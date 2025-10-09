@@ -1,0 +1,16 @@
+# Ignore Visual Studio temporary files, build results, and personal settings
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+*.dbmdl
+*.opendb
+*.vscode/
+*.userosscache
+*.userprefs
+_TestResults/
+*.nupkg
+*.snupkg
