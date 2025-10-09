@@ -1,0 +1,41 @@
+﻿@model IEnumerable<QuickClinique.Models.Appointment>
+@{
+    ViewData["Title"] = "Appointments";
+}
+<h2>Appointments</h2>
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Patient</th>
+            <th>Schedule</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Date Booked</th>
+            <th>Queue Number</th>
+            <th>Queue Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Patient?.LastName</td>
+                <td>@item.Schedule?.Date</td>
+                <td>@item.AppointmentStatus</td>
+                <td>@item.ReasonForVisit</td>
+                <td>@item.DateBooked</td>
+                <td>@item.QueueNumber</td>
+                <td>@item.QueueStatus</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.AppointmentId">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.AppointmentId">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.AppointmentId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
