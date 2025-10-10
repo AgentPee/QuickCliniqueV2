@@ -1,0 +1,65 @@
+﻿@model QuickClinique.Models.Clinicstaff
+
+@{
+    ViewData["Title"] = "Clinic Staff Details";
+}
+
+<h2>Clinic Staff Details</h2>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.FirstName)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.FirstName)
+        </dd>
+
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.Email)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.Email)
+        </dd>
+
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.PhoneNumber)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.PhoneNumber)
+        </dd>
+
+        <dt class="col-sm-3">
+            User Role
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.User.Role)
+        </dd>
+
+        <dt class="col-sm-3">
+            User ID
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.UserId)
+        </dd>
+
+        <dt class="col-sm-3">
+            Staff ID
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.ClinicStaffId)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.ClinicStaffId" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

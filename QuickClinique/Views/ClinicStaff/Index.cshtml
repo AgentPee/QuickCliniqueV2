@@ -2,19 +2,29 @@
 @{
     ViewData["Title"] = "Clinic Staff";
 }
+
 <h2>Clinic Staff</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
 </p>
-<table class="table">
-    <thead>
+
+<table class="table table-striped">
+    <thead class="thead-dark">
         <tr>
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
             <th>Phone Number</th>
             <th>User Role</th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -27,9 +37,9 @@
                 <td>@item.PhoneNumber</td>
                 <td>@item.User?.Role</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.ClinicStaffId">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.ClinicStaffId">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.ClinicStaffId">Delete</a>
+                    <a asp-action="Edit" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
         }
