@@ -18,8 +18,8 @@ namespace QuickClinique.Models
 
         [Required]
         [Display(Name = "Phone Number")]
-        [Range(100000000, 9999999999, ErrorMessage = "Phone number must be between 9-10 digits")]
-        public int PhoneNumber { get; set; }
+        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "Phone number must be exactly 11 digits")]
+        public string PhoneNumber { get; set; } = null!; // Changed to string
 
         [Required]
         [DataType(DataType.Password)]

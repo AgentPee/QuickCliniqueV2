@@ -91,7 +91,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.FirstName).HasColumnType("text");
             entity.Property(e => e.LastName).HasColumnType("text");
             entity.Property(e => e.Password).HasColumnType("text");
-            entity.Property(e => e.PhoneNumber).HasColumnType("int(20)");
+            entity.Property(e => e.PhoneNumber).HasColumnType("text");
             entity.Property(e => e.UserId)
                 .HasColumnType("int(100)")
                 .HasColumnName("UserID");
@@ -275,7 +275,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("IDnumber");
             entity.Property(e => e.LastName).HasColumnType("text");
             entity.Property(e => e.Password).HasColumnType("text");
-            entity.Property(e => e.PhoneNumber).HasColumnType("int(20)");
+            entity.Property(e => e.PhoneNumber).HasColumnType("text");
             entity.Property(e => e.UserId)
                 .HasColumnType("int(100)")
                 .HasColumnName("UserID");

@@ -15,7 +15,7 @@ public partial class Clinicstaff
 
     public string Email { get; set; } = null!;
 
-    public int PhoneNumber { get; set; }
+    public string PhoneNumber { get; set; } = null!; // Changed from int to string
 
     public string Password { get; set; } = null!;
 

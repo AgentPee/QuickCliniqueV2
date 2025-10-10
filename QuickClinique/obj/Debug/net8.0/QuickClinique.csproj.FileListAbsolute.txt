@@ -129,10 +129,10 @@ C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\stat
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickCli.D1438281.Up2Date
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickClinique.dll
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\refint\QuickClinique.dll
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickClinique.pdb
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickClinique.genruntimeconfig.cache
 C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\ref\QuickClinique.dll
+C:\Users\RainPyre\source\repos\QuickClinique\QuickClinique\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

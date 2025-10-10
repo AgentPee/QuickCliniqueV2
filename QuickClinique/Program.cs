@@ -45,4 +45,20 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// AUTO-CREATE DATABASE ON STARTUP
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.EnsureCreated(); // This creates the database and tables
+        Console.WriteLine("Database created successfully!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred creating the database: {ex.Message}");
+    }
+}
+
 app.Run();
