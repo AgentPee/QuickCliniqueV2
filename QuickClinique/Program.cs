@@ -1,16 +1,32 @@
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
+using QuickClinique.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-//DB Context
+// Add email service
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// DB Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         new MySqlServerVersion(new Version(8, 0, 21))));
+
+// Add session services (required for ClinicStaffController)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+// Add distributed memory cache (required for session)
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
@@ -24,7 +40,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -35,7 +50,12 @@ app.UseRouting();
 
 app.UseCookiePolicy();
 
-app.UseCookiePolicy();
+// Add session middleware (must come before UseAuthentication/UseAuthorization)
+app.UseSession();
+
+// Add authentication if you're using identity/authentication
+// Note: If you're using ASP.NET Core Identity, you need to add authentication services above
+app.UseAuthentication();
 
 app.UseAuthorization();
 
@@ -45,15 +65,19 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// AUTO-CREATE DATABASE ON STARTUP
+// Database initialization
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated(); // This creates the database and tables
-        Console.WriteLine("Database created successfully!");
+
+        // Use Migrate() if you have EF Core migrations
+        // Use EnsureCreated() if you don't have migrations yet
+        context.Database.Migrate(); // or context.Database.EnsureCreated();
+
+        Console.WriteLine("Database created/migrated successfully!");
     }
     catch (Exception ex)
     {

@@ -96,6 +96,23 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("int(100)")
                 .HasColumnName("UserID");
 
+            // Add the new properties
+            entity.Property(e => e.IsEmailVerified)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false);
+            entity.Property(e => e.EmailVerificationToken)
+                .HasColumnType("text")
+                .IsRequired(false);
+            entity.Property(e => e.EmailVerificationTokenExpiry)
+                .HasColumnType("datetime")
+                .IsRequired(false);
+            entity.Property(e => e.PasswordResetToken)
+                .HasColumnType("text")
+                .IsRequired(false);
+            entity.Property(e => e.PasswordResetTokenExpiry)
+                .HasColumnType("datetime")
+                .IsRequired(false);
+
             entity.HasOne(d => d.User).WithMany(p => p.Clinicstaffs)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("clinicstaff_ibfk_1");

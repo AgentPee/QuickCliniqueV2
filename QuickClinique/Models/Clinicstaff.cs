@@ -15,9 +15,16 @@ public partial class Clinicstaff
 
     public string Email { get; set; } = null!;
 
-    public string PhoneNumber { get; set; } = null!; // Changed from int to string
+    public string PhoneNumber { get; set; } = null!;
 
     public string Password { get; set; } = null!;
+
+    // Add these new properties for email verification and password reset
+    public bool IsEmailVerified { get; set; }
+    public string? EmailVerificationToken { get; set; }
+    public DateTime? EmailVerificationTokenExpiry { get; set; }
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 

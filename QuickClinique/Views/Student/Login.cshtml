@@ -1,14 +1,14 @@
-﻿@model QuickClinique.Models.ClinicStaffLoginViewModel
+﻿@model QuickClinique.Models.StudentLoginViewModel
 
 @{
-    ViewData["Title"] = "Clinic Staff Login";
+    ViewData["Title"] = "Student Login";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h2>Clinic Staff Login</h2>
+                <h2>Student Login</h2>
             </div>
             <div class="card-body">
                 @if (TempData["SuccessMessage"] != null)
@@ -22,9 +22,9 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                     <div class="form-group mb-3">
-                        <label asp-for="Email" class="control-label"></label>
-                        <input asp-for="Email" class="form-control" type="email" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <label asp-for="Idnumber" class="control-label"></label>
+                        <input asp-for="Idnumber" class="form-control" />
+                        <span asp-validation-for="Idnumber" class="text-danger"></span>
                     </div>
 
                     <div class="form-group mb-3">

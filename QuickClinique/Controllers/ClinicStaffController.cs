@@ -2,16 +2,20 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
+using QuickClinique.Services;
+using System.Text;
 
 namespace QuickClinique.Controllers
 {
     public class ClinicstaffController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public ClinicstaffController(ApplicationDbContext context)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Clinicstaff
@@ -102,7 +106,7 @@ namespace QuickClinique.Controllers
 
                     // Find the existing entity in the context
                     var existingStaff = await _context.Clinicstaffs
-                        .Include(c => c.User) // Include the User navigation property
+                        .Include(c => c.User)
                         .FirstOrDefaultAsync(c => c.ClinicStaffId == id);
 
                     if (existingStaff == null)
@@ -149,7 +153,7 @@ namespace QuickClinique.Controllers
                         Console.WriteLine("No associated Usertype found for this staff member");
                     }
 
-                    // Save changes - this will update both Clinicstaff and Usertype in the same transaction
+                    // Save changes
                     int changes = await _context.SaveChangesAsync();
                     Console.WriteLine($"SaveChanges completed. {changes} records affected.");
 
@@ -174,13 +178,20 @@ namespace QuickClinique.Controllers
                 {
                     Console.WriteLine($"Exception during save: {ex.Message}");
                     Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
-                    
+                    ModelState.AddModelError("", "An error occurred while saving. Please try again.");
                 }
             }
             else
             {
                 Console.WriteLine("ModelState is still invalid. Errors:");
-                
+                foreach (var key in ModelState.Keys)
+                {
+                    var errors = ModelState[key].Errors;
+                    if (errors.Count > 0)
+                    {
+                        Console.WriteLine($"  {key}: {string.Join(", ", errors.Select(e => e.ErrorMessage))}");
+                    }
+                }
             }
 
             // If we got this far, something failed; redisplay form
@@ -215,10 +226,8 @@ namespace QuickClinique.Controllers
 
             if (clinicstaff != null)
             {
-                // Remove the clinic staff
                 _context.Clinicstaffs.Remove(clinicstaff);
 
-                // Also remove the associated user type to avoid orphaned records
                 if (clinicstaff.User != null)
                 {
                     _context.Usertypes.Remove(clinicstaff.User);
@@ -235,8 +244,6 @@ namespace QuickClinique.Controllers
             return _context.Clinicstaffs.Any(e => e.ClinicStaffId == id);
         }
 
-        // Add these methods to your existing ClinicstaffController class
-
         // GET: Clinicstaff/Login
         public IActionResult Login()
         {
@@ -246,7 +253,7 @@ namespace QuickClinique.Controllers
         // POST: Clinicstaff/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(ClinicStaffLoginViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -255,14 +262,32 @@ namespace QuickClinique.Controllers
 
                 if (staff != null)
                 {
-                    // Here you should implement proper authentication
-                    // For production, use proper password hashing and ASP.NET Core Identity
+                    if (!staff.IsEmailVerified)
+                    {
+                        ModelState.AddModelError("", "Please verify your email before logging in.");
+                        return View(model);
+                    }
+
+                    // Set session
+                    HttpContext.Session.SetInt32("ClinicStaffId", staff.ClinicStaffId);
+                    HttpContext.Session.SetString("ClinicStaffName", staff.FirstName + " " + staff.LastName);
+                    HttpContext.Session.SetString("UserRole", "ClinicStaff");
+
+                    TempData["SuccessMessage"] = "Login successful!";
                     return RedirectToAction(nameof(Index));
                 }
 
-                ModelState.AddModelError("", "Invalid login attempt.");
+                ModelState.AddModelError("", "Invalid email or password.");
             }
             return View(model);
+        }
+
+        // GET: Clinicstaff/Logout
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            TempData["SuccessMessage"] = "You have been logged out successfully.";
+            return RedirectToAction(nameof(Login));
         }
 
         // GET: Clinicstaff/Register
@@ -289,7 +314,7 @@ namespace QuickClinique.Controllers
                         return View(model);
                     }
 
-                    // 1. Create and save the Usertype first
+                    // Create and save the Usertype first
                     var usertype = new Usertype
                     {
                         Name = model.FirstName + " " + model.LastName,
@@ -297,40 +322,45 @@ namespace QuickClinique.Controllers
                     };
 
                     _context.Usertypes.Add(usertype);
-                    await _context.SaveChangesAsync(); // This generates the UserId
+                    await _context.SaveChangesAsync();
 
-                    Console.WriteLine($"Created Usertype with ID: {usertype.UserId}");
+                    // Generate email verification token
+                    var emailToken = GenerateToken();
 
-                    // 2. Now create the Clinicstaff with the UserId from Usertype
+                    // Create the Clinicstaff
                     var clinicstaff = new Clinicstaff
                     {
-                        UserId = usertype.UserId, // Set the foreign key
+                        UserId = usertype.UserId,
                         FirstName = model.FirstName,
                         LastName = model.LastName,
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
-                        Password = model.Password // In production, hash this!
+                        Password = model.Password,
+                        IsEmailVerified = false,
+                        EmailVerificationToken = emailToken,
+                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
                     };
 
-                    // 3. Save the Clinicstaff record
                     _context.Clinicstaffs.Add(clinicstaff);
                     await _context.SaveChangesAsync();
 
-                    Console.WriteLine("Clinic staff registered successfully!");
+                    // Send verification email
+                    var verificationLink = Url.Action("VerifyEmail", "Clinicstaff",
+                        new { token = emailToken, email = clinicstaff.Email }, Request.Scheme);
 
-                    TempData["SuccessMessage"] = "Registration successful! Please login.";
-                    return RedirectToAction(nameof(Register));
+                    await _emailService.SendVerificationEmail(clinicstaff.Email, clinicstaff.FirstName, verificationLink);
+
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
+                    return RedirectToAction(nameof(Login));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error during registration: {ex.Message}");
-                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                    Console.WriteLine($"Registration error: {ex.Message}");
                     ModelState.AddModelError("", "An error occurred during registration. Please try again.");
                 }
             }
             else
             {
-                // Log validation errors
                 foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
                 {
                     Console.WriteLine($"Validation Error: {error.ErrorMessage}");
@@ -340,10 +370,144 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
-        private async Task<int> GetClinicStaffUserTypeId()
+        // GET: Clinicstaff/VerifyEmail
+        public async Task<IActionResult> VerifyEmail(string token, string email)
         {
-            var userType = await _context.Usertypes.FirstOrDefaultAsync(u => u.Role == "ClinicStaff");
-            return userType?.UserId ?? throw new InvalidOperationException("Clinic Staff user type not found");
+            var clinicstaff = await _context.Clinicstaffs
+                .FirstOrDefaultAsync(s => s.Email == email &&
+                         s.EmailVerificationToken == token &&
+                         s.EmailVerificationTokenExpiry > DateTime.Now);
+
+            if (clinicstaff == null)
+            {
+                TempData["ErrorMessage"] = "Invalid or expired verification link.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            clinicstaff.IsEmailVerified = true;
+            clinicstaff.EmailVerificationToken = null;
+            clinicstaff.EmailVerificationTokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Email verified successfully! You can now login.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        // GET: Clinicstaff/ForgotPassword
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        // POST: Clinicstaff/ForgotPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var clinicstaff = await _context.Clinicstaffs
+                        .FirstOrDefaultAsync(s => s.Email == model.Email && s.IsEmailVerified);
+
+                    if (clinicstaff != null)
+                    {
+                        var resetToken = GenerateToken();
+                        clinicstaff.PasswordResetToken = resetToken;
+                        clinicstaff.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+
+                        await _context.SaveChangesAsync();
+
+                        var resetLink = Url.Action("ResetPassword", "Clinicstaff",
+                            new { token = resetToken, email = clinicstaff.Email }, Request.Scheme);
+
+                        await _emailService.SendPasswordResetEmail(clinicstaff.Email, clinicstaff.FirstName, resetLink);
+
+                        TempData["SuccessMessage"] = "Password reset link has been sent to your email.";
+                        return RedirectToAction(nameof(Login));
+                    }
+
+                    // Don't reveal that the user doesn't exist or isn't verified
+                    TempData["SuccessMessage"] = "If your email is registered and verified, you will receive a password reset link.";
+                    return RedirectToAction(nameof(Login));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Forgot password error: {ex.Message}");
+                    TempData["ErrorMessage"] = "An error occurred. Please try again.";
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clinicstaff/ResetPassword
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            var clinicstaff = await _context.Clinicstaffs
+                .FirstOrDefaultAsync(s => s.Email == email &&
+                         s.PasswordResetToken == token &&
+                         s.PasswordResetTokenExpiry > DateTime.Now);
+
+            if (clinicstaff == null)
+            {
+                TempData["ErrorMessage"] = "Invalid or expired reset link.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            var model = new ResetPasswordViewModel
+            {
+                Token = token,
+                Email = email
+            };
+
+            return View(model);
+        }
+
+        // POST: Clinicstaff/ResetPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var clinicstaff = await _context.Clinicstaffs
+                        .FirstOrDefaultAsync(s => s.Email == model.Email &&
+                                 s.PasswordResetToken == model.Token &&
+                                 s.PasswordResetTokenExpiry > DateTime.Now);
+
+                    if (clinicstaff == null)
+                    {
+                        TempData["ErrorMessage"] = "Invalid or expired reset link.";
+                        return RedirectToAction(nameof(ForgotPassword));
+                    }
+
+                    // Update password
+                    clinicstaff.Password = model.Password;
+                    clinicstaff.PasswordResetToken = null;
+                    clinicstaff.PasswordResetTokenExpiry = null;
+
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Password reset successfully! You can now login with your new password.";
+                    return RedirectToAction(nameof(Login));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Reset password error: {ex.Message}");
+                    TempData["ErrorMessage"] = "An error occurred. Please try again.";
+                }
+            }
+            return View(model);
+        }
+
+        // Helper method to generate tokens
+        private string GenerateToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
     }
 }
