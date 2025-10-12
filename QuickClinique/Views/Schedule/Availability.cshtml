@@ -156,6 +156,7 @@
             @if (Model.Any())
             {
                 <form id="bulkForm" method="post" asp-action="BulkUpdateAvailability">
+                    @Html.AntiForgeryToken()
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
@@ -198,7 +199,10 @@
                                                     <form method="post" asp-action="BulkUpdateAvailability" style="display: inline;">
                                                         <input type="hidden" name="scheduleIds" value="@item.ScheduleId" />
                                                         <input type="hidden" name="newAvailability" value="No" />
-                                                        
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                                onclick="return confirm('Mark this schedule as unavailable?')">
+                                                            Mark Unavailable
+                                                        </button>
                                                     </form>
                                                 }
                                                 else
@@ -206,7 +210,10 @@
                                                     <form method="post" asp-action="BulkUpdateAvailability" style="display: inline;">
                                                         <input type="hidden" name="scheduleIds" value="@item.ScheduleId" />
                                                         <input type="hidden" name="newAvailability" value="Yes" />
-                                                        
+                                                        <button type="submit" class="btn btn-success btn-sm"
+                                                                onclick="return confirm('Mark this schedule as available?')">
+                                                            Mark Available
+                                                        </button>
                                                     </form>
                                                 }
                                             </div>
@@ -233,28 +240,64 @@
 
 @section Scripts {
     <script>
-        // Select All functionality
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.schedule-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            toggleBulkActions();
+        // Wait for the document to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCheckboxHandlers();
+            initializeFilterHandler();
         });
 
-        // Individual checkbox change
-        document.querySelectorAll('.schedule-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', toggleBulkActions);
-        });
+        function initializeCheckboxHandlers() {
+            const selectAll = document.getElementById('selectAll');
+            const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+
+            // Select All functionality
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    scheduleCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    toggleBulkActions();
+                });
+            }
+
+            // Individual checkbox change
+            scheduleCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Update select all checkbox state
+                    if (selectAll) {
+                        const allChecked = document.querySelectorAll('.schedule-checkbox:checked').length === scheduleCheckboxes.length;
+                        const someChecked = document.querySelectorAll('.schedule-checkbox:checked').length > 0;
+
+                        selectAll.checked = allChecked;
+                        selectAll.indeterminate = someChecked && !allChecked;
+                    }
+                    toggleBulkActions();
+                });
+            });
+
+            // Initial toggle
+            toggleBulkActions();
+        }
+
+        function initializeFilterHandler() {
+            const statusFilter = document.getElementById('status');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    this.form.submit();
+                });
+            }
+        }
 
         function toggleBulkActions() {
             const checkedCount = document.querySelectorAll('.schedule-checkbox:checked').length;
             const bulkActions = document.getElementById('bulkActions');
 
-            if (checkedCount > 0) {
-                bulkActions.style.display = 'block';
-            } else {
-                bulkActions.style.display = 'none';
+            if (bulkActions) {
+                if (checkedCount > 0) {
+                    bulkActions.style.display = 'block';
+                } else {
+                    bulkActions.style.display = 'none';
+                }
             }
         }
 
@@ -262,21 +305,42 @@
             const checkedCount = document.querySelectorAll('.schedule-checkbox:checked').length;
             const action = newAvailability === 'Yes' ? 'available' : 'unavailable';
 
-            if (checkedCount > 0 && confirm(`Are you sure you want to mark ${checkedCount} schedule(s) as ${action}?`)) {
-                const form = document.getElementById('bulkForm');
-                const availabilityInput = document.createElement('input');
-                availabilityInput.type = 'hidden';
-                availabilityInput.name = 'newAvailability';
-                availabilityInput.value = newAvailability;
-                form.appendChild(availabilityInput);
+            if (checkedCount > 0) {
+                if (confirm(`Are you sure you want to mark ${checkedCount} schedule(s) as ${action}?`)) {
+                    // Create a form for bulk update
+                    const form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '@Url.Action("BulkUpdateAvailability", "Schedule")';
 
-                form.submit();
+                    // Add anti-forgery token
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (token) {
+                        form.appendChild(token.cloneNode());
+                    }
+
+                    // Add selected schedule IDs
+                    document.querySelectorAll('.schedule-checkbox:checked').forEach(checkbox => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'scheduleIds';
+                        input.value = checkbox.value;
+                        form.appendChild(input);
+                    });
+
+                    // Add availability value
+                    const availabilityInput = document.createElement('input');
+                    availabilityInput.type = 'hidden';
+                    availabilityInput.name = 'newAvailability';
+                    availabilityInput.value = newAvailability;
+                    form.appendChild(availabilityInput);
+
+                    // Submit the form
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            } else {
+                alert('Please select at least one schedule to update.');
             }
         }
-
-        // Auto-submit filter form when status changes
-        document.getElementById('status').addEventListener('change', function() {
-            this.form.submit();
-        });
     </script>
 }

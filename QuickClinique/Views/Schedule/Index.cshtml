@@ -44,29 +44,111 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.Date.ToString("yyyy-MM-dd")</td>
-                                <td>@item.StartTime.ToString("hh\\:mm tt")</td>
-                                <td>@item.EndTime.ToString("hh\\:mm tt")</td>
-                                <td>
-                                    <span class="badge @(item.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
-                                        @item.IsAvailable
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">Details</a>
-                                        <a asp-action="Edit" asp-route-id="@item.ScheduleId" class="btn btn-warning btn-sm">Edit</a>
-                                        <a asp-action="Delete" asp-route-id="@item.ScheduleId" class="btn btn-danger btn-sm">Delete</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@item.StartTime.ToString("hh\\:mm tt")</td>
+                            <td>@item.EndTime.ToString("hh\\:mm tt")</td>
+                            <td>
+                                <span class="badge @(item.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
+                                    @item.IsAvailable
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.ScheduleId" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="setDeleteSchedule(@item.ScheduleId, '@item.Date.ToString("yyyy-MM-dd")', '@item.StartTime.ToString("hh\\:mm tt") - @item.EndTime.ToString("hh\\:mm tt")', @(item.Appointments?.Count ?? 0))">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
                 </table>
             </div>
         </div>
     </div>
+<!-- Single Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                    <p class="mb-0">Are you sure you want to delete this schedule?</p>
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Date:</dt>
+                    <dd class="col-sm-8" id="deleteDate"></dd>
+
+                    <dt class="col-sm-4">Time:</dt>
+                    <dd class="col-sm-8" id="deleteTime"></dd>
+
+                    <dt class="col-sm-4">Appointments:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge" id="deleteAppointmentsBadge">
+                            0 appointment(s)
+                        </span>
+                    </dd>
+                </dl>
+                <div class="alert alert-danger" id="appointmentsWarning" style="display: none;">
+                    <strong>Important:</strong> This schedule has <span id="appointmentsCount">0</span> appointment(s) associated with it.
+                    Deleting this schedule will also remove these appointments.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" asp-action="Delete" method="post">
+                    <input type="hidden" name="id" id="deleteScheduleId" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Schedule
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setDeleteSchedule(scheduleId, date, time, appointmentCount) {
+            // Set the values in the modal
+            document.getElementById('deleteScheduleId').value = scheduleId;
+            document.getElementById('deleteDate').textContent = date;
+            document.getElementById('deleteTime').textContent = time;
+
+            // Update appointments info
+            const appointmentsBadge = document.getElementById('deleteAppointmentsBadge');
+            const appointmentsWarning = document.getElementById('appointmentsWarning');
+            const appointmentsCount = document.getElementById('appointmentsCount');
+
+            appointmentsBadge.textContent = appointmentCount + ' appointment(s)';
+            appointmentsCount.textContent = appointmentCount;
+
+            if (appointmentCount > 0) {
+                appointmentsBadge.className = 'badge bg-danger';
+                appointmentsWarning.style.display = 'block';
+            } else {
+                appointmentsBadge.className = 'badge bg-success';
+                appointmentsWarning.style.display = 'none';
+            }
+
+            // Show the modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+    </script>
+}
