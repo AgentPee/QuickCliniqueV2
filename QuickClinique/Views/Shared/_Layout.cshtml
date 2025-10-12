@@ -31,12 +31,37 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Clinicstaff" asp-action="Index">Clinic Staff</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Clinicstaff" asp-action="Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Student" asp-action="Login">Student-Login</a>
-                        </li>
+                        @if (Context.Session.GetInt32("ClinicStaffId") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-dark">Welcome, @Context.Session.GetString("ClinicStaffName")!</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Clinicstaff" asp-action="Logout">Staff Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Clinicstaff" asp-action="Login">Staff-Login</a>
+                            </li>
+                        }
+
+                        @if (Context.Session.GetInt32("StudentId") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-dark">Welcome, @Context.Session.GetString("StudentName")!</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Student" asp-action="Logout">Student Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Student" asp-action="Login">Student-Login</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
