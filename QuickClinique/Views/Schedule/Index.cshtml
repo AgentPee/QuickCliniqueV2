@@ -1,0 +1,72 @@
+﻿@model IEnumerable<QuickClinique.Models.Schedule>
+
+@{
+    ViewData["Title"] = "Schedules";
+    Layout = "_Layout";
+}
+
+<!-- Add this below the main heading in Index.cshtml -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Clinic Schedules</h1>
+    <div class="btn-group">
+        <a asp-action="Availability" class="btn btn-info">View Availability</a>
+        <a asp-action="Create" class="btn btn-primary">Create New Schedule</a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                Create Multiple
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" asp-action="CreateMultiple">Date Range Create</a></li>
+                <li><a class="dropdown-item" asp-action="CreateQuick">Quick Create</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Availability</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Date.ToString("yyyy-MM-dd")</td>
+                                <td>@item.StartTime.ToString("hh\\:mm tt")</td>
+                                <td>@item.EndTime.ToString("hh\\:mm tt")</td>
+                                <td>
+                                    <span class="badge @(item.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
+                                        @item.IsAvailable
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">Details</a>
+                                        <a asp-action="Edit" asp-route-id="@item.ScheduleId" class="btn btn-warning btn-sm">Edit</a>
+                                        <a asp-action="Delete" asp-route-id="@item.ScheduleId" class="btn btn-danger btn-sm">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>

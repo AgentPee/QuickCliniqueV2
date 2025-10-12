@@ -1,0 +1,203 @@
+﻿@model QuickClinique.Models.ScheduleBulkCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Multiple Schedules";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Create Multiple Schedules</h4>
+                    <p class="text-muted mb-0">Create schedules for a date range with specific days of the week.</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateMultiple">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="StartDate" class="control-label">Start Date</label>
+                                    <input asp-for="StartDate" class="form-control" type="date" />
+                                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EndDate" class="control-label">End Date</label>
+                                    <input asp-for="EndDate" class="form-control" type="date" />
+                                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="StartTime" class="control-label">Start Time</label>
+                                    <input asp-for="StartTime" class="form-control" type="time" />
+                                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EndTime" class="control-label">End Time</label>
+                                    <input asp-for="EndTime" class="form-control" type="time" />
+                                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="IsAvailable" class="control-label">Availability</label>
+                            <select asp-for="IsAvailable" class="form-control">
+                                <option value="Yes">Available</option>
+                                <option value="No">Not Available</option>
+                            </select>
+                            <span asp-validation-for="IsAvailable" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="control-label">Days of Week (Optional - select none for all days)</label>
+                            <div class="row mt-2">
+                                @{
+                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+                                }
+                                @foreach (var day in daysOfWeek)
+                                {
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="SelectedDays" value="@day"
+                                                   id="day-@day" @(Model.SelectedDays?.Contains(day) == true ? "checked" : "")>
+                                            <label class="form-check-label" for="day-@day">
+                                                @day
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Create Schedules
+                            </button>
+                            <a asp-action="CreateQuick" class="btn btn-outline-primary">
+                                <i class="fas fa-bolt"></i> Quick Create
+                            </a>
+                            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Preview</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted" id="previewText">
+                        Select dates and times to see a preview of the schedules that will be created.
+                    </p>
+                    <div id="schedulePreview" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function updatePreview() {
+            const startDateInput = document.getElementById('StartDate');
+            const endDateInput = document.getElementById('EndDate');
+            const startTimeInput = document.getElementById('StartTime');
+            const endTimeInput = document.getElementById('EndTime');
+
+            if (!startDateInput || !endDateInput || !startTimeInput || !endTimeInput) {
+                return;
+            }
+
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+
+            if (!startDateInput.value || !endDateInput.value || !startTime || !endTime) {
+                document.getElementById('previewText').textContent =
+                    'Select dates and times to see a preview.';
+                document.getElementById('schedulePreview').innerHTML = '';
+                return;
+            }
+
+            // Get selected days
+            const selectedDays = [];
+            document.querySelectorAll('input[name="SelectedDays"]:checked').forEach(checkbox => {
+                selectedDays.push(checkbox.value);
+            });
+
+            // Calculate schedules
+            const schedules = [];
+            const currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                if (selectedDays.length === 0 || selectedDays.includes(dayName)) {
+                    schedules.push({
+                        date: currentDate.toISOString().split('T')[0],
+                        day: dayName,
+                        startTime: startTime,
+                        endTime: endTime
+                    });
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Update preview
+            document.getElementById('previewText').textContent =
+                `Will create ${schedules.length} schedule(s):`;
+
+            let previewHtml = '<div class="list-group">';
+            schedules.slice(0, 10).forEach(schedule => {
+                previewHtml += `
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${schedule.day}</h6>
+                            <small>${schedule.date}</small>
+                        </div>
+                        <p class="mb-1">${schedule.startTime} - ${schedule.endTime}</p>
+                    </div>
+                `;
+            });
+
+            if (schedules.length > 10) {
+                previewHtml += `<div class="list-group-item text-center text-muted">
+                    ... and ${schedules.length - 10} more
+                </div>`;
+            }
+
+            previewHtml += '</div>';
+            document.getElementById('schedulePreview').innerHTML = previewHtml;
+        }
+
+        // Add event listeners
+        document.getElementById('StartDate')?.addEventListener('change', updatePreview);
+        document.getElementById('EndDate')?.addEventListener('change', updatePreview);
+        document.getElementById('StartTime')?.addEventListener('change', updatePreview);
+        document.getElementById('EndTime')?.addEventListener('change', updatePreview);
+        document.querySelectorAll('input[name="SelectedDays"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updatePreview);
+        });
+
+        // Initial preview
+        updatePreview();
+    </script>
+}

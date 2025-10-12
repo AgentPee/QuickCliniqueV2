@@ -130,5 +130,230 @@ namespace QuickClinique.Controllers
         {
             return _context.Schedules.Any(e => e.ScheduleId == id);
         }
+
+        // GET: Schedule/CreateMultiple
+        public IActionResult CreateMultiple()
+        {
+            var model = new ScheduleBulkCreateViewModel();
+            return View(model);
+        }
+
+        // POST: Schedule/CreateMultiple
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateMultiple(ScheduleBulkCreateViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var schedules = new List<Schedule>();
+                    var currentDate = model.StartDate;
+
+                    // Generate schedules for each day in the range
+                    while (currentDate <= model.EndDate)
+                    {
+                        // Check if we should create schedule for this day of week
+                        if (ShouldCreateForDay(currentDate, model.SelectedDays))
+                        {
+                            var schedule = new Schedule
+                            {
+                                Date = currentDate,
+                                StartTime = model.StartTime,
+                                EndTime = model.EndTime,
+                                IsAvailable = model.IsAvailable
+                            };
+                            schedules.Add(schedule);
+                        }
+                        currentDate = currentDate.AddDays(1);
+                    }
+
+                    if (schedules.Count > 0)
+                    {
+                        // Add all schedules to context
+                        _context.Schedules.AddRange(schedules);
+                        await _context.SaveChangesAsync();
+
+                        TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "No schedules were created. Please check your date range and selected days.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating multiple schedules: {ex.Message}");
+                    ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
+                }
+            }
+
+            // If we got here, something went wrong - redisplay form
+            return View(model);
+        }
+
+        // GET: Schedule/CreateQuick
+        public IActionResult CreateQuick()
+        {
+            var model = new ScheduleQuickCreateViewModel();
+            return View(model);
+        }
+
+        // POST: Schedule/CreateQuick
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateQuick(ScheduleQuickCreateViewModel model)
+        {
+            if (ModelState.IsValid && model.SelectedDates != null && model.SelectedDates.Any())
+            {
+                try
+                {
+                    var schedules = new List<Schedule>();
+
+                    foreach (var date in model.SelectedDates)
+                    {
+                        var schedule = new Schedule
+                        {
+                            Date = date,
+                            StartTime = model.StartTime,
+                            EndTime = model.EndTime,
+                            IsAvailable = model.IsAvailable
+                        };
+                        schedules.Add(schedule);
+                    }
+
+                    _context.Schedules.AddRange(schedules);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating quick schedules: {ex.Message}");
+                    ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
+                }
+            }
+            else if (model.SelectedDates == null || !model.SelectedDates.Any())
+            {
+                ModelState.AddModelError("SelectedDates", "Please select at least one date.");
+            }
+
+            return View(model);
+        }
+
+        // Helper method to check if schedule should be created for specific day
+        private bool ShouldCreateForDay(DateOnly date, List<string>? selectedDays)
+        {
+            if (selectedDays == null || !selectedDays.Any())
+                return true;
+
+            var dayOfWeek = date.DayOfWeek.ToString();
+            return selectedDays.Contains(dayOfWeek);
+        }
+
+        // GET: Schedule/Availability
+        public async Task<IActionResult> Availability(string status = "All", DateOnly? startDate = null, DateOnly? endDate = null)
+        {
+            ViewData["CurrentFilter"] = status;
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+
+            var schedules = _context.Schedules.AsQueryable();
+
+            // Filter by availability status
+            if (!string.IsNullOrEmpty(status) && status != "All")
+            {
+                schedules = schedules.Where(s => s.IsAvailable == status);
+            }
+
+            // Filter by date range
+            if (startDate.HasValue)
+            {
+                schedules = schedules.Where(s => s.Date >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                schedules = schedules.Where(s => s.Date <= endDate.Value);
+            }
+
+            // Order by date and time
+            schedules = schedules.OrderBy(s => s.Date)
+                                .ThenBy(s => s.StartTime);
+
+            var model = await schedules.ToListAsync();
+
+            // Calculate statistics
+            ViewBag.TotalSchedules = await _context.Schedules.CountAsync();
+            ViewBag.AvailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes");
+            ViewBag.UnavailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "No");
+
+            return View(model);
+        }
+
+        // GET: Schedule/Available
+        public async Task<IActionResult> Available()
+        {
+            var availableSchedules = await _context.Schedules
+                .Where(s => s.IsAvailable == "Yes")
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.StartTime)
+                .ToListAsync();
+
+            ViewBag.FilterType = "Available";
+            return View("Availability", availableSchedules);
+        }
+
+        // GET: Schedule/Unavailable
+        public async Task<IActionResult> Unavailable()
+        {
+            var unavailableSchedules = await _context.Schedules
+                .Where(s => s.IsAvailable == "No")
+                .OrderBy(s => s.Date)
+                .ThenBy(s => s.StartTime)
+                .ToListAsync();
+
+            ViewBag.FilterType = "Unavailable";
+            return View("Availability", unavailableSchedules);
+        }
+
+        // POST: Schedule/BulkUpdateAvailability
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkUpdateAvailability(int[] scheduleIds, string newAvailability)
+        {
+            if (scheduleIds == null || !scheduleIds.Any())
+            {
+                TempData["ErrorMessage"] = "No schedules selected for update.";
+                return RedirectToAction(nameof(Availability));
+            }
+
+            try
+            {
+                var schedules = await _context.Schedules
+                    .Where(s => scheduleIds.Contains(s.ScheduleId))
+                    .ToListAsync();
+
+                foreach (var schedule in schedules)
+                {
+                    schedule.IsAvailable = newAvailability;
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Successfully updated {schedules.Count} schedule(s) to {newAvailability}.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating schedules: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while updating schedules.";
+            }
+
+            return RedirectToAction(nameof(Availability));
+        }
+
     }
 }
+    

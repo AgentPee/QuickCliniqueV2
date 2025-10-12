@@ -31,6 +31,9 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Clinicstaff" asp-action="Index">Clinic Staff</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Schedule" asp-action="Index">Manage Schedules</a>
+                        </li>
                         @if (Context.Session.GetInt32("ClinicStaffId") != null)
                         {
                             <li class="nav-item">

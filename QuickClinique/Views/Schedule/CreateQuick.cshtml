@@ -1,0 +1,180 @@
+﻿@model QuickClinique.Models.ScheduleQuickCreateViewModel
+
+@{
+    ViewData["Title"] = "Quick Create Schedules";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Quick Create Schedules</h4>
+                    <p class="text-muted mb-0">Select multiple specific dates to create schedules.</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateQuick">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-group mb-3">
+                            <label class="control-label">Select Dates</label>
+                            <div id="dateSelection" class="border rounded p-3">
+                                <div class="row">
+                                    @for (int i = 0; i < 14; i++)
+                                    {
+                                        var date = DateOnly.FromDateTime(DateTime.Today.AddDays(i));
+                                        <div class="col-md-3 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input date-checkbox" type="checkbox"
+                                                       name="SelectedDates" value="@date.ToString("yyyy-MM-dd")"
+                                                       id="date-@date.ToString("yyyy-MM-dd")">
+                                                <label class="form-check-label" for="date-@date.ToString("yyyy-MM-dd")">
+                                                    @date.ToString("ddd, MMM dd")
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button" id="selectWeekdays" class="btn btn-sm btn-outline-primary">
+                                        Select Weekdays
+                                    </button>
+                                    <button type="button" id="selectWeekend" class="btn btn-sm btn-outline-primary">
+                                        Select Weekend
+                                    </button>
+                                    <button type="button" id="clearSelection" class="btn btn-sm btn-outline-secondary">
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+                            <span asp-validation-for="SelectedDates" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="StartTime" class="control-label">Start Time</label>
+                                    <input asp-for="StartTime" class="form-control" type="time" />
+                                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="EndTime" class="control-label">End Time</label>
+                                    <input asp-for="EndTime" class="form-control" type="time" />
+                                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="IsAvailable" class="control-label">Availability</label>
+                            <select asp-for="IsAvailable" class="form-control">
+                                <option value="Yes">Available</option>
+                                <option value="No">Not Available</option>
+                            </select>
+                            <span asp-validation-for="IsAvailable" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Create Selected Schedules
+                            </button>
+                            <a asp-action="CreateMultiple" class="btn btn-outline-primary">
+                                <i class="fas fa-calendar-alt"></i> Date Range Create
+                            </a>
+                            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Selected Dates</h5>
+                </div>
+                <div class="card-body">
+                    <p id="selectedCount" class="text-muted">No dates selected</p>
+                    <div id="selectedDatesList" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function updateSelectedDates() {
+            const selectedDates = Array.from(document.querySelectorAll('.date-checkbox:checked'))
+                .map(checkbox => {
+                    const date = new Date(checkbox.value);
+                    return {
+                        value: checkbox.value,
+                        display: date.toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                        })
+                    };
+                });
+
+            document.getElementById('selectedCount').textContent =
+                `${selectedDates.length} date(s) selected`;
+
+            const listContainer = document.getElementById('selectedDatesList');
+            if (selectedDates.length > 0) {
+                let html = '<div class="list-group">';
+                selectedDates.forEach(date => {
+                    html += `<div class="list-group-item py-2">${date.display}</div>`;
+                });
+                html += '</div>';
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = '';
+            }
+        }
+
+        // Event listeners for date selection
+        document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedDates);
+        });
+
+        // Select weekdays button
+        document.getElementById('selectWeekdays').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                const date = new Date(checkbox.value);
+                const day = date.getDay();
+                checkbox.checked = (day >= 1 && day <= 5); // Monday to Friday
+            });
+            updateSelectedDates();
+        });
+
+        // Select weekend button
+        document.getElementById('selectWeekend').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                const date = new Date(checkbox.value);
+                const day = date.getDay();
+                checkbox.checked = (day === 0 || day === 6); // Saturday or Sunday
+            });
+            updateSelectedDates();
+        });
+
+        // Clear selection button
+        document.getElementById('clearSelection').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedDates();
+        });
+
+        // Initial update
+        updateSelectedDates();
+    </script>
+}

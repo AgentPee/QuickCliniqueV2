@@ -1,0 +1,84 @@
+﻿@model QuickClinique.Models.Schedule
+
+@{
+    ViewData["Title"] = "Schedule Details";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Schedule Details</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Schedule ID:</dt>
+                        <dd class="col-sm-8">@Model.ScheduleId</dd>
+
+                        <dt class="col-sm-4">Date:</dt>
+                        <dd class="col-sm-8">@Model.Date.ToString("yyyy-MM-dd")</dd>
+
+                        <dt class="col-sm-4">Start Time:</dt>
+                        <dd class="col-sm-8">@Model.StartTime.ToString("hh\\:mm tt")</dd>
+
+                        <dt class="col-sm-4">End Time:</dt>
+                        <dd class="col-sm-8">@Model.EndTime.ToString("hh\\:mm tt")</dd>
+
+                        <dt class="col-sm-4">Availability:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
+                                @Model.IsAvailable
+                            </span>
+                        </dd>
+                    </dl>
+
+                    <div class="mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.ScheduleId" class="btn btn-warning">Edit</a>
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Related Appointments</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Appointments != null && Model.Appointments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Appointment ID</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var appointment in Model.Appointments)
+                                    {
+                                        <tr>
+                                            <td>@appointment.AppointmentId</td>
+                                            <td>
+                                                <span class="badge bg-info">@appointment.AppointmentStatus</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No appointments scheduled for this time slot.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
