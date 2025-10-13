@@ -75,7 +75,7 @@ using (var scope = app.Services.CreateScope())
 
         // Use Migrate() if you have EF Core migrations
         // Use EnsureCreated() if you don't have migrations yet
-        context.Database.Migrate(); // or context.Database.EnsureCreated();
+        context.Database.EnsureCreated(); // or context.Database.EnsureCreated();
 
         Console.WriteLine("Database created/migrated successfully!");
     }
