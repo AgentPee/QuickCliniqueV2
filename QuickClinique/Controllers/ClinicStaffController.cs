@@ -509,5 +509,12 @@ namespace QuickClinique.Controllers
         {
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
+
+        public IActionResult Dashboard()
+        {
+            var model = new Clinicstaff();
+            return View("clinicstaff", model);
+        }
+
     }
 }

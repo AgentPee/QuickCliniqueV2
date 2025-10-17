@@ -1,4 +1,4 @@
-﻿@page
+﻿@model QuickClinique.Models.Clinicstaff
 
 @{
     ViewData["Title"] = "Staff Dashboard";
@@ -164,9 +164,7 @@
     </div>
 </div>
 
-<!-- Modals -->
-<partial name="_AssignDoctorModal" />
-<partial name="_RecordsModal" />
+
 
 @section Scripts {
     <script src="~/js/dashboard-data.js"></script>
