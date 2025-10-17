@@ -2,7 +2,317 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="main-content">
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>University of Cebu Medical-Dental Clinic</h1>
+        <p>Providing quality healthcare services to the UC community with compassion and excellence</p>
+        <div class="hero-buttons">
+            <a href="#dashboard" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Book Appointment</a>
+            <a href="#dental-schedule" class="btn btn-outline"><i class="fas fa-tooth"></i> Dental Schedule</a>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section class="dashboard-section" id="dashboard">
+        <h2 class="dashboard-header"><i class="fas fa-chart-line"></i> STUDENT DASHBOARD</h2>
+
+        <div class="dashboard-grid">
+            <!-- Appointment Booking -->
+            <div class="appointment-card">
+                <h3>Book New Appointment</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="appointmentDate">Appointment Date & Time</label>
+                        <input type="datetime-local" id="appointmentDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceRequired">Service Required</label>
+                        <select id="serviceRequired">
+                            <option value="">Select a Service</option>
+                            <option value="medical-checkup">General Medical Checkup</option>
+                            <option value="dental-checkup">Dental Checkup</option>
+                            <option value="dental-cleaning">Dental Cleaning/Prophylaxis</option>
+                            <option value="dental-pasta">Dental Pasta (Fillings)</option>
+                            <option value="dental-extraction">Tooth Extraction</option>
+                            <option value="consultation">Medical Consultation</option>
+                            <option value="bp-monitoring">Blood Pressure Monitoring</option>
+                            <option value="vaccination">Vaccination</option>
+                            <option value="emergency">Emergency Care</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="symptoms">Symptoms/Concerns (Optional)</label>
+                        <input type="text" id="symptoms" placeholder="Describe your symptoms or concerns">
+                    </div>
+                    <button type="button" class="submit-appointment-btn">
+                        <i class="fas fa-calendar-check"></i> Submit Appointment Request
+                    </button>
+                </form>
+            </div>
+
+            <!-- Real-Time Queue -->
+            <div class="queue-card">
+                <div class="queue-header">
+                    <i class="fas fa-clock"></i> Real-Time Queue
+                </div>
+                <div class="queue-info">
+                    <h4>Now Serving:</h4>
+                    <p>N/A (No consultation active)</p>
+                </div>
+                <div class="queue-info">
+                    <h4>Waiting in line:</h4>
+                    <p>0 patient(s)</p>
+                </div>
+                <div class="queue-message">
+                    <p>You have no active appointment in the queue.</p>
+                </div>
+                <div class="queue-info" style="margin-top: 15px;">
+                    <h4>Your Queue Number:</h4>
+                    <p>-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment History -->
+        <div class="history-section">
+            <div class="history-header">
+                <i class="fas fa-history"></i> Appointment History
+            </div>
+            <div class="history-list">
+                <div class="no-records">No records found.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dental Schedule Section -->
+    <section class="section" id="dental-schedule">
+        <div class="section-header">
+            <h2>Dental Services Schedule</h2>
+            <p>Plan your visit according to our specialized dental service days</p>
+        </div>
+        <div class="dental-schedule-section">
+            <div class="schedule-grid">
+                <div class="schedule-card">
+                    <div class="schedule-icon">
+                        <i class="fas fa-spa"></i>
+                    </div>
+                    <div class="schedule-day">Monday</div>
+                    <div class="schedule-service">Cleaning Only</div>
+                    <div class="schedule-desc">
+                        Professional dental cleaning and prophylaxis services available all day.
+                    </div>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="schedule-icon">
+                        <i class="fas fa-fill-drip"></i>
+                    </div>
+                    <div class="schedule-day">Tuesday</div>
+                    <div class="schedule-service">Pasta (Fillings)</div>
+                    <div class="schedule-desc">
+                        Dental fillings and restorative procedures available throughout the day.
+                    </div>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="schedule-icon">
+                        <i class="fas fa-teeth"></i>
+                    </div>
+                    <div class="schedule-day">Wednesday</div>
+                    <div class="schedule-service">Extraction</div>
+                    <div class="schedule-desc">
+                        Tooth extraction services available from morning to afternoon.
+                    </div>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="schedule-icon">
+                        <i class="fas fa-fill-drip"></i>
+                    </div>
+                    <div class="schedule-day">Thursday</div>
+                    <div class="schedule-service">Pasta (Fillings)</div>
+                    <div class="schedule-desc">
+                        Dental fillings and restorative procedures available throughout the day.
+                    </div>
+                </div>
+
+                <div class="schedule-card">
+                    <div class="schedule-icon">
+                        <i class="fas fa-teeth"></i>
+                    </div>
+                    <div class="schedule-day">Friday</div>
+                    <div class="schedule-service">Extraction</div>
+                    <div class="schedule-desc">
+                        Tooth extraction services available from morning to afternoon.
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                <h4 style="color: #2e7d32; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> Important Note:</h4>
+                <p style="color: #555; margin: 0;">
+                    Emergency dental services are available every day during clinic hours.
+                    Please contact the clinic directly for urgent dental concerns.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Messaging Section -->
+    <section class="messaging-section" id="messaging">
+        <div class="messaging-header">
+            <i class="fas fa-comments"></i> Clinic Communications
+        </div>
+        <div class="messaging-container">
+            <div class="chat-header">
+                <i class="fas fa-user-md"></i> Clinic Staff
+            </div>
+            <div class="chat-messages">
+                <div class="message received">
+                    <div class="message-content">
+                        Welcome to QuickClinique! How can we assist you today?
+                    </div>
+                    <div class="message-time">09:00 AM</div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Type your message...">
+                <button class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission & Vision Section -->
+    <section class="section" id="mission">
+        <div class="section-header">
+            <h2>Our Mission & Vision</h2>
+            <p>Guiding principles that drive our healthcare services</p>
+        </div>
+        <div class="mission-vision">
+            <div class="vision-card">
+                <h3><i class="fas fa-eye"></i> VISION</h3>
+                <p>"As a Health Care Provider, the University of Cebu – Main goal is to render efficient Medical and Dental Services to the UC Community as a whole, and to promote good health and well-being of students that will highly contribute to their success."</p>
+            </div>
+            <div class="mission-card">
+                <h3><i class="fas fa-bullseye"></i> MISSION</h3>
+                <p>"Diverse implements, effective and accessible antidote for any malady and the health teaching that will be bestowed/ inculcated by the Clinicians to the minds of every individual who will be going to the Clinic are what the endeavor uses and does to ensure that the wellness of the health among UC populace is at hand."</p>
+            </div>
+        </div>
+        <div class="staff-section">
+            <h3 style="text-align: center; color: #4ECDC4; margin-bottom: 20px;">MEDICAL- DENTAL CLINIC</h3>
+            <p style="text-align: center; font-style: italic; color: #666; margin-bottom: 30px;">"The UC Medical- Dental Clinic aims to promote good health and total well- being of the students, the teachers and the employees through prevention, diagnosis, treatment of disease, and education."</p>
+        </div>
+    </section>
+
+    <!-- Staff Section -->
+    <section class="section" id="staff">
+        <div class="section-header">
+            <h2>Our Medical & Dental Staff</h2>
+            <p>Meet our dedicated healthcare professionals</p>
+        </div>
+        <div class="staff-section">
+            <div class="staff-category">
+                <h3>MEDICAL STAFF</h3>
+                <div class="staff-grid">
+                    <div class="staff-card">
+                        <h4>Dr. Carolyn Go- Uang</h4>
+                        <p>Medical Doctor</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM – 12:00 NN</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Jewel Ann Marie Abella</h4>
+                        <p>Medical Doctor</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM – 12:00 NN (South Campus- Extension Clinic)</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Hermogina Jao- Co</h4>
+                        <p>Medical Doctor</p>
+                        <div class="staff-schedule">Schedule: 1:30 PM – 5:30 PM</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Rosalinda Margallo</h4>
+                        <p>Medical Doctor</p>
+                        <div class="staff-schedule">Schedule: 1:30 PM – 7:30 PM (South Campus- Extension Clinic)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="staff-category">
+                <h3>DENTAL STAFF</h3>
+                <div class="staff-grid">
+                    <div class="staff-card">
+                        <h4>Dr. Concepcion Tundag</h4>
+                        <p>Dentist</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 12:00 NN</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Cherryl Abineta- Asibal</h4>
+                        <p>Dentist</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 5:00 PM</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Emmanuel Mercado</h4>
+                        <p>Dentist</p>
+                        <div class="staff-schedule">Schedule: 1:00 PM - 5:00 PM</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Frances Mae Licong</h4>
+                        <p>Dentist</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 5:00 PM (High School/ Grade School)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="staff-category">
+                <h3>NURSING STAFF</h3>
+                <div class="staff-grid">
+                    <div class="staff-card">
+                        <h4>Mrs. Paz Colina Po, BSN, RN</h4>
+                        <p>Nurse</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 5:00 PM (High School/ Grade School)</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Mrs. Charlene Gallentes, BSN, RN</h4>
+                        <p>Nurse</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 5:00 PM</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Dr. Lloyd Dabon, DMD, BSN, RN</h4>
+                        <p>Nurse</p>
+                        <div class="staff-schedule">Schedule: 1:30 PM - 9:30 PM</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Mrs. Nancy Ong, BSN, RN</h4>
+                        <p>Nurse</p>
+                        <div class="staff-schedule">Schedule: 8:00 AM - 5:00 PM (South Campus- Extension Clinic)</div>
+                    </div>
+                    <div class="staff-card">
+                        <h4>Ms. Therese Bacalso, BSN, RN</h4>
+                        <p>Nurse</p>
+                        <div class="staff-schedule">Schedule: 10:30 AM - 7:30 PM (South Campus- Extension Clinic)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Objectives Section -->
+    <section class="section" id="objectives">
+        <div class="section-header">
+            <h2>Department Objectives</h2>
+            <p>Our commitment to comprehensive healthcare services</p>
+        </div>
+        <div class="objectives">
+            <h3>DEPARTMENT OBJECTIVES:</h3>
+            <ul class="objectives-list">
+                <li>Provide preventive measures through BP taking and physical examination, oral examination and prophylaxis;</li>
+                <li>Diagnose diseases based on the patient's history, clinical and laboratory findings;</li>
+                <li>Give treatment to specific diseases based on diagnosis.</li>
+                <li>Conduct Medical- Dental awareness and education through posters and counseling.</li>
+            </ul>
+        </div>
+    </section>
 </div>
