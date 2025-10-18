@@ -13,6 +13,7 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    [StudentOnly]
     public IActionResult Index()
     {
         return View();
@@ -27,5 +28,11 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    public IActionResult AccessDenied(string message)
+    {
+        ViewData["ErrorMessage"] = message ?? "You don't have permission to access this page.";
+        return View();
     }
 }

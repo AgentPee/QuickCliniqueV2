@@ -274,7 +274,7 @@ namespace QuickClinique.Controllers
                     HttpContext.Session.SetString("UserRole", "ClinicStaff");
 
                     TempData["SuccessMessage"] = "Login successful!";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Dashboard));
                 }
 
                 ModelState.AddModelError("", "Invalid email or password.");

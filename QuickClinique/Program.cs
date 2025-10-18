@@ -63,7 +63,7 @@ app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Student}/{action=Login}/{id?}");
 
 // Database initialization
 using (var scope = app.Services.CreateScope())
