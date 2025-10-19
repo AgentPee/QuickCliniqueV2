@@ -92,7 +92,7 @@ namespace QuickClinique.Controllers
                     else
                         throw;
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Availability));
             }
             return View(schedule);
         }
@@ -123,7 +123,7 @@ namespace QuickClinique.Controllers
                 _context.Schedules.Remove(schedule);
                 await _context.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Availability));
         }
 
         private bool ScheduleExists(int id)

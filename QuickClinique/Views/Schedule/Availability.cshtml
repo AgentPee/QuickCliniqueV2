@@ -14,9 +14,16 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Schedule Availability</h1>
         <div class="btn-group">
-            <a asp-action="Index" class="btn btn-outline-secondary">All Schedules</a>
             <a asp-action="Create" class="btn btn-primary">Create Schedule</a>
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                Create Multiple
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" asp-action="CreateMultiple">Date Range Create</a></li>
+                <li><a class="dropdown-item" asp-action="CreateQuick">Quick Create</a></li>
+            </ul>
         </div>
+        
     </div>
 
     @if (TempData["SuccessMessage"] != null)
