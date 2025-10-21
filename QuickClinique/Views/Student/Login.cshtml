@@ -2,17 +2,13 @@
 
 @{
     ViewData["Title"] = "Student Login";
+    Layout = "_AuthLayout";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/studReg.css" asp-append-version="true" />
 }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"] - QuickClinic</title>
-    <link rel="stylesheet" href="~/css/studlogin.css">
-</head>
-<body>
+
     <div class="container">
         <div class="side-panel">
             <div class="logo">
@@ -88,5 +84,3 @@
             await Html.RenderPartialAsync("_ValidationScriptsPartial");
         }
     }
-</body>
-</html>
