@@ -2901,23 +2901,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\RainPyre\\.nuget\\packages\\": {},
+    "C:\\Users\\LENOVO\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\documents\\CAPSTONE 2\\branch-james\\QuickClinique\\QuickClinique.csproj",
+      "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique\\QuickClinique.csproj",
       "projectName": "QuickClinique",
-      "projectPath": "D:\\documents\\CAPSTONE 2\\branch-james\\QuickClinique\\QuickClinique.csproj",
-      "packagesPath": "C:\\Users\\RainPyre\\.nuget\\packages\\",
-      "outputPath": "D:\\documents\\CAPSTONE 2\\branch-james\\QuickClinique\\obj\\",
+      "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique\\QuickClinique.csproj",
+      "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\RainPyre\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -2944,7 +2944,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -2980,7 +2980,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

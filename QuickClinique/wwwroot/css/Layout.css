@@ -1,6 +1,6 @@
 ﻿/* Header Styles */
 .header {
-    background: black;
+    background: rgb(0, 93, 101);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 18px 0;
@@ -9,7 +9,7 @@
     top: 0;
     z-index: 1000;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid rgba(78, 205, 196, 0.1);
+    border-bottom: 1px solid    rgba(0, 136, 127, 0.1);
 }
 
     .header::after {
@@ -80,7 +80,7 @@
     width: 58px;
     height: 58px;
     margin-right: 14px;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #0bee6e 0%, #03dafc 100%);
     border-radius: 16px;
     padding: 10px;
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -107,7 +107,7 @@
 
 .navbar-brand:hover .logo-img {
     transform: rotate(-8deg) scale(1.1);
-    box-shadow: 0 12px 32px rgba(78, 205, 196, 0.5);
+    box-shadow: 0 12px 32px rgba(19, 144, 136, 0.5);
 }
 
 /* Navigation Links */
@@ -125,7 +125,7 @@
     }
 
     .navbar-nav .nav-link {
-        color: #2c3e50 !important;
+        color: #ffffff !important;
         text-decoration: none;
         font-family: 'Inter', sans-serif;
         font-weight: 600;
