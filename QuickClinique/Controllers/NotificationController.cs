@@ -20,14 +20,23 @@ namespace QuickClinique.Controllers
             var notifications = _context.Notifications
                 .Include(n => n.ClinicStaff)
                 .Include(n => n.Patient);
-            return View(await notifications.ToListAsync());
+            var result = await notifications.ToListAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = result });
+
+            return View(result);
         }
 
         // GET: Notification/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var notification = await _context.Notifications
                 .Include(n => n.ClinicStaff)
@@ -35,7 +44,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.NotificationId == id);
 
             if (notification == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Notification not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = notification });
 
             return View(notification);
         }
@@ -45,6 +61,15 @@ namespace QuickClinique.Controllers
         {
             ViewData["ClinicStaffId"] = new SelectList(_context.Clinicstaffs, "ClinicStaffId", "FirstName");
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName");
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = true,
+                    clinicStaff = ViewData["ClinicStaffId"],
+                    patients = ViewData["PatientId"]
+                });
+
             return View();
         }
 
@@ -57,10 +82,27 @@ namespace QuickClinique.Controllers
             {
                 _context.Add(notification);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Notification created successfully", id = notification.NotificationId });
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["ClinicStaffId"] = new SelectList(_context.Clinicstaffs, "ClinicStaffId", "FirstName", notification.ClinicStaffId);
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", notification.PatientId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(notification);
         }
 
@@ -68,14 +110,26 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var notification = await _context.Notifications.FindAsync(id);
             if (notification == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Notification not found" });
                 return NotFound();
+            }
 
             ViewData["ClinicStaffId"] = new SelectList(_context.Clinicstaffs, "ClinicStaffId", "FirstName", notification.ClinicStaffId);
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", notification.PatientId);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = notification });
+
             return View(notification);
         }
 
@@ -85,7 +139,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("NotificationId,ClinicStaffId,PatientId,Content,NotifDateTime,IsRead")] Notification notification)
         {
             if (id != notification.NotificationId)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID mismatch" });
                 return NotFound();
+            }
 
             if (ModelState.IsValid)
             {
@@ -93,18 +151,41 @@ namespace QuickClinique.Controllers
                 {
                     _context.Update(notification);
                     await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Notification updated successfully" });
+
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!NotificationExists(notification.NotificationId))
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Notification not found" });
                         return NotFound();
+                    }
                     else
+                    {
                         throw;
+                    }
                 }
-                return RedirectToAction(nameof(Index));
             }
+
             ViewData["ClinicStaffId"] = new SelectList(_context.Clinicstaffs, "ClinicStaffId", "FirstName", notification.ClinicStaffId);
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", notification.PatientId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(notification);
         }
 
@@ -112,7 +193,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var notification = await _context.Notifications
                 .Include(n => n.ClinicStaff)
@@ -120,7 +205,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.NotificationId == id);
 
             if (notification == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Notification not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = notification });
 
             return View(notification);
         }
@@ -135,13 +227,28 @@ namespace QuickClinique.Controllers
             {
                 _context.Notifications.Remove(notification);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Notification deleted successfully" });
             }
+            else
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Notification not found" });
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool NotificationExists(int id)
         {
             return _context.Notifications.Any(e => e.NotificationId == id);
+        }
+
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                   Request.ContentType == "application/json";
         }
     }
 }

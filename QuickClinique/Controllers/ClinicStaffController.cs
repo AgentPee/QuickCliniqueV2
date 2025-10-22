@@ -24,6 +24,10 @@ namespace QuickClinique.Controllers
             var clinicstaffs = await _context.Clinicstaffs
                 .Include(c => c.User)
                 .ToListAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = clinicstaffs });
+
             return View(clinicstaffs);
         }
 
@@ -31,14 +35,25 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var clinicstaff = await _context.Clinicstaffs
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(m => m.ClinicStaffId == id);
 
             if (clinicstaff == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Staff not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = clinicstaff });
 
             return View(clinicstaff);
         }
@@ -47,6 +62,14 @@ namespace QuickClinique.Controllers
         public IActionResult Create()
         {
             ViewData["UserId"] = new SelectList(_context.Usertypes, "UserId", "Role");
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = true,
+                    userTypes = ViewData["UserId"]
+                });
+
             return View();
         }
 
@@ -59,9 +82,26 @@ namespace QuickClinique.Controllers
             {
                 _context.Add(clinicstaff);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Staff created successfully", id = clinicstaff.ClinicStaffId });
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["UserId"] = new SelectList(_context.Usertypes, "UserId", "Role", clinicstaff.UserId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(clinicstaff);
         }
 
@@ -69,13 +109,25 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var clinicstaff = await _context.Clinicstaffs.FindAsync(id);
             if (clinicstaff == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Staff not found" });
                 return NotFound();
+            }
 
             ViewData["UserId"] = new SelectList(_context.Usertypes, "UserId", "Role", clinicstaff.UserId);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = clinicstaff });
+
             return View(clinicstaff);
         }
 
@@ -88,7 +140,11 @@ namespace QuickClinique.Controllers
             Console.WriteLine($"ID: {id}, ClinicStaffId: {clinicstaff.ClinicStaffId}");
 
             if (id != clinicstaff.ClinicStaffId)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID mismatch" });
                 return NotFound();
+            }
 
             // Remove validation for navigation properties and password
             ModelState.Remove("User");
@@ -112,6 +168,8 @@ namespace QuickClinique.Controllers
                     if (existingStaff == null)
                     {
                         Console.WriteLine("Existing staff not found in database");
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Staff not found" });
                         return NotFound();
                     }
 
@@ -157,6 +215,9 @@ namespace QuickClinique.Controllers
                     int changes = await _context.SaveChangesAsync();
                     Console.WriteLine($"SaveChanges completed. {changes} records affected.");
 
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Staff member updated successfully!" });
+
                     TempData["SuccessMessage"] = "Staff member updated successfully!";
                     return RedirectToAction(nameof(Index));
                 }
@@ -166,6 +227,8 @@ namespace QuickClinique.Controllers
                     if (!ClinicstaffExists(clinicstaff.ClinicStaffId))
                     {
                         Console.WriteLine("Clinic staff no longer exists");
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Staff not found" });
                         return NotFound();
                     }
                     else
@@ -178,6 +241,10 @@ namespace QuickClinique.Controllers
                 {
                     Console.WriteLine($"Exception during save: {ex.Message}");
                     Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred while saving. Please try again." });
+
                     ModelState.AddModelError("", "An error occurred while saving. Please try again.");
                 }
             }
@@ -196,6 +263,18 @@ namespace QuickClinique.Controllers
 
             // If we got this far, something failed; redisplay form
             ViewData["UserId"] = new SelectList(_context.Usertypes, "UserId", "Role", clinicstaff.UserId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(clinicstaff);
         }
 
@@ -203,14 +282,25 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var clinicstaff = await _context.Clinicstaffs
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(m => m.ClinicStaffId == id);
 
             if (clinicstaff == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Staff not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = clinicstaff });
 
             return View(clinicstaff);
         }
@@ -234,6 +324,14 @@ namespace QuickClinique.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Staff deleted successfully" });
+            }
+            else
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Staff not found" });
             }
 
             return RedirectToAction(nameof(Index));
@@ -247,6 +345,9 @@ namespace QuickClinique.Controllers
         // GET: Clinicstaff/Login
         public IActionResult Login()
         {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
             return View();
         }
 
@@ -264,6 +365,9 @@ namespace QuickClinique.Controllers
                 {
                     if (!staff.IsEmailVerified)
                     {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Please verify your email before logging in." });
+
                         ModelState.AddModelError("", "Please verify your email before logging in.");
                         return View(model);
                     }
@@ -273,12 +377,30 @@ namespace QuickClinique.Controllers
                     HttpContext.Session.SetString("ClinicStaffName", staff.FirstName + " " + staff.LastName);
                     HttpContext.Session.SetString("UserRole", "ClinicStaff");
 
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Login successful!", redirectUrl = Url.Action(nameof(Dashboard)) });
+
                     TempData["SuccessMessage"] = "Login successful!";
                     return RedirectToAction(nameof(Dashboard));
                 }
 
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Invalid email or password." });
+
                 ModelState.AddModelError("", "Invalid email or password.");
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(model);
         }
 
@@ -286,6 +408,10 @@ namespace QuickClinique.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "You have been logged out successfully.", redirectUrl = Url.Action(nameof(Login)) });
+
             TempData["SuccessMessage"] = "You have been logged out successfully.";
             return RedirectToAction(nameof(Login));
         }
@@ -293,6 +419,9 @@ namespace QuickClinique.Controllers
         // GET: Clinicstaff/Register
         public IActionResult Register()
         {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
             return View();
         }
 
@@ -310,6 +439,9 @@ namespace QuickClinique.Controllers
                     // Check if email already exists
                     if (await _context.Clinicstaffs.AnyAsync(x => x.Email == model.Email))
                     {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Email already registered." });
+
                         ModelState.AddModelError("Email", "Email already registered.");
                         return View(model);
                     }
@@ -350,12 +482,19 @@ namespace QuickClinique.Controllers
 
                     await _emailService.SendVerificationEmail(clinicstaff.Email, clinicstaff.FirstName, verificationLink);
 
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
+
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
                     return RedirectToAction(nameof(Login));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Registration error: {ex.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred during registration. Please try again." });
+
                     ModelState.AddModelError("", "An error occurred during registration. Please try again.");
                 }
             }
@@ -366,6 +505,17 @@ namespace QuickClinique.Controllers
                     Console.WriteLine($"Validation Error: {error.ErrorMessage}");
                 }
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
 
             return View(model);
         }
@@ -380,6 +530,9 @@ namespace QuickClinique.Controllers
 
             if (clinicstaff == null)
             {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Invalid or expired verification link." });
+
                 TempData["ErrorMessage"] = "Invalid or expired verification link.";
                 return RedirectToAction(nameof(Login));
             }
@@ -390,6 +543,9 @@ namespace QuickClinique.Controllers
 
             await _context.SaveChangesAsync();
 
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "Email verified successfully! You can now login.", redirectUrl = Url.Action(nameof(Login)) });
+
             TempData["SuccessMessage"] = "Email verified successfully! You can now login.";
             return RedirectToAction(nameof(Login));
         }
@@ -397,6 +553,9 @@ namespace QuickClinique.Controllers
         // GET: Clinicstaff/ForgotPassword
         public IActionResult ForgotPassword()
         {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
             return View();
         }
 
@@ -425,20 +584,42 @@ namespace QuickClinique.Controllers
 
                         await _emailService.SendPasswordResetEmail(clinicstaff.Email, clinicstaff.FirstName, resetLink);
 
+                        if (IsAjaxRequest())
+                            return Json(new { success = true, message = "Password reset link has been sent to your email.", redirectUrl = Url.Action(nameof(Login)) });
+
                         TempData["SuccessMessage"] = "Password reset link has been sent to your email.";
                         return RedirectToAction(nameof(Login));
                     }
 
                     // Don't reveal that the user doesn't exist or isn't verified
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "If your email is registered and verified, you will receive a password reset link.", redirectUrl = Url.Action(nameof(Login)) });
+
                     TempData["SuccessMessage"] = "If your email is registered and verified, you will receive a password reset link.";
                     return RedirectToAction(nameof(Login));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Forgot password error: {ex.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred. Please try again." });
+
                     TempData["ErrorMessage"] = "An error occurred. Please try again.";
                 }
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(model);
         }
 
@@ -452,6 +633,9 @@ namespace QuickClinique.Controllers
 
             if (clinicstaff == null)
             {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Invalid or expired reset link." });
+
                 TempData["ErrorMessage"] = "Invalid or expired reset link.";
                 return RedirectToAction(nameof(ForgotPassword));
             }
@@ -461,6 +645,9 @@ namespace QuickClinique.Controllers
                 Token = token,
                 Email = email
             };
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = model });
 
             return View(model);
         }
@@ -481,6 +668,9 @@ namespace QuickClinique.Controllers
 
                     if (clinicstaff == null)
                     {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Invalid or expired reset link." });
+
                         TempData["ErrorMessage"] = "Invalid or expired reset link.";
                         return RedirectToAction(nameof(ForgotPassword));
                     }
@@ -492,15 +682,34 @@ namespace QuickClinique.Controllers
 
                     await _context.SaveChangesAsync();
 
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Password reset successfully! You can now login with your new password.", redirectUrl = Url.Action(nameof(Login)) });
+
                     TempData["SuccessMessage"] = "Password reset successfully! You can now login with your new password.";
                     return RedirectToAction(nameof(Login));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Reset password error: {ex.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred. Please try again." });
+
                     TempData["ErrorMessage"] = "An error occurred. Please try again.";
                 }
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(model);
         }
 
@@ -513,8 +722,17 @@ namespace QuickClinique.Controllers
         public IActionResult Dashboard()
         {
             var model = new Clinicstaff();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = model });
+
             return View("clinicstaff", model);
         }
 
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                   Request.ContentType == "application/json";
+        }
     }
 }

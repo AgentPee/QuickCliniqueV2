@@ -21,6 +21,10 @@ namespace QuickClinique.Controllers
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
                 .ToListAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = appointments });
+
             return View(appointments);
         }
 
@@ -28,7 +32,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var appointment = await _context.Appointments
                 .Include(a => a.Patient)
@@ -36,7 +44,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.AppointmentId == id);
 
             if (appointment == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Appointment not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = appointment });
 
             return View(appointment);
         }
@@ -46,6 +61,15 @@ namespace QuickClinique.Controllers
         {
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName");
             ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date");
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = true,
+                    patients = ViewData["PatientId"],
+                    schedules = ViewData["ScheduleId"]
+                });
+
             return View();
         }
 
@@ -67,10 +91,27 @@ namespace QuickClinique.Controllers
 
                 _context.Add(appointment);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Appointment created successfully", id = appointment.AppointmentId });
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", appointment.PatientId);
             ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", appointment.ScheduleId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(appointment);
         }
 
@@ -78,14 +119,26 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Appointment not found" });
                 return NotFound();
+            }
 
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", appointment.PatientId);
             ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", appointment.ScheduleId);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = appointment });
+
             return View(appointment);
         }
 
@@ -95,7 +148,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("AppointmentId,PatientId,ScheduleId,AppointmentStatus,ReasonForVisit,DateBooked,QueueNumber,QueueStatus")] Appointment appointment)
         {
             if (id != appointment.AppointmentId)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID mismatch" });
                 return NotFound();
+            }
 
             if (ModelState.IsValid)
             {
@@ -103,18 +160,41 @@ namespace QuickClinique.Controllers
                 {
                     _context.Update(appointment);
                     await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Appointment updated successfully" });
+
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!AppointmentExists(appointment.AppointmentId))
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Appointment not found" });
                         return NotFound();
+                    }
                     else
+                    {
                         throw;
+                    }
                 }
-                return RedirectToAction(nameof(Index));
             }
+
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", appointment.PatientId);
             ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", appointment.ScheduleId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(appointment);
         }
 
@@ -122,7 +202,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var appointment = await _context.Appointments
                 .Include(a => a.Patient)
@@ -130,7 +214,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.AppointmentId == id);
 
             if (appointment == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Appointment not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = appointment });
 
             return View(appointment);
         }
@@ -145,13 +236,28 @@ namespace QuickClinique.Controllers
             {
                 _context.Appointments.Remove(appointment);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Appointment deleted successfully" });
             }
+            else
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Appointment not found" });
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool AppointmentExists(int id)
         {
             return _context.Appointments.Any(e => e.AppointmentId == id);
+        }
+
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                   Request.ContentType == "application/json";
         }
     }
 }

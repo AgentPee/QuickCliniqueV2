@@ -17,6 +17,10 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Index()
         {
             var schedules = await _context.Schedules.ToListAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = schedules });
+
             return View(schedules);
         }
 
@@ -24,7 +28,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var schedule = await _context.Schedules
                 .Include(s => s.Appointments)
@@ -32,7 +40,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.ScheduleId == id);
 
             if (schedule == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Schedule not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = schedule });
 
             return View(schedule);
         }
@@ -40,6 +55,9 @@ namespace QuickClinique.Controllers
         // GET: Schedule/Create
         public IActionResult Create()
         {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
             return View();
         }
 
@@ -52,8 +70,24 @@ namespace QuickClinique.Controllers
             {
                 _context.Add(schedule);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Schedule created successfully", id = schedule.ScheduleId });
+
                 return RedirectToAction(nameof(Index));
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(schedule);
         }
 
@@ -61,11 +95,22 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var schedule = await _context.Schedules.FindAsync(id);
             if (schedule == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Schedule not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = schedule });
 
             return View(schedule);
         }
@@ -76,7 +121,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("ScheduleId,Date,StartTime,EndTime,IsAvailable")] Schedule schedule)
         {
             if (id != schedule.ScheduleId)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID mismatch" });
                 return NotFound();
+            }
 
             if (ModelState.IsValid)
             {
@@ -84,16 +133,38 @@ namespace QuickClinique.Controllers
                 {
                     _context.Update(schedule);
                     await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Schedule updated successfully" });
+
+                    return RedirectToAction(nameof(Availability));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ScheduleExists(schedule.ScheduleId))
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Schedule not found" });
                         return NotFound();
+                    }
                     else
+                    {
                         throw;
+                    }
                 }
-                return RedirectToAction(nameof(Availability));
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(schedule);
         }
 
@@ -101,13 +172,24 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var schedule = await _context.Schedules
                 .FirstOrDefaultAsync(m => m.ScheduleId == id);
 
             if (schedule == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Schedule not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = schedule });
 
             return View(schedule);
         }
@@ -122,7 +204,16 @@ namespace QuickClinique.Controllers
             {
                 _context.Schedules.Remove(schedule);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Schedule deleted successfully" });
             }
+            else
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Schedule not found" });
+            }
+
             return RedirectToAction(nameof(Availability));
         }
 
@@ -135,6 +226,10 @@ namespace QuickClinique.Controllers
         public IActionResult CreateMultiple()
         {
             var model = new ScheduleBulkCreateViewModel();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = model });
+
             return View(model);
         }
 
@@ -174,22 +269,43 @@ namespace QuickClinique.Controllers
                         _context.Schedules.AddRange(schedules);
                         await _context.SaveChangesAsync();
 
+                        if (IsAjaxRequest())
+                            return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
+
                         TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
                         return RedirectToAction(nameof(Index));
                     }
                     else
                     {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "No schedules were created. Please check your date range and selected days." });
+
                         ModelState.AddModelError("", "No schedules were created. Please check your date range and selected days.");
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error creating multiple schedules: {ex.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred while creating schedules. Please try again." });
+
                     ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
                 }
             }
 
             // If we got here, something went wrong - redisplay form
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(model);
         }
 
@@ -197,6 +313,10 @@ namespace QuickClinique.Controllers
         public IActionResult CreateQuick()
         {
             var model = new ScheduleQuickCreateViewModel();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = model });
+
             return View(model);
         }
 
@@ -226,19 +346,40 @@ namespace QuickClinique.Controllers
                     _context.Schedules.AddRange(schedules);
                     await _context.SaveChangesAsync();
 
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
+
                     TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error creating quick schedules: {ex.Message}");
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred while creating schedules. Please try again." });
+
                     ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
                 }
             }
             else if (model.SelectedDates == null || !model.SelectedDates.Any())
             {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Please select at least one date." });
+
                 ModelState.AddModelError("SelectedDates", "Please select at least one date.");
             }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
 
             return View(model);
         }
@@ -290,6 +431,19 @@ namespace QuickClinique.Controllers
             ViewBag.AvailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes");
             ViewBag.UnavailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "No");
 
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = true,
+                    data = model,
+                    statistics = new
+                    {
+                        total = ViewBag.TotalSchedules,
+                        available = ViewBag.AvailableSchedules,
+                        unavailable = ViewBag.UnavailableSchedules
+                    }
+                });
+
             return View(model);
         }
 
@@ -303,6 +457,10 @@ namespace QuickClinique.Controllers
                 .ToListAsync();
 
             ViewBag.FilterType = "Available";
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = availableSchedules, filterType = "Available" });
+
             return View("Availability", availableSchedules);
         }
 
@@ -316,6 +474,10 @@ namespace QuickClinique.Controllers
                 .ToListAsync();
 
             ViewBag.FilterType = "Unavailable";
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = unavailableSchedules, filterType = "Unavailable" });
+
             return View("Availability", unavailableSchedules);
         }
 
@@ -326,6 +488,9 @@ namespace QuickClinique.Controllers
         {
             if (scheduleIds == null || !scheduleIds.Any())
             {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "No schedules selected for update." });
+
                 TempData["ErrorMessage"] = "No schedules selected for update.";
                 return RedirectToAction(nameof(Availability));
             }
@@ -343,17 +508,28 @@ namespace QuickClinique.Controllers
 
                 await _context.SaveChangesAsync();
 
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = $"Successfully updated {schedules.Count} schedule(s) to {newAvailability}." });
+
                 TempData["SuccessMessage"] = $"Successfully updated {schedules.Count} schedule(s) to {newAvailability}.";
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating schedules: {ex.Message}");
+
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "An error occurred while updating schedules." });
+
                 TempData["ErrorMessage"] = "An error occurred while updating schedules.";
             }
 
             return RedirectToAction(nameof(Availability));
         }
 
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                   Request.ContentType == "application/json";
+        }
     }
 }
-    

@@ -20,14 +20,23 @@ namespace QuickClinique.Controllers
             var messages = _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver);
-            return View(await messages.ToListAsync());
+            var result = await messages.ToListAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = result });
+
+            return View(result);
         }
 
         // GET: Message/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var message = await _context.Messages
                 .Include(m => m.Sender)
@@ -35,7 +44,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.MessageId == id);
 
             if (message == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Message not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = message });
 
             return View(message);
         }
@@ -45,6 +61,15 @@ namespace QuickClinique.Controllers
         {
             ViewData["SenderId"] = new SelectList(_context.Usertypes, "UserId", "Name");
             ViewData["ReceiverId"] = new SelectList(_context.Usertypes, "UserId", "Name");
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = true,
+                    senders = ViewData["SenderId"],
+                    receivers = ViewData["ReceiverId"]
+                });
+
             return View();
         }
 
@@ -57,10 +82,27 @@ namespace QuickClinique.Controllers
             {
                 _context.Add(message);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Message created successfully", id = message.MessageId });
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["SenderId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.SenderId);
             ViewData["ReceiverId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.ReceiverId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(message);
         }
 
@@ -68,14 +110,26 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var message = await _context.Messages.FindAsync(id);
             if (message == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Message not found" });
                 return NotFound();
+            }
 
             ViewData["SenderId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.SenderId);
             ViewData["ReceiverId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.ReceiverId);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = message });
+
             return View(message);
         }
 
@@ -85,7 +139,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("MessageId,SenderId,ReceiverId,Message1,CreatedAt")] Message message)
         {
             if (id != message.MessageId)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID mismatch" });
                 return NotFound();
+            }
 
             if (ModelState.IsValid)
             {
@@ -93,18 +151,41 @@ namespace QuickClinique.Controllers
                 {
                     _context.Update(message);
                     await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Message updated successfully" });
+
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!MessageExists(message.MessageId))
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Message not found" });
                         return NotFound();
+                    }
                     else
+                    {
                         throw;
+                    }
                 }
-                return RedirectToAction(nameof(Index));
             }
+
             ViewData["SenderId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.SenderId);
             ViewData["ReceiverId"] = new SelectList(_context.Usertypes, "UserId", "Name", message.ReceiverId);
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
             return View(message);
         }
 
@@ -112,7 +193,11 @@ namespace QuickClinique.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "ID not provided" });
                 return NotFound();
+            }
 
             var message = await _context.Messages
                 .Include(m => m.Sender)
@@ -120,7 +205,14 @@ namespace QuickClinique.Controllers
                 .FirstOrDefaultAsync(m => m.MessageId == id);
 
             if (message == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Message not found" });
                 return NotFound();
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = message });
 
             return View(message);
         }
@@ -135,13 +227,28 @@ namespace QuickClinique.Controllers
             {
                 _context.Messages.Remove(message);
                 await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Message deleted successfully" });
             }
+            else
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Message not found" });
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool MessageExists(int id)
         {
             return _context.Messages.Any(e => e.MessageId == id);
+        }
+
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                   Request.ContentType == "application/json";
         }
     }
 }
