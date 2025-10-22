@@ -45,19 +45,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Phone number formatting
+    // Phone number input - only allow digits and enforce 11-digit format
     const phoneInput = document.getElementById('PhoneNumber');
     if (phoneInput) {
         phoneInput.addEventListener('input', function (e) {
+            // Remove any non-digit characters
             let value = e.target.value.replace(/\D/g, '');
 
-            if (value.length > 3 && value.length <= 6) {
-                value = value.replace(/(\d{3})(\d+)/, '$1-$2');
-            } else if (value.length > 6) {
-                value = value.replace(/(\d{3})(\d{3})(\d+)/, '$1-$2-$3');
+            // Limit to 11 digits
+            if (value.length > 11) {
+                value = value.slice(0, 11);
             }
 
             e.target.value = value;
+        });
+
+        // Also add paste event to handle pasted content
+        phoneInput.addEventListener('paste', function (e) {
+            setTimeout(() => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 11) {
+                    value = value.slice(0, 11);
+                }
+                e.target.value = value;
+            }, 0);
         });
     }
 

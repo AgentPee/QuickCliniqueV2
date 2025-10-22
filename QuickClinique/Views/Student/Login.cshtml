@@ -78,9 +78,10 @@
         </div>
     </div>
 
-    <script src="~/js/studlogin.js"></script>
+    
     @section Scripts {
         @{
             await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        <script src="~/js/studlogin.js"></script>
         }
     }
