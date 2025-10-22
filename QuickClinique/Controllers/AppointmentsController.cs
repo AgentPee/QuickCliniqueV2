@@ -76,13 +76,14 @@ namespace QuickClinique.Controllers
         // POST: Appointments/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PatientId,ScheduleId,ReasonForVisit")] Appointment appointment)
+        public async Task<IActionResult> Create([Bind("PatientId,ScheduleId,ReasonForVisit,Symptoms")] Appointment appointment)
         {
             if (ModelState.IsValid)
             {
                 appointment.DateBooked = DateOnly.FromDateTime(DateTime.Now);
                 appointment.AppointmentStatus = "Pending";
                 appointment.QueueStatus = "Waiting";
+
                 var lastQueue = await _context.Appointments
                     .Where(a => a.ScheduleId == appointment.ScheduleId)
                     .OrderByDescending(a => a.QueueNumber)
@@ -258,6 +259,49 @@ namespace QuickClinique.Controllers
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
                    Request.ContentType == "application/json";
+        }
+
+        // GET: Appointments/GetAvailableSlots
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableSlots(DateOnly? date = null)
+        {
+            try
+            {
+                var query = _context.Schedules
+                    .Where(s => s.IsAvailable == "Yes" && s.Date >= DateOnly.FromDateTime(DateTime.Now));
+
+                if (date.HasValue)
+                {
+                    query = query.Where(s => s.Date == date.Value);
+                }
+
+                var availableSlots = await query
+                    .OrderBy(s => s.Date)
+                    .ThenBy(s => s.StartTime)
+                    .Select(s => new
+                    {
+                        ScheduleId = s.ScheduleId,
+                        Date = s.Date,
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        DisplayText = $"{s.Date:MMM dd, yyyy} - {s.StartTime:hh\\:mm} to {s.EndTime:hh\\:mm}",
+                        AvailableAppointments = _context.Appointments.Count(a => a.ScheduleId == s.ScheduleId &&
+                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed"))
+                    })
+                    .ToListAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, data = availableSlots });
+
+                return Json(new { success = true, data = availableSlots });
+            }
+            catch (Exception ex)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Error retrieving available slots" });
+
+                return Json(new { success = false, error = "Error retrieving available slots" });
+            }
         }
     }
 }

@@ -65,6 +65,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Student}/{action=Login}/{id?}");
 
+// Apply pending migrations
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+}
+
 // Database initialization
 using (var scope = app.Services.CreateScope())
 {

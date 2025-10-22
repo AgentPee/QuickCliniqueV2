@@ -15,6 +15,8 @@ public partial class Appointment
 
     public string ReasonForVisit { get; set; } = null!;
 
+    public string Symptoms { get; set; } = null!; // New column for symptom data
+
     public DateOnly DateBooked { get; set; }
 
     public int QueueNumber { get; set; }
