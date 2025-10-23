@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
+using QuickClinique.Attributes;
 using System.Text;
 
 namespace QuickClinique.Controllers
@@ -11,11 +12,13 @@ namespace QuickClinique.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IPasswordService _passwordService;
 
-        public StudentController(ApplicationDbContext context, IEmailService emailService)
+        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService)
         {
             _context = context;
             _emailService = emailService;
+            _passwordService = passwordService;
         }
 
         // GET: Student
@@ -301,7 +304,7 @@ namespace QuickClinique.Controllers
                         LastName = model.LastName,
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
-                        Password = model.Password, // In production, hash this!
+                        Password = _passwordService.HashPassword(model.Password), // Hash the password
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
@@ -362,7 +365,12 @@ namespace QuickClinique.Controllers
             if (ModelState.IsValid)
             {
                 var student = await _context.Students
-                    .FirstOrDefaultAsync(s => s.Idnumber == model.Idnumber && s.Password == model.Password);
+                    .FirstOrDefaultAsync(s => s.Idnumber == model.Idnumber);
+
+                if (student != null && !_passwordService.VerifyPassword(model.Password, student.Password))
+                {
+                    student = null; // Invalid password
+                }
 
                 if (student != null)
                 {
@@ -404,6 +412,20 @@ namespace QuickClinique.Controllers
                 });
 
             return View(model);
+        }
+
+        // GET: Student/GetCurrentStudentId - Get logged in student ID
+        [HttpGet]
+        public IActionResult GetCurrentStudentId()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            
+            if (studentId.HasValue)
+            {
+                return Json(new { success = true, studentId = studentId.Value });
+            }
+            
+            return Json(new { success = false, error = "No student is currently logged in" });
         }
 
         // GET: Student/Logout
@@ -560,7 +582,7 @@ namespace QuickClinique.Controllers
                 }
 
                 // Update password
-                student.Password = model.Password; // In production, hash this!
+                student.Password = _passwordService.HashPassword(model.Password);
                 student.PasswordResetToken = null;
                 student.PasswordResetTokenExpiry = null;
 

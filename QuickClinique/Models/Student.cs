@@ -14,6 +14,9 @@ public partial class Student
     public string Password { get; set; } = null!;
     public string PhoneNumber { get; set; } = null!;
 
+    // Computed property for full name
+    public string FullName => $"{FirstName} {LastName}";
+
     // Add these new properties
     public bool IsEmailVerified { get; set; }
     public string? EmailVerificationToken { get; set; }

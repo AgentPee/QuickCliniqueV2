@@ -1,18 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-public class ClinicStaffOnlyAttribute : ActionFilterAttribute
+namespace QuickClinique.Attributes
 {
-    public override void OnActionExecuting(ActionExecutingContext context)
+    public class ClinicStaffOnlyAttribute : ActionFilterAttribute
     {
-        if (context.HttpContext.Session.GetInt32("ClinicStaffId") == null)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            context.Result = new RedirectToActionResult("AccessDenied", "Home", new
-            {
-                message = "This page is only accessible to clinic staff members."
-            });
-        }
+            var session = context.HttpContext.Session;
+            var clinicStaffId = session.GetInt32("ClinicStaffId");
 
-        base.OnActionExecuting(context);
+            if (clinicStaffId == null)
+            {
+                context.Result = new RedirectToActionResult("Login", "Clinicstaff", null);
+                return;
+            }
+
+            base.OnActionExecuting(context);
+        }
     }
 }

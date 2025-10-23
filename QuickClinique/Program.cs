@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
+using QuickClinique.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add email service
+// Add services
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
 
 // DB Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -48,6 +51,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Add error handling middleware
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 app.UseCookiePolicy();
 
 // Add session middleware (must come before UseAuthentication/UseAuthorization)
@@ -72,23 +78,26 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-// Database initialization
+// Database initialization and seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        var seedingService = services.GetRequiredService<IDataSeedingService>();
 
-        // Use Migrate() if you have EF Core migrations
-        // Use EnsureCreated() if you don't have migrations yet
-        context.Database.EnsureCreated(); // or context.Database.EnsureCreated();
+        // Apply migrations
+        context.Database.Migrate();
 
-        Console.WriteLine("Database created/migrated successfully!");
+        // Seed initial data
+        await seedingService.SeedDataAsync();
+
+        Console.WriteLine("Database initialized and seeded successfully!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"An error occurred creating the database: {ex.Message}");
+        Console.WriteLine($"An error occurred initializing the database: {ex.Message}");
     }
 }
 

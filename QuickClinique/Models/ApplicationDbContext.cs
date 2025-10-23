@@ -35,7 +35,10 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Usertype> Usertypes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseMySql("server=localhost;database=quickclinique;uid=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("10.4.32-mariadb"));
+    {
+        // Configuration is handled in Program.cs
+        // This method is kept for backward compatibility but should not be used
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

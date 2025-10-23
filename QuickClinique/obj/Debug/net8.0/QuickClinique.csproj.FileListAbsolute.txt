@@ -688,4 +688,3 @@ C:\Users\LENOVO\OneDrive\Documents\capstone\QuickClinique\QuickClinique\obj\Debu
 C:\Users\LENOVO\OneDrive\Documents\capstone\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickClinique.pdb
 C:\Users\LENOVO\OneDrive\Documents\capstone\QuickClinique\QuickClinique\obj\Debug\net8.0\QuickClinique.genruntimeconfig.cache
 C:\Users\LENOVO\OneDrive\Documents\capstone\QuickClinique\QuickClinique\obj\Debug\net8.0\ref\QuickClinique.dll
-D:\documents\CAPSTONE 2\branch-james\QuickClinique\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

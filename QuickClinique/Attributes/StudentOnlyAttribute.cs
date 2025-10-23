@@ -1,18 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-public class StudentOnlyAttribute : ActionFilterAttribute
+namespace QuickClinique.Attributes
 {
-    public override void OnActionExecuting(ActionExecutingContext context)
+    public class StudentOnlyAttribute : ActionFilterAttribute
     {
-        if (context.HttpContext.Session.GetInt32("StudentId") == null)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            context.Result = new RedirectToActionResult("AccessDenied", "Home", new
-            {
-                message = "This page is only accessible to students."
-            });
-        }
+            var session = context.HttpContext.Session;
+            var studentId = session.GetInt32("StudentId");
 
-        base.OnActionExecuting(context);
+            if (studentId == null)
+            {
+                context.Result = new RedirectToActionResult("Login", "Student", null);
+                return;
+            }
+
+            base.OnActionExecuting(context);
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
+using QuickClinique.Attributes;
 using System.Text;
 
 namespace QuickClinique.Controllers
@@ -11,11 +12,13 @@ namespace QuickClinique.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IPasswordService _passwordService;
 
-        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService)
         {
             _context = context;
             _emailService = emailService;
+            _passwordService = passwordService;
         }
 
         // GET: Clinicstaff
@@ -185,7 +188,7 @@ namespace QuickClinique.Controllers
                     if (!string.IsNullOrWhiteSpace(newPassword))
                     {
                         Console.WriteLine("New password provided, updating password");
-                        existingStaff.Password = newPassword;
+                        existingStaff.Password = _passwordService.HashPassword(newPassword);
                     }
                     else
                     {
@@ -359,7 +362,12 @@ namespace QuickClinique.Controllers
             if (ModelState.IsValid)
             {
                 var staff = await _context.Clinicstaffs
-                    .FirstOrDefaultAsync(s => s.Email == model.Email && s.Password == model.Password);
+                    .FirstOrDefaultAsync(s => s.Email == model.Email);
+
+                if (staff != null && !_passwordService.VerifyPassword(model.Password, staff.Password))
+                {
+                    staff = null; // Invalid password
+                }
 
                 if (staff != null)
                 {
@@ -378,10 +386,10 @@ namespace QuickClinique.Controllers
                     HttpContext.Session.SetString("UserRole", "ClinicStaff");
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Login successful!", redirectUrl = Url.Action(nameof(Dashboard)) });
+                        return Json(new { success = true, message = "Login successful!", redirectUrl = Url.Action("Index", "Dashboard") });
 
                     TempData["SuccessMessage"] = "Login successful!";
-                    return RedirectToAction(nameof(Dashboard));
+                    return RedirectToAction("Index", "Dashboard");
                 }
 
                 if (IsAjaxRequest())
@@ -467,7 +475,7 @@ namespace QuickClinique.Controllers
                         LastName = model.LastName,
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
-                        Password = model.Password,
+                        Password = _passwordService.HashPassword(model.Password),
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
@@ -676,7 +684,7 @@ namespace QuickClinique.Controllers
                     }
 
                     // Update password
-                    clinicstaff.Password = model.Password;
+                    clinicstaff.Password = _passwordService.HashPassword(model.Password);
                     clinicstaff.PasswordResetToken = null;
                     clinicstaff.PasswordResetTokenExpiry = null;
 

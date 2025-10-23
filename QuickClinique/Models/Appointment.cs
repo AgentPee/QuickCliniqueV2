@@ -15,7 +15,7 @@ public partial class Appointment
 
     public string ReasonForVisit { get; set; } = null!;
 
-    public string Symptoms { get; set; } = null!; // New column for symptom data
+    public string Symptoms { get; set; } = string.Empty; // New column for symptom data
 
     public DateOnly DateBooked { get; set; }
 

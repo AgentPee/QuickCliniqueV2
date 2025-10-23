@@ -26,9 +26,12 @@ ViewData["Title"] = "Home Page";
             <div class="appointment-card">
                 <h3>Book New Appointment</h3>
                 <form id="appointmentForm">
+                    @Html.AntiForgeryToken()
+                    <span class="validation-error" id="patientError"></span>
                     <div class="form-group">
                         <label for="appointmentDate">Select Date</label>
                         <input type="date" id="appointmentDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" required>
+                        <small class="form-text text-muted">Only dates with available slots are selectable</small>
                         <span class="validation-error" id="dateError"></span>
                     </div>
 
@@ -61,8 +64,8 @@ ViewData["Title"] = "Home Page";
                     </div>
 
                     <div class="form-group">
-                        <label for="symptoms">Symptoms/Concerns</label>
-                        <textarea id="symptoms" placeholder="Describe your symptoms or concerns in detail..." rows="3" required></textarea>
+                        <label for="symptoms">Symptoms/Concerns <small class="text-muted">(Optional)</small></label>
+                        <textarea id="symptoms" placeholder="Describe your symptoms or concerns in detail (optional)..." rows="3"></textarea>
                         <span class="validation-error" id="symptomsError"></span>
                     </div>
 
@@ -146,8 +149,9 @@ ViewData["Title"] = "Home Page";
 
 @section Scripts {
     <script>
-        // Enhanced appointment functionality
+             // Enhanced appointment functionality
         let availableSlots = [];
+        let availableDates = [];
 
         // DOM Ready
         document.addEventListener('DOMContentLoaded', function() {
@@ -159,72 +163,91 @@ ViewData["Title"] = "Home Page";
             const appointmentDate = document.getElementById('appointmentDate');
             const availableSlotsSelect = document.getElementById('availableSlots');
 
-            // Load available slots when date changes
-            appointmentDate.addEventListener('change', function() {
-                loadAvailableSlots(this.value);
-            });
+            // Initialize with empty slots
+            availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
+            availableSlotsSelect.disabled = true;
 
             // Set minimum date to today
-            appointmentDate.min = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            appointmentDate.min = today;
+
+            // Load available dates when page loads
+            loadAvailableDates().then(() => {
+                // Once dates are loaded, set up the date input
+                setupDateInput();
+            });
+
+            // Load available slots when date changes
+            appointmentDate.addEventListener('change', function() {
+                const selectedDate = this.value;
+                if (selectedDate && isDateAvailable(selectedDate)) {
+                    loadAvailableSlots(selectedDate);
+                } else {
+                    availableSlotsSelect.innerHTML = '<option value="">Selected date is not available</option>';
+                    availableSlotsSelect.disabled = true;
+                }
+            });
 
             // Initialize appointment form
             const appointmentForm = document.getElementById('appointmentForm');
             appointmentForm.addEventListener('submit', handleEnhancedAppointmentSubmit);
         }
 
-        // Load available slots for selected date
-        async function loadAvailableSlots(selectedDate) {
-            const availableSlotsSelect = document.getElementById('availableSlots');
-            const slotLoading = document.getElementById('slotLoading');
+                // Enhanced appointment history display
+        function displayEnhancedAppointmentHistory(appointments) {
+            const historyList = document.getElementById('historyList');
 
-            if (!selectedDate) {
-                availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
-                availableSlotsSelect.disabled = true;
-                return;
-            }
+            if (appointments && appointments.length > 0) {
+                historyList.innerHTML = appointments.map(appointment => {
+                    // Format the time for display
+                    const startTime = formatTime(appointment.schedule?.startTime);
+                    const endTime = formatTime(appointment.schedule?.endTime);
 
-            try {
-                slotLoading.style.display = 'block';
-                availableSlotsSelect.disabled = true;
-                availableSlotsSelect.innerHTML = '<option value="">Loading available slots...</option>';
-
-                const response = await fetch(`/Appointments/GetAvailableSlots?date=${selectedDate}`);
-                const result = await response.json();
-
-                if (result.success && result.data.length > 0) {
-                    availableSlots = result.data;
-                    availableSlotsSelect.innerHTML = '<option value="">Select a time slot</option>';
-
-                    result.data.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot.ScheduleId;
-                        option.textContent = `${slot.StartTime} to ${slot.EndTime} (${slot.AvailableAppointments} appointments)`;
-                        option.dataset.slotInfo = JSON.stringify(slot);
-                        availableSlotsSelect.appendChild(option);
-                    });
-
-                    availableSlotsSelect.disabled = false;
-                } else {
-                    availableSlotsSelect.innerHTML = '<option value="">No available slots for this date</option>';
-                    availableSlotsSelect.disabled = true;
-                }
-            } catch (error) {
-                console.error('Error loading available slots:', error);
-                availableSlotsSelect.innerHTML = '<option value="">Error loading slots</option>';
-                availableSlotsSelect.disabled = true;
-            } finally {
-                slotLoading.style.display = 'none';
+                    return `
+                        <div class="history-item ${appointment.appointmentStatus.toLowerCase()}">
+                            <div class="history-main">
+                                <div class="history-date">
+                                    <strong>Date:</strong> ${new Date(appointment.schedule?.date).toLocaleDateString()}
+                                </div>
+                                <div class="history-time">
+                                    <strong>Time:</strong> ${startTime} - ${endTime}
+                                </div>
+                                <div class="history-service">
+                                    <strong>Service:</strong> ${appointment.reasonForVisit}
+                                </div>
+                                <div class="history-symptoms">
+                                    <strong>Symptoms:</strong> ${appointment.symptoms || 'Not specified'}
+                                </div>
+                            </div>
+                            <div class="history-meta">
+                                <div class="history-status ${appointment.appointmentStatus.toLowerCase()}">
+                                    ${appointment.appointmentStatus}
+                                </div>
+                                <div class="history-queue">Queue: ${appointment.queueNumber}</div>
+                                ${appointment.appointmentStatus === 'Pending' ?
+                                    `<button class="cancel-btn" onclick="cancelAppointment(${appointment.appointmentId})">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>` : ''
+                                }
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                historyList.innerHTML = '<div class="no-records">No appointment records found.</div>';
             }
         }
 
-        // Handle enhanced appointment submission
+         // Handle enhanced appointment submission - FIXED SERVICE MAPPING & OPTIONAL SYMPTOMS
         async function handleEnhancedAppointmentSubmit(e) {
             e.preventDefault();
 
             const submitBtn = document.getElementById('submitAppointment');
             const messageContainer = document.getElementById('appointmentMessage');
 
+            // Validate form (symptoms is now optional)
             if (!validateEnhancedAppointmentForm()) {
+                showMessage('Please fix the errors above before submitting.', 'error');
                 return;
             }
 
@@ -234,52 +257,481 @@ ViewData["Title"] = "Home Page";
             messageContainer.innerHTML = '';
 
             try {
-                const selectedSlot = document.getElementById('availableSlots');
-                const slotInfo = JSON.parse(selectedSlot.selectedOptions[0].dataset.slotInfo);
+                // Get form values
+                const scheduleId = document.getElementById('availableSlots').value;
+                const serviceRequired = document.getElementById('serviceRequired').value;
+                const symptoms = document.getElementById('symptoms').value;
+                
+                // Get patient ID from session (async)
+                let patientId;
+                try {
+                    patientId = await getCurrentPatientId();
+                } catch (error) {
+                    showMessage(error.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Submit Appointment Request';
+                    return;
+                }
 
+                console.log('=== APPOINTMENT SUBMISSION DEBUG ===');
+                console.log('Raw form values:');
+                console.log('  scheduleId (raw):', scheduleId);
+                console.log('  serviceRequired:', serviceRequired);
+                console.log('  symptoms:', symptoms);
+                console.log('  patientId:', patientId);
+                
+                // Check dropdown state
+                const slotsDropdown = document.getElementById('availableSlots');
+                console.log('Slots dropdown state:');
+                console.log('  disabled:', slotsDropdown.disabled);
+                console.log('  selectedIndex:', slotsDropdown.selectedIndex);
+                console.log('  options count:', slotsDropdown.options.length);
+                if (slotsDropdown.selectedIndex >= 0) {
+                    console.log('  selected option text:', slotsDropdown.options[slotsDropdown.selectedIndex].text);
+                    console.log('  selected option value:', slotsDropdown.options[slotsDropdown.selectedIndex].value);
+                }
+
+                // Validate schedule ID
+                if (!scheduleId || scheduleId === '' || isNaN(parseInt(scheduleId))) {
+                    showMessage('Please select a date and time slot before submitting.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Submit Appointment Request';
+                    return;
+                }
+
+                // Validate that serviceRequired is not empty
+                if (!serviceRequired || serviceRequired.trim() === '') {
+                    showMessage('Please select a service before submitting.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Submit Appointment Request';
+                    return;
+                }
+
+                // Parse and validate schedule ID
+                const parsedScheduleId = parseInt(scheduleId, 10);
+                if (isNaN(parsedScheduleId) || parsedScheduleId <= 0) {
+                    showMessage('Invalid schedule selected. Please select a valid time slot.', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Submit Appointment Request';
+                    return;
+                }
+
+                // Prepare form data - serviceRequired goes to ReasonForVisit
                 const formData = {
-                    ScheduleId: parseInt(selectedSlot.value),
-                    ReasonForVisit: document.getElementById('serviceRequired').value,
-                    Symptoms: document.getElementById('symptoms').value,
-                    PatientId: getCurrentPatientId() // You'll need to implement this based on your auth system
+                    ScheduleId: parsedScheduleId,
+                    PatientId: patientId,
+                    ReasonForVisit: serviceRequired, // This maps to ReasonForVisit in database
+                    Symptoms: symptoms.trim() || "No symptoms provided" // Make optional with default
                 };
+
+                console.log('Form data to submit (mapped):', formData);
+                console.log('ScheduleId parsed:', parsedScheduleId);
+                console.log('ReasonForVisit value being sent:', formData.ReasonForVisit);
+
+                // Get anti-forgery token with fallback
+                const token = getAntiForgeryToken();
+
+                // Use FormData instead of JSON to ensure proper binding
+                const formDataToSend = new FormData();
+                formDataToSend.append('ScheduleId', formData.ScheduleId.toString());
+                formDataToSend.append('PatientId', formData.PatientId.toString());
+                formDataToSend.append('ReasonForVisit', formData.ReasonForVisit);
+                formDataToSend.append('Symptoms', formData.Symptoms);
+                
+                // Add anti-forgery token if available
+                if (token) {
+                    formDataToSend.append('__RequestVerificationToken', token);
+                }
+                
+                // Debug: Log what's being sent
+                console.log('FormData being sent:');
+                for (let pair of formDataToSend.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
 
                 const response = await fetch('/Appointments/Create', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify(formData)
+                    body: formDataToSend
                 });
 
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const result = await response.json();
+                console.log('Appointment creation response:', result);
 
                 if (result.success) {
-                    showMessage('Appointment booked successfully!', 'success');
+                    const queueMessage = result.queueNumber ?
+                        `Appointment booked successfully! Your queue number is ${result.queueNumber}.` :
+                        'Appointment booked successfully!';
+
+                    showMessage(queueMessage, 'success');
+
+                    // Reset form
                     document.getElementById('appointmentForm').reset();
-                    loadAppointmentHistory();
-                    updateQueueStatus();
 
                     // Reset slots dropdown
                     document.getElementById('availableSlots').innerHTML = '<option value="">Select a date first</option>';
                     document.getElementById('availableSlots').disabled = true;
+
+                    // Reload data
+                    setTimeout(() => {
+                        loadAvailableDates();
+                        loadAppointmentHistory();
+                        updateQueueStatus();
+                    }, 1000);
+
+                    // Clear any error messages
+                    clearValidationErrors();
                 } else {
-                    showMessage(result.error || 'Failed to book appointment', 'error');
+                    let errorMessage = result.error || 'Failed to book appointment';
                     if (result.errors) {
+                        // Display form errors
                         displayEnhancedFormErrors(result.errors);
+                        errorMessage = 'Please fix the validation errors above.';
                     }
+                    showMessage(errorMessage, 'error');
                 }
             } catch (error) {
                 console.error('Error booking appointment:', error);
-                showMessage('An error occurred while booking the appointment', 'error');
+
+                let userMessage = 'An error occurred while booking the appointment. ';
+
+                if (error.message.includes('400')) {
+                    userMessage += 'This might be due to a security token issue. Please refresh the page and try again.';
+                } else if (error.message.includes('500')) {
+                    userMessage += 'Server error. Please try again later.';
+                } else {
+                    userMessage += 'Please try again.';
+                }
+
+                showMessage(userMessage, 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Submit Appointment Request';
             }
         }
 
-        // Enhanced form validation
+        // Setup date input with available dates restriction
+        function setupDateInput() {
+            const appointmentDate = document.getElementById('appointmentDate');
+            const dateError = document.getElementById('dateError');
+
+            // Add input event listener for real-time validation
+            appointmentDate.addEventListener('input', function() {
+                const selectedDate = this.value;
+                validateSelectedDate(selectedDate);
+            });
+
+            // Add change event listener for additional validation
+            appointmentDate.addEventListener('change', function() {
+                const selectedDate = this.value;
+                validateSelectedDate(selectedDate);
+            });
+
+            // Add a custom property to store available dates
+            appointmentDate.availableDates = availableDates;
+        }
+
+        // Validate if the selected date is available
+        function validateSelectedDate(selectedDate) {
+            const dateError = document.getElementById('dateError');
+            const availableSlotsSelect = document.getElementById('availableSlots');
+
+            if (!selectedDate) {
+                dateError.textContent = '';
+                availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
+                availableSlotsSelect.disabled = true;
+                return false;
+            }
+
+            if (!isDateAvailable(selectedDate)) {
+                dateError.textContent = 'Selected date is not available for appointments. Please choose from available dates.';
+                availableSlotsSelect.innerHTML = '<option value="">Selected date is not available</option>';
+                availableSlotsSelect.disabled = true;
+                return false;
+            } else {
+                dateError.textContent = '';
+                return true;
+            }
+        }
+
+        // Check if a date is available
+        function isDateAvailable(dateString) {
+            return availableDates.includes(dateString);
+        }
+
+                // Enhanced available dates loading with auto-selection
+        async function loadAvailableDates() {
+            try {
+                console.log('Loading available dates...');
+                const response = await fetch('/Appointments/GetAvailableDates');
+                const result = await response.json();
+
+                console.log('Available dates response:', result);
+
+                if (result.success && result.data && result.data.length > 0) {
+                    // Convert to ISO string format (YYYY-MM-DD)
+                    availableDates = result.data.map(date => {
+                        if (typeof date === 'string') {
+                            return date.split('T')[0]; // Handle date strings
+                        }
+                        return new Date(date).toISOString().split('T')[0];
+                    }).filter(date => date); // Remove null/undefined
+
+                    console.log('Processed available dates:', availableDates);
+                    updateAvailableDatesUI();
+
+                    // Auto-select the first available date and load its slots
+                    if (availableDates.length > 0) {
+                        const appointmentDate = document.getElementById('appointmentDate');
+                        const firstAvailableDate = availableDates[0];
+                        appointmentDate.value = firstAvailableDate;
+
+                        // Load slots for the first available date
+                        setTimeout(() => {
+                            loadAvailableSlots(firstAvailableDate);
+                        }, 100);
+                    }
+
+                    return availableDates;
+                } else {
+                    console.warn('No available dates found in response');
+                    availableDates = [];
+                    updateAvailableDatesUI();
+                    return [];
+                }
+            } catch (error) {
+                console.error('Error loading available dates:', error);
+                availableDates = [];
+                updateAvailableDatesUI();
+                return [];
+            }
+        }
+
+        // Update the available dates UI
+        function updateAvailableDatesUI() {
+            const appointmentDate = document.getElementById('appointmentDate');
+
+            // Remove existing hint if any
+            const existingHint = appointmentDate.parentNode.querySelector('.available-dates-hint');
+            if (existingHint) {
+                existingHint.remove();
+            }
+
+            if (availableDates.length > 0) {
+                // Create hint element
+                const hint = document.createElement('div');
+                hint.className = 'available-dates-hint';
+
+                // Show next few available dates
+                const nextDates = availableDates.slice(0, 5).map(date => {
+                    const dateObj = new Date(date);
+                    return dateObj.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                });
+
+                let hintText = `<strong>Available Dates:</strong> ${nextDates.join(', ')}`;
+                if (availableDates.length > 5) {
+                    hintText += ` and ${availableDates.length - 5} more`;
+                }
+
+                hint.innerHTML = hintText;
+                appointmentDate.parentNode.appendChild(hint);
+            } else {
+                // Show message when no dates available
+                const hint = document.createElement('div');
+                hint.className = 'available-dates-hint no-dates';
+                hint.innerHTML = '<strong>No available dates found. Please check back later.</strong>';
+                appointmentDate.parentNode.appendChild(hint);
+            }
+        }
+
+        // Enhanced date picker with custom validation (alternative approach)
+        function enhanceDatePicker() {
+            const appointmentDate = document.getElementById('appointmentDate');
+
+            // Store original value for comparison
+            let lastValidValue = '';
+
+            appointmentDate.addEventListener('blur', function() {
+                const selectedDate = this.value;
+                if (selectedDate && !isDateAvailable(selectedDate)) {
+                    // Reset to last valid value or clear
+                    this.value = lastValidValue;
+                    validateSelectedDate(this.value);
+                } else if (selectedDate) {
+                    lastValidValue = selectedDate;
+                }
+            });
+
+            // Prevent invalid dates from being entered
+            appointmentDate.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const selectedDate = this.value;
+                    if (selectedDate && !isDateAvailable(selectedDate)) {
+                        e.preventDefault();
+                        this.value = lastValidValue;
+                        validateSelectedDate(this.value);
+                    }
+                }
+            });
+        }
+
+                 // Load available slots for selected date - FIXED VERSION
+        async function loadAvailableSlots(selectedDate) {
+            const availableSlotsSelect = document.getElementById('availableSlots');
+            const slotLoading = document.getElementById('slotLoading');
+            const dateError = document.getElementById('dateError');
+
+            if (!selectedDate) {
+                availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
+                availableSlotsSelect.disabled = true;
+                dateError.textContent = '';
+                return;
+            }
+
+            // Validate date is available
+            if (!isDateAvailable(selectedDate)) {
+                availableSlotsSelect.innerHTML = '<option value="">Selected date is not available</option>';
+                availableSlotsSelect.disabled = true;
+                dateError.textContent = 'Selected date is not available for appointments.';
+                return;
+            }
+
+            try {
+                slotLoading.style.display = 'block';
+                availableSlotsSelect.disabled = true;
+                availableSlotsSelect.innerHTML = '<option value="">Loading available slots...</option>';
+                dateError.textContent = '';
+
+                console.log(`Fetching slots for: ${selectedDate}`);
+                const response = await fetch(`/Appointments/GetAvailableSlots?date=${selectedDate}`);
+                const result = await response.json();
+
+                console.log('Slots API response:', result);
+
+                if (result.success) {
+                    if (result.data && result.data.length > 0) {
+                        availableSlots = result.data;
+                        availableSlotsSelect.innerHTML = '<option value="">Select a time slot</option>';
+
+                        result.data.forEach(slot => {
+                            const option = document.createElement('option');
+                            // Handle both camelCase (from JSON serialization) and PascalCase
+                            const scheduleId = slot.scheduleId || slot.ScheduleId;
+                            option.value = scheduleId;
+
+                            // Debug: Log the slot data to see property names
+                            console.log('Slot data:', slot);
+                            console.log('ScheduleId value:', scheduleId);
+
+                            // Use the formatted times that are already provided
+                            let displayText;
+
+                            if (slot.displayText || slot.DisplayText) {
+                                // Use DisplayText if available (handle both cases)
+                                displayText = slot.displayText || slot.DisplayText;
+                            } else if (slot.startTimeFormatted && slot.endTimeFormatted) {
+                                // Use the pre-formatted times (camelCase from JSON)
+                                displayText = `${slot.startTimeFormatted} - ${slot.endTimeFormatted}`;
+                            } else if (slot.StartTimeFormatted && slot.EndTimeFormatted) {
+                                // Use the pre-formatted times (PascalCase)
+                                displayText = `${slot.StartTimeFormatted} - ${slot.EndTimeFormatted}`;
+                            } else {
+                                // Fallback: format the time strings ourselves
+                                const startTime = formatTimeString(slot.startTime || slot.StartTime);
+                                const endTime = formatTimeString(slot.endTime || slot.EndTime);
+                                displayText = `${startTime} - ${endTime}`;
+                            }
+
+                            option.textContent = displayText;
+                            option.dataset.slotInfo = JSON.stringify(slot);
+                            availableSlotsSelect.appendChild(option);
+
+                            console.log('Added slot option:', displayText, 'with ScheduleId:', scheduleId);
+                        });
+
+                        availableSlotsSelect.disabled = false;
+                        showSlotCountInfo(result.data.length);
+                        dateError.textContent = '';
+
+                        console.log(`Successfully loaded ${result.data.length} slots`);
+                    } else {
+                        // No slots found for this date
+                        availableSlotsSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+                        availableSlotsSelect.disabled = true;
+                        showSlotCountInfo(0);
+                        dateError.textContent = 'No available time slots found for the selected date.';
+                    }
+                } else {
+                    // API returned error
+                    availableSlotsSelect.innerHTML = '<option value="">Error loading slots</option>';
+                    availableSlotsSelect.disabled = true;
+                    dateError.textContent = result.error || 'Error loading available slots';
+                }
+            } catch (error) {
+                console.error('Error loading available slots:', error);
+                availableSlotsSelect.innerHTML = '<option value="">Error loading slots</option>';
+                availableSlotsSelect.disabled = true;
+                dateError.textContent = 'Network error loading available slots.';
+                showSlotCountInfo(0);
+            } finally {
+                slotLoading.style.display = 'none';
+            }
+        }
+
+        // Format time string from "09:00:00" to "9:00 AM"
+        function formatTimeString(timeStr) {
+            if (!timeStr) return 'N/A';
+
+            console.log('Formatting time string:', timeStr);
+
+            // Handle different time string formats
+            if (typeof timeStr === 'string') {
+                // Remove seconds if present
+                const timeWithoutSeconds = timeStr.split(':').slice(0, 2).join(':');
+                const [hours, minutes] = timeWithoutSeconds.split(':').map(Number);
+
+                if (!isNaN(hours) && !isNaN(minutes)) {
+                    const period = hours >= 12 ? 'PM' : 'AM';
+                    const displayHours = hours % 12 || 12;
+                    const displayMinutes = minutes.toString().padStart(2, '0');
+                    return `${displayHours}:${displayMinutes} ${period}`;
+                }
+            }
+
+            return 'N/A';
+        }
+
+        // Show information about available slots count
+        function showSlotCountInfo(count) {
+            const availableSlotsSelect = document.getElementById('availableSlots');
+
+            // Remove existing count info
+            const existingInfo = availableSlotsSelect.parentNode.querySelector('.slot-count-info');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+
+            if (count > 0) {
+                const info = document.createElement('small');
+                info.className = 'form-text text-muted slot-count-info';
+                info.textContent = `${count} available slot(s) found`;
+                availableSlotsSelect.parentNode.appendChild(info);
+            }
+        }
+
+
+                 // Enhanced form validation - SYMPTOMS NOW OPTIONAL
         function validateEnhancedAppointmentForm() {
             let isValid = true;
             const dateError = document.getElementById('dateError');
@@ -288,104 +740,280 @@ ViewData["Title"] = "Home Page";
             const symptomsError = document.getElementById('symptomsError');
 
             // Clear previous errors
-            dateError.textContent = '';
-            slotError.textContent = '';
-            serviceError.textContent = '';
-            symptomsError.textContent = '';
+            clearValidationErrors();
 
             const appointmentDate = document.getElementById('appointmentDate').value;
             const availableSlot = document.getElementById('availableSlots').value;
             const serviceRequired = document.getElementById('serviceRequired').value;
             const symptoms = document.getElementById('symptoms').value;
 
+            // Date validation
             if (!appointmentDate) {
                 dateError.textContent = 'Please select appointment date';
                 isValid = false;
+            } else if (!isDateAvailable(appointmentDate)) {
+                dateError.textContent = 'Selected date is not available for appointments. Please choose from available dates.';
+                isValid = false;
             }
 
+            // Slot validation
             if (!availableSlot) {
                 slotError.textContent = 'Please select an available time slot';
                 isValid = false;
             }
 
+            // Service validation
             if (!serviceRequired) {
                 serviceError.textContent = 'Please select a service';
                 isValid = false;
             }
 
-            if (!symptoms.trim()) {
-                symptomsError.textContent = 'Please describe your symptoms or concerns';
-                isValid = false;
-            }
+            // Symptoms validation - NOW OPTIONAL
+            // No validation required for symptoms field
 
             return isValid;
         }
 
-        // Display enhanced form errors
+        // Clear all validation errors
+        function clearValidationErrors() {
+            const errorElements = document.querySelectorAll('.validation-error');
+            errorElements.forEach(element => {
+                element.textContent = '';
+            });
+        }
+
+        // Call this after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEnhancedAppointment();
+            enhanceDatePicker();
+        });
+
+                // Helper function to get current patient ID from server session
+        let cachedStudentId = null; // Cache the student ID to avoid repeated API calls
+
+        async function getCurrentPatientId() {
+            // Return cached value if available
+            if (cachedStudentId !== null) {
+                console.log('Using cached student ID:', cachedStudentId);
+                return cachedStudentId;
+            }
+
+            try {
+                const response = await fetch('/Student/GetCurrentStudentId');
+                const result = await response.json();
+                
+                if (result.success && result.studentId) {
+                    cachedStudentId = result.studentId;
+                    console.log('Retrieved student ID from session:', cachedStudentId);
+                    return cachedStudentId;
+                } else {
+                    console.error('Failed to get student ID:', result.error);
+                    throw new Error('You must be logged in as a student to book an appointment');
+                }
+            } catch (error) {
+                console.error('Error fetching student ID:', error);
+                throw new Error('Unable to verify login status. Please log in again.');
+            }
+        }
+
+                // Display enhanced form errors - IMPROVED VERSION
         function displayEnhancedFormErrors(errors) {
+            console.log('Form errors received:', errors);
+
+            // Clear previous errors first
+            clearValidationErrors();
+
             for (const [field, messages] of Object.entries(errors)) {
-                const errorElement = document.getElementById(field + 'Error');
-                if (errorElement && messages.length > 0) {
-                    errorElement.textContent = messages[0];
+                if (messages && messages.length > 0) {
+                    let errorElement;
+
+                    // Map C# model property names to HTML element IDs
+                    switch(field) {
+                        case 'PatientId':
+                            errorElement = document.getElementById('patientError');
+                            break;
+                        case 'ScheduleId':
+                            errorElement = document.getElementById('slotError');
+                            break;
+                        case 'ReasonForVisit':
+                            errorElement = document.getElementById('serviceError');
+                            break;
+                        case 'Symptoms':
+                            errorElement = document.getElementById('symptomsError');
+                            break;
+                        default:
+                            errorElement = document.getElementById(field + 'Error');
+                    }
+
+                    if (errorElement && messages.length > 0) {
+                        errorElement.textContent = messages[0];
+                    }
                 }
             }
         }
 
-        // Helper function to get current patient ID (implement based on your authentication)
-        function getCurrentPatientId() {
-            // This should return the logged-in student's ID
-            // For now, returning a placeholder - implement based on your auth system
-            const studentId = sessionStorage.getItem('studentId') ||
-                             document.querySelector('[data-student-id]')?.dataset.studentId;
-            return studentId ? parseInt(studentId) : 1; // Fallback for demo
-        }
+                // Enhanced message display function
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('appointmentMessage');
+            const alertClass = type === 'success' ? 'alert-success' :
+                              type === 'error' ? 'alert-error' : 'alert-info';
 
-        // Enhanced appointment history display
-        function displayEnhancedAppointmentHistory(appointments) {
-            const historyList = document.getElementById('historyList');
+            messageContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <div class="message-content">${message}</div>
+                    <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
+                </div>
+            `;
 
-            if (appointments && appointments.length > 0) {
-                historyList.innerHTML = appointments.map(appointment => `
-                    <div class="history-item ${appointment.appointmentStatus.toLowerCase()}">
-                        <div class="history-main">
-                            <div class="history-date">
-                                <strong>Date:</strong> ${new Date(appointment.schedule?.date).toLocaleDateString()}
-                            </div>
-                            <div class="history-time">
-                                <strong>Time:</strong> ${appointment.schedule?.startTime} - ${appointment.schedule?.endTime}
-                            </div>
-                            <div class="history-service">
-                                <strong>Service:</strong> ${appointment.reasonForVisit}
-                            </div>
-                            <div class="history-symptoms">
-                                <strong>Symptoms:</strong> ${appointment.symptoms || 'Not specified'}
-                            </div>
-                        </div>
-                        <div class="history-meta">
-                            <div class="history-status ${appointment.appointmentStatus.toLowerCase()}">
-                                ${appointment.appointmentStatus}
-                            </div>
-                            <div class="history-queue">Queue: ${appointment.queueNumber}</div>
-                            ${appointment.appointmentStatus === 'Pending' ?
-                                `<button class="cancel-btn" onclick="cancelAppointment(${appointment.appointmentId})">
-                                    <i class="fas fa-times"></i> Cancel
-                                </button>` : ''
-                            }
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                historyList.innerHTML = '<div class="no-records">No appointment records found.</div>';
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = messageContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 5000);
             }
         }
+
+                // Get anti-forgery token with multiple fallback methods
+        function getAntiForgeryToken() {
+            // Method 1: Look for input with name __RequestVerificationToken
+            let token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            // Method 2: Look for hidden input with anti-forgery token
+            if (!token) {
+                token = document.querySelector('input[type="hidden"][name="__RequestVerificationToken"]')?.value;
+            }
+
+            // Method 3: Look for any element with the token
+            if (!token) {
+                const tokenElement = document.querySelector('[name="__RequestVerificationToken"], [data-token]');
+                token = tokenElement?.value || tokenElement?.dataset?.token;
+            }
+
+            // Method 4: Check if token is in a meta tag
+            if (!token) {
+                const metaToken = document.querySelector('meta[name="__RequestVerificationToken"]');
+                token = metaToken?.getAttribute('content');
+            }
+
+            console.log('Anti-forgery token found:', token ? 'Yes' : 'No');
+            return token;
+        }
+
+                // Add this debug function and call it
+        async function debugSlotData() {
+            const testDate = new Date().toISOString().split('T')[0]; // Today's date
+            console.log('=== DEBUGGING SLOT DATA ===');
+
+            try {
+                const response = await fetch(`/Appointments/GetAvailableSlots?date=${testDate}`);
+                const result = await response.json();
+                console.log('Full API response:', JSON.stringify(result, null, 2));
+
+                if (result.success && result.data && result.data.length > 0) {
+                    console.log('First slot details:', result.data[0]);
+                    console.log('StartTime type:', typeof result.data[0].StartTime);
+                    console.log('StartTime value:', result.data[0].StartTime);
+                    console.log('EndTime value:', result.data[0].EndTime);
+                    console.log('StartTimeFormatted value:', result.data[0].StartTimeFormatted);
+                    console.log('EndTimeFormatted value:', result.data[0].EndTimeFormatted);
+                    console.log('DisplayText value:', result.data[0].DisplayText);
+                } else {
+                    console.log('No data returned from API');
+                }
+            } catch (error) {
+                console.error('Debug error:', error);
+            }
+        }
+
+                // Debug: Check what's being sent to the server
+        async function debugFormSubmission() {
+            const scheduleId = document.getElementById('availableSlots').value;
+            const serviceRequired = document.getElementById('serviceRequired').value;
+            const symptoms = document.getElementById('symptoms').value;
+
+            console.log('=== FORM DATA DEBUG ===');
+            console.log('scheduleId:', scheduleId, 'type:', typeof scheduleId);
+            console.log('serviceRequired:', serviceRequired, 'type:', typeof serviceRequired);
+            console.log('symptoms:', symptoms, 'type:', typeof symptoms);
+
+            const formData = {
+                ScheduleId: parseInt(scheduleId),
+                PatientId: getCurrentPatientId(),
+                ReasonForVisit: serviceRequired,
+                Symptoms: symptoms.trim() || "No symptoms provided"
+            };
+
+            console.log('Final formData to be sent:', formData);
+            console.log('ReasonForVisit value:', formData.ReasonForVisit);
+            console.log('Is ReasonForVisit empty?', !formData.ReasonForVisit);
+        }
+
+        // Check all available dates and their slots
+        async function debugAllAvailableSlots() {
+            console.log('=== CHECKING ALL AVAILABLE SLOTS ===');
+
+            try {
+                // First, get all available dates
+                const datesResponse = await fetch('/Appointments/GetAvailableDates');
+                const datesResult = await datesResponse.json();
+
+                console.log('Available dates:', datesResult.data);
+
+                if (datesResult.success && datesResult.data && datesResult.data.length > 0) {
+                    // Check slots for each available date
+                    for (const date of datesResult.data.slice(0, 3)) { // Check first 3 dates
+                        const dateStr = typeof date === 'string' ? date : new Date(date).toISOString().split('T')[0];
+                        console.log(`\nChecking slots for date: ${dateStr}`);
+
+                        const slotsResponse = await fetch(`/Appointments/GetAvailableSlots?date=${dateStr}`);
+                        const slotsResult = await slotsResponse.json();
+
+                        console.log(`Slots for ${dateStr}:`, slotsResult.data);
+
+                        if (slotsResult.success && slotsResult.data && slotsResult.data.length > 0) {
+                            console.log(`Found ${slotsResult.data.length} slots for ${dateStr}`);
+                            console.log('First slot details:', slotsResult.data[0]);
+                            break; // Stop after finding the first date with slots
+                        }
+                    }
+                } else {
+                    console.log('No available dates found at all!');
+                }
+            } catch (error) {
+                console.error('Debug error:', error);
+            }
+        }
+
+        // Run this in console
+        // debugAllAvailableSlots()
+
     </script>
 
     <style>
-        .loading-message {
-            color: #6c757d;
-            font-size: 0.875em;
+        .available-dates-hint {
+            font-size: 0.8rem;
             margin-top: 0.5rem;
+            padding: 0.75rem;
+            background-color: #e8f5e8;
+            border-radius: 0.375rem;
+            border-left: 4px solid #28a745;
+            color: #155724;
         }
+
+        .available-dates-hint.no-dates {
+           background-color: #f8d7da;
+           border-left-color: #dc3545;
+           color: #721c24;
+        }
+
+        .form-text.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
 
         .history-item {
             display: flex;
@@ -432,6 +1060,13 @@ ViewData["Title"] = "Home Page";
             font-size: 0.875rem;
             color: #6c757d;
             margin-top: 0.25rem;
+        }
+
+        .slot-count-info {
+            display: block;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            color: #28a745;
         }
 
         .validation-error {
@@ -567,6 +1202,115 @@ ViewData["Title"] = "Home Page";
         .message.received .message-content {
             background-color: #e9ecef;
             color: #495057;
+        }
+
+        /* Style for valid/invalid dates */
+        input:valid {
+            border-color: #28a745;
+        }
+
+        input:invalid {
+            border-color: #dc3545;
+        }
+
+        /* Custom date picker styling */
+        input[type="date"] {
+            position: relative;
+        }
+
+        /* Loading states */
+        .loading-message {
+            color: #6c757d;
+            font-size: 0.875em;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        /* Success state for valid date selection */
+        .date-valid {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+
+        .date-invalid {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        /* Enhanced error styling */
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+            display: block;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.375rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .alert-success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+        }
+
+        .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-info {
+            color: #055160;
+            background-color: #cff4fc;
+            border-color: #b6effb;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            margin-left: 1rem;
+            color: inherit;
+            opacity: 0.7;
+        }
+
+            .close-btn:hover {
+                opacity: 1;
+            }
+
+        .message-content {
+            flex: 1;
+        }
+
+        /* Form field error states */
+        .form-group.has-error input,
+        .form-group.has-error select,
+        .form-group.has-error textarea {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .form-group.has-error .validation-error {
+            display: block;
         }
     </style>
 }
