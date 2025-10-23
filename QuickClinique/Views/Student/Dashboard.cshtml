@@ -1,0 +1,517 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "My Dashboard";
+}
+
+@section Styles {
+    <style>
+        .student-dashboard {
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-section h1 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card.primary .icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-card.success .icon {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .stat-card.warning .icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .stat-card.info .icon {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            color: #718096;
+            margin: 0;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .appointments-section, .quick-actions {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-header i {
+            color: #667eea;
+        }
+
+        .appointment-item {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .appointment-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .appointment-date {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .appointment-details {
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .appointment-details i {
+            margin-right: 0.5rem;
+            color: #667eea;
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .action-btn.secondary:hover {
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .action-btn i {
+            margin-right: 0.5rem;
+        }
+
+        .profile-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .profile-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .profile-info-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #a0aec0;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="student-dashboard">
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1><i class="fas fa-hand-wave"></i> Welcome back, @Model.FirstName!</h1>
+            <p>Here's an overview of your appointments and health information</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 id="totalAppointments">0</h3>
+                <p>Total Appointments</p>
+            </div>
+
+            <div class="stat-card success">
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 id="completedAppointments">0</h3>
+                <p>Completed</p>
+            </div>
+
+            <div class="stat-card warning">
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 id="pendingAppointments">0</h3>
+                <p>Pending</p>
+            </div>
+
+            <div class="stat-card info">
+                <div class="icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3 id="upcomingAppointments">0</h3>
+                <p>Upcoming</p>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Appointments Section -->
+            <div class="appointments-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-alt"></i> My Appointments</h2>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Book New
+                    </a>
+                </div>
+
+                <div id="appointmentsList">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p>Loading appointments...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="quick-actions">
+                <!-- Profile Card -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-user-circle"></i> My Profile</h3>
+                    <div class="profile-info">
+                        <div class="profile-info-item">
+                            <i class="fas fa-id-card"></i>
+                            <span>@Model.Idnumber</span>
+                        </div>
+                        <div class="profile-info-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>@Model.Email</span>
+                        </div>
+                        <div class="profile-info-item">
+                            <i class="fas fa-phone"></i>
+                            <span>@Model.PhoneNumber</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h4 style="margin-bottom: 1rem; color: #2d3748;">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h4>
+
+                <a href="@Url.Action("Index", "Home")" class="action-btn">
+                    <i class="fas fa-calendar-plus"></i> Book Appointment
+                </a>
+
+                <a href="@Url.Action("Profile", "Student")" class="action-btn secondary">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </a>
+
+                <a href="@Url.Action("History", "Student")" class="action-btn secondary">
+                    <i class="fas fa-history"></i> View History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Get student ID from session
+                const studentIdResponse = await fetch('/Student/GetCurrentStudentId');
+                const studentIdResult = await studentIdResponse.json();
+
+                if (!studentIdResult.success) {
+                    console.error('Failed to get student ID');
+                    return;
+                }
+
+                const studentId = studentIdResult.studentId;
+
+                // Fetch appointments
+                const response = await fetch(`/Appointments/GetStudentAppointments?studentId=${studentId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayAppointments(result.data);
+                    updateStats(result.data);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showError();
+            }
+        }
+
+        function displayAppointments(appointments) {
+            const container = $('#appointmentsList');
+
+            if (!appointments || appointments.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            // Sort by date (most recent first)
+            appointments.sort((a, b) => new Date(b.dateBooked) - new Date(a.dateBooked));
+
+            // Show only upcoming and recent appointments (last 5)
+            const recentAppointments = appointments.slice(0, 5);
+
+            let html = '';
+            recentAppointments.forEach(apt => {
+                const statusClass = apt.appointmentStatus.toLowerCase();
+                const date = new Date(apt.schedule?.date || apt.dateBooked);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+
+                html += `
+                    <div class="appointment-item">
+                        <div class="appointment-header">
+                            <span class="appointment-date">${formattedDate}</span>
+                            <span class="status-badge ${statusClass}">${apt.appointmentStatus}</span>
+                        </div>
+                        <div class="appointment-details">
+                            <div><i class="fas fa-stethoscope"></i> ${apt.reasonForVisit}</div>
+                            <div><i class="fas fa-clock"></i> ${apt.schedule?.startTime || 'TBA'} - ${apt.schedule?.endTime || 'TBA'}</div>
+                            <div><i class="fas fa-list-ol"></i> Queue #${apt.queueNumber} - ${apt.queueStatus}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.html(html);
+        }
+
+        function updateStats(appointments) {
+            const total = appointments.length;
+            const completed = appointments.filter(a => a.appointmentStatus === 'Completed').length;
+            const pending = appointments.filter(a => a.appointmentStatus === 'Pending').length;
+            const upcoming = appointments.filter(a => 
+                a.appointmentStatus === 'Confirmed' || a.appointmentStatus === 'Pending'
+            ).length;
+
+            $('#totalAppointments').text(total);
+            $('#completedAppointments').text(completed);
+            $('#pendingAppointments').text(pending);
+            $('#upcomingAppointments').text(upcoming);
+        }
+
+        function showEmptyState() {
+            $('#appointmentsList').html(`
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No appointments yet</p>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Book Your First Appointment
+                    </a>
+                </div>
+            `);
+
+            // Reset stats
+            $('#totalAppointments').text('0');
+            $('#completedAppointments').text('0');
+            $('#pendingAppointments').text('0');
+            $('#upcomingAppointments').text('0');
+        }
+
+        function showError() {
+            $('#appointmentsList').html(`
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Failed to load appointments</p>
+                    <button class="btn btn-primary" onclick="loadDashboardData()">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>
+            `);
+        }
+    </script>
+}
+

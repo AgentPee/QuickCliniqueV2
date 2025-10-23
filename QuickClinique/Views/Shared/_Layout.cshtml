@@ -82,10 +82,24 @@
                                     <span class="nav-link text-dark">Welcome, @Context.Session.GetString("StudentName")!</span>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                                    <a class="nav-link text-dark" asp-controller="Student" asp-action="Dashboard">
+                                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                                    </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Student" asp-action="Logout">Student Logout</a>
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Student" asp-action="Profile">
+                                        <i class="fas fa-user"></i> Profile
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Student" asp-action="Logout">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </a>
                                 </li>
                             }
 

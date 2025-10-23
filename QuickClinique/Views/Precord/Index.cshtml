@@ -1,0 +1,430 @@
+@model IEnumerable<QuickClinique.Models.Precord>
+@{
+    ViewData["Title"] = "Patient Records";
+}
+
+@section Styles {
+    <style>
+        .records-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-header h1 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-add {
+            background: white;
+            color: #667eea;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+            color: #667eea;
+        }
+
+        .search-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 0.75rem 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .search-box button:hover {
+            background: #5568d3;
+        }
+
+        .records-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .record-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        .record-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f7fafc;
+        }
+
+        .patient-info h3 {
+            margin: 0 0 0.25rem;
+            color: #2d3748;
+            font-size: 1.2rem;
+        }
+
+        .patient-info p {
+            margin: 0;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .record-id {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .record-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+        }
+
+        .detail-item i {
+            color: #667eea;
+            margin-top: 0.25rem;
+            width: 20px;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #f7fafc;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-view {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .btn-view:hover {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .btn-edit:hover {
+            background: #fde68a;
+            color: #78350f;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-delete:hover {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: #cbd5e0;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+
+        @@media (max-width: 768px) {
+            .records-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+}
+
+<div class="records-container">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-file-medical"></i>
+            Patient Records
+        </h1>
+        <a href="@Url.Action("Create")" class="btn-add">
+            <i class="fas fa-plus"></i>
+            New Record
+        </a>
+    </div>
+
+    <div class="search-section">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by patient name, ID, or diagnosis..." />
+            <button onclick="searchRecords()">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </div>
+
+    <div class="records-grid" id="recordsGrid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var record in Model)
+            {
+                <div class="record-card" data-search="@record.Name @record.Patient?.Idnumber @record.Diagnosis">
+                    <div class="record-header">
+                        <div class="patient-info">
+                            <h3>@record.Name</h3>
+                            <p>
+                                <i class="fas fa-id-card"></i>
+                                @(record.Patient != null ? record.Patient.Idnumber : "N/A")
+                            </p>
+                        </div>
+                        <span class="record-id">#@record.RecordId</span>
+                    </div>
+
+                    <div class="record-details">
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Age & Gender</div>
+                                <div class="detail-value">@record.Age years, @record.Gender</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-weight"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">BMI</div>
+                                <div class="detail-value">@record.Bmi</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-stethoscope"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Diagnosis</div>
+                                <div class="detail-value">@(string.IsNullOrEmpty(record.Diagnosis) ? "No diagnosis recorded" : record.Diagnosis)</div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(record.Allergies))
+                        {
+                            <div class="detail-item">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div class="detail-content">
+                                    <div class="detail-label">Allergies</div>
+                                    <div class="detail-value">@record.Allergies</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="record-actions">
+                        <a href="@Url.Action("Details", new { id = record.RecordId })" class="btn-action btn-view">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="@Url.Action("Edit", new { id = record.RecordId })" class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="@Url.Action("Delete", new { id = record.RecordId })" class="btn-action btn-delete">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="fas fa-file-medical-alt"></i>
+                <h3>No Patient Records</h3>
+                <p>No patient records have been created yet. Start by adding a new record.</p>
+                <a href="@Url.Action("Create")" class="btn-add">
+                    <i class="fas fa-plus"></i>
+                    Create First Record
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function searchRecords() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.record-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const searchData = card.getAttribute('data-search').toLowerCase();
+                if (searchData.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show empty state if no results
+            const grid = document.getElementById('recordsGrid');
+            let emptyState = document.getElementById('searchEmptyState');
+
+            if (visibleCount === 0 && searchTerm) {
+                if (!emptyState) {
+                    emptyState = document.createElement('div');
+                    emptyState.id = 'searchEmptyState';
+                    emptyState.className = 'empty-state';
+                    emptyState.style.gridColumn = '1 / -1';
+                    emptyState.innerHTML = `
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Found</h3>
+                        <p>No records match your search criteria. Try a different search term.</p>
+                        <button class="btn-add" onclick="clearSearch()">
+                            <i class="fas fa-times"></i>
+                            Clear Search
+                        </button>
+                    `;
+                    grid.appendChild(emptyState);
+                }
+            } else if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchRecords();
+        }
+
+        // Search on enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchRecords();
+            }
+        });
+
+        // Real-time search
+        document.getElementById('searchInput').addEventListener('input', searchRecords);
+    </script>
+}
+
