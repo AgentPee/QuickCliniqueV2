@@ -1,82 +1,116 @@
 ﻿@model QuickClinique.Models.ClinicStaffRegisterViewModel
-
 @{
-    ViewData["Title"] = "Register";
-    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    ViewData["Title"] = "Clinic Staff Registration";
+    Layout = null;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2>Clinic Staff Registration</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Staff Registration - QuickClinic</title>
+    <link rel="stylesheet" href="~/css/staffReg.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="container">
+        <div class="side-panel">
+            <div class="logo">
+                <img src="~/img/logo.png" alt="QuickClinic Logo" class="logo-img">
             </div>
-            <div class="card-body">
-                <!-- Show success message if redirected from successful registration -->
+            <h1 class="clinic-name">QuickClinic</h1>
+            <p class="tagline">Staff Portal - Professional Healthcare</p>
+            <div class="medical-icons">
+                <div class="floating-icon">💊</div>
+                <div class="floating-icon">🩺</div>
+                <div class="floating-icon">❤️</div>
+                <div class="floating-icon">🏥</div>
+                <div class="floating-icon">🔬</div>
+                <div class="floating-icon">🩹</div>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div class="form-container">
+                <h2 class="form-title">Staff Registration</h2>
+                <p class="form-subtitle">Join QuickClinic as staff member</p>
+
                 @if (TempData["SuccessMessage"] != null)
                 {
-                    <div class="alert alert-success">
+                    <div class="success-message">
                         @TempData["SuccessMessage"]
                     </div>
                 }
 
-                <form asp-action="Register" method="post">
-                    <div asp-validation-summary="All" class="text-danger"></div>
+                <form asp-action="Register" method="post" class="auth-form">
+                    <div asp-validation-summary="All" class="error-message"></div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="FirstName" class="control-label"></label>
-                        <input asp-for="FirstName" class="form-control" />
-                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label asp-for="FirstName" class="control-label">First Name</label>
+                            <input asp-for="FirstName" class="form-control" required />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                            <span class="input-icon">👤</span>
+                        </div>
+
+                        <div class="input-group">
+                            <label asp-for="LastName" class="control-label">Last Name</label>
+                            <input asp-for="LastName" class="form-control" required />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                            <span class="input-icon">👤</span>
+                        </div>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="LastName" class="control-label"></label>
-                        <input asp-for="LastName" class="form-control" />
-                        <span asp-validation-for="LastName" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="Email" class="control-label"></label>
-                        <input asp-for="Email" class="form-control" type="email" />
+                    <div class="input-group">
+                        <label asp-for="Email" class="control-label">Email</label>
+                        <input asp-for="Email" class="form-control" type="email" required placeholder="Enter your email" />
                         <span asp-validation-for="Email" class="text-danger"></span>
+                        <span class="input-icon">📧</span>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="PhoneNumber" class="control-label"></label>
+                    <div class="input-group">
+                        <label asp-for="PhoneNumber" class="control-label">Phone Number</label>
                         <input asp-for="PhoneNumber" class="form-control"
                                placeholder="e.g., 09345672824"
                                pattern="[0-9]{11}"
-                               title="Please enter exactly 11 digits" />
+                               title="Please enter exactly 11 digits"
+                               required />
                         <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                        <small class="form-text text-muted">Enter your 11-digit phone number (e.g., 09345672824)</small>
+                        <span class="input-icon">📱</span>
+                        <small class="input-hint">Enter your 11-digit phone number</small>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="Password" class="control-label"></label>
-                        <input asp-for="Password" class="form-control" type="password" />
+                    <div class="input-group">
+                        <label asp-for="Password" class="control-label">Password</label>
+                        <input asp-for="Password" class="form-control" type="password" required />
                         <span asp-validation-for="Password" class="text-danger"></span>
+
+                        <span class="toggle-password" onclick="togglePassword('Password')">👁️</span>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="ConfirmPassword" class="control-label"></label>
-                        <input asp-for="ConfirmPassword" class="form-control" type="password" />
+                    <div class="input-group">
+                        <label asp-for="ConfirmPassword" class="control-label">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" class="form-control" type="password" required />
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+
+                        <span class="toggle-password" onclick="togglePassword('ConfirmPassword')">👁️</span>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">Register</button>
-                    </div>
+                    <button type="submit" class="submit-btn">
+                        <span class="btn-text">Register</span>
+                        <span class="btn-loader"></span>
+                    </button>
                 </form>
-                <div class="mt-3">
-                    <p>Already have an account? <a asp-action="Login">Login here</a></p>
+
+                <div class="back-to-login">
+                    <p>Already have an account? <a asp-action="Login" class="back-link">Login here</a></p>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+    <script src="~/js/auth.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

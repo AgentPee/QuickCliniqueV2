@@ -1,14 +1,18 @@
 ﻿@model QuickClinique.Models.StudentLoginViewModel
-
 @{
     ViewData["Title"] = "Student Login";
-    Layout = "_AuthLayout";
-}
-@section Styles {
-    <link rel="stylesheet" href="~/css/studReg.css" asp-append-version="true" />
+    Layout = null;
 }
 
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - QuickClinic</title>
+    <link rel="stylesheet" href="~/css/studlogin.css" asp-append-version="true" />
+</head>
+<body>
     <div class="container">
         <div class="side-panel">
             <div class="logo">
@@ -52,7 +56,6 @@
                         <label asp-for="Password" class="control-label">Password</label>
                         <input asp-for="Password" class="form-control" type="password" required />
                         <span asp-validation-for="Password" class="text-danger"></span>
-                        <span class="input-icon">🔒</span>
                         <span class="toggle-password" onclick="togglePassword('Password')">👁️</span>
                     </div>
 
@@ -78,10 +81,8 @@
         </div>
     </div>
 
-    
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        <script src="~/js/studlogin.js"></script>
-        }
-    }
+    <script src="~/js/studlogin.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>
