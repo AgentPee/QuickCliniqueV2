@@ -515,5 +515,44 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Error moving to next patient" });
             }
         }
+
+        // GET: Appointments/GetStudentAppointments
+        [HttpGet]
+        public async Task<IActionResult> GetStudentAppointments(int studentId)
+        {
+            try
+            {
+                var appointments = await _context.Appointments
+                    .Include(a => a.Schedule)
+                    .Where(a => a.PatientId == studentId)
+                    .OrderByDescending(a => a.DateBooked)
+                    .Select(a => new
+                    {
+                        appointmentId = a.AppointmentId,
+                        patientId = a.PatientId,
+                        scheduleId = a.ScheduleId,
+                        appointmentStatus = a.AppointmentStatus,
+                        reasonForVisit = a.ReasonForVisit,
+                        symptoms = a.Symptoms,
+                        dateBooked = a.DateBooked,
+                        queueNumber = a.QueueNumber,
+                        queueStatus = a.QueueStatus,
+                        schedule = a.Schedule != null ? new
+                        {
+                            date = a.Schedule.Date,
+                            startTime = a.Schedule.StartTime.ToString(),
+                            endTime = a.Schedule.EndTime.ToString(),
+                            isAvailable = a.Schedule.IsAvailable
+                        } : null
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, data = appointments });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to load appointments" });
+            }
+        }
     }
 }

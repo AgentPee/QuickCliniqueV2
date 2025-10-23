@@ -414,6 +414,162 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
+        // GET: Student/Dashboard
+        [StudentOnly]
+        public async Task<IActionResult> Dashboard()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId.Value);
+
+            if (student == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(student);
+        }
+
+        // GET: Student/Profile
+        [StudentOnly]
+        public async Task<IActionResult> Profile()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId.Value);
+
+            if (student == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(student);
+        }
+
+        // POST: Student/UpdateProfile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [StudentOnly]
+        public async Task<IActionResult> UpdateProfile(Student model)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue || studentId.Value != model.StudentId)
+            {
+                return Json(new { success = false, error = "Unauthorized" });
+            }
+
+            var student = await _context.Students.FindAsync(model.StudentId);
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found" });
+            }
+
+            // Update only allowed fields
+            student.FirstName = model.FirstName;
+            student.LastName = model.LastName;
+            student.Email = model.Email;
+            student.PhoneNumber = model.PhoneNumber;
+
+            await _context.SaveChangesAsync();
+
+            // Update session name
+            HttpContext.Session.SetString("StudentName", student.FirstName + " " + student.LastName);
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "Profile updated successfully" });
+
+            TempData["SuccessMessage"] = "Profile updated successfully";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        // POST: Student/ChangePassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [StudentOnly]
+        public async Task<IActionResult> ChangePassword(int studentId, string currentPassword, string newPassword, string confirmPassword)
+        {
+            var sessionStudentId = HttpContext.Session.GetInt32("StudentId");
+            if (!sessionStudentId.HasValue || sessionStudentId.Value != studentId)
+            {
+                return Json(new { success = false, error = "Unauthorized" });
+            }
+
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(currentPassword))
+            {
+                return Json(new { success = false, error = "Current password is required", field = "currentPassword" });
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                return Json(new { success = false, error = "New password is required", field = "newPassword" });
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                return Json(new { success = false, error = "Passwords do not match", field = "confirmPassword" });
+            }
+
+            // Validate password strength
+            if (newPassword.Length < 6)
+            {
+                return Json(new { success = false, error = "Password must be at least 6 characters", field = "newPassword" });
+            }
+
+            var student = await _context.Students.FindAsync(studentId);
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found" });
+            }
+
+            // Verify current password
+            if (!_passwordService.VerifyPassword(currentPassword, student.Password))
+            {
+                return Json(new { success = false, error = "Current password is incorrect", field = "currentPassword" });
+            }
+
+            // Check if new password is same as current
+            if (_passwordService.VerifyPassword(newPassword, student.Password))
+            {
+                return Json(new { success = false, error = "New password must be different from current password", field = "newPassword" });
+            }
+
+            // Update password
+            student.Password = _passwordService.HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Password changed successfully" });
+        }
+
+        // GET: Student/History
+        [StudentOnly]
+        public async Task<IActionResult> History()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var appointments = await _context.Appointments
+                .Include(a => a.Schedule)
+                .Where(a => a.PatientId == studentId.Value)
+                .OrderByDescending(a => a.DateBooked)
+                .ToListAsync();
+
+            return View(appointments);
+        }
+
         // GET: Student/GetCurrentStudentId - Get logged in student ID
         [HttpGet]
         public IActionResult GetCurrentStudentId()

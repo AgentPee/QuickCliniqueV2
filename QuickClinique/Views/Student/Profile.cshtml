@@ -1,0 +1,463 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+@section Styles {
+    <style>
+        .profile-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .profile-header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .profile-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+
+        .profile-body {
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section h3 i {
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group label i {
+            margin-right: 0.5rem;
+            color: #667eea;
+            width: 20px;
+            text-align: center;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control:disabled {
+            background: #f7fafc;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .info-card {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-card p {
+            margin: 0;
+            color: #4a5568;
+        }
+
+        .info-card i {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+}
+
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <h1>@Model.FirstName @Model.LastName</h1>
+        <p><i class="fas fa-id-card"></i> @Model.Idnumber</p>
+    </div>
+
+    <div class="profile-body">
+        <div id="messageContainer"></div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+
+        <div class="info-card">
+            <p>
+                <i class="fas fa-info-circle"></i>
+                <strong>Note:</strong> Your ID number cannot be changed. Contact the clinic staff if you need to update it.
+            </p>
+        </div>
+
+        <form id="profileForm" asp-action="UpdateProfile" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="StudentId" />
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="Idnumber" />
+            <input type="hidden" asp-for="Password" />
+
+            <!-- Personal Information -->
+            <div class="form-section">
+                <h3><i class="fas fa-user"></i> Personal Information</h3>
+
+                <div class="form-group">
+                    <label for="Idnumber">
+                        <i class="fas fa-id-card"></i> ID Number
+                    </label>
+                    <input type="text" class="form-control" value="@Model.Idnumber" disabled />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="FirstName">
+                        <i class="fas fa-user"></i> First Name
+                    </label>
+                    <input asp-for="FirstName" class="form-control" required />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="LastName">
+                        <i class="fas fa-user"></i> Last Name
+                    </label>
+                    <input asp-for="LastName" class="form-control" required />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h3><i class="fas fa-address-book"></i> Contact Information</h3>
+
+                <div class="form-group">
+                    <label asp-for="Email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input asp-for="Email" type="email" class="form-control" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PhoneNumber">
+                        <i class="fas fa-phone"></i> Phone Number
+                    </label>
+                    <input asp-for="PhoneNumber" type="tel" class="form-control" required />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+                <a href="@Url.Action("Dashboard", "Student")" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+
+        <!-- Change Password Section -->
+        <div class="form-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 3px solid #e2e8f0;">
+            <h3><i class="fas fa-lock"></i> Change Password</h3>
+            <p style="color: #718096; margin-bottom: 1.5rem;">
+                Update your password to keep your account secure. Use a strong password with letters, numbers, and special characters.
+            </p>
+
+            <form id="changePasswordForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="StudentId" value="@Model.StudentId" />
+
+                <div class="form-group">
+                    <label for="CurrentPassword">
+                        <i class="fas fa-key"></i> Current Password
+                    </label>
+                    <input type="password" id="CurrentPassword" name="CurrentPassword" class="form-control" required />
+                    <span class="text-danger" id="currentPasswordError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="NewPassword">
+                        <i class="fas fa-lock"></i> New Password
+                    </label>
+                    <input type="password" id="NewPassword" name="NewPassword" class="form-control" required minlength="6" />
+                    <small class="form-text text-muted">
+                        Password must be at least 6 characters and include uppercase, lowercase, number, and special character.
+                    </small>
+                    <span class="text-danger" id="newPasswordError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="ConfirmPassword">
+                        <i class="fas fa-lock"></i> Confirm New Password
+                    </label>
+                    <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" required />
+                    <span class="text-danger" id="confirmPasswordError"></span>
+                </div>
+
+                <div class="btn-group" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="resetPasswordForm()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Profile form submission
+            $('#profileForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if (!$(this).valid()) {
+                    return;
+                }
+
+                const formData = $(this).serialize();
+
+                $.ajax({
+                    url: '@Url.Action("UpdateProfile", "Student")',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage('Profile updated successfully!', 'success');
+                            setTimeout(function() {
+                                window.location.href = '@Url.Action("Dashboard", "Student")';
+                            }, 1500);
+                        } else {
+                            showMessage(response.error || 'Failed to update profile', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred. Please try again.', 'error');
+                    }
+                });
+            });
+
+            // Change password form submission
+            $('#changePasswordForm').on('submit', function(e) {
+                e.preventDefault();
+
+                // Clear previous errors
+                $('.text-danger').text('');
+
+                // Validate passwords match
+                const newPassword = $('#NewPassword').val();
+                const confirmPassword = $('#ConfirmPassword').val();
+
+                if (newPassword !== confirmPassword) {
+                    $('#confirmPasswordError').text('Passwords do not match');
+                    return;
+                }
+
+                // Validate password strength
+                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&])[A-Za-z\d@@$!%*?&]{6,}$/;
+                if (!passwordRegex.test(newPassword)) {
+                    $('#newPasswordError').text('Password must include uppercase, lowercase, number, and special character');
+                    return;
+                }
+
+                const formData = $(this).serialize();
+
+                $.ajax({
+                    url: '@Url.Action("ChangePassword", "Student")',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage('Password changed successfully!', 'success');
+                            resetPasswordForm();
+                            setTimeout(function() {
+                                window.location.href = '@Url.Action("Dashboard", "Student")';
+                            }, 2000);
+                        } else {
+                            if (response.field) {
+                                $('#' + response.field + 'Error').text(response.error);
+                            } else {
+                                showMessage(response.error || 'Failed to change password', 'error');
+                            }
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred. Please try again.', 'error');
+                    }
+                });
+            });
+
+            // Real-time password match validation
+            $('#ConfirmPassword').on('input', function() {
+                const newPassword = $('#NewPassword').val();
+                const confirmPassword = $(this).val();
+
+                if (confirmPassword && newPassword !== confirmPassword) {
+                    $('#confirmPasswordError').text('Passwords do not match');
+                } else {
+                    $('#confirmPasswordError').text('');
+                }
+            });
+        });
+
+        function resetPasswordForm() {
+            $('#changePasswordForm')[0].reset();
+            $('.text-danger').text('');
+        }
+
+        function showMessage(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            $('#messageContainer').html(
+                '<div class="alert ' + alertClass + '">' +
+                    '<i class="fas ' + icon + '"></i>' +
+                    '<span>' + message + '</span>' +
+                '</div>'
+            );
+
+            // Scroll to top to show message
+            $('html, body').animate({ scrollTop: 0 }, 300);
+        }
+    </script>
+}
+

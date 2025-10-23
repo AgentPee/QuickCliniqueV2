@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
+using QuickClinique.Attributes;
 
 namespace QuickClinique.Controllers
 {
+    [ClinicStaffOnly] // Only clinic staff can access patient records
     public class PrecordController : Controller
     {
         private readonly ApplicationDbContext _context;

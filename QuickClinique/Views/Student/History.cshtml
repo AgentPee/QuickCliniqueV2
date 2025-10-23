@@ -1,0 +1,453 @@
+@model IEnumerable<QuickClinique.Models.Appointment>
+@{
+    ViewData["Title"] = "Appointment History";
+}
+
+@section Styles {
+    <style>
+        .history-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-header h1 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .filter-group label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .filter-group button {
+            padding: 0.5rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group button:hover {
+            background: #5568d3;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #667eea;
+            box-shadow: 0 0 0 3px white;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f7fafc;
+        }
+
+        .timeline-date {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timeline-date i {
+            color: #667eea;
+        }
+
+        .status-badge {
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-badge.completed {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .timeline-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+        }
+
+        .info-item i {
+            color: #667eea;
+            margin-top: 0.25rem;
+            width: 20px;
+        }
+
+        .info-item-content {
+            flex: 1;
+        }
+
+        .info-item-label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-item-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: #cbd5e0;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        @@media (max-width: 768px) {
+            .timeline {
+                padding-left: 1.5rem;
+            }
+
+            .timeline-item::before {
+                left: -2rem;
+            }
+
+            .timeline-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="history-container">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-history"></i>
+            Appointment History
+        </h1>
+        <p>View all your past and upcoming appointments</p>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-group">
+            <div>
+                <label for="statusFilter">Filter by Status</label>
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div>
+                <label for="dateFilter">Filter by Date</label>
+                <input type="date" id="dateFilter" />
+            </div>
+            <div>
+                <button onclick="applyFilters()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="timeline" id="appointmentTimeline">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var appointment in Model)
+            {
+                var statusClass = appointment.AppointmentStatus.ToLower().Replace(" ", "-");
+                var date = appointment.Schedule?.Date ?? appointment.DateBooked;
+                var formattedDate = date.ToString("MMMM dd, yyyy");
+
+                <div class="timeline-item" data-status="@appointment.AppointmentStatus" data-date="@date">
+                    <div class="timeline-header">
+                        <span class="timeline-date">
+                            <i class="fas fa-calendar-day"></i>
+                            @formattedDate
+                        </span>
+                        <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                    </div>
+
+                    <div class="timeline-content">
+                        <div class="info-item">
+                            <i class="fas fa-stethoscope"></i>
+                            <div class="info-item-content">
+                                <div class="info-item-label">Service</div>
+                                <div class="info-item-value">@appointment.ReasonForVisit</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <div class="info-item-content">
+                                <div class="info-item-label">Time</div>
+                                <div class="info-item-value">
+                                    @if (appointment.Schedule != null)
+                                    {
+                                        <text>@appointment.Schedule.StartTime.ToString(@"hh\:mm tt") - @appointment.Schedule.EndTime.ToString(@"hh\:mm tt")</text>
+                                    }
+                                    else
+                                    {
+                                        <span>Not scheduled</span>
+                                    }
+                                </div>                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <i class="fas fa-list-ol"></i>
+                            <div class="info-item-content">
+                                <div class="info-item-label">Queue</div>
+                                <div class="info-item-value">
+                                    #@appointment.QueueNumber - @appointment.QueueStatus
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(appointment.Symptoms) && appointment.Symptoms != "No symptoms provided")
+                        {
+                            <div class="info-item">
+                                <i class="fas fa-notes-medical"></i>
+                                <div class="info-item-content">
+                                    <div class="info-item-label">Symptoms</div>
+                                    <div class="info-item-value">@appointment.Symptoms</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No Appointment History</h3>
+                <p>You haven't booked any appointments yet. Start by booking your first appointment!</p>
+                <a href="@Url.Action("Index", "Home")" class="btn-primary">
+                    <i class="fas fa-calendar-plus"></i>
+                    Book Appointment
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const items = document.querySelectorAll('.timeline-item');
+
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const itemStatus = item.getAttribute('data-status').toLowerCase();
+                const itemDate = item.getAttribute('data-date');
+
+                let showItem = true;
+
+                // Apply status filter
+                if (statusFilter && itemStatus !== statusFilter) {
+                    showItem = false;
+                }
+
+                // Apply date filter
+                if (dateFilter && itemDate !== dateFilter) {
+                    showItem = false;
+                }
+
+                if (showItem) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Show empty state if no items match
+            if (visibleCount === 0) {
+                const timeline = document.getElementById('appointmentTimeline');
+                if (!document.getElementById('emptyFilterState')) {
+                    const emptyState = document.createElement('div');
+                    emptyState.id = 'emptyFilterState';
+                    emptyState.className = 'empty-state';
+                    emptyState.innerHTML = `
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Found</h3>
+                        <p>No appointments match your filter criteria. Try adjusting your filters.</p>
+                        <button class="btn-primary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i>
+                            Clear Filters
+                        </button>
+                    `;
+                    timeline.appendChild(emptyState);
+                }
+            } else {
+                const emptyState = document.getElementById('emptyFilterState');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            applyFilters();
+        }
+    </script>
+}
+
