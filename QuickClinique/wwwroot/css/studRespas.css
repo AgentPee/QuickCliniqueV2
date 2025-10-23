@@ -1,4 +1,4 @@
-﻿/* QuickClinic Reset Password Styles */
+﻿﻿ /* QuickClinic Reset Password Styles */
 * {
     margin: 0;
     padding: 0;
@@ -22,8 +22,8 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     width: 100%;
-    max-width: 900px;
-    min-height: 600px;
+    max-width: 1000px;
+    min-height: 650px;
     display: flex;
     animation: slideUp 0.8s ease-out;
 }
@@ -69,7 +69,7 @@ body {
 .logo {
     width: 120px;
     height: 120px;
-    background: #1a3a8f;
+    background: transparent;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -79,7 +79,7 @@ body {
     animation: pulse 2s infinite;
     padding: 15px;
     overflow: hidden;
-    border: 3px solid white;
+    border: 3px solid rgba(255, 255, 255, 0.8);
 }
 
 @keyframes pulse {
@@ -97,6 +97,7 @@ body {
     height: 100%;
     object-fit: contain;
     border-radius: 50%;
+    filter: brightness(0) invert(1);
 }
 
 .clinic-name {
@@ -109,74 +110,74 @@ body {
 .tagline {
     font-size: 1.1rem;
     opacity: 0.9;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    transition: all 0.3s ease;
 }
 
+/* Medical Icons - Same as Login Page */
 .medical-icons {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin-top: 20px;
 }
 
 .floating-icon {
     position: absolute;
-    font-size: 1.5rem;
-    animation: float 3s ease-in-out infinite;
-    opacity: 0.3;
+    font-size: 2rem;
+    animation: float 6s ease-in-out infinite;
+    opacity: 0.7;
 }
 
     .floating-icon:nth-child(1) {
-        top: 20%;
-        left: 10%;
+        top: 10%;
+        left: 20%;
         animation-delay: 0s;
     }
 
     .floating-icon:nth-child(2) {
         top: 60%;
-        right: 15%;
-        animation-delay: 0.5s;
-    }
-
-    .floating-icon:nth-child(3) {
-        bottom: 30%;
-        left: 20%;
+        left: 10%;
         animation-delay: 1s;
     }
 
-    .floating-icon:nth-child(4) {
-        top: 80%;
-        right: 30%;
-        animation-delay: 1.5s;
-    }
-
-    .floating-icon:nth-child(5) {
-        top: 40%;
-        left: 25%;
+    .floating-icon:nth-child(3) {
+        top: 30%;
+        right: 20%;
         animation-delay: 2s;
     }
 
-    .floating-icon:nth-child(6) {
+    .floating-icon:nth-child(4) {
         bottom: 20%;
+        right: 30%;
+        animation-delay: 3s;
+    }
+
+    .floating-icon:nth-child(5) {
+        top: 70%;
         right: 20%;
-        animation-delay: 2.5s;
+        animation-delay: 4s;
+    }
+
+    .floating-icon:nth-child(6) {
+        top: 40%;
+        left: 40%;
+        animation-delay: 5s;
     }
 
 @keyframes float {
     0%, 100% {
-        transform: translateY(0px);
+        transform: translateY(0px) rotate(0deg);
     }
 
     50% {
-        transform: translateY(-10px);
+        transform: translateY(-20px) rotate(10deg);
     }
 }
 
 /* Form Panel */
 .form-panel {
-    flex: 1;
+    flex: 1.2;
     padding: 40px;
     display: flex;
     align-items: center;
@@ -201,7 +202,6 @@ body {
     color: #666;
     margin-bottom: 30px;
     font-size: 0.95rem;
-    line-height: 1.5;
 }
 
 .auth-form {
@@ -210,18 +210,18 @@ body {
 
 .input-group {
     position: relative;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
     .input-group label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
         color: #333;
         font-weight: 500;
         font-size: 0.9rem;
     }
 
-    .input-group input {
+    .input-group .form-control {
         width: 100%;
         padding: 12px 40px 12px 12px;
         border: 2px solid #e1e5e9;
@@ -231,7 +231,7 @@ body {
         background: #f8f9fa;
     }
 
-        .input-group input:focus {
+        .input-group .form-control:focus {
             outline: none;
             border-color: #4ECDC4;
             background: white;
@@ -241,7 +241,8 @@ body {
 .input-icon {
     position: absolute;
     right: 12px;
-    top: 38px;
+    top: 50%;
+    transform: translateY(-50%);
     font-size: 1.1rem;
     color: #666;
     pointer-events: none;
@@ -249,26 +250,21 @@ body {
 
 .toggle-password {
     position: absolute;
-    right: 12px;
-    top: 38px;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     font-size: 1.1rem;
-    color: #666;
-    transition: color 0.3s ease;
-    z-index: 10;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+    z-index: 2;
 }
 
     .toggle-password:hover {
-        color: #4ECDC4;
+        opacity: 1;
     }
 
-.text-danger {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 4px;
-    display: block;
-}
-
+/* Button Styles */
 .submit-btn {
     width: 100%;
     padding: 14px;
@@ -282,11 +278,16 @@ body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    margin-top: 10px;
 }
 
     .submit-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
     }
 
 .btn-text {
@@ -326,6 +327,17 @@ body {
     }
 }
 
+/* Messages */
+.success-message {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease-out;
+}
+
 .error-message {
     background: #f8d7da;
     color: #721c24;
@@ -334,6 +346,20 @@ body {
     padding: 12px;
     margin-bottom: 20px;
     animation: slideDown 0.3s ease-out;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 5px;
+    display: block;
 }
 
 @keyframes slideDown {
@@ -348,16 +374,37 @@ body {
     }
 }
 
+/* Back to Login */
+.back-to-login {
+    text-align: center;
+    margin-top: 25px;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.back-link {
+    color: #4ECDC4;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+    .back-link:hover {
+        color: #44A08D;
+        text-decoration: underline;
+    }
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
-        max-width: 400px;
+        max-width: 450px;
+        min-height: auto;
     }
 
     .side-panel {
         padding: 30px 20px;
-        min-height: 200px;
+        min-height: 250px;
     }
 
     .clinic-name {
@@ -366,6 +413,10 @@ body {
 
     .form-panel {
         padding: 30px 20px;
+    }
+
+    .medical-icons {
+        display: none;
     }
 }
 
@@ -379,10 +430,33 @@ body {
     }
 
     .form-panel {
-        padding: 20px;
+        padding: 25px 20px;
+    }
+
+    .side-panel {
+        padding: 25px 20px;
     }
 
     .clinic-name {
         font-size: 1.8rem;
+    }
+
+    .form-title {
+        font-size: 1.7rem;
+    }
+}
+
+/* Shake animation for invalid fields */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
     }
 }
