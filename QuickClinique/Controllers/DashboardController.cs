@@ -63,24 +63,59 @@ namespace QuickClinique.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateAppointmentStatus(int appointmentId, string status)
+        public async Task<IActionResult> UpdateAppointmentStatus([FromBody] UpdateStatusRequest request)
         {
             try
             {
-                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                Console.WriteLine($"UpdateAppointmentStatus called with appointmentId: {request?.appointmentId}, status: {request?.status}");
+                
+                if (request == null)
+                {
+                    Console.WriteLine("Request is null");
+                    return Json(new { success = false, message = "Invalid request" });
+                }
+                
+                var appointment = await _context.Appointments.FindAsync(request.appointmentId);
                 if (appointment == null)
                 {
+                    Console.WriteLine($"Appointment not found with ID: {request.appointmentId}");
                     return Json(new { success = false, message = "Appointment not found" });
                 }
 
-                appointment.AppointmentStatus = status;
+                Console.WriteLine($"Found appointment: {appointment.AppointmentId}, Current status: {appointment.AppointmentStatus}");
+
+                // Update appointment status
+                appointment.AppointmentStatus = request.status;
+                
+                // Update queue status based on appointment status
+                switch (request.status)
+                {
+                    case "Confirmed":
+                        appointment.QueueStatus = "Waiting";
+                        break;
+                    case "In Progress":
+                        appointment.QueueStatus = "Being Served";
+                        break;
+                    case "Completed":
+                        appointment.QueueStatus = "Completed";
+                        break;
+                    case "Cancelled":
+                        appointment.QueueStatus = "Cancelled";
+                        break;
+                    default:
+                        appointment.QueueStatus = "Waiting";
+                        break;
+                }
+
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"Appointment updated successfully. New status: {appointment.AppointmentStatus}, QueueStatus: {appointment.QueueStatus}");
 
                 return Json(new { success = true, message = "Appointment status updated successfully" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error updating appointment status" });
+                Console.WriteLine($"Error updating appointment status: {ex.Message}");
+                return Json(new { success = false, message = "Error updating appointment status: " + ex.Message });
             }
         }
 
@@ -149,5 +184,11 @@ namespace QuickClinique.Controllers
         public int CompletedCount { get; set; }
         public int TotalPatients { get; set; }
         public int AvailableSlots { get; set; }
+    }
+
+    public class UpdateStatusRequest
+    {
+        public int appointmentId { get; set; }
+        public string status { get; set; } = string.Empty;
     }
 }

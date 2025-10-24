@@ -349,17 +349,26 @@
                             <div class="appointment-actions">
                                 @if (appointment.AppointmentStatus == "Pending")
                                 {
-                                    <button class="status-btn confirm" onclick="updateAppointmentStatus(@appointment.AppointmentId, 'Confirmed')">
+                                    <button class="status-btn confirm" 
+                                            data-appointment-id="@appointment.AppointmentId" 
+                                            data-status="Confirmed"
+                                            onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                         Confirm
                                     </button>
                                 }
                                 @if (appointment.AppointmentStatus == "Confirmed")
                                 {
-                                    <button class="status-btn complete" onclick="updateAppointmentStatus(@appointment.AppointmentId, 'Completed')">
+                                    <button class="status-btn complete" 
+                                            data-appointment-id="@appointment.AppointmentId" 
+                                            data-status="Completed"
+                                            onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                         Complete
                                     </button>
                                 }
-                                <button class="status-btn cancel" onclick="updateAppointmentStatus(@appointment.AppointmentId, 'Cancelled')">
+                                <button class="status-btn cancel" 
+                                        data-appointment-id="@appointment.AppointmentId" 
+                                        data-status="Cancelled"
+                                        onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                     Cancel
                                 </button>
                             </div>
@@ -395,10 +404,16 @@
                                 </div>
                             </div>
                             <div class="appointment-actions">
-                                <button class="status-btn confirm" onclick="updateAppointmentStatus(@appointment.AppointmentId, 'Confirmed')">
+                                <button class="status-btn confirm" 
+                                        data-appointment-id="@appointment.AppointmentId" 
+                                        data-status="Confirmed"
+                                        onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                     Confirm
                                 </button>
-                                <button class="status-btn cancel" onclick="updateAppointmentStatus(@appointment.AppointmentId, 'Cancelled')">
+                                <button class="status-btn cancel" 
+                                        data-appointment-id="@appointment.AppointmentId" 
+                                        data-status="Cancelled"
+                                        onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                     Cancel
                                 </button>
                             </div>
@@ -465,9 +480,37 @@
 @section Scripts {
     <script>
         function updateAppointmentStatus(appointmentId, status) {
+            console.log('updateAppointmentStatus called with (raw):', { appointmentId, status });
+            console.log('appointmentId type:', typeof appointmentId);
+            console.log('status type:', typeof status);
+            
+            // Parse appointmentId to integer
+            const parsedId = parseInt(appointmentId, 10);
+            
+            console.log('Parsed appointmentId:', parsedId);
+            
+            if (!appointmentId || appointmentId === '0' || isNaN(parsedId) || parsedId === 0) {
+                console.error('appointmentId is missing or invalid:', appointmentId, 'parsed:', parsedId);
+                showMessage('Error: Invalid appointment ID', 'error');
+                return;
+            }
+            
+            if (!status || status.trim() === '') {
+                console.error('status is missing or invalid:', status);
+                showMessage('Error: Invalid status', 'error');
+                return;
+            }
+            
             if (!confirm(`Are you sure you want to ${status.toLowerCase()} this appointment?`)) {
                 return;
             }
+
+            const requestData = {
+                appointmentId: parsedId,
+                status: status
+            };
+            
+            console.log('Sending request:', requestData);
 
             fetch('/Dashboard/UpdateAppointmentStatus', {
                 method: 'POST',
@@ -475,25 +518,29 @@
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({
-                    appointmentId: appointmentId,
-                    status: status
-                })
+                body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
                     showMessage(data.message, 'success');
                     setTimeout(() => {
                         location.reload();
                     }, 1000);
                 } else {
-                    showMessage(data.message, 'error');
+                    showMessage(data.message || 'Failed to update appointment', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage('An error occurred while updating the appointment.', 'error');
+                showMessage('An error occurred while updating the appointment: ' + error.message, 'error');
             });
         }
 

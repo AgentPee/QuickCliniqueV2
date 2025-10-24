@@ -151,17 +151,23 @@
                             <td>@item.DateBooked.ToString("MMM dd, yyyy")</td>
                             <td>
                                 <div class="action-buttons">
-                                    <a asp-action="Details" asp-route-id="@item.AppointmentId" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Details
+                                    <a asp-action="Details" asp-route-id="@item.AppointmentId" class="btn btn-info btn-sm" title="View Details">
+                                        <i class="fas fa-eye"></i> View
                                     </a>
                                     @if (Context.Session.GetInt32("ClinicStaffId") != null)
                                     {
-                                        <a asp-action="Edit" asp-route-id="@item.AppointmentId" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.AppointmentId" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
+                                        @if (item.AppointmentStatus == "Pending")
+                                        {
+                                            <button type="button" class="btn btn-success btn-sm" onclick="confirmAppointment(@item.AppointmentId)" title="Confirm Appointment">
+                                                <i class="fas fa-check"></i> Confirm
+                                            </button>
+                                        }
+                                        @if (item.AppointmentStatus != "Cancelled" && item.AppointmentStatus != "Completed")
+                                        {
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="cancelAppointment(@item.AppointmentId)" title="Cancel Appointment">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </td>
@@ -183,3 +189,63 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function confirmAppointment(appointmentId) {
+            if (!confirm('Are you sure you want to confirm this appointment?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("ConfirmAppointment", "Appointments")',
+                type: 'POST',
+                data: {
+                    appointmentId: appointmentId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Appointment confirmed successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (response.error || 'Failed to confirm appointment'));
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        }
+
+        function cancelAppointment(appointmentId) {
+            if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+                return;
+            }
+
+            const reason = prompt('Please enter a reason for cancellation (optional):');
+
+            $.ajax({
+                url: '@Url.Action("CancelAppointment", "Appointments")',
+                type: 'POST',
+                data: {
+                    appointmentId: appointmentId,
+                    reason: reason || 'Cancelled by clinic staff',
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Appointment cancelled successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (response.error || 'Failed to cancel appointment'));
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}
