@@ -554,5 +554,240 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Failed to load appointments" });
             }
         }
+
+        // POST: Appointments/ConfirmAppointment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> ConfirmAppointment(int appointmentId)
+        {
+            try
+            {
+                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                
+                if (appointment == null)
+                {
+                    return Json(new { success = false, error = "Appointment not found" });
+                }
+
+                if (appointment.AppointmentStatus != "Pending")
+                {
+                    return Json(new { success = false, error = "Only pending appointments can be confirmed" });
+                }
+
+                appointment.AppointmentStatus = "Confirmed";
+                appointment.QueueStatus = "Waiting";
+                
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Appointment confirmed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to confirm appointment" });
+            }
+        }
+
+        // POST: Appointments/CancelAppointment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> CancelAppointment(int appointmentId, string reason = null)
+        {
+            try
+            {
+                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                
+                if (appointment == null)
+                {
+                    return Json(new { success = false, error = "Appointment not found" });
+                }
+
+                if (appointment.AppointmentStatus == "Cancelled")
+                {
+                    return Json(new { success = false, error = "Appointment is already cancelled" });
+                }
+
+                if (appointment.AppointmentStatus == "Completed")
+                {
+                    return Json(new { success = false, error = "Cannot cancel a completed appointment" });
+                }
+
+                appointment.AppointmentStatus = "Cancelled";
+                appointment.QueueStatus = "Cancelled";
+                
+                // Optionally store the cancellation reason in symptoms or create a new field
+                if (!string.IsNullOrEmpty(reason))
+                {
+                    appointment.Symptoms = $"{appointment.Symptoms}\n\nCancellation Reason: {reason}";
+                }
+                
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Appointment cancelled successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to cancel appointment" });
+            }
+        }
+
+        // POST: Appointments/CompleteAppointment - Complete appointment with medical record creation
+        [HttpPost]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> CompleteAppointment([FromBody] CompleteAppointmentViewModel model)
+        {
+            try
+            {
+                Console.WriteLine($"CompleteAppointment called with AppointmentId: {model.AppointmentId}, PatientId: {model.PatientId}");
+                
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    Console.WriteLine($"ModelState errors: {string.Join(", ", errors)}");
+                    return Json(new { success = false, error = "Invalid data provided", details = errors });
+                }
+
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == model.AppointmentId);
+                
+                if (appointment == null)
+                {
+                    Console.WriteLine($"Appointment not found with ID: {model.AppointmentId}");
+                    return Json(new { success = false, error = "Appointment not found" });
+                }
+
+                if (appointment.AppointmentStatus != "In Progress")
+                {
+                    return Json(new { success = false, error = "Only appointments in progress can be completed" });
+                }
+
+                // Update appointment status
+                appointment.AppointmentStatus = "Completed";
+                appointment.QueueStatus = "Completed";
+
+                // Create medical record (Precord)
+                var medicalRecord = new Precord
+                {
+                    PatientId = model.PatientId,
+                    Diagnosis = model.Diagnosis,
+                    Medications = model.Medications ?? "None",
+                    Allergies = model.Allergies ?? "None",
+                    Name = appointment.Patient?.FullName ?? "Unknown",
+                    Age = model.Age ?? 0,
+                    Gender = model.Gender ?? "Not specified",
+                    Bmi = model.Bmi.HasValue ? (int)model.Bmi.Value : 0
+                };
+
+                _context.Precords.Add(medicalRecord);
+                await _context.SaveChangesAsync();
+
+                // Create history record
+                var historyRecord = new History
+                {
+                    PatientId = model.PatientId,
+                    AppointmentId = appointment.AppointmentId,
+                    ScheduleId = appointment.ScheduleId,
+                    VisitReason = appointment.ReasonForVisit,
+                    Idnumber = appointment.Patient?.Idnumber ?? 0,
+                    Date = DateOnly.FromDateTime(DateTime.Now)
+                };
+
+                _context.Histories.Add(historyRecord);
+                await _context.SaveChangesAsync();
+
+                return Json(new 
+                { 
+                    success = true, 
+                    message = "Appointment completed successfully",
+                    medicalRecordId = medicalRecord.RecordId,
+                    historyRecordId = historyRecord.HistoryId
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error completing appointment: {ex.Message}");
+                return Json(new { success = false, error = "Failed to complete appointment" });
+            }
+        }
+
+        // GET: Appointments/GetQueueStatus - Get real-time queue status for students
+        [HttpGet]
+        public async Task<IActionResult> GetQueueStatus(int? studentId = null)
+        {
+            try
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                
+                // Get all today's appointments in queue
+                var todayAppointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.Schedule.Date == today && 
+                               (a.AppointmentStatus == "Pending" || 
+                                a.AppointmentStatus == "Confirmed" || 
+                                a.AppointmentStatus == "In Progress"))
+                    .OrderBy(a => a.QueueNumber)
+                    .ToListAsync();
+
+                // Get currently being served
+                var nowServing = todayAppointments
+                    .FirstOrDefault(a => a.QueueStatus == "Being Served");
+
+                // Get waiting count
+                var waitingCount = todayAppointments
+                    .Count(a => a.QueueStatus == "Waiting");
+
+                // Get student's position if studentId provided
+                int? userQueueNumber = null;
+                string? userQueueStatus = null;
+                int? userPosition = null;
+
+                if (studentId.HasValue)
+                {
+                    var userAppointment = todayAppointments
+                        .FirstOrDefault(a => a.PatientId == studentId.Value);
+
+                    if (userAppointment != null)
+                    {
+                        userQueueNumber = userAppointment.QueueNumber;
+                        userQueueStatus = userAppointment.QueueStatus;
+                        
+                        // Calculate position in queue (only count waiting appointments before this one)
+                        if (userAppointment.QueueStatus == "Waiting")
+                        {
+                            userPosition = todayAppointments
+                                .Count(a => a.QueueStatus == "Waiting" && 
+                                           a.QueueNumber < userAppointment.QueueNumber) + 1;
+                        }
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        nowServing = nowServing != null ? new
+                        {
+                            queueNumber = nowServing.QueueNumber,
+                            patientName = nowServing.Patient?.FullName ?? "Unknown",
+                            service = nowServing.ReasonForVisit
+                        } : null,
+                        waitingCount = waitingCount,
+                        totalInQueue = todayAppointments.Count,
+                        userQueueNumber = userQueueNumber,
+                        userQueueStatus = userQueueStatus,
+                        userPosition = userPosition,
+                        lastUpdated = DateTime.Now
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to fetch queue status" });
+            }
+        }
     }
 }

@@ -154,6 +154,8 @@
 }
 
 <div class="appointment-management">
+    @Html.AntiForgeryToken()
+    
     <div class="management-header">
         <h2><i class="fas fa-calendar-check"></i> Manage Appointments</h2>
         <div>
@@ -266,7 +268,7 @@
                                 }
                                 @if (item.AppointmentStatus == "In Progress")
                                 {
-                                    <button class="btn btn-success btn-sm" onclick="updateStatus(@item.AppointmentId, 'Completed')">
+                                    <button class="btn btn-success btn-sm" onclick="completeAppointment(@item.AppointmentId, @item.PatientId)">
                                         <i class="fas fa-check-circle"></i> Complete
                                     </button>
                                 }
@@ -285,6 +287,109 @@
                 }
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Complete Appointment Modal -->
+<div class="modal fade" id="completeAppointmentModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="completeModalLabel">
+                    <i class="fas fa-check-circle"></i> Complete Appointment
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="completeAppointmentForm">
+                    <input type="hidden" id="completeAppointmentId" name="appointmentId">
+                    <input type="hidden" id="completePatientId" name="patientId">
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> Completing this appointment will create a medical record for the patient.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="diagnosis">
+                            <i class="fas fa-stethoscope"></i> Diagnosis <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" required 
+                                  placeholder="Enter the diagnosis..."></textarea>
+                        <small class="form-text text-muted">Describe the patient's condition and diagnosis</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="medications">
+                            <i class="fas fa-pills"></i> Medications Prescribed
+                        </label>
+                        <textarea class="form-control" id="medications" name="medications" rows="3" 
+                                  placeholder="List medications prescribed (optional)"></textarea>
+                        <small class="form-text text-muted">Include dosage and instructions if applicable</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="allergies">
+                            <i class="fas fa-exclamation-triangle"></i> Allergies Noted
+                        </label>
+                        <input type="text" class="form-control" id="allergies" name="allergies" 
+                               placeholder="Any allergies noted (optional)">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="patientAge">
+                                    <i class="fas fa-birthday-cake"></i> Age
+                                </label>
+                                <input type="number" class="form-control" id="patientAge" name="age" 
+                                       placeholder="Patient age" min="1" max="120">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="patientGender">
+                                    <i class="fas fa-venus-mars"></i> Gender
+                                </label>
+                                <select class="form-control" id="patientGender" name="gender">
+                                    <option value="">Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="patientBMI">
+                                    <i class="fas fa-weight"></i> BMI
+                                </label>
+                                <input type="number" class="form-control" id="patientBMI" name="bmi" 
+                                       placeholder="BMI" step="0.1" min="10" max="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="additionalNotes">
+                            <i class="fas fa-notes-medical"></i> Additional Notes
+                        </label>
+                        <textarea class="form-control" id="additionalNotes" name="additionalNotes" rows="2" 
+                                  placeholder="Any additional notes or observations (optional)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitCompleteAppointment()">
+                    <i class="fas fa-check-circle"></i> Complete Appointment
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -364,5 +469,105 @@
                 alert('An error occurred while updating the appointment status.');
             }
         }
+
+        // Complete appointment with medical record
+        function completeAppointment(appointmentId, patientId) {
+            // Set the appointment and patient IDs in the modal
+            document.getElementById('completeAppointmentId').value = appointmentId;
+            document.getElementById('completePatientId').value = patientId;
+            
+            // Reset form
+            document.getElementById('completeAppointmentForm').reset();
+            document.getElementById('completeAppointmentId').value = appointmentId;
+            document.getElementById('completePatientId').value = patientId;
+            
+            // Show the modal
+            $('#completeAppointmentModal').modal('show');
+        }
+
+        async function submitCompleteAppointment() {
+            const form = document.getElementById('completeAppointmentForm');
+            
+            // Validate required fields
+            const diagnosis = document.getElementById('diagnosis').value.trim();
+            if (!diagnosis) {
+                alert('Please enter a diagnosis before completing the appointment.');
+                document.getElementById('diagnosis').focus();
+                return;
+            }
+
+            const appointmentId = document.getElementById('completeAppointmentId').value;
+            const patientId = document.getElementById('completePatientId').value;
+            
+            console.log('Raw values from form:');
+            console.log('  appointmentId:', appointmentId);
+            console.log('  patientId:', patientId);
+            
+            // Validate IDs are present
+            if (!appointmentId || !patientId) {
+                alert('Error: Missing appointment or patient ID. Please try again.');
+                console.error('Missing IDs - appointmentId:', appointmentId, 'patientId:', patientId);
+                return;
+            }
+            
+            // Prepare form data
+            const formData = {
+                appointmentId: parseInt(appointmentId),
+                patientId: parseInt(patientId),
+                diagnosis: diagnosis,
+                medications: document.getElementById('medications').value.trim() || null,
+                allergies: document.getElementById('allergies').value.trim() || null,
+                age: document.getElementById('patientAge').value ? parseInt(document.getElementById('patientAge').value) : null,
+                gender: document.getElementById('patientGender').value || null,
+                bmi: document.getElementById('patientBMI').value ? parseFloat(document.getElementById('patientBMI').value) : null,
+                additionalNotes: document.getElementById('additionalNotes').value.trim() || null
+            };
+
+            console.log('Submitting completion data:', formData);
+            console.log('Parsed appointmentId:', formData.appointmentId);
+            console.log('Parsed patientId:', formData.patientId);
+
+            try {
+                const response = await fetch('/Appointments/CompleteAppointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    console.error('HTTP error:', response.status, response.statusText);
+                    alert('Server error: ' + response.status + ' ' + response.statusText);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                if (result.success) {
+                    $('#completeAppointmentModal').modal('hide');
+                    alert('Appointment completed successfully! Medical record has been created.');
+                    location.reload(); // Refresh to show updated status
+                } else {
+                    console.error('Error from server:', result.error, result.details);
+                    let errorMsg = 'Error: ' + (result.error || 'Failed to complete appointment');
+                    if (result.details) {
+                        errorMsg += '\nDetails: ' + JSON.stringify(result.details);
+                    }
+                    alert(errorMsg);
+                }
+            } catch (error) {
+                console.error('Error completing appointment:', error);
+                alert('An error occurred while completing the appointment. Please try again.\n\nError: ' + error.message);
+            }
+        }
+
+        // Close modal when clicking outside or pressing ESC
+        $('#completeAppointmentModal').on('hidden.bs.modal', function () {
+            document.getElementById('completeAppointmentForm').reset();
+        });
     </script>
 }
