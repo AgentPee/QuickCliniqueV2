@@ -1,6 +1,294 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Frequently Asked Questions - QuickClinic";
+    Layout = "_Layout";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/health.css" asp-append-version="true" />
+}
+
+<div class="health-container">
+    <!-- Hero Section -->
+    <section class="health-hero">
+        <div class="hero-content">
+            <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
+            <p>Find quick answers about our school clinic services and student healthcare</p>
+        </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="health-quick-links">
+        <div class="link-cards">
+            <a href="#appointments" class="link-card">
+                <i class="fas fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+            <a href="#services" class="link-card">
+                <i class="fas fa-stethoscope"></i>
+                <span>Services</span>
+            </a>
+            <a href="#medications" class="link-card">
+                <i class="fas fa-pills"></i>
+                <span>Medications</span>
+            </a>
+            <a href="#emergency" class="link-card">
+                <i class="fas fa-ambulance"></i>
+                <span>Emergency</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- FAQ Sections -->
+    <section class="health-sections">
+        <!-- Appointments -->
+        <div class="health-section" id="appointments">
+            <h2><i class="fas fa-calendar-check"></i> Appointments & Visits</h2>
+            <div class="health-items">
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>How do students visit the clinic?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Students can visit the clinic through:</p>
+                        <ul>
+                            <li><strong>Walk-in:</strong> During clinic hours for urgent needs</li>
+                            <li><strong>Scheduled:</strong> Book appointments through the online portal</li>
+                            <li><strong>Teacher referral:</strong> Sent by teachers for health concerns</li>
+                            <li><strong>Emergency:</strong> Immediate care for urgent health issues</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>What information do I need to provide?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>For student visits, we need:</p>
+                        <ul>
+                            <li>Student ID number</li>
+                            <li>Parent/guardian contact information</li>
+                            <li>Medical history and allergies</li>
+                            <li>Current medications (if any)</li>
+                            <li>Emergency contact details</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>Can parents accompany students?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Parents are welcome to accompany their children during clinic visits. Please check in at the main office first to get a visitor pass.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services -->
+        <div class="health-section" id="services">
+            <h2><i class="fas fa-stethoscope"></i> Clinic Services</h2>
+            <div class="health-items">
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>What services does the school clinic provide?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Our school clinic offers:</p>
+                        <ul>
+                            <li>First aid and emergency care</li>
+                            <li>Health assessments and screenings</li>
+                            <li>Medication administration</li>
+                            <li>Health education and counseling</li>
+                            <li>Immunization records management</li>
+                            <li>Chronic condition monitoring</li>
+                            <li>Mental health support</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>Do you handle medical emergencies?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Yes, we handle medical emergencies according to school protocols:</p>
+                        <ul>
+                            <li><strong>Minor emergencies:</strong> Treated in the clinic</li>
+                            <li><strong>Serious emergencies:</strong> We contact parents and emergency services</li>
+                            <li><strong>Emergency action plans:</strong> Available for students with known conditions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>Are vaccinations required?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>We follow state vaccination requirements for school attendance:</p>
+                        <ul>
+                            <li>Vaccination records must be up to date</li>
+                            <li>Exemptions require proper documentation</li>
+                            <li>We can help coordinate vaccination clinics</li>
+                            <li>Records are maintained in student health files</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medications -->
+        <div class="health-section" id="medications">
+            <h2><i class="fas fa-pills"></i> Medication Management</h2>
+            <div class="health-items">
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>Can students take medication at school?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Yes, with proper authorization:</p>
+                        <ul>
+                            <li>Prescription medications require doctor's orders</li>
+                            <li>Over-the-counter medications need parent permission</li>
+                            <li>All medications must be in original containers</li>
+                            <li>Medication administration forms must be completed</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>What is the medication policy?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Our medication policy ensures student safety:</p>
+                        <ul>
+                            <li>All medications stored securely in the clinic</li>
+                            <li>Self-carry privileges for certain medications (inhalers, epi-pens)</li>
+                            <li>Documentation of every dose administered</li>
+                            <li>Parent notification for any medication issues</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>How are medication errors prevented?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>We follow strict safety protocols:</p>
+                        <ul>
+                            <li>Double-check all medications before administration</li>
+                            <li>Maintain accurate medication logs</li>
+                            <li>Regular inventory checks</li>
+                            <li>Staff training on medication safety</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency & Health -->
+        <div class="health-section" id="emergency">
+            <h2><i class="fas fa-ambulance"></i> Emergency & Health Policies</h2>
+            <div class="health-items">
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>What happens in a health emergency?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Our emergency response includes:</p>
+                        <ul>
+                            <li><strong>Immediate first aid</strong> by trained staff</li>
+                            <li><strong>Parent/guardian notification</strong> immediately</li>
+                            <li><strong>EMS activation</strong> for serious situations</li>
+                            <li><strong>Accident reports</strong> documentation</li>
+                            <li><strong>Follow-up care</strong> coordination</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>When should students stay home sick?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Students should stay home if they have:</p>
+                        <ul>
+                            <li>Fever of 100.4°F or higher</li>
+                            <li>Vomiting or diarrhea</li>
+                            <li>Contagious illnesses (flu, COVID-19 symptoms)</li>
+                            <li>Severe cough or difficulty breathing</li>
+                            <li>Undiagnosed rash</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-question">
+                        <h3>What are the clinic hours?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="health-answer">
+                        <p>Our clinic operates during school hours:</p>
+                        <ul>
+                            <li><strong>Monday - Friday:</strong> 7:30 AM - 3:30 PM</li>
+                            <li><strong>Early dismissal days:</strong> 7:30 AM - 12:00 PM</li>
+                            <li><strong>Closed during school holidays</strong></li>
+                            <li><strong>Emergency contact:</strong> Available through school office after hours</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="health-contact">
+        <div class="contact-card">
+            <h3><i class="fas fa-headset"></i> Need More Help?</h3>
+            <p>Contact our school clinic team for assistance</p>
+            <div class="contact-options">
+                <div class="contact-option">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <strong>Clinic Office</strong>
+                        <p>(555) 123-4567</p>
+                    </div>
+                </div>
+                <div class="contact-option">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <strong>Email</strong>
+                        <p>clinic@school.edu</p>
+                    </div>
+                </div>
+                <div class="contact-option">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <strong>Hours</strong>
+                        <p>Mon-Fri: 7:30 AM - 3:30 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/health.js"></script>
+}

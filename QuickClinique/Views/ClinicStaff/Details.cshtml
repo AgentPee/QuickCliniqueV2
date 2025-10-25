@@ -4,62 +4,105 @@
     ViewData["Title"] = "Clinic Staff Details";
 }
 
-<h2>Clinic Staff Details</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/StaffDetails.css" />
+}
 
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">
-            @Html.DisplayNameFor(model => model.FirstName)
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.FirstName)
-        </dd>
+<div class="staff-details-container">
+    <div class="details-header">
+        <h2><i class="fas fa-user-md"></i> Clinic Staff Details</h2>
+        <p class="staff-id">Staff ID: #@Model.ClinicStaffId</p>
+    </div>
 
-        <dt class="col-sm-3">
-            @Html.DisplayNameFor(model => model.LastName)
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.LastName)
-        </dd>
+    <div class="details-content">
+        <div class="staff-profile">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="profile-info">
+                <h3 class="staff-name">
+                    <span class="first-name">@Html.DisplayFor(model => model.FirstName)</span>
+                    <span class="last-name">@Html.DisplayFor(model => model.LastName)</span>
+                </h3>
+                <div class="role-badge role-@Model.User?.Role?.ToLower()">
+                    <i class="fas fa-user-tag"></i>
+                    @Html.DisplayFor(model => model.User.Role)
+                </div>
+            </div>
+        </div>
 
-        <dt class="col-sm-3">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
+        <div class="details-grid">
+            <div class="detail-section">
+                <h4><i class="fas fa-id-card"></i> Personal Information</h4>
+                <div class="detail-items">
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-user"></i> First Name
+                        </span>
+                        <span class="detail-value name-first">@Html.DisplayFor(model => model.FirstName)</span>
+                    </div>
 
-        <dt class="col-sm-3">
-            @Html.DisplayNameFor(model => model.PhoneNumber)
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.PhoneNumber)
-        </dd>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-user"></i> Last Name
+                        </span>
+                        <span class="detail-value name-last">@Html.DisplayFor(model => model.LastName)</span>
+                    </div>
 
-        <dt class="col-sm-3">
-            User Role
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.User.Role)
-        </dd>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-envelope"></i> Email
+                        </span>
+                        <span class="detail-value">@Html.DisplayFor(model => model.Email)</span>
+                    </div>
 
-        <dt class="col-sm-3">
-            User ID
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.UserId)
-        </dd>
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </span>
+                        <span class="detail-value">@Html.DisplayFor(model => model.PhoneNumber)</span>
+                    </div>
+                </div>
+            </div>
 
-        <dt class="col-sm-3">
-            Staff ID
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.ClinicStaffId)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model.ClinicStaffId" class="btn btn-primary">Edit</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            <div class="detail-section">
+                <h4><i class="fas fa-key"></i> System Information</h4>
+                <div class="detail-items">
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-id-badge"></i> Staff ID
+                        </span>
+                        <span class="detail-value id-number">#@Html.DisplayFor(model => model.ClinicStaffId)</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-user-circle"></i> User ID
+                        </span>
+                        <span class="detail-value id-number">#@Html.DisplayFor(model => model.UserId)</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-label">
+                            <i class="fas fa-user-tag"></i> User Role
+                        </span>
+                        <span class="detail-value">
+                            <span class="role-badge role-@Model.User?.Role?.ToLower()">
+                                @Html.DisplayFor(model => model.User.Role)
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a asp-action="Edit" asp-route-id="@Model.ClinicStaffId" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Staff
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
 </div>

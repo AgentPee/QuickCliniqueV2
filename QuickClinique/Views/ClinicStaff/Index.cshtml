@@ -3,48 +3,69 @@
     ViewData["Title"] = "Clinic Staff";
 }
 
-<h2>Clinic Staff</h2>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/StaffIndex.css" />
 }
 
+<div class="staff-management">
+    <div class="staff-header">
+        <h2><i class="fas fa-user-md"></i> Clinic Staff</h2>
 
-
-
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
-
-<table class="table table-striped">
-    <thead class="thead-dark">
-        <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-            <th>Phone Number</th>
-            <th>User Role</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
+        @if (TempData["SuccessMessage"] != null)
         {
-            <tr>
-                <td>@item.FirstName</td>
-                <td>@item.LastName</td>
-                <td>@item.Email</td>
-                <td>@item.PhoneNumber</td>
-                <td>@item.User?.Role</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-action="Details" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-info">Details</a>
-                    <a asp-action="Delete" asp-route-id="@item.ClinicStaffId" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            </div>
         }
-    </tbody>
-</table>
+
+        <div class="header-actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Staff
+            </a>
+        </div>
+    </div>
+
+    <div class="staff-table-container">
+        <table class="staff-table">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>User Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="staff-name">@item.FirstName</td>
+                        <td class="staff-name">@item.LastName</td>
+                        <td>@item.Email</td>
+                        <td>@item.PhoneNumber</td>
+                        <td>
+                            <span class="role-badge role-@item.User?.Role?.ToLower()">
+                                @item.User?.Role
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a asp-action="Edit" asp-route-id="@item.ClinicStaffId" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a asp-action="Details" asp-route-id="@item.ClinicStaffId" class="btn btn-info btn-sm">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@item.ClinicStaffId" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

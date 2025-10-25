@@ -1,0 +1,475 @@
+﻿/* Staff Details Styles - Teal Medical Theme */
+.staff-details-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.details-header {
+    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+    .details-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+
+        .details-header h2 i {
+            font-size: 2.5rem;
+        }
+
+.staff-id {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.details-content {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Staff Profile */
+.staff-profile {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #4ECDC4;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+    .staff-profile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+.profile-avatar {
+    font-size: 4rem;
+    color: #4ECDC4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.staff-name {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.first-name {
+    color: #4ECDC4;
+}
+
+.last-name {
+    color: #44A08D;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: black;
+}
+
+.role-admin {
+    background: #4ECDC4;
+}
+
+.role-doctor {
+    background: #28a745;
+}
+
+.role-nurse {
+    background: #17a2b8;
+}
+
+.role-staff {
+    background: #6c757d;
+}
+
+.role-receptionist {
+    background: #ffc107;
+    color: #333;
+}
+
+/* Details Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.detail-section {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #4ECDC4;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+    .detail-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .detail-section h4 {
+        margin: 0 0 1.5rem 0;
+        color: #333;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+        .detail-section h4 i {
+            color: #4ECDC4;
+        }
+
+.detail-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+    .detail-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+.detail-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .detail-label i {
+        color: #4ECDC4;
+        width: 16px;
+    }
+
+.detail-value {
+    color: #333;
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+/* Fix for nested role badge in detail items */
+.detail-item .role-badge {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* Name Styling */
+.name-first {
+    color: #4ECDC4;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.name-last {
+    color: #44A08D;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* ID Styling */
+.id-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #333;
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #e1e5e9;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 2rem;
+    border-top: 2px solid #e1e5e9;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-width: 160px;
+    justify-content: center;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primary {
+    background: #4ECDC4;
+    color: white;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        color: white;
+    }
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.staff-profile {
+    animation: fadeInUp 0.6s ease;
+}
+
+.detail-section:first-child {
+    animation: slideInFromLeft 0.6s ease;
+}
+
+.detail-section:last-child {
+    animation: slideInFromRight 0.6s ease;
+}
+
+.action-buttons {
+    animation: fadeInUp 0.6s ease 0.3s both;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .staff-details-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .details-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .details-header h2 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+    .details-content {
+        padding: 1.5rem;
+        border-radius: 0 0 10px 10px;
+    }
+
+    .staff-profile {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .staff-name {
+        font-size: 1.5rem;
+        justify-content: center;
+    }
+
+    .profile-avatar {
+        font-size: 3rem;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    .detail-label {
+        min-width: auto;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .details-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .staff-id {
+        font-size: 0.8rem;
+    }
+
+    .staff-name {
+        font-size: 1.3rem;
+    }
+
+    .profile-avatar {
+        font-size: 2.5rem;
+    }
+
+    .detail-section {
+        padding: 1rem;
+    }
+
+        .detail-section h4 {
+            font-size: 1rem;
+        }
+
+    .btn {
+        padding: 1.25rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .role-badge {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Focus States for Accessibility */
+.btn:focus {
+    outline: 3px solid rgba(78, 205, 196, 0.5);
+    outline-offset: 2px;
+}
+
+/* Hover Effects */
+.detail-item:hover .detail-label i {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Print Styles */
+@media print {
+    .action-buttons {
+        display: none;
+    }
+
+    .details-header {
+        background: #6c757d !important;
+        color: white !important;
+    }
+
+    .staff-profile {
+        background: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}

@@ -1,0 +1,730 @@
+﻿/* Schedule Edit Styles */
+/* Clean Teal Medical Dashboard Theme */
+
+.schedule-edit-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+    .edit-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        font-weight: 600;
+        font-size: 2rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+        .edit-header h2 i {
+            font-size: 2.5rem;
+        }
+
+.schedule-id {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.edit-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Edit Card */
+.edit-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0;
+    border: 1px solid #e1e5e9;
+    height: 100%;
+}
+
+    .edit-card .card-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e1e5e9;
+        border-radius: 12px 12px 0 0;
+    }
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+    .header-content h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.3rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+        .header-content h4 i {
+            color: #4ECDC4;
+        }
+
+.edit-card .card-body {
+    padding: 2rem;
+}
+
+/* Form Styles */
+.schedule-edit-form {
+    width: 100%;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+    .form-label i {
+        color: #4ECDC4;
+        width: 16px;
+    }
+
+.form-group.focused .form-label {
+    color: #4ECDC4;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: #4ECDC4;
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .form-control:valid {
+        border-color: #28a745;
+    }
+
+    .form-control.invalid-time {
+        border-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+/* Availability Select Styling */
+.availability-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Validation Styles */
+.validation-summary {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #dc3545;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.validation-message {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: 500;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e1e5e9;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        background-color: #e0a800;
+        color: #333;
+    }
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        background-color: #c82333;
+        color: white;
+    }
+
+.btn-info {
+    background-color: #4ECDC4;
+    color: white;
+}
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+        background-color: #44b8b0;
+        color: white;
+    }
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        background-color: #5a6268;
+        color: white;
+    }
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* Info Sidebar */
+.info-sidebar {
+    height: 100%;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e1e5e9;
+    height: 100%;
+}
+
+    .info-card .card-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e1e5e9;
+        border-radius: 12px 12px 0 0;
+    }
+
+        .info-card .card-header h5 {
+            margin: 0;
+            color: #333;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+            .info-card .card-header h5 i {
+                color: #4ECDC4;
+            }
+
+    .info-card .card-body {
+        padding: 1.5rem;
+    }
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #4ECDC4;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+    .info-label i {
+        color: #4ECDC4;
+        width: 14px;
+    }
+
+.info-value {
+    color: #333;
+    font-weight: 500;
+    font-size: 0.9rem;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Special Value Styling */
+.id-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #4ECDC4;
+}
+
+.time-slot {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #333;
+}
+
+.appointments-count {
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+    .appointments-count.has-appointments {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    .appointments-count.no-appointments {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+/* Banner Styles */
+.warning-banner {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    border-left: 4px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: #856404;
+}
+
+    .warning-banner i {
+        font-size: 1.1rem;
+        color: #ffc107;
+        margin-top: 0.1rem;
+    }
+
+    .warning-banner strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .warning-banner p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+.success-banner {
+    background-color: #d4edda;
+    border: 2px solid #28a745;
+    border-left: 4px solid #28a745;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: #155724;
+}
+
+    .success-banner i {
+        font-size: 1.1rem;
+        color: #28a745;
+        margin-top: 0.1rem;
+    }
+
+    .success-banner strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .success-banner p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+/* Delete Modal Styles */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.danger-header {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+    .danger-header .modal-title {
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 600;
+    }
+
+    .danger-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+.modal-warning {
+    margin-bottom: 1.5rem;
+}
+
+    .modal-warning h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+.delete-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e1e5e9;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-row .label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .detail-row .value {
+        color: #333;
+        font-weight: 500;
+        font-size: 0.9rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+.appointment-count {
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+    .appointment-count.has-appointments {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    .appointment-count.no-appointments {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+.critical-warning {
+    background-color: #f8d7da;
+    border: 2px solid #dc3545;
+    border-left: 4px solid #dc3545;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: #721c24;
+}
+
+    .critical-warning i {
+        font-size: 1.1rem;
+        color: #dc3545;
+        margin-top: 0.1rem;
+    }
+
+    .critical-warning strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .critical-warning p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+.modal-footer {
+    border-top: 1px solid #e1e5e9;
+    padding: 1.5rem;
+}
+
+.delete-form {
+    margin: 0;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.edit-card {
+    animation: fadeInUp 0.6s ease;
+}
+
+.info-sidebar {
+    animation: slideInFromRight 0.6s ease 0.2s both;
+}
+
+.form-group {
+    animation: fadeInUp 0.6s ease;
+}
+
+    .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .schedule-edit-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .edit-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .edit-header h2 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+    .edit-content {
+        padding: 1.5rem;
+        border-radius: 0 0 10px 10px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    .modal-dialog {
+        margin: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .schedule-id {
+        font-size: 0.8rem;
+    }
+
+    .header-content h4 {
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        padding: 1rem;
+    }
+
+    .btn {
+        padding: 1rem 1.5rem;
+    }
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.form-control:focus,
+.availability-select:focus {
+    outline: 3px solid rgba(78, 205, 196, 0.5);
+    outline-offset: 2px;
+}
