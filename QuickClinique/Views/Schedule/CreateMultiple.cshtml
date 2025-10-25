@@ -3,21 +3,29 @@
 @{
     ViewData["Title"] = "Create Multiple Schedules";
     Layout = "_Layout";
-
-
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-8">
+@section Styles {
+    <link rel="stylesheet" href="~/css/SchedCM.css" />
+}
+
+<div class="schedules-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-calendar-plus"></i> Create Multiple Schedules</h1>
+            <p class="header-subtitle">Create schedules for a date range with specific days of the week.</p>
+        </div>
+    </div>
+
+    <div class="create-multiple-layout">
+        <div class="form-section">
             <div class="card">
                 <div class="card-header">
-                    <h4>Create Multiple Schedules</h4>
-                    <p class="text-muted mb-0">Create schedules for a date range with specific days of the week.</p>
+                    <h4><i class="fas fa-calendar-week"></i> Schedule Information</h4>
                 </div>
                 <div class="card-body">
                     <form asp-action="CreateMultiple">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="row">
                             <div class="col-md-6">
@@ -53,7 +61,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group mb-3">
+                        <div class="form-group mb-4">
                             <label asp-for="IsAvailable" class="control-label">Availability</label>
                             <select asp-for="IsAvailable" class="form-control">
                                 <option value="Yes">Available</option>
@@ -64,15 +72,26 @@
 
                         <div class="form-group mb-4">
                             <label class="control-label">Days of Week (Optional - select none for all days)</label>
-                            <div class="row mt-2">
+                            <div class="days-selection-buttons mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectWeekdays">
+                                    <i class="fas fa-briefcase"></i> Weekdays
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectWeekend">
+                                    <i class="fas fa-calendar-day"></i> Weekend
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSelection">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                            <div class="row">
                                 @{
                                     var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
                                 }
                                 @foreach (var day in daysOfWeek)
                                 {
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-md-3 col-6 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="SelectedDays" value="@day"
+                                            <input class="form-check-input day-checkbox" type="checkbox" name="SelectedDays" value="@day"
                                                    id="day-@day" @(Model.SelectedDays?.Contains(day) == true ? "checked" : "")>
                                             <label class="form-check-label" for="day-@day">
                                                 @day
@@ -90,27 +109,30 @@
                             <a asp-action="CreateQuick" class="btn btn-outline-primary">
                                 <i class="fas fa-bolt"></i> Quick Create
                             </a>
-                            <a asp-action="Availability" class="btn btn-secondary">Back to List</a>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card">
+        <div class="preview-section">
+            <div class="card preview-card sticky-preview">
                 <div class="card-header">
-                    <h5>Preview</h5>
+                    <h5><i class="fas fa-eye"></i> Preview</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted" id="previewText">
+                    <p class="preview-count" id="previewText">
                         Select dates and times to see a preview of the schedules that will be created.
                     </p>
-                    <div id="schedulePreview" class="mt-3"></div>
+                    <div id="schedulePreview" class="preview-list"></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 @section Scripts {
@@ -119,6 +141,30 @@
     }
 
     <script>
+        // Day selection buttons
+        document.getElementById('selectWeekdays')?.addEventListener('click', function() {
+            const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+                checkbox.checked = weekdays.includes(checkbox.value);
+            });
+            updatePreview();
+        });
+
+        document.getElementById('selectWeekend')?.addEventListener('click', function() {
+            const weekend = ['Saturday', 'Sunday'];
+            document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+                checkbox.checked = weekend.includes(checkbox.value);
+            });
+            updatePreview();
+        });
+
+        document.getElementById('clearSelection')?.addEventListener('click', function() {
+            document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updatePreview();
+        });
+
         function updatePreview() {
             const startDateInput = document.getElementById('StartDate');
             const endDateInput = document.getElementById('EndDate');
@@ -135,8 +181,8 @@
             const endTime = endTimeInput.value;
 
             if (!startDateInput.value || !endDateInput.value || !startTime || !endTime) {
-                document.getElementById('previewText').textContent =
-                    'Select dates and times to see a preview.';
+                document.getElementById('previewText').innerHTML =
+                    '<i class="fas fa-info-circle"></i> Select dates and times to see a preview.';
                 document.getElementById('schedulePreview').innerHTML = '';
                 return;
             }
@@ -164,25 +210,27 @@
             }
 
             // Update preview
-            document.getElementById('previewText').textContent =
-                `Will create ${schedules.length} schedule(s):`;
+            document.getElementById('previewText').innerHTML =
+                `<i class="fas fa-calendar-check"></i> Will create <strong>${schedules.length}</strong> schedule(s)`;
 
-            let previewHtml = '<div class="list-group">';
-            schedules.slice(0, 10).forEach(schedule => {
+            let previewHtml = '<div class="preview-items">';
+            schedules.slice(0, 15).forEach(schedule => {
                 previewHtml += `
-                    <div class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">${schedule.day}</h6>
-                            <small>${schedule.date}</small>
+                    <div class="preview-item">
+                        <div class="preview-item-header">
+                            <span class="preview-day">${schedule.day}</span>
+                            <span class="preview-date">${schedule.date}</span>
                         </div>
-                        <p class="mb-1">${schedule.startTime} - ${schedule.endTime}</p>
+                        <div class="preview-time">
+                            <i class="fas fa-clock"></i> ${schedule.startTime} - ${schedule.endTime}
+                        </div>
                     </div>
                 `;
             });
 
-            if (schedules.length > 10) {
-                previewHtml += `<div class="list-group-item text-center text-muted">
-                    ... and ${schedules.length - 10} more
+            if (schedules.length > 15) {
+                previewHtml += `<div class="preview-item preview-more">
+                    <i class="fas fa-ellipsis-h"></i> and ${schedules.length - 15} more schedule(s)
                 </div>`;
             }
 
@@ -201,5 +249,22 @@
 
         // Initial preview
         updatePreview();
+
+        // Match preview height to form height
+        function matchHeights() {
+            const formCard = document.querySelector('.form-section .card');
+            const previewCard = document.querySelector('.preview-section .card');
+            if (formCard && previewCard) {
+                const formHeight = formCard.offsetHeight;
+                previewCard.style.height = formHeight + 'px';
+            }
+        }
+
+        // Call on load and resize
+        matchHeights();
+        window.addEventListener('resize', matchHeights);
+
+        // Also match after a short delay to ensure content is loaded
+        setTimeout(matchHeights, 100);
     </script>
 }
