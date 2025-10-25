@@ -1,0 +1,454 @@
+﻿/* Schedule Create Styles - Teal Medical Theme */
+.schedule-create-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.create-header {
+    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+    .create-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+
+        .create-header h2 i {
+            font-size: 2.5rem;
+        }
+
+.subtitle {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.create-card {
+    background: #ffffff;
+    padding: 0;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background: #f8f9fa;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+    .card-header h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .card-header h4 i {
+            color: #4ECDC4;
+        }
+
+.card-body {
+    padding: 2rem;
+}
+
+.schedule-form {
+    width: 100%;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+    .form-label i {
+        color: #4ECDC4;
+        width: 16px;
+    }
+
+.form-group.focused .form-label {
+    color: #4ECDC4;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #333;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: #4ECDC4;
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .form-control:valid {
+        border-color: #28a745;
+    }
+
+    .form-control:invalid:not(:focus):not(:placeholder-shown) {
+        border-color: #dc3545;
+    }
+
+/* Availability Select Styling */
+.availability-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+    .availability-select option[value="Yes"] {
+        background: #28a745;
+        color: white;
+        padding: 0.5rem;
+    }
+
+    .availability-select option[value="No"] {
+        background: #dc3545;
+        color: white;
+        padding: 0.5rem;
+    }
+
+/* Validation Styles */
+.validation-summary {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #dc3545;
+}
+
+.validation-message {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: 500;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+    line-height: 1.6;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e1e5e9;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primary {
+    background: #4ECDC4;
+    color: white;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        color: white;
+    }
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+/* Tips Card */
+.tips-card {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tips-header {
+    background: #ffc107;
+    padding: 1rem 1.5rem;
+    color: #856404;
+}
+
+    .tips-header h5 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+.tips-body {
+    padding: 1.5rem;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+    .tip-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .tip-item:first-child {
+        padding-top: 0;
+    }
+
+    .tip-item i {
+        font-size: 1.25rem;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+        .tip-item i.text-primary {
+            color: #4ECDC4;
+        }
+
+        .tip-item i.text-success {
+            color: #28a745;
+        }
+
+        .tip-item i.text-danger {
+            color: #dc3545;
+        }
+
+    .tip-item strong {
+        display: block;
+        color: #856404;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .tip-item p {
+        margin: 0;
+        color: #856404;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.create-card {
+    animation: fadeInUp 0.6s ease;
+}
+
+.tips-card {
+    animation: slideInFromLeft 0.6s ease 0.2s both;
+}
+
+.form-group {
+    animation: fadeInUp 0.6s ease;
+}
+
+    .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .schedule-create-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .create-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .create-header h2 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tip-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+        .tip-item i {
+            margin-top: 0;
+        }
+}
+
+@media (max-width: 480px) {
+    .create-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
+    }
+
+    .card-header h4 {
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        padding: 1rem;
+    }
+
+    .btn {
+        padding: 1rem 1.5rem;
+    }
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.form-control:focus,
+.availability-select:focus {
+    outline: 3px solid rgba(78, 205, 196, 0.5);
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .tips-card,
+    .btn {
+        display: none;
+    }
+
+    .create-header {
+        background: #6c757d !important;
+        color: white !important;
+    }
+}

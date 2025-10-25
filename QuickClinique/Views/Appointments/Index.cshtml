@@ -1,251 +1,236 @@
 ﻿@model IEnumerable<QuickClinique.Models.Appointment>
 @{
     ViewData["Title"] = "Appointments";
+    Layout = "_Layout";
 }
 
 @section Styles {
-    <style>
-        .appointments-container {
-            padding: 20px;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
-        
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
-        .status-in-progress { background-color: #d4edda; color: #155724; }
-        .status-completed { background-color: #cce5ff; color: #004085; }
-        .status-cancelled { background-color: #f8d7da; color: #721c24; }
-        
-        .queue-badge {
-            background-color: #6c757d;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-        }
-        
-        .table-responsive {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .table th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-        }
-        
-        .patient-info {
-            font-weight: 500;
-        }
-        
-        .appointment-time {
-            color: #6c757d;
-            font-size: 0.9em;
-        }
-        
-        .symptoms-text {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.8em;
-        }
-        
-        .no-appointments {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-        
-        .no-appointments i {
-            font-size: 3em;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/appoIndex.css" asp-append-version="true" />
 }
 
 <div class="appointments-container">
-    <div class="page-header">
-        <h2><i class="fas fa-calendar-check"></i> Appointments</h2>
-        <div>
-            @if (Context.Session.GetInt32("ClinicStaffId") != null)
+    <div class="content-card">
+        <!-- Enhanced Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="header-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Appointments</h2>
+                        <p class="header-subtitle">View and manage all appointment records</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    @if (Context.Session.GetInt32("ClinicStaffId") != null)
+                    {
+                        <a asp-action="Manage" class="btn btn-primary">
+                            <i class="fas fa-cogs"></i>
+                            <span>Manage</span>
+                        </a>
+                        <a asp-action="Queue" class="btn btn-success">
+                            <i class="fas fa-users"></i>
+                            <span>Queue</span>
+                        </a>
+                    }
+                    <a asp-action="Create" class="btn btn-create">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>New Appointment</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Summary (if appointments exist) -->
+        @if (Model.Any())
+        {
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="stat-icon stat-icon-total">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value">@Model.Count()</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon stat-icon-pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value">@Model.Count(a => a.AppointmentStatus == "Pending")</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon stat-icon-confirmed">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value">@Model.Count(a => a.AppointmentStatus == "Confirmed")</div>
+                        <div class="stat-label">Confirmed</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon stat-icon-completed">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-value">@Model.Count(a => a.AppointmentStatus == "Completed")</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Table Container -->
+        <div class="table-container">
+            @if (Model.Any())
             {
-                <a asp-action="Manage" class="btn btn-primary">
-                    <i class="fas fa-cogs"></i> Manage Appointments
-                </a>
-                <a asp-action="Queue" class="btn btn-success">
-                    <i class="fas fa-users"></i> Queue Management
-                </a>
+                <div class="table-header">
+                    <h5><i class="fas fa-list-ul"></i> All Appointments</h5>
+                    <span class="record-count">Showing @Model.Count() record(s)</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-user"></i> Patient</th>
+                                <th><i class="fas fa-calendar-day"></i> Date & Time</th>
+                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                <th><i class="fas fa-hashtag"></i> Queue</th>
+                                <th><i class="fas fa-comment-medical"></i> Reason</th>
+                                <th><i class="fas fa-notes-medical"></i> Symptoms</th>
+                                <th><i class="fas fa-clock"></i> Booked</th>
+                                <th><i class="fas fa-cog"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="patient-info">
+                                            <i class="fas fa-user-circle patient-icon"></i>
+                                            <span class="patient-name">@item.Patient?.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="datetime-info">
+                                            <div class="date-primary">
+                                                <i class="fas fa-calendar"></i>
+                                                @item.Schedule?.Date.ToString("MMM dd, yyyy")
+                                            </div>
+                                            <div class="appointment-time">
+                                                <i class="fas fa-clock"></i>
+                                                @item.Schedule?.StartTime.ToString("h:mm tt") - @item.Schedule?.EndTime.ToString("h:mm tt")
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-@item.AppointmentStatus.ToLower().Replace(" ", "-")">
+                                            @if (item.AppointmentStatus == "Pending")
+                                            {
+                                                <i class="fas fa-hourglass-half"></i>
+                                            }
+                                            else if (item.AppointmentStatus == "Confirmed")
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else if (item.AppointmentStatus == "In Progress")
+                                            {
+                                                <i class="fas fa-spinner"></i>
+                                            }
+                                            else if (item.AppointmentStatus == "Completed")
+                                            {
+                                                <i class="fas fa-check-circle"></i>
+                                            }
+                                            else if (item.AppointmentStatus == "Cancelled")
+                                            {
+                                                <i class="fas fa-times-circle"></i>
+                                            }
+                                            <span>@item.AppointmentStatus</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="queue-info">
+                                            <span class="queue-badge">
+                                                <i class="fas fa-hashtag"></i>@item.QueueNumber
+                                            </span>
+                                            <span class="queue-status">@item.QueueStatus</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="reason-tag">@item.ReasonForVisit</span>
+                                    </td>
+                                    <td>
+                                        <div class="symptoms-text" title="@item.Symptoms">
+                                            @item.Symptoms
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="date-booked">
+                                            @item.DateBooked.ToString("MMM dd, yyyy")
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a asp-action="Details" asp-route-id="@item.AppointmentId"
+                                               class="btn btn-info btn-sm"
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            @if (Context.Session.GetInt32("ClinicStaffId") != null)
+                                            {
+                                                @if (item.AppointmentStatus == "Pending")
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-success btn-sm"
+                                                            onclick="confirmAppointment(@item.AppointmentId)"
+                                                            title="Confirm Appointment">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                }
+                                                @if (item.AppointmentStatus != "Cancelled" && item.AppointmentStatus != "Completed")
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                            onclick="cancelAppointment(@item.AppointmentId)"
+                                                            title="Cancel Appointment">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             }
-            <a asp-action="Create" class="btn btn-outline-primary">
-                <i class="fas fa-plus"></i> Create New
-            </a>
+            else
+            {
+                <div class="no-appointments">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h4>No Appointments Yet</h4>
+                    <p>There are no appointments in the system. Create your first appointment to get started.</p>
+                    <a asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Create First Appointment</span>
+                    </a>
+                </div>
+            }
         </div>
     </div>
-
-    @if (Model.Any())
-    {
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Patient</th>
-                        <th>Date & Time</th>
-                        <th>Status</th>
-                        <th>Queue</th>
-                        <th>Reason</th>
-                        <th>Symptoms</th>
-                        <th>Date Booked</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td class="patient-info">@item.Patient?.FullName</td>
-                            <td>
-                                <div>@item.Schedule?.Date.ToString("MMM dd, yyyy")</div>
-                                <div class="appointment-time">@item.Schedule?.StartTime.ToString("h:mm tt") - @item.Schedule?.EndTime.ToString("h:mm tt")</div>
-                            </td>
-                            <td>
-                                <span class="status-badge status-@item.AppointmentStatus.ToLower().Replace(" ", "-")">
-                                    @item.AppointmentStatus
-                                </span>
-                            </td>
-                            <td>
-                                <span class="queue-badge">#@item.QueueNumber</span>
-                                <div class="appointment-time">@item.QueueStatus</div>
-                            </td>
-                            <td>@item.ReasonForVisit</td>
-                            <td class="symptoms-text" title="@item.Symptoms">@item.Symptoms</td>
-                            <td>@item.DateBooked.ToString("MMM dd, yyyy")</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a asp-action="Details" asp-route-id="@item.AppointmentId" class="btn btn-info btn-sm" title="View Details">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    @if (Context.Session.GetInt32("ClinicStaffId") != null)
-                                    {
-                                        @if (item.AppointmentStatus == "Pending")
-                                        {
-                                            <button type="button" class="btn btn-success btn-sm" onclick="confirmAppointment(@item.AppointmentId)" title="Confirm Appointment">
-                                                <i class="fas fa-check"></i> Confirm
-                                            </button>
-                                        }
-                                        @if (item.AppointmentStatus != "Cancelled" && item.AppointmentStatus != "Completed")
-                                        {
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="cancelAppointment(@item.AppointmentId)" title="Cancel Appointment">
-                                                <i class="fas fa-times"></i> Cancel
-                                            </button>
-                                        }
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="no-appointments">
-            <i class="fas fa-calendar-times"></i>
-            <h4>No Appointments Found</h4>
-            <p>There are no appointments to display at this time.</p>
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create First Appointment
-            </a>
-        </div>
-    }
 </div>
 
 @section Scripts {
-    <script>
-        function confirmAppointment(appointmentId) {
-            if (!confirm('Are you sure you want to confirm this appointment?')) {
-                return;
-            }
-
-            $.ajax({
-                url: '@Url.Action("ConfirmAppointment", "Appointments")',
-                type: 'POST',
-                data: {
-                    appointmentId: appointmentId,
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Appointment confirmed successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + (response.error || 'Failed to confirm appointment'));
-                    }
-                },
-                error: function() {
-                    alert('An error occurred. Please try again.');
-                }
-            });
-        }
-
-        function cancelAppointment(appointmentId) {
-            if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
-                return;
-            }
-
-            const reason = prompt('Please enter a reason for cancellation (optional):');
-
-            $.ajax({
-                url: '@Url.Action("CancelAppointment", "Appointments")',
-                type: 'POST',
-                data: {
-                    appointmentId: appointmentId,
-                    reason: reason || 'Cancelled by clinic staff',
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Appointment cancelled successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + (response.error || 'Failed to cancel appointment'));
-                    }
-                },
-                error: function() {
-                    alert('An error occurred. Please try again.');
-                }
-            });
-        }
-    </script>
+    <script src="~/js/appoIndex.js"></script>
     @Html.AntiForgeryToken()
 }

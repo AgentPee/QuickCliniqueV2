@@ -5,90 +5,136 @@
     Layout = "_Layout";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Schedule Details</h4>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Schedule ID:</dt>
-                        <dd class="col-sm-8">@Model.ScheduleId</dd>
+@section Styles {
+    <link rel="stylesheet" href="~/css/schedDetails.css" />
+}
 
-                        <dt class="col-sm-4">Date:</dt>
-                        <dd class="col-sm-8">@Model.Date.ToString("yyyy-MM-dd")</dd>
+<div class="schedule-details-container">
+    <div class="details-header">
+        <h2><i class="fas fa-calendar-alt"></i> Schedule Details</h2>
+        <p class="schedule-id">Schedule ID: #@Model.ScheduleId</p>
+    </div>
 
-                        <dt class="col-sm-4">Day:</dt>
-                        <dd class="col-sm-8">@Model.Date.DayOfWeek</dd>
+    <div class="details-content">
+        <div class="row">
+            <!-- Schedule Information -->
+            <div class="col-md-6">
+                <div class="info-card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-info-circle"></i> Schedule Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-id-badge"></i> Schedule ID
+                                </span>
+                                <span class="detail-value id-number">#@Model.ScheduleId</span>
+                            </div>
 
-                        <dt class="col-sm-4">Start Time:</dt>
-                        <dd class="col-sm-8">@Model.StartTime.ToString("hh\\:mm tt")</dd>
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-calendar-day"></i> Date
+                                </span>
+                                <span class="detail-value">@Model.Date.ToString("yyyy-MM-dd")</span>
+                            </div>
 
-                        <dt class="col-sm-4">End Time:</dt>
-                        <dd class="col-sm-8">@Model.EndTime.ToString("hh\\:mm tt")</dd>
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-calendar-week"></i> Day
+                                </span>
+                                <span class="detail-value day-highlight">@Model.Date.DayOfWeek</span>
+                            </div>
 
-                        <dt class="col-sm-4">Availability:</dt>
-                        <dd class="col-sm-8">
-                            <span class="badge @(Model.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
-                                @(Model.IsAvailable == "Yes" ? "Available" : "Unavailable")
-                            </span>
-                        </dd>
-                    </dl>
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-play-circle"></i> Start Time
+                                </span>
+                                <span class="detail-value time-slot">@Model.StartTime.ToString("hh\\:mm tt")</span>
+                            </div>
 
-                    <div class="mt-4">
-                        <a asp-action="Edit" asp-route-id="@Model.ScheduleId" class="btn btn-warning">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                        <a asp-action="Availability" class="btn btn-secondary">
-                            <i class="fas fa-list"></i> Back to List
-                        </a>
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-stop-circle"></i> End Time
+                                </span>
+                                <span class="detail-value time-slot">@Model.EndTime.ToString("hh\\:mm tt")</span>
+                            </div>
+
+                            <div class="detail-item">
+                                <span class="detail-label">
+                                    <i class="fas fa-toggle-on"></i> Availability
+                                </span>
+                                <span class="detail-value">
+                                    <span class="availability-badge @(Model.IsAvailable == "Yes" ? "available" : "unavailable")">
+                                        <i class="fas @(Model.IsAvailable == "Yes" ? "fa-check" : "fa-times")"></i>
+                                        @(Model.IsAvailable == "Yes" ? "Available" : "Unavailable")
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <a asp-action="Edit" asp-route-id="@Model.ScheduleId" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit Schedule
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            <a asp-action="Availability" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Appointments Section -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Related Appointments</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.Appointments != null && Model.Appointments.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Appointment ID</th>
-                                        <th>Patient</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var appointment in Model.Appointments)
-                                    {
-                                        <tr>
-                                            <td>@appointment.AppointmentId</td>
-                                            <td>@(appointment.Patient?.FirstName + " " + appointment.Patient?.LastName)</td>
-                                            <td>
-                                                <span class="badge bg-info">@appointment.AppointmentStatus</span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted">No appointments scheduled for this time slot.</p>
-                    }
+            <!-- Appointments Section -->
+            <div class="col-md-6">
+                <div class="appointments-card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-calendar-check"></i> Related Appointments</h4>
+                        <span class="appointments-count">
+                            @(Model.Appointments?.Count ?? 0)
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Appointments != null && Model.Appointments.Any())
+                        {
+                            <div class="appointments-list">
+                                @foreach (var appointment in Model.Appointments)
+                                {
+                                    <div class="appointment-item">
+                                        <div class="appointment-header">
+                                            <span class="appointment-id">#@appointment.AppointmentId</span>
+                                            <span class="status-badge status-@appointment.AppointmentStatus?.ToLower()">
+                                                @appointment.AppointmentStatus
+                                            </span>
+                                        </div>
+                                        <div class="appointment-details">
+                                            <div class="patient-info">
+                                                <i class="fas fa-user"></i>
+                                                <strong>@(appointment.Patient?.FirstName + " " + appointment.Patient?.LastName)</strong>
+                                            </div>
+                                            <div class="appointment-meta">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i>
+                                                    Created: @appointment.DateBooked.ToString("MMM dd, yyyy")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-appointments">
+                                <i class="fas fa-calendar-times"></i>
+                                <h5>No Appointments</h5>
+                                <p class="text-muted">No appointments scheduled for this time slot.</p>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -97,42 +143,59 @@
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header danger-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
-                    <p class="mb-0">Are you sure you want to delete this schedule?</p>
+                <div class="warning-banner">
+                    <i class="fas fa-radiation"></i>
+                    <div>
+                        <h6>Delete Schedule</h6>
+                        <p class="mb-0">Are you sure you want to delete this schedule? This action cannot be undone.</p>
+                    </div>
                 </div>
-                <dl class="row">
-                    <dt class="col-sm-4">Date:</dt>
-                    <dd class="col-sm-8">@Model.Date.ToString("yyyy-MM-dd")</dd>
 
-                    <dt class="col-sm-4">Time:</dt>
-                    <dd class="col-sm-8">@Model.StartTime.ToString("hh\\:mm tt") - @Model.EndTime.ToString("hh\\:mm tt")</dd>
-
-                    <dt class="col-sm-4">Appointments:</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge @(Model.Appointments?.Count > 0 ? "bg-danger" : "bg-success")">
-                            @(Model.Appointments?.Count ?? 0) appointment(s)
+                <div class="delete-details">
+                    <div class="detail-row">
+                        <span class="label">Date:</span>
+                        <span class="value">@Model.Date.ToString("yyyy-MM-dd")</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Time Slot:</span>
+                        <span class="value">@Model.StartTime.ToString("hh\\:mm tt") - @Model.EndTime.ToString("hh\\:mm tt")</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Appointments:</span>
+                        <span class="value">
+                            <span class="appointment-count @(Model.Appointments?.Count > 0 ? "has-appointments" : "no-appointments")">
+                                <i class="fas fa-calendar-check"></i>
+                                @(Model.Appointments?.Count ?? 0) appointment(s)
+                            </span>
                         </span>
-                    </dd>
-                </dl>
+                    </div>
+                </div>
+
                 @if (Model.Appointments?.Count > 0)
                 {
-                    <div class="alert alert-danger">
-                        <strong>Important:</strong> This schedule has @Model.Appointments.Count appointment(s) associated with it.
-                        Deleting this schedule will also remove these appointments.
+                    <div class="critical-warning">
+                        <i class="fas fa-skull-crossbones"></i>
+                        <div>
+                            <strong>Critical Warning</strong>
+                            <p>This schedule has @Model.Appointments.Count active appointment(s). Deleting this schedule will permanently remove all associated appointments.</p>
+                        </div>
                     </div>
                 }
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form asp-action="Delete" method="post">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form asp-action="Delete" method="post" class="delete-form">
                     <input type="hidden" name="id" value="@Model.ScheduleId" />
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash"></i> Delete Schedule
@@ -142,3 +205,27 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation to appointment items
+            const appointmentItems = document.querySelectorAll('.appointment-item');
+            appointmentItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Modal enhancement
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function() {
+                    document.body.classList.add('modal-open');
+                });
+
+                deleteModal.addEventListener('hidden.bs.modal', function() {
+                    document.body.classList.remove('modal-open');
+                });
+            }
+        });
+    </script>
+}

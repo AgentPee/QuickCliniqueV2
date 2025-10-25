@@ -1,0 +1,295 @@
+﻿/* Staff Edit Styles - Teal Medical Theme */
+@import url('staffedit.css');
+.staff-edit-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+}
+
+.edit-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+}
+
+.edit-header h2 i {
+    font-size: 2rem;
+}
+
+.staff-id {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.edit-form-container {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.staff-edit-form {
+    width: 100%;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: #4ECDC4;
+    width: 16px;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #333;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-control.touched:valid {
+    border-color: #28a745;
+}
+
+.form-control.touched:invalid {
+    border-color: #dc3545;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+    line-height: 1.6;
+}
+
+/* Validation Styles */
+.validation-summary {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #dc3545;
+}
+
+.validation-message {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Button Styles */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e1e5e9;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primary {
+    background: #4ECDC4;
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+    color: white;
+}
+
+/* Name Field Specific Styling */
+input[name="FirstName"],
+input[name="LastName"] {
+    font-weight: 500;
+    color: #333;
+    background: #f8f9fa;
+}
+
+input[name="FirstName"]:focus,
+input[name="LastName"]:focus {
+    background: #ffffff;
+    border-color: #4ECDC4;
+}
+
+/* Phone Number Field */
+input[name="PhoneNumber"] {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Password Field */
+input[name="newPassword"] {
+    font-family: 'Courier New', monospace;
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.staff-edit-form {
+    animation: slideIn 0.5s ease;
+}
+
+.form-group {
+    animation: slideIn 0.5s ease;
+}
+
+.form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-group:nth-child(2) { animation-delay: 0.2s; }
+.form-group:nth-child(3) { animation-delay: 0.3s; }
+.form-group:nth-child(4) { animation-delay: 0.4s; }
+.form-group:nth-child(5) { animation-delay: 0.5s; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .staff-edit-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .edit-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .edit-header h2 {
+        font-size: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .edit-form-container {
+        padding: 1.5rem;
+        border-radius: 0 0 10px 10px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .form-control {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .staff-id {
+        font-size: 0.8rem;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+    }
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Success State Animation */
+.form-control.valid {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}

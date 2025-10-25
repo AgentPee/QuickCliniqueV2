@@ -4,161 +4,19 @@
 }
 
 @section Styles {
-    <style>
-        .appointment-management {
-            padding: 20px;
-        }
-        
-        .management-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
-        
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
-        .status-in-progress { background-color: #d4edda; color: #155724; }
-        .status-completed { background-color: #cce5ff; color: #004085; }
-        .status-cancelled { background-color: #f8d7da; color: #721c24; }
-        
-        .queue-badge {
-            background-color: #6c757d;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.8em;
-        }
-        
-        .filters {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .filter-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9em;
-        }
-        
-        .table-responsive {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .table th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-        }
-        
-        .patient-info {
-            font-weight: 500;
-        }
-        
-        .appointment-time {
-            color: #6c757d;
-            font-size: 0.9em;
-        }
-        
-        .symptoms-text {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .refresh-btn {
-            background: none;
-            border: none;
-            color: #007bff;
-            cursor: pointer;
-            padding: 5px;
-        }
-        
-        .refresh-btn:hover {
-            color: #0056b3;
-        }
-        
-        @@media (max-width: 768px) {
-            .management-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .filter-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .action-buttons {
-                justify-content: center;
-            }
-            
-            .stats-cards {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/appoMan.css" />
 }
 
 <div class="appointment-management">
     @Html.AntiForgeryToken()
-    
+
+    <!-- Enhanced Header -->
     <div class="management-header">
-        <h2><i class="fas fa-calendar-check"></i> Manage Appointments</h2>
-        <div>
+        <div class="header-content">
+            <h2><i class="fas fa-calendar-check"></i> Appointment Management</h2>
+            <p class="header-subtitle">Manage and track all patient appointments</p>
+        </div>
+        <div class="header-actions">
             <button class="btn btn-primary" onclick="refreshAppointments()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -168,32 +26,55 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Enhanced Statistics Cards -->
     <div class="stats-cards">
-        <div class="stat-card">
-            <div class="stat-number" id="totalAppointments">@Model.Count()</div>
-            <div class="stat-label">Total Appointments</div>
+        <div class="stat-card stat-card-total">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalAppointments">@Model.Count()</div>
+                <div class="stat-label">Total Appointments</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-number" id="pendingAppointments">@Model.Count(a => a.AppointmentStatus == "Pending")</div>
-            <div class="stat-label">Pending</div>
+        <div class="stat-card stat-card-pending">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="pendingAppointments">@Model.Count(a => a.AppointmentStatus == "Pending")</div>
+                <div class="stat-label">Pending</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-number" id="confirmedAppointments">@Model.Count(a => a.AppointmentStatus == "Confirmed")</div>
-            <div class="stat-label">Confirmed</div>
+        <div class="stat-card stat-card-confirmed">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="confirmedAppointments">@Model.Count(a => a.AppointmentStatus == "Confirmed")</div>
+                <div class="stat-label">Confirmed</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-number" id="todayAppointments">@Model.Count(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Now))</div>
-            <div class="stat-label">Today's Appointments</div>
+        <div class="stat-card stat-card-today">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="todayAppointments">@Model.Count(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Now))</div>
+                <div class="stat-label">Today's Appointments</div>
+            </div>
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Enhanced Filters -->
     <div class="filters">
+        <div class="filter-header">
+            <h5><i class="fas fa-filter"></i> Filter Appointments</h5>
+        </div>
         <div class="filter-group">
-            <div>
-                <label for="statusFilter">Filter by Status:</label>
-                <select id="statusFilter" class="form-control" style="width: 150px;">
+            <div class="filter-item">
+                <label for="statusFilter"><i class="fas fa-info-circle"></i> Status</label>
+                <select id="statusFilter" class="form-control">
                     <option value="">All Statuses</option>
                     <option value="Pending">Pending</option>
                     <option value="Confirmed">Confirmed</option>
@@ -202,101 +83,165 @@
                     <option value="Cancelled">Cancelled</option>
                 </select>
             </div>
-            <div>
-                <label for="dateFilter">Filter by Date:</label>
-                <input type="date" id="dateFilter" class="form-control" style="width: 150px;">
+            <div class="filter-item">
+                <label for="dateFilter"><i class="fas fa-calendar"></i> Date</label>
+                <input type="date" id="dateFilter" class="form-control">
             </div>
-            <div>
-                <label for="searchPatient">Search Patient:</label>
-                <input type="text" id="searchPatient" class="form-control" placeholder="Patient name..." style="width: 200px;">
+            <div class="filter-item">
+                <label for="searchPatient"><i class="fas fa-search"></i> Search Patient</label>
+                <input type="text" id="searchPatient" class="form-control" placeholder="Enter patient name...">
             </div>
-            <div>
-                <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+            <div class="filter-item filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times-circle"></i> Clear
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Appointments Table -->
-    <div class="table-responsive">
-        <table class="table table-hover" id="appointmentsTable">
-            <thead>
-                <tr>
-                    <th>Patient</th>
-                    <th>Date & Time</th>
-                    <th>Status</th>
-                    <th>Queue</th>
-                    <th>Reason</th>
-                    <th>Symptoms</th>
-                    <th>Date Booked</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr data-status="@item.AppointmentStatus" data-date="@item.Schedule.Date.ToString("yyyy-MM-dd")" data-patient="@item.Patient.FullName.ToLower()">
-                        <td class="patient-info">@item.Patient.FullName</td>
-                        <td>
-                            <div>@item.Schedule.Date.ToString("MMM dd, yyyy")</div>
-                            <div class="appointment-time">@item.Schedule.StartTime.ToString("h:mm tt") - @item.Schedule.EndTime.ToString("h:mm tt")</div>
-                        </td>
-                        <td>
-                            <span class="status-badge status-@item.AppointmentStatus.ToLower().Replace(" ", "-")">
-                                @item.AppointmentStatus
-                            </span>
-                        </td>
-                        <td>
-                            <span class="queue-badge">#@item.QueueNumber</span>
-                            <div class="appointment-time">@item.QueueStatus</div>
-                        </td>
-                        <td>@item.ReasonForVisit</td>
-                        <td class="symptoms-text" title="@item.Symptoms">@item.Symptoms</td>
-                        <td>@item.DateBooked.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            <div class="action-buttons">
-                                @if (item.AppointmentStatus == "Pending")
-                                {
-                                    <button class="btn btn-success btn-sm" onclick="updateStatus(@item.AppointmentId, 'Confirmed')">
-                                        <i class="fas fa-check"></i> Confirm
-                                    </button>
-                                }
-                                @if (item.AppointmentStatus == "Confirmed")
-                                {
-                                    <button class="btn btn-primary btn-sm" onclick="updateStatus(@item.AppointmentId, 'In Progress')">
-                                        <i class="fas fa-play"></i> Start
-                                    </button>
-                                }
-                                @if (item.AppointmentStatus == "In Progress")
-                                {
-                                    <button class="btn btn-success btn-sm" onclick="completeAppointment(@item.AppointmentId, @item.PatientId)">
-                                        <i class="fas fa-check-circle"></i> Complete
-                                    </button>
-                                }
-                                @if (item.AppointmentStatus != "Completed" && item.AppointmentStatus != "Cancelled")
-                                {
-                                    <button class="btn btn-warning btn-sm" onclick="updateStatus(@item.AppointmentId, 'Cancelled')">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </button>
-                                }
-                                <a href="@Url.Action("Details", new { id = item.AppointmentId })" class="btn btn-info btn-sm">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                            </div>
-                        </td>
+    <!-- Enhanced Appointments Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h5><i class="fas fa-list"></i> Appointments List</h5>
+            <span class="table-count" id="tableCount">Showing @Model.Count() appointments</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover" id="appointmentsTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Patient</th>
+                        <th><i class="fas fa-calendar"></i> Date & Time</th>
+                        <th><i class="fas fa-info-circle"></i> Status</th>
+                        <th><i class="fas fa-hashtag"></i> Queue</th>
+                        <th><i class="fas fa-comment-medical"></i> Reason</th>
+                        <th><i class="fas fa-notes-medical"></i> Symptoms</th>
+                        <th><i class="fas fa-clock"></i> Date Booked</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="no-appointments">
+                                    <i class="fas fa-calendar-times"></i>
+                                    <h5>No Appointments Found</h5>
+                                    <p>There are no appointments to display at this time.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr data-status="@item.AppointmentStatus" data-date="@item.Schedule.Date.ToString("yyyy-MM-dd")" data-patient="@item.Patient.FullName.ToLower()">
+                                <td>
+                                    <div class="patient-info">
+                                        <i class="fas fa-user-circle patient-icon"></i>
+                                        <span>@item.Patient.FullName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-info">
+                                        <div class="date-primary">@item.Schedule.Date.ToString("MMM dd, yyyy")</div>
+                                        <div class="appointment-time">
+                                            <i class="fas fa-clock"></i> @item.Schedule.StartTime.ToString("h:mm tt") - @item.Schedule.EndTime.ToString("h:mm tt")
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-@item.AppointmentStatus.ToLower().Replace(" ", "-")">
+                                        @if (item.AppointmentStatus == "Pending")
+                                        {
+                                            <i class="fas fa-clock"></i>
+                                        }
+                                        else if (item.AppointmentStatus == "Confirmed")
+                                        {
+                                            <i class="fas fa-check"></i>
+                                        }
+                                        else if (item.AppointmentStatus == "In Progress")
+                                        {
+                                            <i class="fas fa-spinner"></i>
+                                        }
+                                        else if (item.AppointmentStatus == "Completed")
+                                        {
+                                            <i class="fas fa-check-circle"></i>
+                                        }
+                                        else if (item.AppointmentStatus == "Cancelled")
+                                        {
+                                            <i class="fas fa-times-circle"></i>
+                                        }
+                                        @item.AppointmentStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="queue-info-cell">
+                                        <span class="queue-badge">#@item.QueueNumber</span>
+                                        <div class="queue-status">@item.QueueStatus</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="reason-badge">@item.ReasonForVisit</span>
+                                </td>
+                                <td>
+                                    <div class="symptoms-text" title="@item.Symptoms">
+                                        @item.Symptoms
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-booked">
+                                        @item.DateBooked.ToString("MMM dd, yyyy")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        @if (item.AppointmentStatus == "Pending")
+                                        {
+                                            <button class="btn btn-success btn-sm" onclick="updateStatus(@item.AppointmentId, 'Confirmed')" title="Confirm Appointment">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        }
+                                        @if (item.AppointmentStatus == "Confirmed")
+                                        {
+                                            <button class="btn btn-primary btn-sm" onclick="updateStatus(@item.AppointmentId, 'In Progress')" title="Start Appointment">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        }
+                                        @if (item.AppointmentStatus == "In Progress")
+                                        {
+                                            <button class="btn btn-success btn-sm" onclick="completeAppointment(@item.AppointmentId, @item.PatientId)" title="Complete Appointment">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        }
+                                        @if (item.AppointmentStatus != "Completed" && item.AppointmentStatus != "Cancelled")
+                                        {
+                                            <button class="btn btn-warning btn-sm" onclick="updateStatus(@item.AppointmentId, 'Cancelled')" title="Cancel Appointment">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        }
+                                        <a href="@Url.Action("Details", new { id = item.AppointmentId })" class="btn btn-info btn-sm" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- Complete Appointment Modal -->
+<!-- Enhanced Complete Appointment Modal -->
 <div class="modal fade" id="completeAppointmentModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="completeModalLabel">
-                    <i class="fas fa-check-circle"></i> Complete Appointment
+                    <i class="fas fa-check-circle"></i> Complete Appointment & Create Medical Record
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -306,78 +251,92 @@
                 <form id="completeAppointmentForm">
                     <input type="hidden" id="completeAppointmentId" name="appointmentId">
                     <input type="hidden" id="completePatientId" name="patientId">
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> 
-                        <strong>Note:</strong> Completing this appointment will create a medical record for the patient.
-                    </div>
 
-                    <div class="form-group">
-                        <label for="diagnosis">
-                            <i class="fas fa-stethoscope"></i> Diagnosis <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" required 
-                                  placeholder="Enter the diagnosis..."></textarea>
-                        <small class="form-text text-muted">Describe the patient's condition and diagnosis</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="medications">
-                            <i class="fas fa-pills"></i> Medications Prescribed
-                        </label>
-                        <textarea class="form-control" id="medications" name="medications" rows="3" 
-                                  placeholder="List medications prescribed (optional)"></textarea>
-                        <small class="form-text text-muted">Include dosage and instructions if applicable</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="allergies">
-                            <i class="fas fa-exclamation-triangle"></i> Allergies Noted
-                        </label>
-                        <input type="text" class="form-control" id="allergies" name="allergies" 
-                               placeholder="Any allergies noted (optional)">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="patientAge">
-                                    <i class="fas fa-birthday-cake"></i> Age
-                                </label>
-                                <input type="number" class="form-control" id="patientAge" name="age" 
-                                       placeholder="Patient age" min="1" max="120">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="patientGender">
-                                    <i class="fas fa-venus-mars"></i> Gender
-                                </label>
-                                <select class="form-control" id="patientGender" name="gender">
-                                    <option value="">Select...</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="patientBMI">
-                                    <i class="fas fa-weight"></i> BMI
-                                </label>
-                                <input type="number" class="form-control" id="patientBMI" name="bmi" 
-                                       placeholder="BMI" step="0.1" min="10" max="50">
-                            </div>
+                    <div class="alert alert-info alert-custom">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Important:</strong> Completing this appointment will automatically create a medical record for the patient with the information provided below.
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="additionalNotes">
-                            <i class="fas fa-notes-medical"></i> Additional Notes
-                        </label>
-                        <textarea class="form-control" id="additionalNotes" name="additionalNotes" rows="2" 
-                                  placeholder="Any additional notes or observations (optional)"></textarea>
+                    <!-- Diagnosis Section -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-stethoscope"></i> Diagnosis</h6>
+                        <div class="form-group">
+                            <label for="diagnosis">
+                                Primary Diagnosis <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" required
+                                      placeholder="Enter the primary diagnosis and findings..."></textarea>
+                            <small class="form-text text-muted">Provide a detailed description of the patient's condition</small>
+                        </div>
+                    </div>
+
+                    <!-- Treatment Section -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-pills"></i> Treatment & Medications</h6>
+                        <div class="form-group">
+                            <label for="medications">Medications Prescribed</label>
+                            <textarea class="form-control" id="medications" name="medications" rows="3"
+                                      placeholder="List all medications with dosage and frequency..."></textarea>
+                            <small class="form-text text-muted">Example: Amoxicillin 500mg, 3 times daily for 7 days</small>
+                        </div>
+                    </div>
+
+                    <!-- Patient Information Section -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-user-md"></i> Patient Information</h6>
+                        <div class="form-group">
+                            <label for="allergies">
+                                <i class="fas fa-exclamation-triangle"></i> Known Allergies
+                            </label>
+                            <input type="text" class="form-control" id="allergies" name="allergies"
+                                   placeholder="List any known allergies (e.g., Penicillin, Peanuts)">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="patientAge">
+                                        <i class="fas fa-birthday-cake"></i> Age
+                                    </label>
+                                    <input type="number" class="form-control" id="patientAge" name="age"
+                                           placeholder="Age" min="1" max="120">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="patientGender">
+                                        <i class="fas fa-venus-mars"></i> Gender
+                                    </label>
+                                    <select class="form-control" id="patientGender" name="gender">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="patientBMI">
+                                        <i class="fas fa-weight"></i> BMI
+                                    </label>
+                                    <input type="number" class="form-control" id="patientBMI" name="bmi"
+                                           placeholder="Body Mass Index" step="0.1" min="10" max="50">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Notes Section -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-notes-medical"></i> Additional Notes</h6>
+                        <div class="form-group">
+                            <label for="additionalNotes">Clinical Observations & Follow-up Notes</label>
+                            <textarea class="form-control" id="additionalNotes" name="additionalNotes" rows="3"
+                                      placeholder="Any additional observations, recommendations, or follow-up instructions..."></textarea>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -386,7 +345,7 @@
                     <i class="fas fa-times"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-success" onclick="submitCompleteAppointment()">
-                    <i class="fas fa-check-circle"></i> Complete Appointment
+                    <i class="fas fa-check-circle"></i> Complete & Save Record
                 </button>
             </div>
         </div>
@@ -394,180 +353,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        // Filter functionality
-        document.getElementById('statusFilter').addEventListener('change', filterTable);
-        document.getElementById('dateFilter').addEventListener('change', filterTable);
-        document.getElementById('searchPatient').addEventListener('input', filterTable);
-
-        function filterTable() {
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const dateFilter = document.getElementById('dateFilter').value;
-            const searchPatient = document.getElementById('searchPatient').value.toLowerCase();
-            
-            const rows = document.querySelectorAll('#appointmentsTable tbody tr');
-            
-            rows.forEach(row => {
-                const status = row.dataset.status.toLowerCase();
-                const date = row.dataset.date;
-                const patient = row.dataset.patient;
-                
-                const statusMatch = !statusFilter || status.includes(statusFilter);
-                const dateMatch = !dateFilter || date === dateFilter;
-                const patientMatch = !searchPatient || patient.includes(searchPatient);
-                
-                if (statusMatch && dateMatch && patientMatch) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function clearFilters() {
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('dateFilter').value = '';
-            document.getElementById('searchPatient').value = '';
-            filterTable();
-        }
-
-        function refreshAppointments() {
-            location.reload();
-        }
-
-        async function updateStatus(appointmentId, status) {
-            if (!confirm(`Are you sure you want to change the appointment status to "${status}"?`)) {
-                return;
-            }
-
-            try {
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                
-                const response = await fetch('/Appointments/UpdateStatus', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': token,
-                        'X-CSRF-TOKEN': token
-                    },
-                    body: JSON.stringify({
-                        appointmentId: appointmentId,
-                        status: status
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(result.message);
-                    location.reload(); // Refresh to show updated status
-                } else {
-                    alert('Error: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                alert('An error occurred while updating the appointment status.');
-            }
-        }
-
-        // Complete appointment with medical record
-        function completeAppointment(appointmentId, patientId) {
-            // Set the appointment and patient IDs in the modal
-            document.getElementById('completeAppointmentId').value = appointmentId;
-            document.getElementById('completePatientId').value = patientId;
-            
-            // Reset form
-            document.getElementById('completeAppointmentForm').reset();
-            document.getElementById('completeAppointmentId').value = appointmentId;
-            document.getElementById('completePatientId').value = patientId;
-            
-            // Show the modal
-            $('#completeAppointmentModal').modal('show');
-        }
-
-        async function submitCompleteAppointment() {
-            const form = document.getElementById('completeAppointmentForm');
-            
-            // Validate required fields
-            const diagnosis = document.getElementById('diagnosis').value.trim();
-            if (!diagnosis) {
-                alert('Please enter a diagnosis before completing the appointment.');
-                document.getElementById('diagnosis').focus();
-                return;
-            }
-
-            const appointmentId = document.getElementById('completeAppointmentId').value;
-            const patientId = document.getElementById('completePatientId').value;
-            
-            console.log('Raw values from form:');
-            console.log('  appointmentId:', appointmentId);
-            console.log('  patientId:', patientId);
-            
-            // Validate IDs are present
-            if (!appointmentId || !patientId) {
-                alert('Error: Missing appointment or patient ID. Please try again.');
-                console.error('Missing IDs - appointmentId:', appointmentId, 'patientId:', patientId);
-                return;
-            }
-            
-            // Prepare form data
-            const formData = {
-                appointmentId: parseInt(appointmentId),
-                patientId: parseInt(patientId),
-                diagnosis: diagnosis,
-                medications: document.getElementById('medications').value.trim() || null,
-                allergies: document.getElementById('allergies').value.trim() || null,
-                age: document.getElementById('patientAge').value ? parseInt(document.getElementById('patientAge').value) : null,
-                gender: document.getElementById('patientGender').value || null,
-                bmi: document.getElementById('patientBMI').value ? parseFloat(document.getElementById('patientBMI').value) : null,
-                additionalNotes: document.getElementById('additionalNotes').value.trim() || null
-            };
-
-            console.log('Submitting completion data:', formData);
-            console.log('Parsed appointmentId:', formData.appointmentId);
-            console.log('Parsed patientId:', formData.patientId);
-
-            try {
-                const response = await fetch('/Appointments/CompleteAppointment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                console.log('Response status:', response.status);
-                
-                if (!response.ok) {
-                    console.error('HTTP error:', response.status, response.statusText);
-                    alert('Server error: ' + response.status + ' ' + response.statusText);
-                    return;
-                }
-
-                const result = await response.json();
-                console.log('Response data:', result);
-                
-                if (result.success) {
-                    $('#completeAppointmentModal').modal('hide');
-                    alert('Appointment completed successfully! Medical record has been created.');
-                    location.reload(); // Refresh to show updated status
-                } else {
-                    console.error('Error from server:', result.error, result.details);
-                    let errorMsg = 'Error: ' + (result.error || 'Failed to complete appointment');
-                    if (result.details) {
-                        errorMsg += '\nDetails: ' + JSON.stringify(result.details);
-                    }
-                    alert(errorMsg);
-                }
-            } catch (error) {
-                console.error('Error completing appointment:', error);
-                alert('An error occurred while completing the appointment. Please try again.\n\nError: ' + error.message);
-            }
-        }
-
-        // Close modal when clicking outside or pressing ESC
-        $('#completeAppointmentModal').on('hidden.bs.modal', function () {
-            document.getElementById('completeAppointmentForm').reset();
-        });
-    </script>
+    <script src="~/js/appoMan.js"></script>
 }

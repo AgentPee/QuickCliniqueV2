@@ -1,0 +1,323 @@
+﻿/* Staff Management Styles - Teal Medical Theme */
+.staff-management {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.staff-header {
+    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+}
+
+    .staff-header h2 {
+        margin: 0 0 1.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-weight: 600;
+    }
+
+        .staff-header h2 i {
+            font-size: 2rem;
+        }
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: none;
+    border-left: 4px solid #28a745;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .alert-success i {
+        font-size: 1.2rem;
+    }
+
+.header-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primary {
+    background: #4ECDC4;
+    color: white;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        color: white;
+    }
+
+.btn-warning {
+    background: #ffc107;
+    color: #333;
+}
+
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
+        color: #333;
+    }
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        color: white;
+    }
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+
+/* Staff Table */
+.staff-table-container {
+    background: #ffffff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+    .staff-table thead {
+        background: #f8f9fa;
+    }
+
+    .staff-table th {
+        padding: 1.25rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e1e5e9;
+    }
+
+    .staff-table td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid #e1e5e9;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .staff-table tbody tr {
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+
+        .staff-table tbody tr:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+/* Staff Name Styling */
+.staff-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+}
+
+/* Role Badges */
+.role-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.role-admin {
+    background: #4ECDC4;
+    color: white;
+}
+
+.role-doctor {
+    background: #28a745;
+    color: white;
+}
+
+.role-nurse {
+    background: #17a2b8;
+    color: white;
+}
+
+.role-staff {
+    background: #6c757d;
+    color: white;
+}
+
+.role-receptionist {
+    background: #ffc107;
+    color: #333;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+    .action-buttons .btn {
+        white-space: nowrap;
+    }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .staff-management {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .staff-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .staff-header h2 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            text-align: center;
+            gap: 0.5rem;
+        }
+
+    .header-actions {
+        justify-content: center;
+    }
+
+    .staff-table-container {
+        border-radius: 0 0 10px 10px;
+        overflow-x: auto;
+    }
+
+    .staff-table {
+        font-size: 0.9rem;
+        min-width: 800px;
+    }
+
+        .staff-table th,
+        .staff-table td {
+            padding: 1rem 0.75rem;
+        }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .action-buttons .btn {
+            justify-content: center;
+            text-align: center;
+        }
+
+    .staff-name {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .staff-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .btn {
+        padding: 1rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+/* Animation for table rows */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.staff-table tbody tr {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+    .staff-table tbody tr:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .staff-table tbody tr:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .staff-table tbody tr:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .staff-table tbody tr:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .staff-table tbody tr:nth-child(5) {
+        animation-delay: 0.5s;
+    }
+
+    .staff-table tbody tr:nth-child(n+6) {
+        animation-delay: 0.6s;
+    }

@@ -5,37 +5,57 @@
     Layout = "_Layout";
 }
 
-<!-- Add this below the main heading in Index.cshtml -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Clinic Schedules</h1>
-    <div class="btn-group">
-        <a asp-action="Availability" class="btn btn-info">View Availability</a>
-        <a asp-action="Create" class="btn btn-primary">Create New Schedule</a>
-        <div class="btn-group">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-                Create Multiple
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" asp-action="CreateMultiple">Date Range Create</a></li>
-                <li><a class="dropdown-item" asp-action="CreateQuick">Quick Create</a></li>
-            </ul>
+@section Styles {
+    <link rel="stylesheet" href="~/css/schedIndex.css" />
+}
+
+<div class="schedules-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-calendar-alt"></i> Clinic Schedules</h1>
+            <div class="header-actions">
+                <div class="btn-group">
+                    <a asp-action="Availability" class="btn btn-info">
+                        <i class="fas fa-list-check"></i> View Availability
+                    </a>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Schedule
+                    </a>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            Create Multiple
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-action="CreateMultiple">
+                                    <i class="fas fa-calendar-week"></i> Date Range Create
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-action="CreateQuick">
+                                    <i class="fas fa-bolt"></i> Quick Create
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="card">
+    <div class="schedules-card">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
+            <div class="table-container">
+                <table class="schedules-table">
+                    <thead>
                         <tr>
                             <th>Date</th>
                             <th>Start Time</th>
@@ -44,74 +64,115 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td>@item.Date.ToString("yyyy-MM-dd")</td>
-                            <td>@item.StartTime.ToString("hh\\:mm tt")</td>
-                            <td>@item.EndTime.ToString("hh\\:mm tt")</td>
-                            <td>
-                                <span class="badge @(item.IsAvailable == "Yes" ? "bg-success" : "bg-danger")">
-                                    @item.IsAvailable
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Details
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@item.ScheduleId" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="setDeleteSchedule(@item.ScheduleId, '@item.Date.ToString("yyyy-MM-dd")', '@item.StartTime.ToString("hh\\:mm tt") - @item.EndTime.ToString("hh\\:mm tt")', @(item.Appointments?.Count ?? 0))">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr class="schedule-row">
+                                <td class="date-cell">
+                                    <div class="date-info">
+                                        <span class="date">@item.Date.ToString("yyyy-MM-dd")</span>
+                                        <small class="day">@item.Date.DayOfWeek</small>
+                                    </div>
+                                </td>
+                                <td class="time-cell">
+                                    <span class="time-slot">@item.StartTime.ToString("hh\\:mm tt")</span>
+                                </td>
+                                <td class="time-cell">
+                                    <span class="time-slot">@item.EndTime.ToString("hh\\:mm tt")</span>
+                                </td>
+                                <td class="availability-cell">
+                                    <span class="availability-badge @(item.IsAvailable == "Yes" ? "available" : "unavailable")">
+                                        <i class="fas @(item.IsAvailable == "Yes" ? "fa-check" : "fa-times")"></i>
+                                        @item.IsAvailable
+                                    </span>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> Details
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.ScheduleId" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-sm delete-btn"
+                                                onclick="setDeleteSchedule(@item.ScheduleId, '@item.Date.ToString("yyyy-MM-dd")', '@item.StartTime.ToString("hh\\:mm tt") - @item.EndTime.ToString("hh\\:mm tt")', @(item.Appointments?.Count ?? 0))">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
                 </table>
             </div>
+
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Schedules Found</h4>
+                    <p class="text-muted">There are no schedules available. Create your first schedule to get started.</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Schedule
+                    </a>
+                </div>
+            }
         </div>
     </div>
+</div>
+
 <!-- Single Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header danger-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
-                    <p class="mb-0">Are you sure you want to delete this schedule?</p>
+                <div class="warning-banner">
+                    <i class="fas fa-radiation"></i>
+                    <div>
+                        <h6>Delete Schedule</h6>
+                        <p class="mb-0">Are you sure you want to delete this schedule? This action cannot be undone.</p>
+                    </div>
                 </div>
-                <dl class="row">
-                    <dt class="col-sm-4">Date:</dt>
-                    <dd class="col-sm-8" id="deleteDate"></dd>
 
-                    <dt class="col-sm-4">Time:</dt>
-                    <dd class="col-sm-8" id="deleteTime"></dd>
-
-                    <dt class="col-sm-4">Appointments:</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge" id="deleteAppointmentsBadge">
-                            0 appointment(s)
+                <div class="delete-details">
+                    <div class="detail-row">
+                        <span class="label">Date:</span>
+                        <span class="value" id="deleteDate"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Time Slot:</span>
+                        <span class="value" id="deleteTime"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Appointments:</span>
+                        <span class="value">
+                            <span class="appointment-count" id="deleteAppointmentsBadge">
+                                <i class="fas fa-calendar-check"></i>
+                                <span id="appointmentsText">0 appointment(s)</span>
+                            </span>
                         </span>
-                    </dd>
-                </dl>
-                <div class="alert alert-danger" id="appointmentsWarning" style="display: none;">
-                    <strong>Important:</strong> This schedule has <span id="appointmentsCount">0</span> appointment(s) associated with it.
-                    Deleting this schedule will also remove these appointments.
+                    </div>
+                </div>
+
+                <div class="critical-warning" id="appointmentsWarning">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <div>
+                        <strong>Critical Warning</strong>
+                        <p>This schedule has <span id="appointmentsCount">0</span> active appointment(s). Deleting this schedule will permanently remove all associated appointments.</p>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" asp-action="Delete" method="post">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form id="deleteForm" asp-action="Delete" method="post" class="delete-form">
                     <input type="hidden" name="id" id="deleteScheduleId" />
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash"></i> Delete Schedule
@@ -134,15 +195,16 @@
             const appointmentsBadge = document.getElementById('deleteAppointmentsBadge');
             const appointmentsWarning = document.getElementById('appointmentsWarning');
             const appointmentsCount = document.getElementById('appointmentsCount');
+            const appointmentsText = document.getElementById('appointmentsText');
 
-            appointmentsBadge.textContent = appointmentCount + ' appointment(s)';
+            appointmentsText.textContent = appointmentCount + ' appointment(s)';
             appointmentsCount.textContent = appointmentCount;
 
             if (appointmentCount > 0) {
-                appointmentsBadge.className = 'badge bg-danger';
-                appointmentsWarning.style.display = 'block';
+                appointmentsBadge.className = 'appointment-count has-appointments';
+                appointmentsWarning.style.display = 'flex';
             } else {
-                appointmentsBadge.className = 'badge bg-success';
+                appointmentsBadge.className = 'appointment-count no-appointments';
                 appointmentsWarning.style.display = 'none';
             }
 
@@ -150,5 +212,19 @@
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
         }
+
+        // Add row hover effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const scheduleRows = document.querySelectorAll('.schedule-row');
+            scheduleRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                });
+
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+        });
     </script>
 }

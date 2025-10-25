@@ -1,0 +1,424 @@
+﻿/* Staff Delete Styles - Teal Medical Theme */
+.delete-staff-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+    .delete-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+
+        .delete-header h2 i {
+            font-size: 2.5rem;
+        }
+
+.staff-id {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.delete-content {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Warning Banner */
+.warning-banner {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #856404;
+}
+
+    .warning-banner i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #ffc107;
+    }
+
+    .warning-banner h3 {
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+        font-size: 1.3rem;
+    }
+
+    .warning-banner p {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+/* Staff Details */
+.staff-details {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #4ECDC4;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+    .staff-details h4 {
+        margin: 0 0 1.5rem 0;
+        color: #333;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .staff-details h4 i {
+            color: #4ECDC4;
+        }
+
+.details-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+    .detail-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+.detail-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .detail-label i {
+        color: #4ECDC4;
+        width: 16px;
+    }
+
+.detail-value {
+    color: #333;
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+/* Name Styling */
+.name-first {
+    color: #4ECDC4;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.name-last {
+    color: #44A08D;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Role Badge */
+.role-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.role-admin {
+    background: #4ECDC4;
+    color: white;
+}
+
+.role-doctor {
+    background: #28a745;
+    color: white;
+}
+
+.role-nurse {
+    background: #17a2b8;
+    color: white;
+}
+
+.role-staff {
+    background: #6c757d;
+    color: white;
+}
+
+.role-receptionist {
+    background: #ffc107;
+    color: #333;
+}
+
+/* Confirmation Section */
+.confirmation-section {
+    border-top: 2px solid #e1e5e9;
+    padding-top: 2rem;
+}
+
+.confirmation-warning {
+    background: #f8d7da;
+    border: 2px solid #dc3545;
+    border-left: 4px solid #dc3545;
+    border-radius: 10px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    color: #721c24;
+}
+
+    .confirmation-warning i {
+        font-size: 2rem;
+        color: #dc3545;
+    }
+
+    .confirmation-warning strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .confirmation-warning p {
+        margin: 0;
+        line-height: 1.6;
+    }
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-width: 200px;
+    justify-content: center;
+    font-family: Inter, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+    }
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+/* Delete Form */
+.delete-form {
+    width: 100%;
+}
+
+/* Animations */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.warning-banner {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.btn-delete:hover {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .delete-staff-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+
+    .delete-header {
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .delete-header h2 {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+    .delete-content {
+        padding: 1.5rem;
+        border-radius: 0 0 10px 10px;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    .detail-label {
+        min-width: auto;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .confirmation-warning {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .warning-banner {
+        padding: 1rem;
+    }
+
+        .warning-banner h3 {
+            font-size: 1.1rem;
+        }
+}
+
+@media (max-width: 480px) {
+    .delete-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .staff-id {
+        font-size: 0.8rem;
+    }
+
+    .warning-banner i {
+        font-size: 2rem;
+    }
+
+    .confirmation-warning i {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        padding: 1.25rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Loading State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    animation: none !important;
+}
+
+/* Focus States for Accessibility */
+.btn:focus {
+    outline: 3px solid rgba(78, 205, 196, 0.5);
+    outline-offset: 2px;
+}
+
+.btn-delete:focus {
+    outline-color: rgba(220, 53, 69, 0.5);
+}
+
+/* Print Styles */
+@media print {
+    .btn {
+        display: none;
+    }
+
+    .delete-header {
+        background: #6c757d !important;
+        color: white !important;
+    }
+
+    .warning-banner,
+    .confirmation-warning {
+        border: 1px solid #ccc !important;
+        background: #f8f9fa !important;
+        color: #333 !important;
+    }
+}
