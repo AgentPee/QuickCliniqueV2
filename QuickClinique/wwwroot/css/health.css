@@ -14,24 +14,54 @@
     border-radius: 20px;
     margin-bottom: 40px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(78, 205, 196, 0.3);
 }
 
-    .health-hero h1 {
-        font-size: 2.5rem;
-        margin-bottom: 15px;
-        font-weight: 700;
+    .health-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: pulse 15s ease-in-out infinite;
     }
 
-    .health-hero p {
-        font-size: 1.2rem;
-        margin-bottom: 30px;
-        opacity: 0.9;
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
     }
+
+    50% {
+        transform: translate(-10%, -10%) scale(1.1);
+    }
+}
+
+.health-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.health-hero p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+}
 
 .search-box {
     position: relative;
     max-width: 500px;
     margin: 0 auto;
+    z-index: 1;
 }
 
     .search-box input {
@@ -40,15 +70,32 @@
         border: none;
         border-radius: 50px;
         font-size: 1rem;
-        background: rgba(255, 255, 255, 0.9);
+        background: white;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
     }
+
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+        }
 
     .search-box .fa-search {
         position: absolute;
         right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: #666;
+        color: #4ECDC4;
+        transition: color 0.3s ease;
+    }
+
+    .search-box input:focus ~ .fa-search {
+        color: #44A08D;
     }
 
 /* Quick Links */
@@ -64,21 +111,39 @@
 
 .link-card {
     background: white;
-    padding: 25px 20px;
+    padding: 30px 20px;
     border-radius: 15px;
     text-align: center;
     text-decoration: none;
     color: #333;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     border: 2px solid transparent;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
+    .link-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(78, 205, 196, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .link-card:hover::before {
+        left: 100%;
+    }
+
     .link-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-8px);
         border-color: #4ECDC4;
         text-decoration: none;
         color: #333;
+        box-shadow: 0 15px 35px rgba(78, 205, 196, 0.2);
     }
 
     .link-card i {
@@ -86,11 +151,18 @@
         color: #4ECDC4;
         margin-bottom: 15px;
         display: block;
+        transition: all 0.4s ease;
+    }
+
+    .link-card:hover i {
+        transform: scale(1.15) rotateY(360deg);
     }
 
     .link-card span {
         font-weight: 600;
         font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
     }
 
 /* FAQ Sections */
@@ -108,7 +180,18 @@
         margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 3px solid #4ECDC4;
+        position: relative;
     }
+
+        .health-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background: #44A08D;
+        }
 
         .health-section h2 i {
             color: #4ECDC4;
@@ -118,12 +201,18 @@
 .health-items {
     background: white;
     border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    transition: box-shadow 0.3s ease;
 }
+
+    .health-items:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
 
 .health-item {
     border-bottom: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
 }
 
     .health-item:last-child {
@@ -137,45 +226,80 @@
     justify-content: space-between;
     align-items: center;
     background: #f8f9fa;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    position: relative;
 }
+
+    .health-question::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: #4ECDC4;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
 
     .health-question:hover {
         background: #e9ecef;
+        padding-left: 30px;
     }
+
+        .health-question:hover::before {
+            transform: scaleY(1);
+        }
+
+    .health-question.active {
+        background: linear-gradient(to right, rgba(78, 205, 196, 0.1), transparent);
+    }
+
+        .health-question.active::before {
+            transform: scaleY(1);
+        }
 
     .health-question h3 {
         margin: 0;
         color: #333;
         font-size: 1.2rem;
         font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .health-question:hover h3 {
+        color: #44A08D;
     }
 
     .health-question i {
         color: #4ECDC4;
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
     }
 
     .health-question.active i {
         transform: rotate(180deg);
+        color: #44A08D;
     }
 
 .health-answer {
     padding: 0 25px;
     max-height: 0;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: white;
+    opacity: 0;
 }
 
     .health-answer.active {
         padding: 25px;
         max-height: 1000px;
+        opacity: 1;
     }
 
     .health-answer p {
         color: #666;
-        line-height: 1.6;
+        line-height: 1.8;
         margin-bottom: 15px;
     }
 
@@ -187,11 +311,17 @@
 
     .health-answer li {
         margin-bottom: 8px;
-        line-height: 1.5;
+        line-height: 1.6;
+        position: relative;
     }
+
+        .health-answer li::marker {
+            color: #4ECDC4;
+        }
 
     .health-answer strong {
         color: #333;
+        font-weight: 600;
     }
 
 /* Contact Section */
@@ -205,22 +335,50 @@
     padding: 40px;
     border-radius: 20px;
     text-align: center;
+    box-shadow: 0 10px 40px rgba(78, 205, 196, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
-    .contact-card h3 {
-        font-size: 1.8rem;
-        margin-bottom: 10px;
+    .contact-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+        animation: rotate 20s linear infinite;
     }
 
-        .contact-card h3 i {
-            margin-right: 10px;
-        }
-
-    .contact-card > p {
-        font-size: 1.1rem;
-        margin-bottom: 30px;
-        opacity: 0.9;
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
     }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.contact-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+    .contact-card h3 i {
+        margin-right: 10px;
+    }
+
+.contact-card > p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+}
 
 .contact-options {
     display: grid;
@@ -228,6 +386,8 @@
     gap: 30px;
     max-width: 800px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .contact-option {
@@ -235,11 +395,21 @@
     align-items: center;
     gap: 20px;
     text-align: left;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
+
+    .contact-option:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-3px);
+    }
 
     .contact-option i {
         font-size: 2rem;
-        opacity: 0.9;
+        opacity: 0.95;
     }
 
     .contact-option strong {
@@ -255,21 +425,27 @@
 
 /* Search Results */
 .search-highlight {
-    background-color: #fff3cd;
-    padding: 2px 4px;
-    border-radius: 3px;
+    background: linear-gradient(120deg, #fff3cd 0%, #ffeaa7 100%);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
 .no-results {
     text-align: center;
-    padding: 40px;
+    padding: 60px 40px;
     color: #666;
 }
 
     .no-results i {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        color: #ccc;
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #ddd;
+        opacity: 0.5;
+    }
+
+    .no-results p {
+        font-size: 1.1rem;
     }
 
 /* Responsive Design */
@@ -331,9 +507,9 @@
     }
 }
 
-/* Animation for smooth transitions */
-.health-item {
-    transition: all 0.3s ease;
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
 }
 
 /* Print Styles */
@@ -346,5 +522,11 @@
     .health-answer {
         max-height: none !important;
         display: block !important;
+    }
+
+    .health-hero::before,
+    .contact-card::before,
+    .link-card::before {
+        display: none;
     }
 }

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('healthSearch');
     if (searchInput) {
         searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase().trim();
+            const searchTerm = this.value.toLowerCasen().trim();
             const healthItems = document.querySelectorAll('.health-item');
             let hasResults = false;
 
