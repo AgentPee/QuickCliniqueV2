@@ -113,31 +113,7 @@ namespace QuickClinique.Controllers
             return View(precord);
         }
 
-        // GET: Precord/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                if (IsAjaxRequest())
-                    return Json(new { success = false, error = "ID not provided" });
-                return NotFound();
-            }
-
-            var precord = await _context.Precords.FindAsync(id);
-            if (precord == null)
-            {
-                if (IsAjaxRequest())
-                    return Json(new { success = false, error = "Patient record not found" });
-                return NotFound();
-            }
-
-            ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", precord.PatientId);
-
-            if (IsAjaxRequest())
-                return Json(new { success = true, data = precord });
-
-            return View(precord);
-        }
+        
 
         // POST: Precord/Edit/5
         [HttpPost]
