@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Rainpyre\\Documents\\Capstone2\\main-for-push\\QuickClinique\\QuickClinique.csproj": {}
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Rainpyre\\Documents\\Capstone2\\main-for-push\\QuickClinique\\QuickClinique.csproj": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Rainpyre\\Documents\\Capstone2\\main-for-push\\QuickClinique\\QuickClinique.csproj",
+        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\Rainpyre\\Documents\\Capstone2\\main-for-push\\QuickClinique\\QuickClinique.csproj",
-        "packagesPath": "C:\\Users\\Rainpyre\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Rainpyre\\Documents\\Capstone2\\main-for-push\\QuickClinique\\obj\\",
+        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj",
+        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Rainpyre\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -80,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
