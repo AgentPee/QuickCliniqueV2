@@ -2,15 +2,12 @@
 
 @{
     ViewData["Title"] = "Quick Create Schedules";
-    Layout = null;
-
-    <link rel="stylesheet" href="~/css/schedCQ.css" />
+    Layout = "_Layout";
 }
 
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Left Column - Main Form -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -20,7 +17,7 @@
                 <div class="card-body">
                     <form asp-action="CreateQuick">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+                        x`
                         <div class="form-group mb-3">
                             <label class="control-label">Select Dates</label>
                             <div id="dateSelection" class="border rounded p-3">
@@ -95,7 +92,6 @@
             </div>
         </div>
 
-        <!-- Right Column - Selected Dates Panel -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -110,74 +106,76 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
-
-<script>
-    function updateSelectedDates() {
-        const selectedDates = Array.from(document.querySelectorAll('.date-checkbox:checked'))
-            .map(checkbox => {
-                const date = new Date(checkbox.value);
-                return {
-                    value: checkbox.value,
-                    display: date.toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric'
-                    })
-                };
-            });
-
-        document.getElementById('selectedCount').textContent =
-            selectedDates.length === 0 ? 'No dates selected' : `${selectedDates.length} date(s) selected`;
-
-        const listContainer = document.getElementById('selectedDatesList');
-        if (selectedDates.length > 0) {
-            let html = '<div class="list-group">';
-            selectedDates.forEach(date => {
-                html += `<div class="list-group-item py-2">${date.display}</div>`;
-            });
-            html += '</div>';
-            listContainer.innerHTML = html;
-        } else {
-            listContainer.innerHTML = '';
-        }
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
-    // Event listeners for date selection
-    document.querySelectorAll('.date-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedDates);
-    });
+    <script>
+        function updateSelectedDates() {
+            const selectedDates = Array.from(document.querySelectorAll('.date-checkbox:checked'))
+                .map(checkbox => {
+                    const date = new Date(checkbox.value);
+                    return {
+                        value: checkbox.value,
+                        display: date.toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                        })
+                    };
+                });
 
-    // Select weekdays button
-    document.getElementById('selectWeekdays').addEventListener('click', function() {
+            document.getElementById('selectedCount').textContent =
+                `${selectedDates.length} date(s) selected`;
+
+            const listContainer = document.getElementById('selectedDatesList');
+            if (selectedDates.length > 0) {
+                let html = '<div class="list-group">';
+                selectedDates.forEach(date => {
+                    html += `<div class="list-group-item py-2">${date.display}</div>`;
+                });
+                html += '</div>';
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = '';
+            }
+        }
+
+        // Event listeners for date selection
         document.querySelectorAll('.date-checkbox').forEach(checkbox => {
-            const date = new Date(checkbox.value);
-            const day = date.getDay();
-            checkbox.checked = (day >= 1 && day <= 5); // Monday to Friday
+            checkbox.addEventListener('change', updateSelectedDates);
         });
-        updateSelectedDates();
-    });
 
-    // Select weekend button
-    document.getElementById('selectWeekend').addEventListener('click', function() {
-        document.querySelectorAll('.date-checkbox').forEach(checkbox => {
-            const date = new Date(checkbox.value);
-            const day = date.getDay();
-            checkbox.checked = (day === 0 || day === 6); // Saturday or Sunday
+        // Select weekdays button
+        document.getElementById('selectWeekdays').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                const date = new Date(checkbox.value);
+                const day = date.getDay();
+                checkbox.checked = (day >= 1 && day <= 5); // Monday to Friday
+            });
+            updateSelectedDates();
         });
-        updateSelectedDates();
-    });
 
-    // Clear selection button
-    document.getElementById('clearSelection').addEventListener('click', function() {
-        document.querySelectorAll('.date-checkbox').forEach(checkbox => {
-            checkbox.checked = false;
+        // Select weekend button
+        document.getElementById('selectWeekend').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                const date = new Date(checkbox.value);
+                const day = date.getDay();
+                checkbox.checked = (day === 0 || day === 6); // Saturday or Sunday
+            });
+            updateSelectedDates();
         });
-        updateSelectedDates();
-    });
 
-    // Initial update
-    updateSelectedDates();
-</script>
+        // Clear selection button
+        document.getElementById('clearSelection').addEventListener('click', function() {
+            document.querySelectorAll('.date-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedDates();
+        });
+
+        // Initial update
+        updateSelectedDates();
+    </script>
+}

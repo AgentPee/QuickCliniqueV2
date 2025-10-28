@@ -30,28 +30,28 @@
                     </span>
                     <span class="detail-value name-first">@Html.DisplayFor(model => model.FirstName)</span>
                 </div>
-                
+
                 <div class="detail-item">
                     <span class="detail-label">
                         <i class="fas fa-user"></i> Last Name
                     </span>
                     <span class="detail-value name-last">@Html.DisplayFor(model => model.LastName)</span>
                 </div>
-                
+
                 <div class="detail-item">
                     <span class="detail-label">
                         <i class="fas fa-envelope"></i> Email
                     </span>
                     <span class="detail-value">@Html.DisplayFor(model => model.Email)</span>
                 </div>
-                
+
                 <div class="detail-item">
                     <span class="detail-label">
                         <i class="fas fa-phone"></i> Phone Number
                     </span>
                     <span class="detail-value">@Html.DisplayFor(model => model.PhoneNumber)</span>
                 </div>
-                
+
                 <div class="detail-item">
                     <span class="detail-label">
                         <i class="fas fa-user-tag"></i> User Role
@@ -65,7 +65,7 @@
 
         <form asp-action="Delete" class="delete-form">
             <input type="hidden" asp-for="ClinicStaffId" />
-            
+
             <div class="confirmation-section">
                 <div class="confirmation-warning">
                     <i class="fas fa-radiation"></i>
@@ -74,7 +74,7 @@
                         <p>Deleting this staff member will permanently remove all their data from the system.</p>
                     </div>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-danger btn-delete">
                         <i class="fas fa-trash"></i> Delete Staff Member

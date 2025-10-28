@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -144,6 +143,47 @@
             @RenderBody()
         </main>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>QuickClinique</h4>
+                    <p>University of Cebu Medical-Dental Clinic - Providing quality healthcare services to the UC community.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="@Url.Action("Index", "Home")"><i class="fas fa-chevron-right"></i> Home</a></li>
+                        @if (Context.Session.GetInt32("StudentId") != null)
+                        {
+                            <li><a href="@Url.Action("Dashboard", "Student")"><i class="fas fa-chevron-right"></i> Dashboard</a></li>
+                            <li><a href="@Url.Action("Profile", "Student")"><i class="fas fa-chevron-right"></i> Profile</a></li>
+                        }
+                        @if (Context.Session.GetInt32("ClinicStaffId") != null)
+                        {
+                            <li><a href="@Url.Action("Index", "Dashboard")"><i class="fas fa-chevron-right"></i> Dashboard</a></li>
+                            <li><a href="@Url.Action("Availability", "Schedule")"><i class="fas fa-chevron-right"></i> Schedules</a></li>
+                        }
+                        <li><a href="@Url.Action("Privacy", "Home")"><i class="fas fa-chevron-right"></i> FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Sanciangko St, Cebu City</li>
+                        <li><i class="fas fa-phone"></i> (032) 255-7777</li>
+                        <li><i class="fas fa-envelope"></i> main.collegeregistrar@uc.edu.ph</li>
+                        <li><i class="fas fa-clock"></i> Mon - Fri: 8AM - 5PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 University of Cebu Medical-Dental Clinic. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

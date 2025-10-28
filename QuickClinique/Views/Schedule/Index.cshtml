@@ -21,7 +21,7 @@
                     <a asp-action="Create" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create New Schedule
                     </a>
-                    <div class="dropdown">
+                    <div class="btn-group">
                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                             Create Multiple
                         </button>
@@ -183,6 +183,8 @@
     </div>
 </div>
 
+
+
 @section Scripts {
     <script>
         function setDeleteSchedule(scheduleId, date, time, appointmentCount) {
@@ -226,5 +228,6 @@
                 });
             });
         });
+
     </script>
 }
