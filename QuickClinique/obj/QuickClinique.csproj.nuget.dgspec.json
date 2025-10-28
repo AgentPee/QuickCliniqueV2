@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj": {}
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\quickclinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\quickclinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj",
+        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\quickclinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\QuickClinique.csproj",
+        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\quickclinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\QuickClinique\\obj\\",
+        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\capstone\\quickclinique\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
