@@ -10,7 +10,7 @@ body {
     background: linear-gradient(135deg, #36636e 0%, #44A08D 100%);
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: center;image-orientation
     justify-content: center;
     padding: 20px;
 }
@@ -123,6 +123,7 @@ body {
     pointer-events: none;
 }
 
+
 .floating-icon {
     position: absolute;
     font-size: 1.5rem;
@@ -130,39 +131,40 @@ body {
     opacity: 0.3;
 }
 
+
     .floating-icon:nth-child(1) {
-        top: 20%;
-        left: 10%;
+        top: 15%;
+        left: 8%;
         animation-delay: 0s;
     }
 
     .floating-icon:nth-child(2) {
-        top: 60%;
-        right: 15%;
+        top: 35%;
+        right: 12%;
         animation-delay: 0.5s;
     }
 
     .floating-icon:nth-child(3) {
-        bottom: 30%;
-        left: 20%;
+        top: 70%;
+        left: 15%;
         animation-delay: 1s;
     }
 
     .floating-icon:nth-child(4) {
-        top: 80%;
-        right: 30%;
+        bottom: 15%;
+        right: 8%;
         animation-delay: 1.5s;
     }
 
     .floating-icon:nth-child(5) {
-        top: 40%;
-        left: 25%;
+        top: 50%;
+        left: 35%;
         animation-delay: 2s;
     }
 
     .floating-icon:nth-child(6) {
-        bottom: 20%;
-        right: 20%;
+        top: 25%;
+        right: 30%;
         animation-delay: 2.5s;
     }
 
