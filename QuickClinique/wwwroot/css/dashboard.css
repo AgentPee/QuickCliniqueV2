@@ -577,16 +577,38 @@ input:invalid {
 .messaging-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     font-size: 1.5rem;
     color: #333;
     margin-bottom: 20px;
     font-weight: 600;
 }
 
+    .messaging-header > *:first-child {
+        display: flex;
+        align-items: center;
+    }
+
     .messaging-header i {
         margin-right: 10px;
         color: #4ECDC4;
     }
+
+    .messaging-header .refresh-messages-btn {
+        background: #4ECDC4;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
+
+        .messaging-header .refresh-messages-btn:hover {
+            background: #44A08D;
+            transform: scale(1.05);
+        }
 
 .messaging-container {
     display: flex;

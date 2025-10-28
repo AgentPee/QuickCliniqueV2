@@ -198,6 +198,46 @@
             </div>
         </div>
     </div>
+
+    <!-- Patient Messages Section -->
+    <div class="messages-section">
+        <div class="messages-header">
+            <h3 class="section-title"><i class="fas fa-comments"></i> Patient Messages</h3>
+            <button class="refresh-btn" onclick="loadPatientMessages()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <div class="messages-content">
+            <!-- Patient List -->
+            <div class="patient-list" id="patientList">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No messages yet</p>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area" id="chatArea">
+                <div class="chat-empty">
+                    <i class="fas fa-comments fa-3x"></i>
+                    <p>Select a patient to view messages</p>
+                </div>
+                <div class="chat-content" style="display: none;">
+                    <div class="chat-header-patient">
+                        <span id="selectedPatientName">Patient Name</span>
+                    </div>
+                    <div class="chat-messages-staff" id="chatMessagesStaff"></div>
+                    <div class="chat-input-staff">
+                        <input type="text" id="replyInput" placeholder="Type your reply..." maxlength="500">
+                        <button class="send-reply-btn" id="sendReply">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -310,5 +350,242 @@
         setInterval(() => {
             refreshQueue();
         }, 30000);
+
+        // ===== MESSAGING FUNCTIONALITY =====
+        let selectedPatientUserId = null;
+        let messagesInterval = null;
+
+        // Initialize messaging when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load patient messages on page load
+            loadPatientMessages();
+
+            // Auto-refresh messages every 10 seconds
+            startMessagingAutoRefresh();
+
+            // Send reply button click
+            document.getElementById('sendReply').addEventListener('click', sendReplyToPatient);
+
+            // Send reply on Enter key
+            document.getElementById('replyInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendReplyToPatient();
+                }
+            });
+        });
+
+        // Load patient messages grouped by patient
+        async function loadPatientMessages() {
+            try {
+                const response = await fetch('/Dashboard/GetPatientMessages');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    displayPatientList(result.data);
+                } else {
+                    console.error('Failed to load patient messages:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading patient messages:', error);
+            }
+        }
+
+        // Display patient list
+        function displayPatientList(patients) {
+            const patientList = document.getElementById('patientList');
+            
+            if (patients.length === 0) {
+                patientList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No messages yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            patientList.innerHTML = patients.map(patient => `
+                <div class="patient-item ${selectedPatientUserId === patient.patientUserId ? 'active' : ''}" 
+                     onclick="selectPatient(${patient.patientUserId}, '${escapeHtml(patient.patientName)}')">
+                    <div class="patient-info">
+                        <div class="patient-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="patient-details">
+                            <div class="patient-name">${escapeHtml(patient.patientName)}</div>
+                            <div class="last-message">${escapeHtml(patient.lastMessage.substring(0, 30))}${patient.lastMessage.length > 30 ? '...' : ''}</div>
+                        </div>
+                    </div>
+                    <div class="message-time">${formatMessageTime(patient.lastMessageTime)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select a patient and load their messages
+        async function selectPatient(patientUserId, patientName) {
+            selectedPatientUserId = patientUserId;
+
+            // Update UI
+            document.getElementById('selectedPatientName').textContent = patientName;
+            document.querySelector('.chat-empty').style.display = 'none';
+            document.querySelector('.chat-content').style.display = 'flex';
+
+            // Update active state in patient list
+            document.querySelectorAll('.patient-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.patient-item').classList.add('active');
+
+            // Load messages for this patient
+            await loadMessagesForPatient(patientUserId);
+        }
+
+        // Load messages for a specific patient
+        async function loadMessagesForPatient(patientUserId) {
+            try {
+                const response = await fetch('/Dashboard/GetMessages');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    // Filter messages for the selected patient
+                    const patientMessages = result.data.filter(m => 
+                        m.senderId === patientUserId || m.receiverId === patientUserId
+                    );
+                    displayStaffMessages(patientMessages);
+                } else {
+                    console.error('Failed to load messages:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Display messages in staff chat area
+        function displayStaffMessages(messages) {
+            const chatMessagesStaff = document.getElementById('chatMessagesStaff');
+            
+            if (messages.length === 0) {
+                chatMessagesStaff.innerHTML = `
+                    <div class="no-messages">
+                        <p>No messages yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatMessagesStaff.innerHTML = messages.map(msg => {
+                const messageClass = msg.isSent ? 'sent' : 'received';
+                const messageTime = formatMessageTime(msg.createdAt);
+                
+                return `
+                    <div class="message-staff ${messageClass}">
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                        <div class="message-time">${messageTime}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            chatMessagesStaff.scrollTop = chatMessagesStaff.scrollHeight;
+        }
+
+        // Send reply to patient
+        async function sendReplyToPatient() {
+            if (!selectedPatientUserId) {
+                alert('Please select a patient first');
+                return;
+            }
+
+            const replyInput = document.getElementById('replyInput');
+            const messageText = replyInput.value.trim();
+
+            if (!messageText) {
+                return;
+            }
+
+            // Disable send button
+            const sendButton = document.getElementById('sendReply');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch('/Dashboard/SendMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ 
+                        receiverId: selectedPatientUserId, 
+                        message: messageText 
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Clear input
+                    replyInput.value = '';
+
+                    // Reload messages for the patient
+                    await loadMessagesForPatient(selectedPatientUserId);
+
+                    // Reload patient list to update last message
+                    await loadPatientMessages();
+                } else {
+                    alert('Failed to send message: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        // Format message timestamp
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins < 60) {
+                return `${diffMins} min ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours} hr ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start auto-refresh for messages
+        function startMessagingAutoRefresh() {
+            if (messagesInterval) {
+                clearInterval(messagesInterval);
+            }
+
+            messagesInterval = setInterval(function() {
+                loadPatientMessages();
+                if (selectedPatientUserId) {
+                    loadMessagesForPatient(selectedPatientUserId);
+                }
+            }, 10000); // Refresh every 10 seconds
+        }
+
     </script>
 }

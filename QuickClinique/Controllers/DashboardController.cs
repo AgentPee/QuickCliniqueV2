@@ -171,6 +171,149 @@ namespace QuickClinique.Controllers
                 })
             });
         }
+
+        // GET: Dashboard/GetMessages - Get messages for clinic staff
+        [HttpGet]
+        public async Task<IActionResult> GetMessages()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            // Get clinic staff's userId
+            var clinicStaff = await _context.Clinicstaffs
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.ClinicStaffId == clinicStaffId.Value);
+
+            if (clinicStaff == null)
+            {
+                return Json(new { success = false, error = "Clinic staff not found" });
+            }
+
+            // Get all messages where clinic staff is sender or receiver
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Where(m => m.SenderId == clinicStaff.UserId || m.ReceiverId == clinicStaff.UserId)
+                .OrderBy(m => m.CreatedAt)
+                .Select(m => new {
+                    messageId = m.MessageId,
+                    senderId = m.SenderId,
+                    receiverId = m.ReceiverId,
+                    senderName = m.Sender.Name,
+                    receiverName = m.Receiver.Name,
+                    message = m.Message1,
+                    createdAt = m.CreatedAt,
+                    isSent = m.SenderId == clinicStaff.UserId
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = messages, currentUserId = clinicStaff.UserId });
+        }
+
+        // POST: Dashboard/SendMessage - Send a reply message to student
+        [HttpPost]
+        public async Task<IActionResult> SendMessage([FromBody] SendStaffMessageRequest request)
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            // Get clinic staff's userId
+            var clinicStaff = await _context.Clinicstaffs
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.ClinicStaffId == clinicStaffId.Value);
+
+            if (clinicStaff == null)
+            {
+                return Json(new { success = false, error = "Clinic staff not found" });
+            }
+
+            // Get the receiver (student) UserId
+            if (request.ReceiverId <= 0)
+            {
+                return Json(new { success = false, error = "Receiver not specified" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Message))
+            {
+                return Json(new { success = false, error = "Message cannot be empty" });
+            }
+
+            var message = new Message
+            {
+                SenderId = clinicStaff.UserId,
+                ReceiverId = request.ReceiverId,
+                Message1 = request.Message,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            return Json(new { 
+                success = true, 
+                message = "Message sent successfully",
+                data = new {
+                    messageId = message.MessageId,
+                    senderId = message.SenderId,
+                    receiverId = message.ReceiverId,
+                    senderName = clinicStaff.User.Name,
+                    message = message.Message1,
+                    createdAt = message.CreatedAt,
+                    isSent = true
+                }
+            });
+        }
+
+        // GET: Dashboard/GetPatientMessages - Get messages grouped by student
+        [HttpGet]
+        public async Task<IActionResult> GetPatientMessages()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            // Get clinic staff's userId
+            var clinicStaff = await _context.Clinicstaffs
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.ClinicStaffId == clinicStaffId.Value);
+
+            if (clinicStaff == null)
+            {
+                return Json(new { success = false, error = "Clinic staff not found" });
+            }
+
+            // Get all messages involving this clinic staff
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Where(m => m.SenderId == clinicStaff.UserId || m.ReceiverId == clinicStaff.UserId)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToListAsync();
+
+            // Group messages by patient (student)
+            var patientMessages = messages
+                .GroupBy(m => m.SenderId == clinicStaff.UserId ? m.ReceiverId : m.SenderId)
+                .Select(g => new {
+                    patientUserId = g.Key,
+                    patientName = g.First(m => m.SenderId == g.Key || m.ReceiverId == g.Key).SenderId == g.Key ? 
+                                 g.First(m => m.SenderId == g.Key).Sender.Name : 
+                                 g.First(m => m.ReceiverId == g.Key).Receiver.Name,
+                    lastMessage = g.First().Message1,
+                    lastMessageTime = g.First().CreatedAt,
+                    unreadCount = g.Count(m => m.ReceiverId == clinicStaff.UserId) // Simplified unread logic
+                })
+                .ToList();
+
+            return Json(new { success = true, data = patientMessages });
+        }
     }
 
     public class DashboardViewModel
@@ -190,5 +333,11 @@ namespace QuickClinique.Controllers
     {
         public int appointmentId { get; set; }
         public string status { get; set; } = string.Empty;
+    }
+
+    public class SendStaffMessageRequest
+    {
+        public int ReceiverId { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

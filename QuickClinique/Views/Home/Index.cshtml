@@ -123,6 +123,9 @@
     <section class="messaging-section" id="messaging">
         <div class="messaging-header">
             <i class="fas fa-comments"></i> Clinic Communications
+            <button class="refresh-messages-btn" onclick="loadMessages()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
         <div class="messaging-container">
             <div class="chat-header">
@@ -133,11 +136,11 @@
                     <div class="message-content">
                         Welcome to QuickClinique! How can we assist you today?
                     </div>
-                    <div class="message-time">09:00 AM</div>
+                    <div class="message-time">Just now</div>
                 </div>
             </div>
             <div class="chat-input">
-                <input type="text" id="messageInput" placeholder="Type your message...">
+                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
                 <button class="send-btn" id="sendMessage">
                     <i class="fas fa-paper-plane"></i>
                 </button>
@@ -1352,6 +1355,168 @@
 
         // Stop auto-refresh when user leaves the page
         window.addEventListener('beforeunload', stopQueueAutoRefresh);
+
+        // ===== MESSAGING FUNCTIONALITY =====
+        let messagesInterval = null;
+
+        // Initialize messaging when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load messages on page load
+            loadMessages();
+
+            // Auto-refresh messages every 10 seconds
+            startMessagingAutoRefresh();
+
+            // Send message button click
+            document.getElementById('sendMessage').addEventListener('click', sendMessageToStaff);
+
+            // Send message on Enter key
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessageToStaff();
+                }
+            });
+        });
+
+        // Load messages from server
+        async function loadMessages() {
+            try {
+                const response = await fetch('/Home/GetMessages');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    displayMessages(result.data);
+                } else {
+                    console.error('Failed to load messages:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Display messages in the chat
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = `
+                    <div class="message received">
+                        <div class="message-content">
+                            Welcome to QuickClinique! How can we assist you today?
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                `;
+                return;
+            }
+
+            chatMessages.innerHTML = messages.map(msg => {
+                const messageClass = msg.isSent ? 'sent' : 'received';
+                const messageTime = formatMessageTime(msg.createdAt);
+                
+                return `
+                    <div class="message ${messageClass}">
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                        <div class="message-time">${messageTime}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Send message to clinic staff
+        async function sendMessageToStaff() {
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
+
+            if (!messageText) {
+                return;
+            }
+
+            // Disable send button
+            const sendButton = document.getElementById('sendMessage');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch('/Home/SendMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ message: messageText })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Clear input
+                    messageInput.value = '';
+
+                    // Reload messages
+                    await loadMessages();
+                } else {
+                    alert('Failed to send message: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        // Format message timestamp
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins < 60) {
+                return `${diffMins} min ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours} hr ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start auto-refresh for messages
+        function startMessagingAutoRefresh() {
+            if (messagesInterval) {
+                clearInterval(messagesInterval);
+            }
+
+            messagesInterval = setInterval(function() {
+                loadMessages();
+            }, 10000); // Refresh every 10 seconds
+        }
+
+        // Stop messaging auto-refresh
+        function stopMessagingAutoRefresh() {
+            if (messagesInterval) {
+                clearInterval(messagesInterval);
+                messagesInterval = null;
+            }
+        }
 
     </script>
 
