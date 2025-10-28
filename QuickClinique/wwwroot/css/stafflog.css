@@ -1,4 +1,4 @@
-﻿/* QuickClinic Staff Login Styles - Exact match with Student Login */
+﻿﻿/* QuickClinic Staff Login Styles - Exact match with Student Login */
 * {
     margin: 0;
     padding: 0;
@@ -80,7 +80,20 @@ body {
     padding: 15px;
     overflow: hidden;
     border: 3px solid rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
+
+    .logo:hover {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 1);
+    }
+
+    .logo:active {
+        transform: scale(1.05) rotate(0deg);
+    }
 
 @keyframes pulse {
     0%, 100% {

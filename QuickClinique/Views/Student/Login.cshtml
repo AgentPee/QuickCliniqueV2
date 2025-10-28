@@ -1,4 +1,4 @@
-﻿@model QuickClinique.Models.StudentLoginViewModel
+﻿﻿@model QuickClinique.Models.StudentLoginViewModel
 @{
     ViewData["Title"] = "Student Login";
     Layout = null;
@@ -15,9 +15,9 @@
 <body>
     <div class="container">
         <div class="side-panel">
-            <div class="logo">
+            <a asp-controller="ClinicStaff" asp-action="Login" class="logo" title="Switch to Staff Login">
                 <img src="~/img/logo.png" alt="QuickClinic Logo" class="logo-img">
-            </div>
+            </a>
             <h1 class="clinic-name">QuickClinic</h1>
             <p class="tagline">Your Health, Our Priority</p>
             <div class="medical-icons">
