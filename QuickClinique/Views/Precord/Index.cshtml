@@ -1,430 +1,386 @@
-@model IEnumerable<QuickClinique.Models.Precord>
+@model IEnumerable<QuickClinique.Models.Student>
 @{
-    ViewData["Title"] = "Patient Records";
+    ViewData["Title"] = "Patient Management";
+    Layout = "_Layout";
 }
 
 @section Styles {
-    <style>
-        .records-container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .page-header h1 {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-add {
-            background: white;
-            color: #667eea;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
-            color: #667eea;
-        }
-
-        .search-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-box {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .search-box button {
-            padding: 0.75rem 2rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .search-box button:hover {
-            background: #5568d3;
-        }
-
-        .records-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .record-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            border-left: 4px solid #667eea;
-        }
-
-        .record-card:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-3px);
-        }
-
-        .record-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f7fafc;
-        }
-
-        .patient-info h3 {
-            margin: 0 0 0.25rem;
-            color: #2d3748;
-            font-size: 1.2rem;
-        }
-
-        .patient-info p {
-            margin: 0;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        .record-id {
-            background: #edf2f7;
-            color: #4a5568;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .record-details {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .detail-item {
-            display: flex;
-            align-items: start;
-            gap: 0.75rem;
-        }
-
-        .detail-item i {
-            color: #667eea;
-            margin-top: 0.25rem;
-            width: 20px;
-        }
-
-        .detail-content {
-            flex: 1;
-        }
-
-        .detail-label {
-            font-size: 0.85rem;
-            color: #718096;
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-value {
-            color: #2d3748;
-            font-weight: 500;
-        }
-
-        .record-actions {
-            display: flex;
-            gap: 0.5rem;
-            padding-top: 1rem;
-            border-top: 2px solid #f7fafc;
-        }
-
-        .btn-action {
-            flex: 1;
-            padding: 0.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .btn-view {
-            background: #edf2f7;
-            color: #4a5568;
-        }
-
-        .btn-view:hover {
-            background: #e2e8f0;
-            color: #2d3748;
-        }
-
-        .btn-edit {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .btn-edit:hover {
-            background: #fde68a;
-            color: #78350f;
-        }
-
-        .btn-delete {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .btn-delete:hover {
-            background: #fecaca;
-            color: #7f1d1d;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .empty-state i {
-            font-size: 5rem;
-            color: #cbd5e0;
-            margin-bottom: 1.5rem;
-        }
-
-        .empty-state h3 {
-            color: #4a5568;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state p {
-            color: #718096;
-            margin-bottom: 2rem;
-        }
-
-        @@media (max-width: 768px) {
-            .records-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/precord.css" asp-append-version="true" />
 }
 
-<div class="records-container">
+<div class="patients-container">
+    @Html.AntiForgeryToken()
+    
     <div class="page-header">
         <h1>
-            <i class="fas fa-file-medical"></i>
-            Patient Records
+            <i class="fas fa-users"></i>
+            Patient Management
         </h1>
-        <a href="@Url.Action("Create")" class="btn-add">
-            <i class="fas fa-plus"></i>
-            New Record
-        </a>
     </div>
 
     <div class="search-section">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search by patient name, ID, or diagnosis..." />
-            <button onclick="searchRecords()">
+            <input type="text" id="searchInput" placeholder="Search by name, ID number, email, or phone..." />
+            <button onclick="searchPatients()">
                 <i class="fas fa-search"></i> Search
             </button>
         </div>
     </div>
 
-    <div class="records-grid" id="recordsGrid">
         @if (Model != null && Model.Any())
         {
-            foreach (var record in Model)
-            {
-                <div class="record-card" data-search="@record.Name @record.Patient?.Idnumber @record.Diagnosis">
-                    <div class="record-header">
-                        <div class="patient-info">
-                            <h3>@record.Name</h3>
-                            <p>
-                                <i class="fas fa-id-card"></i>
-                                @(record.Patient != null ? record.Patient.Idnumber : "N/A")
-                            </p>
-                        </div>
-                        <span class="record-id">#@record.RecordId</span>
-                    </div>
-
-                    <div class="record-details">
-                        <div class="detail-item">
-                            <i class="fas fa-user"></i>
-                            <div class="detail-content">
-                                <div class="detail-label">Age & Gender</div>
-                                <div class="detail-value">@record.Age years, @record.Gender</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <i class="fas fa-weight"></i>
-                            <div class="detail-content">
-                                <div class="detail-label">BMI</div>
-                                <div class="detail-value">@record.Bmi</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-item">
-                            <i class="fas fa-stethoscope"></i>
-                            <div class="detail-content">
-                                <div class="detail-label">Diagnosis</div>
-                                <div class="detail-value">@(string.IsNullOrEmpty(record.Diagnosis) ? "No diagnosis recorded" : record.Diagnosis)</div>
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(record.Allergies))
-                        {
-                            <div class="detail-item">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <div class="detail-content">
-                                    <div class="detail-label">Allergies</div>
-                                    <div class="detail-value">@record.Allergies</div>
+        <div class="patients-table-container">
+            <table class="patients-table">
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientsTableBody">
+                    @foreach (var patient in Model)
+                    {
+                        <tr data-search="@patient.Idnumber @patient.FirstName @patient.LastName @patient.Email @patient.PhoneNumber">
+                            <td>@patient.Idnumber</td>
+                            <td>
+                                <span class="patient-name">@patient.FirstName @patient.LastName</span>
+                            </td>
+                            <td>@patient.Email</td>
+                            <td>@patient.PhoneNumber</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button onclick="showDetailsModal(@patient.StudentId)" class="btn-action btn-view">
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                    <button onclick="showEditModal(@patient.StudentId)" class="btn-action btn-edit">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="showDeleteModal(@patient.StudentId, '@patient.FirstName @patient.LastName')" class="btn-action btn-delete">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
                                 </div>
-                            </div>
-                        }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>No Patients Registered</h3>
+            <p>There are currently no patients registered in the system.</p>
+                        </div>
+    }
                     </div>
 
-                    <div class="record-actions">
-                        <a href="@Url.Action("Details", new { id = record.RecordId })" class="btn-action btn-view">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="@Url.Action("Edit", new { id = record.RecordId })" class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <a href="@Url.Action("Delete", new { id = record.RecordId })" class="btn-action btn-delete">
-                            <i class="fas fa-trash"></i> Delete
-                        </a>
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <i class="fas fa-file-medical-alt"></i>
-                <h3>No Patient Records</h3>
-                <p>No patient records have been created yet. Start by adding a new record.</p>
-                <a href="@Url.Action("Create")" class="btn-add">
-                    <i class="fas fa-plus"></i>
-                    Create First Record
-                </a>
+<!-- Details Modal -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-circle"></i> Patient Details</h2>
+            <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="detailsModalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
-        }
+        </div>
+                            </div>
+                        </div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content modal-medium">
+        <div class="modal-header">
+            <h2><i class="fas fa-edit"></i> Edit Patient Information</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="editModalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+                            </div>
+                        </div>
+                            </div>
+                        </div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content modal-small">
+        <div class="modal-header modal-header-danger">
+            <h2><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+                                </div>
+        <div class="modal-body">
+            <p id="deleteMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="closeModal('deleteModal')" class="btn-action btn-view" style="padding: 0.75rem 2rem;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button onclick="confirmDelete()" class="btn-action btn-delete" style="padding: 0.75rem 2rem;">
+                            <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function searchRecords() {
+        let currentDeleteId = null;
+
+        function searchPatients() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const cards = document.querySelectorAll('.record-card');
+            const rows = document.querySelectorAll('#patientsTableBody tr');
             let visibleCount = 0;
 
-            cards.forEach(card => {
-                const searchData = card.getAttribute('data-search').toLowerCase();
+            rows.forEach(row => {
+                const searchData = row.getAttribute('data-search').toLowerCase();
                 if (searchData.includes(searchTerm)) {
-                    card.style.display = 'block';
+                    row.style.display = '';
                     visibleCount++;
                 } else {
-                    card.style.display = 'none';
+                    row.style.display = 'none';
                 }
             });
 
-            // Show empty state if no results
-            const grid = document.getElementById('recordsGrid');
-            let emptyState = document.getElementById('searchEmptyState');
-
             if (visibleCount === 0 && searchTerm) {
-                if (!emptyState) {
-                    emptyState = document.createElement('div');
-                    emptyState.id = 'searchEmptyState';
-                    emptyState.className = 'empty-state';
-                    emptyState.style.gridColumn = '1 / -1';
-                    emptyState.innerHTML = `
-                        <i class="fas fa-search"></i>
-                        <h3>No Results Found</h3>
-                        <p>No records match your search criteria. Try a different search term.</p>
-                        <button class="btn-add" onclick="clearSearch()">
-                            <i class="fas fa-times"></i>
-                            Clear Search
-                        </button>
-                    `;
-                    grid.appendChild(emptyState);
-                }
-            } else if (emptyState) {
-                emptyState.remove();
+                showNoResultsMessage();
+            } else {
+                removeNoResultsMessage();
             }
         }
 
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            searchRecords();
+        function showNoResultsMessage() {
+            let existingMessage = document.getElementById('noResultsMessage');
+            if (!existingMessage) {
+                const tbody = document.getElementById('patientsTableBody');
+                const row = tbody.insertRow(0);
+                row.id = 'noResultsMessage';
+                const cell = row.insertCell(0);
+                cell.colSpan = 5;
+                cell.style.textAlign = 'center';
+                cell.style.padding = '2rem';
+                cell.style.color = '#718096';
+                cell.innerHTML = '<i class="fas fa-search" style="font-size: 2rem; display: block; margin-bottom: 1rem; color: #cbd5e0;"></i><p style="margin: 0;">No patients match your search criteria.</p>';
+            }
         }
 
-        // Search on enter key
+        function removeNoResultsMessage() {
+            const message = document.getElementById('noResultsMessage');
+            if (message) {
+                message.remove();
+            }
+        }
+
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                searchRecords();
+                searchPatients();
             }
         });
 
-        // Real-time search
-        document.getElementById('searchInput').addEventListener('input', searchRecords);
+        document.getElementById('searchInput').addEventListener('input', searchPatients);
+
+        // Modal Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Details Modal
+        async function showDetailsModal(patientId) {
+            openModal('detailsModal');
+            const modalBody = document.getElementById('detailsModalBody');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            try {
+                const response = await fetch(`/Precord/Details/${patientId}`);
+                if (!response.ok) throw new Error('Failed to load patient details');
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const content = doc.querySelector('.patient-details-container');
+                
+                if (content) {
+                    // Remove back button
+                    const backBtn = content.querySelector('.btn-back');
+                    if (backBtn) backBtn.remove();
+                    
+                    // Remove bottom buttons
+                    const bottomButtons = content.querySelector('div[style*="margin-top: 2rem"]');
+                    if (bottomButtons) bottomButtons.remove();
+                    
+                    modalBody.innerHTML = content.innerHTML;
+                } else {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load patient details.</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading patient details. Please try again.</p>';
+            }
+        }
+
+        // Edit Modal
+        async function showEditModal(patientId) {
+            openModal('editModal');
+            const modalBody = document.getElementById('editModalBody');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            try {
+                const response = await fetch(`/Precord/EditPatient/${patientId}`);
+                if (!response.ok) throw new Error('Failed to load patient data');
+                
+                const html = await response.text();
+                modalBody.innerHTML = html;
+                
+                // Setup form submission
+                const form = document.getElementById('editPatientForm');
+                if (form) {
+                    form.addEventListener('submit', (e) => submitEditForm(e, patientId));
+                } else {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading edit form. Please try again.</p>';
+            }
+        }
+
+        async function submitEditForm(event, patientId) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/Precord/EditPatient/${patientId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification(result.message || 'Patient information updated successfully!', 'success');
+                    closeModal('editModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    // Display validation errors
+                    let errorMessage = result.message || 'Failed to update patient information.';
+                    
+                    if (result.errors) {
+                        // Display specific field errors
+                        const errorList = Object.entries(result.errors)
+                            .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
+                            .join('<br>');
+                        errorMessage += '<br><small>' + errorList + '</small>';
+                    }
+                    
+                    showNotification(errorMessage, 'error');
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error updating patient information. Please try again.', 'error');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Delete Modal
+        function showDeleteModal(patientId, patientName) {
+            currentDeleteId = patientId;
+            document.getElementById('deleteMessage').textContent = 
+                `Are you sure you want to delete patient "${patientName}"? This action cannot be undone and will also delete all associated records.`;
+            openModal('deleteModal');
+        }
+
+        async function confirmDelete() {
+            if (!currentDeleteId) return;
+
+            const deleteModal = document.getElementById('deleteModal');
+            const modalBody = deleteModal.querySelector('.modal-body');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Deleting...</div>';
+
+            try {
+                const formData = new FormData();
+                
+                // Get or create anti-forgery token
+                let token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!token) {
+                    // Create a temporary form to get the token
+                    const tempForm = document.createElement('form');
+                    tempForm.innerHTML = '@Html.AntiForgeryToken()';
+                    token = tempForm.querySelector('input[name="__RequestVerificationToken"]');
+                }
+                
+                if (token) {
+                    formData.append('__RequestVerificationToken', token.value);
+                }
+
+                const response = await fetch(`/Precord/DeletePatient/${currentDeleteId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification(result.message || 'Patient deleted successfully!', 'success');
+                    closeModal('deleteModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    throw new Error(result.message || 'Failed to delete patient');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error deleting patient. Please try again.', 'error');
+                closeModal('deleteModal');
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <div>${message}</div>
+            `;
+            notification.style.maxWidth = '500px';
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
     </script>
 }
-

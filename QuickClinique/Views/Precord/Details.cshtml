@@ -1,0 +1,169 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "Patient Details";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/precord.css" asp-append-version="true" />
+}
+
+<div class="patient-details-container">
+    <a href="@Url.Action("Index")" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Patient List
+    </a>
+
+    <div class="patient-info-card">
+        <div class="patient-info-header">
+            <div class="patient-avatar">
+                @(Model.FirstName.Substring(0, 1).ToUpper())@(Model.LastName.Substring(0, 1).ToUpper())
+            </div>
+            <div class="patient-header-info">
+                <h2>@Model.FirstName @Model.LastName</h2>
+                <p><i class="fas fa-id-card"></i> ID: @Model.Idnumber</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value">@Model.Email</div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value">@Model.PhoneNumber</div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Account Status</div>
+                    <div class="info-value">
+                        @if (Model.IsEmailVerified)
+                        {
+                            <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Verified</span>
+                        }
+                        else
+                        {
+                            <span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Not Verified</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Total Appointments</div>
+                    <div class="info-value">@Model.Appointments.Count</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="appointments-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-history"></i>
+                Appointment History
+            </h3>
+        </div>
+
+        @if (Model.Appointments != null && Model.Appointments.Any())
+        {
+            <div class="appointments-list">
+                @foreach (var appointment in Model.Appointments)
+                {
+                    <div class="appointment-item">
+                        <div class="appointment-header-row">
+                            <div class="appointment-date-time">
+                                <div class="date-badge">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>@appointment.Schedule.Date.ToString("MMMM dd, yyyy")</span>
+                                </div>
+                                <div class="time-badge">
+                                    <i class="fas fa-clock"></i>
+                                    <span>@appointment.Schedule.StartTime.ToString("hh:mm tt") - @appointment.Schedule.EndTime.ToString("hh:mm tt")</span>
+                                </div>
+                            </div>
+                            <div>
+                                @{
+                                    var statusClass = "status-" + appointment.AppointmentStatus.ToLower();
+                                }
+                                <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                            </div>
+                        </div>
+
+                        <div class="appointment-details-row">
+                            <div class="detail-row">
+                                <i class="fas fa-notes-medical"></i>
+                                <strong>Reason for Visit:</strong>
+                                <span>@appointment.ReasonForVisit</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(appointment.Symptoms))
+                            {
+                                <div class="detail-row">
+                                    <i class="fas fa-heartbeat"></i>
+                                    <strong>Symptoms:</strong>
+                                    <span>@appointment.Symptoms</span>
+                                </div>
+                            }
+
+                            <div class="detail-row">
+                                <i class="fas fa-hashtag"></i>
+                                <strong>Queue Number:</strong>
+                                <span>@appointment.QueueNumber</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <i class="fas fa-calendar-day"></i>
+                                <strong>Date Booked:</strong>
+                                <span>@appointment.DateBooked.ToString("MMMM dd, yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-appointments">
+                <i class="fas fa-calendar-times"></i>
+                <p>This patient has no appointment history yet.</p>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+        <a href="@Url.Action("Edit", "Student", new { id = Model.StudentId })" class="btn-action btn-edit" style="padding: 0.75rem 2rem; font-size: 1rem;">
+            <i class="fas fa-edit"></i> Edit Patient Info
+        </a>
+        <a href="@Url.Action("Index")" class="btn-back" style="margin: 0;">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: Add any interactive features here
+        console.log('Patient details page loaded');
+    </script>
+}
+

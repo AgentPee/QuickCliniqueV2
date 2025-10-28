@@ -16,20 +16,21 @@ namespace QuickClinique.Controllers
             _context = context;
         }
 
-        // GET: Precord
+        // GET: Precord - Show all patients registered in the system
         public async Task<IActionResult> Index()
         {
-            var precords = _context.Precords
-                .Include(p => p.Patient);
-            var result = await precords.ToListAsync();
+            var students = await _context.Students
+                .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
+                .ToListAsync();
 
             if (IsAjaxRequest())
-                return Json(new { success = true, data = result });
+                return Json(new { success = true, data = students });
 
-            return View(result);
+            return View(students);
         }
 
-        // GET: Precord/Details/5
+        // GET: Precord/Details/5 - Show patient details with appointment history
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -39,21 +40,30 @@ namespace QuickClinique.Controllers
                 return NotFound();
             }
 
-            var precord = await _context.Precords
-                .Include(p => p.Patient)
-                .FirstOrDefaultAsync(m => m.RecordId == id);
+            var student = await _context.Students
+                .Include(s => s.Appointments)
+                    .ThenInclude(a => a.Schedule)
+                .FirstOrDefaultAsync(m => m.StudentId == id);
 
-            if (precord == null)
+            if (student == null)
             {
                 if (IsAjaxRequest())
-                    return Json(new { success = false, error = "Patient record not found" });
+                    return Json(new { success = false, error = "Patient not found" });
                 return NotFound();
             }
 
-            if (IsAjaxRequest())
-                return Json(new { success = true, data = precord });
+            // Order appointments by date descending (most recent first)
+            var orderedAppointments = student.Appointments
+                .OrderByDescending(a => a.Schedule.Date)
+                .ThenByDescending(a => a.Schedule.StartTime)
+                .ToList();
+            
+            student.Appointments = orderedAppointments;
 
-            return View(precord);
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = student });
+
+            return View(student);
         }
 
         // GET: Precord/Create
@@ -243,6 +253,133 @@ namespace QuickClinique.Controllers
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
                    Request.ContentType == "application/json";
+        }
+
+        // GET: Precord/EditPatient/5 - Edit patient (Student) information
+        [HttpGet]
+        public async Task<IActionResult> EditPatient(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            return PartialView("_EditPatientForm", student);
+        }
+
+        // POST: Precord/EditPatient/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPatient(int id)
+        {
+            // Get the existing student first
+            var existingStudent = await _context.Students.FindAsync(id);
+            if (existingStudent == null)
+            {
+                return Json(new { success = false, message = "Patient not found" });
+            }
+
+            // Get form values manually to avoid model binding issues
+            var idnumber = Request.Form["Idnumber"];
+            var firstName = Request.Form["FirstName"];
+            var lastName = Request.Form["LastName"];
+            var email = Request.Form["Email"];
+            var phoneNumber = Request.Form["PhoneNumber"];
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(firstName))
+            {
+                return Json(new { success = false, message = "First Name is required" });
+            }
+            if (string.IsNullOrWhiteSpace(lastName))
+            {
+                return Json(new { success = false, message = "Last Name is required" });
+            }
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Json(new { success = false, message = "Email is required" });
+            }
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                return Json(new { success = false, message = "Phone Number is required" });
+            }
+            if (!int.TryParse(idnumber, out int parsedIdnumber))
+            {
+                return Json(new { success = false, message = "ID Number must be a valid number" });
+            }
+
+            try
+            {
+                // Update only the fields we want to change
+                existingStudent.Idnumber = parsedIdnumber;
+                existingStudent.FirstName = firstName.ToString().Trim();
+                existingStudent.LastName = lastName.ToString().Trim();
+                existingStudent.Email = email.ToString().Trim();
+                existingStudent.PhoneNumber = phoneNumber.ToString().Trim();
+
+                _context.Update(existingStudent);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Patient information updated successfully" });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Students.Any(e => e.StudentId == id))
+                {
+                    return Json(new { success = false, message = "Patient not found" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "An error occurred while updating. Please try again." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        // POST: Precord/DeletePatient/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeletePatient(int id)
+        {
+            var student = await _context.Students
+                .Include(s => s.Appointments)
+                .Include(s => s.Precords)
+                .Include(s => s.Histories)
+                .Include(s => s.Notifications)
+                .FirstOrDefaultAsync(s => s.StudentId == id);
+
+            if (student == null)
+            {
+                return Json(new { success = false, message = "Patient not found" });
+            }
+
+            try
+            {
+                // Remove related records
+                _context.Appointments.RemoveRange(student.Appointments);
+                _context.Precords.RemoveRange(student.Precords);
+                _context.Histories.RemoveRange(student.Histories);
+                _context.Notifications.RemoveRange(student.Notifications);
+                
+                // Remove the student
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Patient deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error deleting patient: {ex.Message}" });
+            }
         }
     }
 }
