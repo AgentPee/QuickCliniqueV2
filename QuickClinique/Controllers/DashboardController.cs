@@ -172,7 +172,7 @@ namespace QuickClinique.Controllers
             });
         }
 
-        // GET: Dashboard/GetMessages - Get messages for clinic staff
+        // GET: Dashboard/GetMessages - Get ALL messages between students and clinic staff (shared inbox)
         [HttpGet]
         public async Task<IActionResult> GetMessages()
         {
@@ -182,7 +182,7 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Not logged in" });
             }
 
-            // Get clinic staff's userId
+            // Get current clinic staff's userId
             var clinicStaff = await _context.Clinicstaffs
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.ClinicStaffId == clinicStaffId.Value);
@@ -192,11 +192,16 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Clinic staff not found" });
             }
 
-            // Get all messages where clinic staff is sender or receiver
+            // Get all clinic staff user IDs (for filtering)
+            var allClinicStaffUserIds = await _context.Clinicstaffs
+                .Select(c => c.UserId)
+                .ToListAsync();
+
+            // Get ALL messages involving any clinic staff (shared inbox for all staff)
             var messages = await _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
-                .Where(m => m.SenderId == clinicStaff.UserId || m.ReceiverId == clinicStaff.UserId)
+                .Where(m => allClinicStaffUserIds.Contains(m.SenderId) || allClinicStaffUserIds.Contains(m.ReceiverId))
                 .OrderBy(m => m.CreatedAt)
                 .Select(m => new {
                     messageId = m.MessageId,
@@ -270,7 +275,7 @@ namespace QuickClinique.Controllers
             });
         }
 
-        // GET: Dashboard/GetPatientMessages - Get messages grouped by student
+        // GET: Dashboard/GetPatientMessages - Get ALL messages grouped by student (shared inbox)
         [HttpGet]
         public async Task<IActionResult> GetPatientMessages()
         {
@@ -290,17 +295,22 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Clinic staff not found" });
             }
 
-            // Get all messages involving this clinic staff
+            // Get all clinic staff user IDs (for filtering)
+            var allClinicStaffUserIds = await _context.Clinicstaffs
+                .Select(c => c.UserId)
+                .ToListAsync();
+
+            // Get ALL messages involving any clinic staff (shared inbox)
             var messages = await _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
-                .Where(m => m.SenderId == clinicStaff.UserId || m.ReceiverId == clinicStaff.UserId)
+                .Where(m => allClinicStaffUserIds.Contains(m.SenderId) || allClinicStaffUserIds.Contains(m.ReceiverId))
                 .OrderByDescending(m => m.CreatedAt)
                 .ToListAsync();
 
-            // Group messages by patient (student)
+            // Group messages by patient (student) - identify patients by excluding clinic staff
             var patientMessages = messages
-                .GroupBy(m => m.SenderId == clinicStaff.UserId ? m.ReceiverId : m.SenderId)
+                .GroupBy(m => allClinicStaffUserIds.Contains(m.SenderId) ? m.ReceiverId : m.SenderId)
                 .Select(g => new {
                     patientUserId = g.Key,
                     patientName = g.First(m => m.SenderId == g.Key || m.ReceiverId == g.Key).SenderId == g.Key ? 
@@ -308,7 +318,7 @@ namespace QuickClinique.Controllers
                                  g.First(m => m.ReceiverId == g.Key).Receiver.Name,
                     lastMessage = g.First().Message1,
                     lastMessageTime = g.First().CreatedAt,
-                    unreadCount = g.Count(m => m.ReceiverId == clinicStaff.UserId) // Simplified unread logic
+                    unreadCount = 0 // Can be enhanced later with read/unread tracking
                 })
                 .ToList();
 

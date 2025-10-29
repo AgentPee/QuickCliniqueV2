@@ -114,7 +114,7 @@ public class HomeController : Controller
         }
 
         // Get a clinic staff member to send message to
-        // For now, send to the first available clinic staff
+        // Note: Message is sent to one staff member, but ALL clinic staff can view and reply (shared inbox)
         var clinicStaff = await _context.Clinicstaffs
             .Include(c => c.User)
             .FirstOrDefaultAsync();

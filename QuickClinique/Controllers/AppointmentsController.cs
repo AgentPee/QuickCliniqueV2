@@ -398,29 +398,37 @@ namespace QuickClinique.Controllers
 
         // POST: Appointments/UpdateStatus - Update appointment status
         [HttpPost]
-        [ValidateAntiForgeryToken]
         [ClinicStaffOnly]
-        public async Task<IActionResult> UpdateStatus(int appointmentId, string status)
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateStatusRequest request)
         {
             try
             {
-                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                Console.WriteLine($"UpdateStatus called with AppointmentId: {request?.AppointmentId}, Status: {request?.Status}");
+                
+                if (request == null || request.AppointmentId <= 0)
+                {
+                    Console.WriteLine("Invalid request data");
+                    return Json(new { success = false, error = "Invalid request data" });
+                }
+
+                var appointment = await _context.Appointments.FindAsync(request.AppointmentId);
                 if (appointment == null)
                 {
+                    Console.WriteLine($"Appointment not found with ID: {request.AppointmentId}");
                     return Json(new { success = false, error = "Appointment not found" });
                 }
 
                 // Validate status
                 var validStatuses = new[] { "Pending", "Confirmed", "In Progress", "Completed", "Cancelled" };
-                if (!validStatuses.Contains(status))
+                if (!validStatuses.Contains(request.Status))
                 {
                     return Json(new { success = false, error = "Invalid status" });
                 }
 
-                appointment.AppointmentStatus = status;
+                appointment.AppointmentStatus = request.Status;
 
                 // Update queue status based on appointment status
-                switch (status)
+                switch (request.Status)
                 {
                     case "Confirmed":
                         appointment.QueueStatus = "Waiting";
@@ -440,13 +448,22 @@ namespace QuickClinique.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"Successfully updated appointment {request.AppointmentId} to status {request.Status}");
 
-                return Json(new { success = true, message = $"Appointment status updated to {status}" });
+                return Json(new { success = true, message = $"Appointment status updated to {request.Status}" });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error updating appointment status: {ex.Message}");
                 return Json(new { success = false, error = "Error updating appointment status" });
             }
+        }
+
+        // Helper class for UpdateStatus request
+        public class UpdateStatusRequest
+        {
+            public int AppointmentId { get; set; }
+            public required string Status { get; set; }
         }
 
         // GET: Appointments/Queue - Real-time queue management
@@ -458,7 +475,8 @@ namespace QuickClinique.Controllers
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
                 .Where(a => a.Schedule.Date == today && 
-                           (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"))
+                           (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress") &&
+                           a.QueueStatus != "Done")
                 .OrderBy(a => a.QueueNumber)
                 .ToListAsync();
 
@@ -478,6 +496,19 @@ namespace QuickClinique.Controllers
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 
+                // First, move any current "In Progress" appointment to "Done" status
+                var currentAppointment = await _context.Appointments
+                    .Where(a => a.Schedule.Date == today && 
+                               a.AppointmentStatus == "In Progress")
+                    .FirstOrDefaultAsync();
+
+                if (currentAppointment != null)
+                {
+                    // Mark current patient as done (they can complete medical record separately)
+                    currentAppointment.QueueStatus = "Done";
+                    // Keep status as "In Progress" until medical record is completed
+                }
+                
                 // Find the next appointment in queue
                 var nextAppointment = await _context.Appointments
                     .Include(a => a.Patient)
@@ -493,7 +524,7 @@ namespace QuickClinique.Controllers
                     return Json(new { success = false, message = "No patients waiting in queue" });
                 }
 
-                // Update current appointment to "In Progress"
+                // Update next appointment to "In Progress"
                 nextAppointment.AppointmentStatus = "In Progress";
                 nextAppointment.QueueStatus = "Being Served";
 

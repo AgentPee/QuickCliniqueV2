@@ -56,14 +56,12 @@ async function updateStatus(appointmentId, status) {
     }
 
     try {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        console.log('Updating appointment:', appointmentId, 'to status:', status);
 
         const response = await fetch('/Appointments/UpdateStatus', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token,
-                'X-CSRF-TOKEN': token
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 appointmentId: appointmentId,
@@ -71,7 +69,16 @@ async function updateStatus(appointmentId, status) {
             })
         });
 
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            console.error('HTTP error:', response.status, response.statusText);
+            alert('Server error: ' + response.status + ' ' + response.statusText);
+            return;
+        }
+
         const result = await response.json();
+        console.log('Response data:', result);
 
         if (result.success) {
             alert(result.message);
@@ -81,7 +88,7 @@ async function updateStatus(appointmentId, status) {
         }
     } catch (error) {
         console.error('Error updating status:', error);
-        alert('An error occurred while updating the appointment status.');
+        alert('An error occurred while updating the appointment status.\n\nError: ' + error.message);
     }
 }
 
@@ -96,8 +103,10 @@ function completeAppointment(appointmentId, patientId) {
     document.getElementById('completeAppointmentId').value = appointmentId;
     document.getElementById('completePatientId').value = patientId;
 
-    // Show the modal
-    $('#completeAppointmentModal').modal('show');
+    // Show the modal using Bootstrap 5
+    const modalElement = document.getElementById('completeAppointmentModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
 }
 
 async function submitCompleteAppointment() {
@@ -163,7 +172,12 @@ async function submitCompleteAppointment() {
         console.log('Response data:', result);
 
         if (result.success) {
-            $('#completeAppointmentModal').modal('hide');
+            // Hide modal using Bootstrap 5
+            const modalElement = document.getElementById('completeAppointmentModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
             alert('Appointment completed successfully! Medical record has been created.');
             location.reload(); // Refresh to show updated status
         } else {
@@ -180,9 +194,12 @@ async function submitCompleteAppointment() {
     }
 }
 
-// Close modal when clicking outside or pressing ESC
+// Reset form when modal is hidden
 document.addEventListener('DOMContentLoaded', function () {
-    $('#completeAppointmentModal').on('hidden.bs.modal', function () {
-        document.getElementById('completeAppointmentForm').reset();
-    });
+    const modalElement = document.getElementById('completeAppointmentModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('completeAppointmentForm').reset();
+        });
+    }
 });

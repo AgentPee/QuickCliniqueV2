@@ -70,30 +70,18 @@
                                 </div>
                             </div>
                             <div class="appointment-actions">
-                                @if (appointment.AppointmentStatus == "Pending")
-                                {
-                                    <button class="status-btn confirm"
-                                            data-appointment-id="@appointment.AppointmentId"
-                                            data-status="Confirmed"
-                                            onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
-                                        Confirm
-                                    </button>
+                                @{
+                                    var statusClass = appointment.AppointmentStatus switch
+                                    {
+                                        "Pending" => "status-badge pending",
+                                        "Confirmed" => "status-badge confirmed",
+                                        "In Progress" => "status-badge in-progress",
+                                        "Completed" => "status-badge completed",
+                                        "Cancelled" => "status-badge cancelled",
+                                        _ => "status-badge"
+                                    };
                                 }
-                                @if (appointment.AppointmentStatus == "Confirmed")
-                                {
-                                    <button class="status-btn complete"
-                                            data-appointment-id="@appointment.AppointmentId"
-                                            data-status="Completed"
-                                            onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
-                                        Complete
-                                    </button>
-                                }
-                                <button class="status-btn cancel"
-                                        data-appointment-id="@appointment.AppointmentId"
-                                        data-status="Cancelled"
-                                        onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
-                                    Cancel
-                                </button>
+                                <span class="@statusClass">@appointment.AppointmentStatus</span>
                             </div>
                         </div>
                     }

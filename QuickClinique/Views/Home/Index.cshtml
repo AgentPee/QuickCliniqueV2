@@ -98,17 +98,10 @@
                     <h4>Your Queue Number:</h4>
                     <p id="userQueueNumber">-</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Appointment History -->
-        <div class="history-section">
-            <div class="history-header">
-                <i class="fas fa-history"></i> Appointment History
-                <button class="refresh-btn" id="refreshHistory"><i class="fas fa-sync-alt"></i></button>
-            </div>
-            <div class="history-list" id="historyList">
-                <div class="no-records">No records found.</div>
+                <div class="queue-last-updated" style="margin-top: 10px; font-size: 0.75rem; color: #6c757d; text-align: center;">
+                    <i class="fas fa-circle" id="queueStatusIndicator" style="font-size: 0.5rem; color: #28a745;"></i>
+                    <span id="queueLastUpdated">Loading...</span>
+                </div>
             </div>
         </div>
     </section>
@@ -360,12 +353,6 @@
         let availableSlots = [];
         let availableDates = [];
 
-        // DOM Ready
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeEnhancedAppointment();
-            // ... other existing initialization code
-        });
-
         function initializeEnhancedAppointment() {
             const appointmentDate = document.getElementById('appointmentDate');
             const availableSlotsSelect = document.getElementById('availableSlots');
@@ -398,51 +385,6 @@
             // Initialize appointment form
             const appointmentForm = document.getElementById('appointmentForm');
             appointmentForm.addEventListener('submit', handleEnhancedAppointmentSubmit);
-        }
-
-                // Enhanced appointment history display
-        function displayEnhancedAppointmentHistory(appointments) {
-            const historyList = document.getElementById('historyList');
-
-            if (appointments && appointments.length > 0) {
-                historyList.innerHTML = appointments.map(appointment => {
-                    // Format the time for display
-                    const startTime = formatTime(appointment.schedule?.startTime);
-                    const endTime = formatTime(appointment.schedule?.endTime);
-
-                    return `
-                        <div class="history-item ${appointment.appointmentStatus.toLowerCase()}">
-                            <div class="history-main">
-                                <div class="history-date">
-                                    <strong>Date:</strong> ${new Date(appointment.schedule?.date).toLocaleDateString()}
-                                </div>
-                                <div class="history-time">
-                                    <strong>Time:</strong> ${startTime} - ${endTime}
-                                </div>
-                                <div class="history-service">
-                                    <strong>Service:</strong> ${appointment.reasonForVisit}
-                                </div>
-                                <div class="history-symptoms">
-                                    <strong>Symptoms:</strong> ${appointment.symptoms || 'Not specified'}
-                                </div>
-                            </div>
-                            <div class="history-meta">
-                                <div class="history-status ${appointment.appointmentStatus.toLowerCase()}">
-                                    ${appointment.appointmentStatus}
-                                </div>
-                                <div class="history-queue">Queue: ${appointment.queueNumber}</div>
-                                ${appointment.appointmentStatus === 'Pending' ?
-                                    `<button class="cancel-btn" onclick="cancelAppointment(${appointment.appointmentId})">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </button>` : ''
-                                }
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                historyList.innerHTML = '<div class="no-records">No appointment records found.</div>';
-            }
         }
 
          // Handle enhanced appointment submission - FIXED SERVICE MAPPING & OPTIONAL SYMPTOMS
@@ -589,7 +531,6 @@
                     // Reload data
                     setTimeout(() => {
                         loadAvailableDates();
-                        loadAppointmentHistory();
                         updateQueueStatus();
                     }, 1000);
 
@@ -989,10 +930,19 @@
             });
         }
 
-        // Call this after DOM is ready
+        // Main DOM Ready handler - consolidate all initialization here
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing all components...');
+            
+            // Initialize appointment booking
             initializeEnhancedAppointment();
             enhanceDatePicker();
+            
+            // Initialize real-time queue updates
+            initializeQueueUpdates();
+            
+            // Initialize messaging
+            initializeMessaging();
         });
 
                 // Helper function to get current patient ID from server session
@@ -1199,10 +1149,12 @@
 
         // ===== REAL-TIME QUEUE FUNCTIONALITY =====
         let queueUpdateInterval = null;
-        const QUEUE_UPDATE_INTERVAL = 10000; // Update every 10 seconds
+        const QUEUE_UPDATE_INTERVAL = 5000; // Update every 5 seconds for more real-time feeling
 
-        // Initialize queue updates when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize queue updates - will be called when DOM is ready
+        function initializeQueueUpdates() {
+            console.log('Initializing queue updates...');
+            
             // Initial queue load
             updateQueueStatus();
 
@@ -1224,11 +1176,18 @@
                     }
                 });
             }
-        });
+        }
 
         // Update queue status
         async function updateQueueStatus() {
+            const statusIndicator = document.getElementById('queueStatusIndicator');
+            
             try {
+                // Add updating class for pulse animation
+                if (statusIndicator) {
+                    statusIndicator.classList.add('updating');
+                }
+                
                 // Get current student ID
                 let studentId = null;
                 try {
@@ -1243,16 +1202,47 @@
                     : '/Appointments/GetQueueStatus';
 
                 const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
 
                 if (result.success && result.data) {
                     displayQueueStatus(result.data);
+                    console.log('Queue status updated successfully at:', new Date().toLocaleTimeString());
                 } else {
                     console.error('Failed to fetch queue status:', result.error);
+                    // Display error in UI
+                    displayQueueError('Unable to load queue status');
                 }
             } catch (error) {
                 console.error('Error updating queue status:', error);
+                // Don't show error in UI for network issues - just log it
+                // This prevents annoying error messages during auto-refresh
+            } finally {
+                // Remove updating class after a short delay
+                if (statusIndicator) {
+                    setTimeout(() => {
+                        statusIndicator.classList.remove('updating');
+                    }, 1000);
+                }
             }
+        }
+        
+        // Display error in queue UI
+        function displayQueueError(message) {
+            const nowServingElement = document.getElementById('nowServing');
+            const waitingCountElement = document.getElementById('waitingCount');
+            const queueMessageElement = document.getElementById('queueMessage');
+            const userQueueNumberElement = document.getElementById('userQueueNumber');
+            
+            nowServingElement.textContent = 'Error loading data';
+            nowServingElement.style.color = '#dc3545';
+            waitingCountElement.textContent = '-';
+            queueMessageElement.innerHTML = '<p style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ' + message + '</p>';
+            userQueueNumberElement.innerHTML = '<span style="color: #6c757d;">-</span>';
         }
 
         // Display queue status in the UI
@@ -1326,6 +1316,21 @@
 
             // Update last updated time
             const lastUpdated = new Date(data.lastUpdated);
+            const lastUpdatedElement = document.getElementById('queueLastUpdated');
+            const statusIndicator = document.getElementById('queueStatusIndicator');
+            
+            if (lastUpdatedElement) {
+                lastUpdatedElement.textContent = `Updated: ${lastUpdated.toLocaleTimeString()}`;
+            }
+            
+            // Pulse the status indicator to show it's updating
+            if (statusIndicator) {
+                statusIndicator.style.color = '#ffc107'; // Yellow during update
+                setTimeout(() => {
+                    statusIndicator.style.color = '#28a745'; // Green when done
+                }, 500);
+            }
+            
             console.log('Queue updated at:', lastUpdated.toLocaleTimeString());
         }
 
@@ -1334,14 +1339,16 @@
             // Clear any existing interval
             if (queueUpdateInterval) {
                 clearInterval(queueUpdateInterval);
+                queueUpdateInterval = null;
             }
 
             // Set up new interval
             queueUpdateInterval = setInterval(function() {
+                console.log('Auto-refreshing queue status...');
                 updateQueueStatus();
             }, QUEUE_UPDATE_INTERVAL);
 
-            console.log('Queue auto-refresh started (every 10 seconds)');
+            console.log(`Queue auto-refresh started (every ${QUEUE_UPDATE_INTERVAL / 1000} seconds)`);
         }
 
         // Stop auto-refresh (useful when user navigates away)
@@ -1355,12 +1362,26 @@
 
         // Stop auto-refresh when user leaves the page
         window.addEventListener('beforeunload', stopQueueAutoRefresh);
+        
+        // Also restart auto-refresh when page becomes visible again (tab switching)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('Page became visible, updating queue...');
+                updateQueueStatus();
+                // Restart auto-refresh to ensure it's running
+                if (!queueUpdateInterval) {
+                    startQueueAutoRefresh();
+                }
+            }
+        });
 
         // ===== MESSAGING FUNCTIONALITY =====
         let messagesInterval = null;
 
-        // Initialize messaging when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize messaging
+        function initializeMessaging() {
+            console.log('Initializing messaging...');
+            
             // Load messages on page load
             loadMessages();
 
@@ -1368,15 +1389,21 @@
             startMessagingAutoRefresh();
 
             // Send message button click
-            document.getElementById('sendMessage').addEventListener('click', sendMessageToStaff);
+            const sendButton = document.getElementById('sendMessage');
+            if (sendButton) {
+                sendButton.addEventListener('click', sendMessageToStaff);
+            }
 
             // Send message on Enter key
-            document.getElementById('messageInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessageToStaff();
-                }
-            });
-        });
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessageToStaff();
+                    }
+                });
+            }
+        }
 
         // Load messages from server
         async function loadMessages() {
@@ -1543,39 +1570,6 @@
         }
 
 
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 1rem;
-            border: 1px solid #e9ecef;
-            border-radius: 0.375rem;
-            margin-bottom: 0.75rem;
-            background: white;
-        }
-
-        .history-main {
-            flex: 1;
-        }
-
-        .history-meta {
-            text-align: right;
-            min-width: 120px;
-        }
-
-        .history-symptoms {
-            margin-top: 0.5rem;
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        .history-date,
-        .history-time,
-        .history-service,
-        .history-symptoms {
-            margin-bottom: 0.25rem;
-        }
-
         textarea#symptoms {
             width: 100%;
             padding: 0.5rem;
@@ -1658,69 +1652,6 @@
                 color: #495057;
             }
 
-        .history-item {
-            border: 1px solid #e9ecef;
-            border-radius: 0.375rem;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s;
-        }
-
-            .history-item:hover {
-                background-color: #f8f9fa;
-            }
-
-            .history-item.pending {
-                border-left: 4px solid #ffc107;
-            }
-
-            .history-item.confirmed {
-                border-left: 4px solid #28a745;
-            }
-
-            .history-item.cancelled {
-                border-left: 4px solid #dc3545;
-            }
-
-        .history-status {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-            .history-status.pending {
-                background-color: #fff3cd;
-                color: #856404;
-            }
-
-            .history-status.confirmed {
-                background-color: #d1e7dd;
-                color: #0f5132;
-            }
-
-            .history-status.cancelled {
-                background-color: #f8d7da;
-                color: #721c24;
-            }
-
-        .cancel-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 0.375rem 0.75rem;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: background-color 0.2s;
-        }
-
-            .cancel-btn:hover {
-                background-color: #c82333;
-            }
 
         .message.sent .message-content {
             background-color: #007bff;
@@ -1839,6 +1770,35 @@
 
         .form-group.has-error .validation-error {
             display: block;
+        }
+
+        /* Queue status indicator pulse animation */
+        @@keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #queueStatusIndicator {
+            transition: color 0.3s ease;
+        }
+
+        #queueStatusIndicator.updating {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .queue-last-updated {
+            border-top: 1px solid #e9ecef;
+            padding-top: 10px !important;
         }
     </style>
 }

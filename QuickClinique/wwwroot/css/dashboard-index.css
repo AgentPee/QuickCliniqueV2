@@ -398,10 +398,64 @@
         box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
     }
 
-        .status-btn.cancel:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5);
-        }
+    .status-btn.cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5);
+    }
+
+/* Status Badge */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    display: inline-block;
+    min-width: 100px;
+}
+
+    .status-badge.pending {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        color: #92400E;
+        border: 2px solid #F59E0B;
+    }
+
+    .status-badge.confirmed {
+        background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+        color: #065F46;
+        border: 2px solid #10B981;
+    }
+
+    .status-badge.in-progress {
+        background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+        color: #1E40AF;
+        border: 2px solid #3B82F6;
+        animation: pulse-badge 2s ease-in-out infinite;
+    }
+
+    .status-badge.completed {
+        background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+        color: #3730A3;
+        border: 2px solid #6366F1;
+    }
+
+    .status-badge.cancelled {
+        background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+        color: #991B1B;
+        border: 2px solid #DC2626;
+    }
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+}
 
 /* Empty State */
 .empty-state {
