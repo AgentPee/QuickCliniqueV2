@@ -957,7 +957,6 @@ C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\staticweba
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.QuickClinique.props
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.QuickClinique.props
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\staticwebassets.pack.json
-C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\QuickCli.D1438281.Up2Date
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\QuickClinique.dll
 C:\Users\LENOVO\OneDrive\Documents\cap\QuickClinique\obj\Debug\net8.0\refint\QuickClinique.dll
