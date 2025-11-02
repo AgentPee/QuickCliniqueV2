@@ -1,4 +1,4 @@
-﻿﻿/* QuickClinic Staff Login Styles - Exact match with Student Login */
+﻿/* QuickClinic Staff Login Styles - Exact match with Student Login */
 * {
     margin: 0;
     padding: 0;
@@ -136,7 +136,6 @@ body {
     pointer-events: none;
 }
 
-
 .floating-icon {
     position: absolute;
     font-size: 1.5rem;
@@ -190,6 +189,9 @@ body {
         transform: translateY(-10px);
     }
 }
+
+
+
 /* Form Panel */
 .form-panel {
     flex: 1.2;

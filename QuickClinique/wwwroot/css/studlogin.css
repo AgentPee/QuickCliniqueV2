@@ -1,4 +1,4 @@
-﻿﻿/* QuickClinic Student Login Styles - Matched with Registration Theme */
+﻿/* QuickClinic Staff Login Styles - Exact match with Student Login */
 * {
     margin: 0;
     padding: 0;
@@ -189,6 +189,8 @@ body {
         transform: translateY(-10px);
     }
 }
+
+
 
 /* Form Panel */
 .form-panel {
@@ -386,7 +388,6 @@ body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    margin-top: 10px;
 }
 
     .submit-btn:hover {
