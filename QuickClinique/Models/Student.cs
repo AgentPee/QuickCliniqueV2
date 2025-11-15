@@ -24,6 +24,9 @@ public partial class Student
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpiry { get; set; }
 
+    // Account activation status
+    public bool IsActive { get; set; } = true;
+
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<History> Histories { get; set; } = new List<History>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();

@@ -9,6 +9,7 @@
 }
 
 <div class="patient-details-container">
+    @Html.AntiForgeryToken()
     <a href="@Url.Action("Index")" class="btn-back">
         <i class="fas fa-arrow-left"></i> Back to Patient List
     </a>
@@ -50,7 +51,7 @@
                     <i class="fas fa-user-check"></i>
                 </div>
                 <div class="info-content">
-                    <div class="info-label">Account Status</div>
+                    <div class="info-label">Email Verification</div>
                     <div class="info-value">
                         @if (Model.IsEmailVerified)
                         {
@@ -60,6 +61,34 @@
                         {
                             <span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Not Verified</span>
                         }
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-toggle-on"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Account Status</div>
+                    <div class="info-value">
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge badge-success">
+                                <i class="fas fa-check-circle"></i> Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger">
+                                <i class="fas fa-ban"></i> Inactive
+                            </span>
+                        }
+                        <button onclick="showToggleModal(@Model.StudentId, '@Model.FirstName @Model.LastName', @Model.IsActive.ToString().ToLower())" 
+                                class="btn-action @(Model.IsActive ? "btn-delete" : "")" 
+                                style="@(Model.IsActive ? "" : "background-color: #28a745; color: white; margin-left: 10px; padding: 0.4rem 1rem; font-size: 0.85rem;")">
+                            <i class="fas fa-@(Model.IsActive ? "ban" : "check")"></i> @(Model.IsActive ? "Deactivate" : "Activate")
+                        </button>
                     </div>
                 </div>
             </div>
@@ -150,20 +179,246 @@
         }
     </div>
 
-    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-        <a href="@Url.Action("Edit", "Student", new { id = Model.StudentId })" class="btn-action btn-edit" style="padding: 0.75rem 2rem; font-size: 1rem;">
+    @if (Model.Precords != null && Model.Precords.Any())
+    {
+        <div class="medical-records-section" style="margin-top: 2rem;">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-file-medical"></i>
+                    Medical Records
+                </h3>
+            </div>
+
+            <div class="medical-records-list">
+                @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
+                {
+                    <div class="medical-record-item" style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <h4 style="margin: 0; color: rgb(0, 93, 101);">
+                                <i class="fas fa-file-medical-alt"></i> Record #@record.RecordId
+                            </h4>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="@Url.Action("Edit", "Precord", new { id = record.RecordId })" class="btn-action btn-edit" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i> Edit Record
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div>
+                                <strong><i class="fas fa-stethoscope"></i> Diagnosis:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Diagnosis</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-pills"></i> Medications:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Medications</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-exclamation-triangle"></i> Allergies:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Allergies</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-user"></i> Age:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Age years</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-venus-mars"></i> Gender:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Gender</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-weight"></i> BMI:</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Bmi</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="medical-records-section" style="margin-top: 2rem;">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-file-medical"></i>
+                    Medical Records
+                </h3>
+            </div>
+            <div class="no-appointments" style="background: white; padding: 2rem; border-radius: 10px; text-align: center;">
+                <i class="fas fa-file-medical" style="font-size: 3rem; color: #cbd5e0; margin-bottom: 1rem;"></i>
+                <p style="color: #718096; margin: 0;">No medical records found for this patient.</p>
+                <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action btn-edit" style="margin-top: 1rem; display: inline-block;">
+                    <i class="fas fa-plus"></i> Create Medical Record
+                </a>
+            </div>
+        </div>
+    }
+
+    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <button onclick="showEditModal(@Model.StudentId)" class="btn-action btn-edit" style="padding: 0.75rem 2rem; font-size: 1rem;">
             <i class="fas fa-edit"></i> Edit Patient Info
+        </button>
+        <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action" style="padding: 0.75rem 2rem; font-size: 1rem; background-color: rgb(0, 93, 101); color: white; text-decoration: none;">
+            <i class="fas fa-plus"></i> Add Medical Record
         </a>
-        <a href="@Url.Action("Index")" class="btn-back" style="margin: 0;">
+        <a href="@Url.Action("Index")" class="btn-back" style="margin: 0; padding: 0.75rem 2rem;">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
     </div>
 </div>
 
+<!-- Toggle Active Modal (same as in Index.cshtml) -->
+<div id="toggleModal" class="modal">
+    <div class="modal-content modal-small">
+        <div class="modal-header" id="toggleModalHeader">
+            <h2><i class="fas fa-exclamation-triangle"></i> <span id="toggleModalTitle">Confirm Action</span></h2>
+            <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="closeModal('toggleModal')" class="btn-action btn-view" style="padding: 0.75rem 2rem;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button onclick="confirmToggle()" class="btn-action" id="toggleConfirmButton" style="padding: 0.75rem 2rem;">
+                    <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        // Optional: Add any interactive features here
-        console.log('Patient details page loaded');
+        let currentToggleId = null;
+        let currentToggleIsActive = null;
+
+        // Modal Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Toggle Active Modal
+        function showToggleModal(patientId, patientName, isCurrentlyActive) {
+            currentToggleId = patientId;
+            currentToggleIsActive = isCurrentlyActive;
+            
+            const toggleModal = document.getElementById('toggleModal');
+            const toggleMessage = document.getElementById('toggleMessage');
+            const toggleTitle = document.getElementById('toggleModalTitle');
+            const toggleHeader = document.getElementById('toggleModalHeader');
+            const toggleConfirmButton = document.getElementById('toggleConfirmButton');
+            const toggleConfirmText = document.getElementById('toggleConfirmText');
+            
+            if (isCurrentlyActive) {
+                // Deactivating
+                toggleTitle.textContent = 'Confirm Deactivate';
+                toggleMessage.textContent = `Are you sure you want to deactivate patient "${patientName}"? They will no longer be able to login to the system.`;
+                toggleHeader.className = 'modal-header modal-header-danger';
+                toggleConfirmButton.className = 'btn-action btn-delete';
+                toggleConfirmButton.style.padding = '0.75rem 2rem';
+                toggleConfirmText.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
+            } else {
+                // Activating
+                toggleTitle.textContent = 'Confirm Activate';
+                toggleMessage.textContent = `Are you sure you want to activate patient "${patientName}"? They will be able to login to the system again.`;
+                toggleHeader.className = 'modal-header';
+                toggleHeader.style.backgroundColor = '#28a745';
+                toggleHeader.style.color = 'white';
+                toggleConfirmButton.className = 'btn-action';
+                toggleConfirmButton.style.backgroundColor = '#28a745';
+                toggleConfirmButton.style.color = 'white';
+                toggleConfirmButton.style.padding = '0.75rem 2rem';
+                toggleConfirmText.innerHTML = '<i class="fas fa-check"></i> Activate';
+            }
+            
+            openModal('toggleModal');
+        }
+
+        async function confirmToggle() {
+            if (!currentToggleId) return;
+
+            const toggleModal = document.getElementById('toggleModal');
+            const modalBody = toggleModal.querySelector('.modal-body');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Updating...</div>';
+
+            try {
+                const formData = new FormData();
+                
+                // Get or create anti-forgery token
+                let token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!token) {
+                    // Create a temporary form to get the token
+                    const tempForm = document.createElement('form');
+                    tempForm.innerHTML = '@Html.AntiForgeryToken()';
+                    token = tempForm.querySelector('input[name="__RequestVerificationToken"]');
+                }
+                
+                if (token) {
+                    formData.append('__RequestVerificationToken', token.value);
+                }
+
+                const response = await fetch(`/Precord/ToggleActivePatient/${currentToggleId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification(result.message || 'Patient status updated successfully!', 'success');
+                    closeModal('toggleModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    throw new Error(result.message || 'Failed to update patient status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error updating patient status. Please try again.', 'error');
+                closeModal('toggleModal');
+            }
+        }
+
+        // Edit Modal (for editing patient info)
+        async function showEditModal(patientId) {
+            // This will be handled by the modal from Index.cshtml if loaded via AJAX
+            // For now, redirect to edit page or use the same modal approach
+            window.location.href = `/Precord/EditPatient/${patientId}`;
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <div>${message}</div>
+            `;
+            notification.style.maxWidth = '500px';
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
     </script>
 }
 

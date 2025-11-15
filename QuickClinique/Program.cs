@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Middleware;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,13 +72,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Student}/{action=Login}/{id?}");
 
-// Apply pending migrations
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.EnsureCreated();
-}
-
 // Database initialization and seeding
 using (var scope = app.Services.CreateScope())
 {
@@ -87,8 +81,82 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var seedingService = services.GetRequiredService<IDataSeedingService>();
 
+        // Check for pending migrations
+        var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+        if (pendingMigrations.Any())
+        {
+            Console.WriteLine($"Applying {pendingMigrations.Count} pending migration(s):");
+            foreach (var migration in pendingMigrations)
+            {
+                Console.WriteLine($"  - {migration}");
+            }
+        }
+
         // Apply migrations
-        context.Database.Migrate();
+        try
+        {
+            context.Database.Migrate();
+            Console.WriteLine("Migrations applied successfully!");
+        }
+        catch (Exception migrateEx)
+        {
+            Console.WriteLine($"Migration failed: {migrateEx.Message}");
+            
+            // Try to apply the IsActive column directly if migration fails
+            try
+            {
+                var connection = context.Database.GetDbConnection();
+                await connection.OpenAsync();
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'students' 
+                    AND COLUMN_NAME = 'IsActive'";
+                
+                var columnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+                
+                if (!columnExists)
+                {
+                    Console.WriteLine("Attempting to add IsActive column directly...");
+                    command.CommandText = "ALTER TABLE `students` ADD COLUMN `IsActive` tinyint(1) NOT NULL DEFAULT 1";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("IsActive column added successfully to students table!");
+                }
+                else
+                {
+                    Console.WriteLine("IsActive column already exists in students table.");
+                }
+
+                // Check and add IsActive column to clinicstaff table
+                command.CommandText = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'clinicstaff' 
+                    AND COLUMN_NAME = 'IsActive'";
+                
+                var clinicStaffColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+                
+                if (!clinicStaffColumnExists)
+                {
+                    Console.WriteLine("Attempting to add IsActive column to clinicstaff table...");
+                    command.CommandText = "ALTER TABLE `clinicstaff` ADD COLUMN `IsActive` tinyint(1) NOT NULL DEFAULT 1";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("IsActive column added successfully to clinicstaff table!");
+                }
+                else
+                {
+                    Console.WriteLine("IsActive column already exists in clinicstaff table.");
+                }
+            }
+            catch (Exception sqlEx)
+            {
+                Console.WriteLine($"Failed to add column directly: {sqlEx.Message}");
+                throw; // Re-throw the original migration exception
+            }
+        }
 
         // Seed initial data
         await seedingService.SeedDataAsync();
@@ -98,6 +166,9 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Console.WriteLine($"An error occurred initializing the database: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        // Don't throw - allow app to start even if migration fails
+        // The error will be visible in logs
     }
 }
 
