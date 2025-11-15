@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\documents\\CAPSTONE 2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
+    "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "D:\\documents\\CAPSTONE 2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
+    "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "D:\\documents\\CAPSTONE 2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "projectPath": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\bamboo-PC\\.nuget\\packages\\",
-        "outputPath": "D:\\documents\\CAPSTONE 2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\obj\\",
+        "outputPath": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\bamboo-PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
