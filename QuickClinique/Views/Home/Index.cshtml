@@ -13,7 +13,7 @@
         <h1>University of Cebu Medical-Dental Clinic</h1>
         <p>Providing quality healthcare services to the UC community with compassion and excellence</p>
         <div class="hero-buttons">
-            <a href="#dashboard" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Book Appointment</a>
+            <a href="#dashboard" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Set Appointment</a>
             <a href="#dental-schedule" class="btn btn-outline"><i class="fas fa-tooth"></i> Dental Schedule</a>
         </div>
     </section>
@@ -25,7 +25,7 @@
         <div class="dashboard-grid">
             <!-- Appointment Booking -->
             <div class="appointment-card">
-                <h3>Book New Appointment</h3>
+                <h3>Set Appointment</h3>
                 <form id="appointmentForm">
                     @Html.AntiForgeryToken()
                     <span class="validation-error" id="patientError"></span>
@@ -516,8 +516,8 @@
 
                 if (result.success) {
                     const queueMessage = result.queueNumber ?
-                        `Appointment booked successfully! Your queue number is ${result.queueNumber}.` :
-                        'Appointment booked successfully!';
+                        `Appointment Set successfully! Your queue number is ${result.queueNumber}.` :
+                        'Appointment Set successfully!';
 
                     showMessage(queueMessage, 'success');
 
@@ -537,7 +537,7 @@
                     // Clear any error messages
                     clearValidationErrors();
                 } else {
-                    let errorMessage = result.error || 'Failed to book appointment';
+                    let errorMessage = result.error || 'Failed to Set appointment';
                     if (result.errors) {
                         // Display form errors
                         displayEnhancedFormErrors(result.errors);
@@ -546,9 +546,9 @@
                     showMessage(errorMessage, 'error');
                 }
             } catch (error) {
-                console.error('Error booking appointment:', error);
+                console.error('Error Set appointment:', error);
 
-                let userMessage = 'An error occurred while booking the appointment. ';
+                let userMessage = 'An error occurred while Set the appointment. ';
 
                 if (error.message.includes('400')) {
                     userMessage += 'This might be due to a security token issue. Please refresh the page and try again.';
@@ -965,7 +965,7 @@
                     return cachedStudentId;
                 } else {
                     console.error('Failed to get student ID:', result.error);
-                    throw new Error('You must be logged in as a student to book an appointment');
+                    throw new Error('You must be logged in as a student to Set an appointment');
                 }
             } catch (error) {
                 console.error('Error fetching student ID:', error);
