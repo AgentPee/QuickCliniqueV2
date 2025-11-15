@@ -1,0 +1,281 @@
+/* Heartbeat ECG Loading Animation */
+.syringe-loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.syringe-loader-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.syringe-loader-container {
+    position: relative;
+    width: 400px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ECG Life Line Background */
+.ecg-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+    opacity: 0.6;
+}
+
+.ecg-background-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, transparent, #4ECDC4, #44A08D, transparent);
+    box-shadow: 0 0 15px rgba(78, 205, 196, 0.5), 0 0 30px rgba(68, 160, 141, 0.3);
+    transform: translateY(-50%);
+    animation: ecgWaveform 1.2s linear infinite;
+}
+
+/* ECG Trace Background - SVG Path */
+.ecg-trace-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: #4ECDC4;
+    stroke-width: 2.5;
+    opacity: 0.5;
+    filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.4));
+    z-index: 1;
+}
+
+.syringe-loader-overlay.active .ecg-trace-bg path {
+    animation: ecgTrace 1.2s linear infinite;
+}
+
+/* Heart Icon - Foreground */
+.heart-beat {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    margin-bottom: 30px;
+    animation: heartBeat 0.8s ease-in-out infinite;
+    z-index: 10;
+    filter: drop-shadow(0 0 15px rgba(78, 205, 196, 0.6));
+}
+
+.heart-beat::before,
+.heart-beat::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 64px;
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    border-radius: 40px 40px 0 0;
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+}
+
+.heart-beat::before {
+    left: 40px;
+}
+
+.heart-beat::after {
+    left: 0;
+    transform: rotate(45deg);
+    transform-origin: 100% 100%;
+}
+
+/* Loading Text */
+.syringe-loader-text {
+    margin-top: 25px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    animation: pulse 1s ease-in-out infinite;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    z-index: 10;
+    position: relative;
+}
+
+/* Heart Beat Animation */
+@keyframes heartBeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+    10%, 30% {
+        transform: scale(1.1);
+    }
+    20%, 40%, 50% {
+        transform: scale(1.15);
+    }
+    60%, 80% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(1.08);
+    }
+}
+
+/* ECG Waveform Animation - Classic heartbeat pattern */
+@keyframes ecgWaveform {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    2% {
+        opacity: 1;
+    }
+    10% {
+        transform: translateX(0%);
+    }
+    12% {
+        transform: translateX(5%) translateY(-80px) scaleY(5);
+    }
+    14% {
+        transform: translateX(8%) translateY(-60px) scaleY(4);
+    }
+    16% {
+        transform: translateX(10%) translateY(-40px) scaleY(3);
+    }
+    18% {
+        transform: translateX(12%) translateY(0px) scaleY(1);
+    }
+    25% {
+        transform: translateX(25%) translateY(0px) scaleY(1);
+    }
+    30% {
+        transform: translateX(30%) translateY(-30px) scaleY(2);
+    }
+    32% {
+        transform: translateX(32%) translateY(0px) scaleY(1);
+    }
+    40% {
+        transform: translateX(40%) translateY(0px) scaleY(1);
+    }
+    45% {
+        transform: translateX(45%) translateY(-20px) scaleY(1.5);
+    }
+    47% {
+        transform: translateX(47%) translateY(0px) scaleY(1);
+    }
+    55% {
+        transform: translateX(60%) translateY(0px) scaleY(1);
+    }
+    65% {
+        transform: translateX(70%) translateY(0px) scaleY(1);
+    }
+    75% {
+        transform: translateX(80%) translateY(0px) scaleY(1);
+    }
+    85% {
+        transform: translateX(90%) translateY(0px) scaleY(1);
+    }
+    100% {
+        transform: translateX(200%);
+        opacity: 1;
+    }
+}
+
+/* ECG Trace Path Animation - Draws the classic ECG heartbeat pattern */
+@keyframes ecgTrace {
+    0% {
+        stroke-dashoffset: 1000;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Pulse Animation for Text */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .syringe-loader-container {
+        width: 320px;
+        height: 250px;
+    }
+    
+    .heart-beat {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 20px;
+    }
+    
+    .heart-beat::before,
+    .heart-beat::after {
+        width: 30px;
+        height: 48px;
+    }
+    
+    .heart-beat::before {
+        left: 30px;
+    }
+    
+    .syringe-loader-text {
+        font-size: 16px;
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .syringe-loader-container {
+        width: 280px;
+        height: 220px;
+    }
+    
+    .heart-beat {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 15px;
+    }
+    
+    .heart-beat::before,
+    .heart-beat::after {
+        width: 25px;
+        height: 40px;
+    }
+    
+    .heart-beat::before {
+        left: 25px;
+    }
+    
+    .syringe-loader-text {
+        font-size: 14px;
+        margin-top: 15px;
+    }
+}
+
