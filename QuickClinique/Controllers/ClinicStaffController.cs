@@ -732,16 +732,6 @@ namespace QuickClinique.Controllers
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
 
-        public IActionResult Dashboard()
-        {
-            var model = new Clinicstaff();
-
-            if (IsAjaxRequest())
-                return Json(new { success = true, data = model });
-
-            return View("clinicstaff", model);
-        }
-
         private bool IsAjaxRequest()
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||

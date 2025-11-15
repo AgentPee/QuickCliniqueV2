@@ -21,7 +21,7 @@
 
                         if (Context.Session.GetInt32("ClinicStaffId") != null)
                         {
-                            logoLink = Url.Action("Dashboard", "ClinicStaff");
+                            logoLink = Url.Action("Index", "Dashboard");
                         }
                     }
 
@@ -71,12 +71,6 @@
                                         <li>
                                             <a class="dropdown-item" asp-controller="Appointments" asp-action="Queue">
                                                 <i class="fas fa-users"></i> Queue Management
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Appointments" asp-action="Index">
-                                                <i class="fas fa-list"></i> View All
                                             </a>
                                         </li>
                                     </ul>

@@ -15,20 +15,6 @@ namespace QuickClinique.Controllers
             _context = context;
         }
 
-        // GET: Appointments
-        public async Task<IActionResult> Index()
-        {
-            var appointments = await _context.Appointments
-                .Include(a => a.Patient)
-                .Include(a => a.Schedule)
-                .ToListAsync();
-
-            if (IsAjaxRequest())
-                return Json(new { success = true, data = appointments });
-
-            return View(appointments);
-        }
-
         // GET: Appointments/Details/5
         public async Task<IActionResult> Details(int? id)
         {
