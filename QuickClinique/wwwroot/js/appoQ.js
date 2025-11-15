@@ -46,13 +46,27 @@ async function submitNextPatient() {
     try {
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
+        // Collect triage data from form
+        const age = document.getElementById('triageAge').value ? parseInt(document.getElementById('triageAge').value) : null;
+        const gender = document.getElementById('triageGender').value || null;
+        const bmi = document.getElementById('triageBMI').value ? parseFloat(document.getElementById('triageBMI').value) : null;
+        const allergies = document.getElementById('triageAllergies').value.trim() || null;
+        const triageNotes = document.getElementById('triageNotes').value.trim() || null;
+
         const response = await fetch('/Appointments/NextInQueue', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': token,
                 'X-CSRF-TOKEN': token
-            }
+            },
+            body: JSON.stringify({
+                age: age,
+                gender: gender,
+                bmi: bmi,
+                allergies: allergies,
+                triageNotes: triageNotes
+            })
         });
 
         const result = await response.json();
@@ -139,6 +153,13 @@ async function submitCompleteAppointment() {
         return;
     }
 
+    const medications = document.getElementById('medications').value.trim();
+    if (!medications) {
+        alert('Please enter medications/treatment information before completing the appointment.');
+        document.getElementById('medications').focus();
+        return;
+    }
+
     const appointmentId = document.getElementById('completeAppointmentId').value;
     const patientId = document.getElementById('completePatientId').value;
 
@@ -153,17 +174,12 @@ async function submitCompleteAppointment() {
         return;
     }
 
-    // Prepare form data
+    // Prepare form data (only diagnosis and medications)
     const formData = {
         appointmentId: parseInt(appointmentId),
         patientId: parseInt(patientId),
         diagnosis: diagnosis,
-        medications: document.getElementById('medications').value.trim() || null,
-        allergies: document.getElementById('allergies').value.trim() || null,
-        age: document.getElementById('patientAge').value ? parseInt(document.getElementById('patientAge').value) : null,
-        gender: document.getElementById('patientGender').value || null,
-        bmi: document.getElementById('patientBMI').value ? parseFloat(document.getElementById('patientBMI').value) : null,
-        additionalNotes: document.getElementById('additionalNotes').value.trim() || null
+        medications: medications
     };
 
     console.log('Submitting completion data:', formData);

@@ -205,7 +205,7 @@
                                         }
                                         @if (item.AppointmentStatus == "Confirmed")
                                         {
-                                            <button class="btn btn-primary btn-sm" onclick="updateStatus(@item.AppointmentId, 'In Progress')" title="Start Appointment">
+                                            <button class="btn btn-primary btn-sm" onclick="showStartAppointmentModal(@item.AppointmentId)" title="Start Appointment">
                                                 <i class="fas fa-play"></i>
                                             </button>
                                         }
@@ -274,66 +274,12 @@
                     <div class="form-section">
                         <h6 class="section-title"><i class="fas fa-pills"></i> Treatment & Medications</h6>
                         <div class="form-group">
-                            <label for="medications">Medications Prescribed</label>
-                            <textarea class="form-control" id="medications" name="medications" rows="3"
+                            <label for="medications">
+                                Medications Prescribed <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="medications" name="medications" rows="3" required
                                       placeholder="List all medications with dosage and frequency..."></textarea>
                             <small class="form-text text-muted">Example: Amoxicillin 500mg, 3 times daily for 7 days</small>
-                        </div>
-                    </div>
-
-                    <!-- Patient Information Section -->
-                    <div class="form-section">
-                        <h6 class="section-title"><i class="fas fa-user-md"></i> Patient Information</h6>
-                        <div class="form-group">
-                            <label for="allergies">
-                                <i class="fas fa-exclamation-triangle"></i> Known Allergies
-                            </label>
-                            <input type="text" class="form-control" id="allergies" name="allergies"
-                                   placeholder="List any known allergies (e.g., Penicillin, Peanuts)">
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientAge">
-                                        <i class="fas fa-birthday-cake"></i> Age
-                                    </label>
-                                    <input type="number" class="form-control" id="patientAge" name="age"
-                                           placeholder="Age" min="1" max="120">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientGender">
-                                        <i class="fas fa-venus-mars"></i> Gender
-                                    </label>
-                                    <select class="form-control" id="patientGender" name="gender">
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientBMI">
-                                        <i class="fas fa-weight"></i> BMI
-                                    </label>
-                                    <input type="number" class="form-control" id="patientBMI" name="bmi"
-                                           placeholder="Body Mass Index" step="0.1" min="10" max="50">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Additional Notes Section -->
-                    <div class="form-section">
-                        <h6 class="section-title"><i class="fas fa-notes-medical"></i> Additional Notes</h6>
-                        <div class="form-group">
-                            <label for="additionalNotes">Clinical Observations & Follow-up Notes</label>
-                            <textarea class="form-control" id="additionalNotes" name="additionalNotes" rows="3"
-                                      placeholder="Any additional observations, recommendations, or follow-up instructions..."></textarea>
                         </div>
                     </div>
                 </form>
@@ -344,6 +290,94 @@
                 </button>
                 <button type="button" class="btn btn-success" onclick="submitCompleteAppointment()">
                     <i class="fas fa-check-circle"></i> Complete & Save Record
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Next Patient Triage Modal (for starting appointments) -->
+<div class="modal fade" id="nextPatientModal" tabindex="-1" role="dialog" aria-labelledby="nextPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="nextPatientModalLabel">
+                    <i class="fas fa-user-check"></i> Start Appointment - Clinical Triage
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nextPatientForm">
+                    <input type="hidden" id="startAppointmentId" name="appointmentId">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Clinical Triage:</strong> Record initial patient information before consultation.
+                    </div>
+
+                    <!-- Patient Information Section -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-user-md"></i> Patient Information</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="triageAge">
+                                        <i class="fas fa-birthday-cake"></i> Age
+                                    </label>
+                                    <input type="number" class="form-control" id="triageAge" name="age"
+                                           placeholder="Age" min="1" max="120">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="triageGender">
+                                        <i class="fas fa-venus-mars"></i> Gender
+                                    </label>
+                                    <select class="form-control" id="triageGender" name="gender">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="triageBMI">
+                                        <i class="fas fa-weight"></i> BMI
+                                    </label>
+                                    <input type="number" class="form-control" id="triageBMI" name="bmi"
+                                           placeholder="Body Mass Index" step="0.1" min="10" max="50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="triageAllergies">
+                                <i class="fas fa-exclamation-triangle"></i> Known Allergies
+                            </label>
+                            <input type="text" class="form-control" id="triageAllergies" name="allergies"
+                                   placeholder="List any known allergies (e.g., Penicillin, Peanuts)">
+                        </div>
+                    </div>
+
+                    <!-- Initial Observations -->
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-notes-medical"></i> Initial Observations</h6>
+                        <div class="form-group">
+                            <label for="triageNotes">Triage Notes (Optional)</label>
+                            <textarea class="form-control" id="triageNotes" name="triageNotes" rows="3"
+                                      placeholder="Record any initial observations or vital signs..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitStartAppointment()">
+                    <i class="fas fa-play"></i> Start Appointment
                 </button>
             </div>
         </div>

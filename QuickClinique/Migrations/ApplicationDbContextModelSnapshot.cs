@@ -63,6 +63,10 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("TriageNotes")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("AppointmentId")
                         .HasName("PRIMARY");
 

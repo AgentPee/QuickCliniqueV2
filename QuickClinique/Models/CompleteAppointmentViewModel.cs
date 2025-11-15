@@ -14,8 +14,9 @@ namespace QuickClinique.Models
         [StringLength(500, ErrorMessage = "Diagnosis cannot exceed 500 characters")]
         public string Diagnosis { get; set; } = null!;
 
+        [Required(ErrorMessage = "Medications/Treatment is required")]
         [StringLength(500, ErrorMessage = "Medications cannot exceed 500 characters")]
-        public string? Medications { get; set; }
+        public string Medications { get; set; } = null!;
 
         [StringLength(200, ErrorMessage = "Allergies cannot exceed 200 characters")]
         public string? Allergies { get; set; }

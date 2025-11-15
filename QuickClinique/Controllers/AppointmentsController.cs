@@ -167,7 +167,7 @@ namespace QuickClinique.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ClinicStaffOnly] // Only clinic staff can edit appointments
-        public async Task<IActionResult> Edit(int id, [Bind("AppointmentId,PatientId,ScheduleId,AppointmentStatus,ReasonForVisit,DateBooked,QueueNumber,QueueStatus,Symptoms")] Appointment appointment)
+        public async Task<IActionResult> Edit(int id, [Bind("AppointmentId,PatientId,ScheduleId,AppointmentStatus,ReasonForVisit,DateBooked,QueueNumber,QueueStatus,Symptoms,TriageNotes")] Appointment appointment)
         {
             if (id != appointment.AppointmentId)
             {
@@ -413,6 +413,35 @@ namespace QuickClinique.Controllers
 
                 appointment.AppointmentStatus = request.Status;
 
+                // If starting appointment (In Progress), create Precord with triage data
+                if (request.Status == "In Progress")
+                {
+                    // Load patient information
+                    await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
+                    
+                    // Check if a Precord already exists for this appointment (in case of re-start)
+                    // We'll create a new one for each appointment start
+                    var medicalRecord = new Precord
+                    {
+                        PatientId = appointment.PatientId,
+                        Diagnosis = "Triage in progress - Diagnosis pending",
+                        Medications = "None",
+                        Allergies = request.Allergies ?? "None",
+                        Name = appointment.Patient?.FullName ?? "Unknown",
+                        Age = request.Age ?? 0,
+                        Gender = request.Gender ?? "Not specified",
+                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0
+                    };
+
+                    _context.Precords.Add(medicalRecord);
+                    
+                    // Save triage notes to TriageNotes field in Appointment
+                    if (!string.IsNullOrWhiteSpace(request.TriageNotes))
+                    {
+                        appointment.TriageNotes = request.TriageNotes;
+                    }
+                }
+
                 // Update queue status based on appointment status
                 switch (request.Status)
                 {
@@ -450,6 +479,23 @@ namespace QuickClinique.Controllers
         {
             public int AppointmentId { get; set; }
             public required string Status { get; set; }
+            // Optional triage data for starting appointments
+            public int? Age { get; set; }
+            public string? Gender { get; set; }
+            public double? Bmi { get; set; }
+            public string? Allergies { get; set; }
+            public string? TriageNotes { get; set; }
+        }
+
+        // Helper class for NextInQueue request
+        public class NextInQueueRequest
+        {
+            // Optional triage data for next patient
+            public int? Age { get; set; }
+            public string? Gender { get; set; }
+            public double? Bmi { get; set; }
+            public string? Allergies { get; set; }
+            public string? TriageNotes { get; set; }
         }
 
         // GET: Appointments/Queue - Real-time queue management
@@ -476,7 +522,7 @@ namespace QuickClinique.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ClinicStaffOnly]
-        public async Task<IActionResult> NextInQueue()
+        public async Task<IActionResult> NextInQueue([FromBody] NextInQueueRequest? request = null)
         {
             try
             {
@@ -513,6 +559,32 @@ namespace QuickClinique.Controllers
                 // Update next appointment to "In Progress"
                 nextAppointment.AppointmentStatus = "In Progress";
                 nextAppointment.QueueStatus = "Being Served";
+
+                // Create Precord with triage data if provided
+                if (request != null && 
+                    (request.Age.HasValue || request.Gender != null || 
+                     request.Bmi.HasValue || request.Allergies != null))
+                {
+                    var medicalRecord = new Precord
+                    {
+                        PatientId = nextAppointment.PatientId,
+                        Diagnosis = "Triage in progress - Diagnosis pending",
+                        Medications = "None",
+                        Allergies = request.Allergies ?? "None",
+                        Name = nextAppointment.Patient?.FullName ?? "Unknown",
+                        Age = request.Age ?? 0,
+                        Gender = request.Gender ?? "Not specified",
+                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0
+                    };
+
+                    _context.Precords.Add(medicalRecord);
+                    
+                    // Save triage notes to TriageNotes field in Appointment
+                    if (!string.IsNullOrWhiteSpace(request.TriageNotes))
+                    {
+                        nextAppointment.TriageNotes = request.TriageNotes;
+                    }
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -684,20 +756,46 @@ namespace QuickClinique.Controllers
                 appointment.AppointmentStatus = "Completed";
                 appointment.QueueStatus = "Completed";
 
-                // Create medical record (Precord)
-                var medicalRecord = new Precord
+                // Get patient info from existing Precord (from triage) or use defaults
+                // Look for the most recent Precord with placeholder diagnosis (created during triage)
+                var existingPrecord = await _context.Precords
+                    .Where(p => p.PatientId == model.PatientId && 
+                               p.Diagnosis == "Triage in progress - Diagnosis pending")
+                    .OrderByDescending(p => p.RecordId)
+                    .FirstOrDefaultAsync();
+                
+                // If not found, get the most recent Precord for this patient
+                if (existingPrecord == null)
                 {
-                    PatientId = model.PatientId,
-                    Diagnosis = model.Diagnosis,
-                    Medications = model.Medications ?? "None",
-                    Allergies = model.Allergies ?? "None",
-                    Name = appointment.Patient?.FullName ?? "Unknown",
-                    Age = model.Age ?? 0,
-                    Gender = model.Gender ?? "Not specified",
-                    Bmi = model.Bmi.HasValue ? (int)model.Bmi.Value : 0
-                };
+                    existingPrecord = await _context.Precords
+                        .Where(p => p.PatientId == model.PatientId)
+                        .OrderByDescending(p => p.RecordId)
+                        .FirstOrDefaultAsync();
+                }
 
-                _context.Precords.Add(medicalRecord);
+                // Create or update medical record (Precord)
+                var medicalRecord = existingPrecord != null 
+                    ? existingPrecord // Update existing record from triage
+                    : new Precord // Create new if none exists
+                    {
+                        PatientId = model.PatientId,
+                        Name = appointment.Patient?.FullName ?? "Unknown",
+                        Age = 0,
+                        Gender = "Not specified",
+                        Bmi = 0,
+                        Allergies = "None"
+                    };
+
+                // Update diagnosis and medications
+                medicalRecord.Diagnosis = model.Diagnosis;
+                medicalRecord.Medications = model.Medications;
+
+                // Only add if creating new record (not updating existing)
+                if (existingPrecord == null)
+                {
+                    _context.Precords.Add(medicalRecord);
+                }
+
                 await _context.SaveChangesAsync();
 
                 // Create history record
