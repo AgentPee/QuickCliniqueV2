@@ -43,6 +43,7 @@ namespace QuickClinique.Controllers
             var student = await _context.Students
                 .Include(s => s.Appointments)
                     .ThenInclude(a => a.Schedule)
+                .Include(s => s.Precords)
                 .FirstOrDefaultAsync(m => m.StudentId == id);
 
             if (student == null)
@@ -321,16 +322,12 @@ namespace QuickClinique.Controllers
             }
         }
 
-        // POST: Precord/DeletePatient/5
+        // POST: Precord/ToggleActivePatient/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePatient(int id)
+        public async Task<IActionResult> ToggleActivePatient(int id)
         {
             var student = await _context.Students
-                .Include(s => s.Appointments)
-                .Include(s => s.Precords)
-                .Include(s => s.Histories)
-                .Include(s => s.Notifications)
                 .FirstOrDefaultAsync(s => s.StudentId == id);
 
             if (student == null)
@@ -340,21 +337,16 @@ namespace QuickClinique.Controllers
 
             try
             {
-                // Remove related records
-                _context.Appointments.RemoveRange(student.Appointments);
-                _context.Precords.RemoveRange(student.Precords);
-                _context.Histories.RemoveRange(student.Histories);
-                _context.Notifications.RemoveRange(student.Notifications);
-                
-                // Remove the student
-                _context.Students.Remove(student);
+                // Toggle the IsActive status
+                student.IsActive = !student.IsActive;
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Patient deleted successfully" });
+                string action = student.IsActive ? "activated" : "deactivated";
+                return Json(new { success = true, message = $"Patient {action} successfully", isActive = student.IsActive });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error deleting patient: {ex.Message}" });
+                return Json(new { success = false, message = $"Error updating patient status: {ex.Message}" });
             }
         }
     }

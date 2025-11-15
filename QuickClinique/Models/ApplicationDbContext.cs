@@ -116,6 +116,11 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("datetime")
                 .IsRequired(false);
 
+            // Add IsActive property configuration
+            entity.Property(e => e.IsActive)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(true);
+
             entity.HasOne(d => d.User).WithMany(p => p.Clinicstaffs)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("clinicstaff_ibfk_1");
@@ -299,6 +304,11 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.UserId)
                 .HasColumnType("int(100)")
                 .HasColumnName("UserID");
+
+            // Add IsActive property configuration
+            entity.Property(e => e.IsActive)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(true);
 
             entity.HasOne(d => d.User).WithMany(p => p.Students)
                 .HasForeignKey(d => d.UserId)

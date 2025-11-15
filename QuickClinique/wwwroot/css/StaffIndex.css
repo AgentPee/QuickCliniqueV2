@@ -243,7 +243,8 @@ body {
     background: var(--white);
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     box-shadow: var(--shadow-md), 0 0 0 1px rgba(0, 0, 0, 0.02);
-    overflow: hidden; /* Changed from overflow-x: auto to hidden */
+    overflow-x: auto;
+    overflow-y: visible;
     position: relative;
     animation: floatUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateZ(0);
@@ -264,8 +265,9 @@ body {
 /* Staff Table - Fixed Layout */
 .staff-table {
     width: 100%;
+    min-width: 1000px;
     border-collapse: collapse;
-    table-layout: fixed; /* Changed from auto to fixed */
+    table-layout: auto;
 }
 
     .staff-table thead {
@@ -292,6 +294,19 @@ body {
         color: var(--text-dark);
         line-height: 1.6;
         vertical-align: middle;
+    }
+
+    .staff-table td:nth-child(3),
+    .staff-table td:nth-child(6),
+    .staff-table td:nth-child(7) {
+        white-space: normal;
+        overflow: visible;
+    }
+
+    .staff-table td:nth-child(1),
+    .staff-table td:nth-child(2),
+    .staff-table td:nth-child(4),
+    .staff-table td:nth-child(5) {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -319,19 +334,25 @@ body {
         .staff-table th:nth-child(4),
         .staff-table td:nth-child(4) {
             text-align: center;
-            width: 15%;
+            width: 12%;
         }
 
         .staff-table th:nth-child(5),
         .staff-table td:nth-child(5) {
             text-align: center;
-            width: 12%;
+            width: 10%;
         }
 
         .staff-table th:nth-child(6),
         .staff-table td:nth-child(6) {
             text-align: center;
-            width: 31%; /* Increased width to accommodate buttons */
+            width: 18%; /* Status column with badge and button */
+        }
+
+        .staff-table th:nth-child(7),
+        .staff-table td:nth-child(7) {
+            text-align: center;
+            width: 18%; /* Actions column */
         }
 
     .staff-table tbody tr {
