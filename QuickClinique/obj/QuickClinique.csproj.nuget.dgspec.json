@@ -1,36 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\cap\\quickclinique\\QuickClinique.csproj": {}
+    "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\cap\\quickclinique\\QuickClinique.csproj": {
+    "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cap\\quickclinique\\QuickClinique.csproj",
+        "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cap\\quickclinique\\QuickClinique.csproj",
-        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cap\\quickclinique\\obj\\",
+        "projectPath": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "packagesPath": "C:\\Users\\bamboo-PC\\.nuget\\packages\\",
+        "outputPath": "D:\\documents\\CAPSTONE 2\\Conflicts\\QuickCliniqueV2\\QuickClinique\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\bamboo-PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {}
           }
         },
@@ -44,11 +38,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -80,7 +74,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

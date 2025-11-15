@@ -96,6 +96,11 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("IsEmailVerified")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -361,6 +366,11 @@ namespace QuickClinique.Migrations
                     b.Property<int>("Idnumber")
                         .HasColumnType("int(100)")
                         .HasColumnName("IDnumber");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsEmailVerified")
                         .HasColumnType("tinyint(1)");

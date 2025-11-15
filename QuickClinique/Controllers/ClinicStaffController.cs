@@ -308,36 +308,32 @@ namespace QuickClinique.Controllers
             return View(clinicstaff);
         }
 
-        // POST: Clinicstaff/Delete/5
-        [HttpPost, ActionName("Delete")]
+        // POST: Clinicstaff/ToggleActiveStaff/5
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> ToggleActiveStaff(int id)
         {
             var clinicstaff = await _context.Clinicstaffs
-                .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.ClinicStaffId == id);
 
-            if (clinicstaff != null)
+            if (clinicstaff == null)
             {
-                _context.Clinicstaffs.Remove(clinicstaff);
+                return Json(new { success = false, message = "Staff member not found" });
+            }
 
-                if (clinicstaff.User != null)
-                {
-                    _context.Usertypes.Remove(clinicstaff.User);
-                }
-
+            try
+            {
+                // Toggle the IsActive status
+                clinicstaff.IsActive = !clinicstaff.IsActive;
                 await _context.SaveChangesAsync();
 
-                if (IsAjaxRequest())
-                    return Json(new { success = true, message = "Staff deleted successfully" });
+                string action = clinicstaff.IsActive ? "activated" : "deactivated";
+                return Json(new { success = true, message = $"Staff member {action} successfully", isActive = clinicstaff.IsActive });
             }
-            else
+            catch (Exception ex)
             {
-                if (IsAjaxRequest())
-                    return Json(new { success = false, error = "Staff not found" });
+                return Json(new { success = false, message = $"Error updating staff status: {ex.Message}" });
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
         private bool ClinicstaffExists(int id)
@@ -377,6 +373,15 @@ namespace QuickClinique.Controllers
                             return Json(new { success = false, error = "Please verify your email before logging in." });
 
                         ModelState.AddModelError("", "Please verify your email before logging in.");
+                        return View(model);
+                    }
+
+                    if (!staff.IsActive)
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the administrator for assistance." });
+
+                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the administrator for assistance.");
                         return View(model);
                     }
 
