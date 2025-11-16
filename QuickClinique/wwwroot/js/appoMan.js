@@ -120,6 +120,13 @@ async function submitCompleteAppointment() {
         return;
     }
 
+    const medications = document.getElementById('medications').value.trim();
+    if (!medications) {
+        alert('Please enter medications/treatment information before completing the appointment.');
+        document.getElementById('medications').focus();
+        return;
+    }
+
     const appointmentId = document.getElementById('completeAppointmentId').value;
     const patientId = document.getElementById('completePatientId').value;
 
@@ -134,17 +141,12 @@ async function submitCompleteAppointment() {
         return;
     }
 
-    // Prepare form data
+    // Prepare form data (only diagnosis and medications)
     const formData = {
         appointmentId: parseInt(appointmentId),
         patientId: parseInt(patientId),
         diagnosis: diagnosis,
-        medications: document.getElementById('medications').value.trim() || null,
-        allergies: document.getElementById('allergies').value.trim() || null,
-        age: document.getElementById('patientAge').value ? parseInt(document.getElementById('patientAge').value) : null,
-        gender: document.getElementById('patientGender').value || null,
-        bmi: document.getElementById('patientBMI').value ? parseFloat(document.getElementById('patientBMI').value) : null,
-        additionalNotes: document.getElementById('additionalNotes').value.trim() || null
+        medications: medications
     };
 
     console.log('Submitting completion data:', formData);
@@ -194,12 +196,94 @@ async function submitCompleteAppointment() {
     }
 }
 
+// Show the start appointment modal (triage modal)
+function showStartAppointmentModal(appointmentId) {
+    // Set the appointment ID
+    document.getElementById('startAppointmentId').value = appointmentId;
+    
+    // Reset form
+    document.getElementById('nextPatientForm').reset();
+    document.getElementById('startAppointmentId').value = appointmentId;
+
+    // Show the modal using Bootstrap 5
+    const modalElement = document.getElementById('nextPatientModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+// Submit start appointment with triage data
+async function submitStartAppointment() {
+    try {
+        const appointmentId = document.getElementById('startAppointmentId').value;
+        
+        if (!appointmentId) {
+            alert('Error: Missing appointment ID. Please try again.');
+            return;
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        // Collect triage data from form
+        const age = document.getElementById('triageAge').value ? parseInt(document.getElementById('triageAge').value) : null;
+        const gender = document.getElementById('triageGender').value || null;
+        const bmi = document.getElementById('triageBMI').value ? parseFloat(document.getElementById('triageBMI').value) : null;
+        const allergies = document.getElementById('triageAllergies').value.trim() || null;
+        const triageNotes = document.getElementById('triageNotes').value.trim() || null;
+
+        // Update appointment status to "In Progress" with triage data
+        const response = await fetch('/Appointments/UpdateStatus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token,
+                'X-CSRF-TOKEN': token
+            },
+            body: JSON.stringify({
+                appointmentId: parseInt(appointmentId),
+                status: 'In Progress',
+                age: age,
+                gender: gender,
+                bmi: bmi,
+                allergies: allergies,
+                triageNotes: triageNotes
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Hide modal
+            const modalElement = document.getElementById('nextPatientModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+            
+            alert(result.message || 'Appointment started successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to start appointment'));
+        }
+    } catch (error) {
+        console.error('Error starting appointment:', error);
+        alert('An error occurred while starting the appointment.');
+    }
+}
+
 // Reset form when modal is hidden
 document.addEventListener('DOMContentLoaded', function () {
     const modalElement = document.getElementById('completeAppointmentModal');
     if (modalElement) {
         modalElement.addEventListener('hidden.bs.modal', function () {
             document.getElementById('completeAppointmentForm').reset();
+        });
+    }
+
+    // Reset next patient modal when hidden
+    const nextPatientModalElement = document.getElementById('nextPatientModal');
+    if (nextPatientModalElement) {
+        nextPatientModalElement.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('nextPatientForm').reset();
         });
     }
 });

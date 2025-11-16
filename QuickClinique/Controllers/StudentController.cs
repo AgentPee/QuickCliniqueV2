@@ -383,6 +383,15 @@ namespace QuickClinique.Controllers
                         return View(model);
                     }
 
+                    if (!student.IsActive)
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the clinic staff for assistance." });
+
+                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the clinic staff for assistance.");
+                        return View(model);
+                    }
+
                     // Set session or authentication cookie
                     HttpContext.Session.SetInt32("StudentId", student.StudentId);
                     HttpContext.Session.SetString("StudentName", student.FirstName + " " + student.LastName);

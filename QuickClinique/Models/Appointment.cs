@@ -17,6 +17,8 @@ public partial class Appointment
 
     public string Symptoms { get; set; } = string.Empty; // New column for symptom data
 
+    public string TriageNotes { get; set; } = string.Empty; // Triage notes from clinical assessment
+
     public DateOnly DateBooked { get; set; }
 
     public int QueueNumber { get; set; }

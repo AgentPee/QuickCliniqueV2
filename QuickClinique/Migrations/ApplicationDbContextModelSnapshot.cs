@@ -63,6 +63,10 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("TriageNotes")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("AppointmentId")
                         .HasName("PRIMARY");
 
@@ -95,6 +99,11 @@ namespace QuickClinique.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsEmailVerified")
                         .ValueGeneratedOnAdd()
@@ -361,6 +370,11 @@ namespace QuickClinique.Migrations
                     b.Property<int>("Idnumber")
                         .HasColumnType("int(100)")
                         .HasColumnName("IDnumber");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsEmailVerified")
                         .HasColumnType("tinyint(1)");

@@ -256,66 +256,12 @@
                     <div class="form-section">
                         <h6 class="section-title"><i class="fas fa-pills"></i> Treatment & Medications</h6>
                         <div class="form-group">
-                            <label for="medications">Medications Prescribed</label>
-                            <textarea class="form-control" id="medications" name="medications" rows="3"
+                            <label for="medications">
+                                Medications Prescribed <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="medications" name="medications" rows="3" required
                                       placeholder="List all medications with dosage and frequency..."></textarea>
                             <small class="form-text text-muted">Example: Amoxicillin 500mg, 3 times daily for 7 days</small>
-                        </div>
-                    </div>
-
-                    <!-- Patient Information Section -->
-                    <div class="form-section">
-                        <h6 class="section-title"><i class="fas fa-user-md"></i> Patient Information</h6>
-                        <div class="form-group">
-                            <label for="allergies">
-                                <i class="fas fa-exclamation-triangle"></i> Known Allergies
-                            </label>
-                            <input type="text" class="form-control" id="allergies" name="allergies"
-                                   placeholder="List any known allergies (e.g., Penicillin, Peanuts)">
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientAge">
-                                        <i class="fas fa-birthday-cake"></i> Age
-                                    </label>
-                                    <input type="number" class="form-control" id="patientAge" name="age"
-                                           placeholder="Age" min="1" max="120">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientGender">
-                                        <i class="fas fa-venus-mars"></i> Gender
-                                    </label>
-                                    <select class="form-control" id="patientGender" name="gender">
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="patientBMI">
-                                        <i class="fas fa-weight"></i> BMI
-                                    </label>
-                                    <input type="number" class="form-control" id="patientBMI" name="bmi"
-                                           placeholder="Body Mass Index" step="0.1" min="10" max="50">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Additional Notes Section -->
-                    <div class="form-section">
-                        <h6 class="section-title"><i class="fas fa-notes-medical"></i> Additional Notes</h6>
-                        <div class="form-group">
-                            <label for="additionalNotes">Clinical Observations & Follow-up Notes</label>
-                            <textarea class="form-control" id="additionalNotes" name="additionalNotes" rows="3"
-                                      placeholder="Any additional observations, recommendations, or follow-up instructions..."></textarea>
                         </div>
                     </div>
                 </form>

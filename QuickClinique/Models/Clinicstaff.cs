@@ -26,6 +26,9 @@ public partial class Clinicstaff
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpiry { get; set; }
 
+    // Account activation status
+    public bool IsActive { get; set; } = true;
+
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual Usertype User { get; set; } = null!;

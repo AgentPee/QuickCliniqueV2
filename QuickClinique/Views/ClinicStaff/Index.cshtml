@@ -5,6 +5,380 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/StaffIndex.css" />
+    <style>
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* ===== ENHANCED MODAL STYLES - THEME CONSISTENT ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal[style*="flex"] {
+            display: flex !important;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: var(--white, #FFFFFF);
+            margin: 1rem;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-lg, 16px);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            box-shadow: var(--shadow-lg, 0 16px 48px rgba(0, 0, 0, 0.12));
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @@keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content.modal-large {
+            max-width: 1000px;
+        }
+
+        .modal-content.modal-medium {
+            max-width: 700px;
+        }
+
+        /* Modal Header - Enhanced with Teal Gradient */
+        .modal-header {
+            padding: 1.75rem 2rem;
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.95) 0%, rgba(68, 160, 141, 0.95) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            color: var(--white, #FFFFFF);
+            border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            pointer-events: none;
+            animation: headerShimmer 8s ease-in-out infinite;
+        }
+
+        @@keyframes headerShimmer {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            50% {
+                transform: translate(30%, 30%) rotate(180deg);
+            }
+        }
+
+        .modal-header-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header h2 i {
+            font-size: 1.75rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Enhanced Close Button */
+        .modal-close {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: var(--white, #FFFFFF);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .modal-close:active {
+            transform: rotate(90deg) scale(0.95);
+        }
+
+        /* Modal Body - Enhanced */
+        .modal-body {
+            padding: 2.5rem;
+            max-height: calc(90vh - 100px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--white, #FFFFFF);
+        }
+
+        /* Custom Scrollbar for Modal Body */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: var(--light-bg, #F0F4F8);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--primary-teal, #4ECDC4);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--dark-teal, #3BA89F);
+        }
+
+        /* Loading Spinner - Theme Consistent */
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--primary-teal, #4ECDC4);
+        }
+
+        .loading-spinner i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-spinner span {
+            display: block;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted, #718096);
+            margin-top: 0.5rem;
+        }
+
+        /* Form Styles in Modal - Theme Consistent */
+        .modal-body .staff-details-container,
+        .modal-body .staff-edit-container,
+        .modal-body .edit-form-container {
+            padding: 0;
+        }
+
+        .modal-body form {
+            max-width: 100%;
+        }
+
+        .modal-body .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-body label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark, #2D3748);
+            font-size: 0.95rem;
+        }
+
+        .modal-body input,
+        .modal-body select,
+        .modal-body textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color, #E2E8F0);
+            border-radius: var(--radius-sm, 8px);
+            font-size: 1rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: all 0.3s ease;
+            background: var(--white, #FFFFFF);
+            color: var(--text-dark, #2D3748);
+        }
+
+        .modal-body input:focus,
+        .modal-body select:focus,
+        .modal-body textarea:focus {
+            outline: none;
+            border-color: var(--primary-teal, #4ECDC4);
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        }
+
+        .modal-body textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-body .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm, 8px);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body .btn-primary {
+            background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+            color: var(--white, #FFFFFF);
+        }
+
+        .modal-body .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .modal-body .btn-secondary {
+            background: var(--light-bg, #F0F4F8);
+            color: var(--text-dark, #2D3748);
+        }
+
+        .modal-body .btn-secondary:hover {
+            background: var(--border-color, #E2E8F0);
+        }
+
+        .modal-body .btn-danger,
+        .modal-body .btn[style*="background: linear-gradient"][style*="#dc3545"] {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+            color: var(--white, #FFFFFF) !important;
+        }
+
+        .modal-body .btn-danger:hover,
+        .modal-body .btn[style*="background: linear-gradient"][style*="#dc3545"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Responsive Modal Styles */
+        @@media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 0.5rem;
+                max-height: 95vh;
+            }
+
+            .modal-header {
+                padding: 1.25rem 1.5rem;
+            }
+
+            .modal-header h2 {
+                font-size: 1.25rem;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+
+            .modal-content.modal-large,
+            .modal-content.modal-medium {
+                max-width: 100%;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .modal-header {
+                padding: 1rem;
+            }
+
+            .modal-header h2 {
+                font-size: 1.1rem;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-close {
+                width: 32px;
+                height: 32px;
+                font-size: 1.25rem;
+            }
+        }
+    </style>
 }
 
 <div class="staff-management">
@@ -20,12 +394,12 @@
         <table class="staff-table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>First Name</th>
                     <th>Last Name</th>
                     <th>Email</th>
                     <th>Phone Number</th>
                     <th>User Role</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -39,16 +413,46 @@
                         <td>@item.PhoneNumber</td>
                         <td>@item.User?.Role</td>
                         <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                @{
+                                    var isActive = item.IsActive;
+                                    var staffName = $"{item.FirstName} {item.LastName}";
+                                    var escapedName = staffName.Replace("'", "\\'").Replace("\"", "\\\"");
+                                }
+                                @if (isActive)
+                                {
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-check-circle"></i> Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-ban"></i> Inactive
+                                    </span>
+                                }
+                                @if (isActive)
+                                {
+                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', true)" class="btn btn-danger btn-sm" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <i class="fas fa-ban"></i> Deactivate
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', false)" class="btn btn-success btn-sm" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <i class="fas fa-check"></i> Activate
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                        <td>
                             <div class="action-buttons">
-                                <a asp-action="Edit" asp-route-id="@item.ClinicStaffId" class="btn btn-warning btn-sm">
-                                    <i class="fas fa-edit"></i> EDIT
-                                </a>
-                                <a asp-action="Details" asp-route-id="@item.ClinicStaffId" class="btn btn-info btn-sm">
+                                <button onclick="showDetailsModal(@item.ClinicStaffId)" class="btn btn-info btn-sm">
                                     <i class="fas fa-eye"></i> DETAILS
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@item.ClinicStaffId" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash"></i> DELETE
-                                </a>
+                                </button>
+                                <button onclick="showEditModal(@item.ClinicStaffId)" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> EDIT
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -57,3 +461,336 @@
         </table>
     </div>
 </div>
+
+@Html.AntiForgeryToken()
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-md"></i> Staff Details</h2>
+            <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="detailsModalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-edit"></i> Edit Staff Information</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="editModalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Active Modal -->
+<div id="toggleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="toggleModalHeader">
+            <h2><i class="fas fa-exclamation-triangle"></i> <span id="toggleModalTitle">Confirm Action</span></h2>
+            <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center; color: var(--text-dark, #2D3748); line-height: 1.6;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button onclick="closeModal('toggleModal')" class="btn btn-secondary" style="padding: 0.75rem 2rem; min-width: 120px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button onclick="confirmToggle()" class="btn btn-primary" id="toggleConfirmButton" style="padding: 0.75rem 2rem; min-width: 120px;">
+                    <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentToggleId = null;
+        let currentToggleIsActive = null;
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Details Modal
+        async function showDetailsModal(staffId) {
+            openModal('detailsModal');
+            const modalBody = document.getElementById('detailsModalBody');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>Loading...</span></div>';
+
+            try {
+                const response = await fetch(`/Clinicstaff/Details/${staffId}`);
+                if (!response.ok) throw new Error('Failed to load staff details');
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const content = doc.querySelector('.staff-details-container');
+                
+                if (content) {
+                    // Remove back button and action buttons
+                    const backBtn = content.querySelector('a[href*="/Clinicstaff"]');
+                    if (backBtn && backBtn.textContent.includes('Back')) backBtn.remove();
+                    const actionButtons = content.querySelector('.action-buttons');
+                    if (actionButtons) actionButtons.remove();
+                    
+                    // Remove details header since we have it in modal header
+                    const detailsHeader = content.querySelector('.details-header');
+                    if (detailsHeader) detailsHeader.remove();
+                    
+                    modalBody.innerHTML = content.innerHTML;
+                } else {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load staff details.</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading staff details. Please try again.</p>';
+            }
+        }
+
+        // Edit Modal
+        async function showEditModal(staffId) {
+            openModal('editModal');
+            const modalBody = document.getElementById('editModalBody');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>Loading...</span></div>';
+
+            try {
+                const response = await fetch(`/Clinicstaff/Edit/${staffId}`);
+                if (!response.ok) throw new Error('Failed to load staff data');
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const content = doc.querySelector('.staff-edit-container');
+                
+                if (content) {
+                    // Replace cancel button that links to Index
+                    const cancelBtn = content.querySelector('a[href*="/Clinicstaff"]');
+                    if (cancelBtn && (cancelBtn.textContent.includes('Cancel') || cancelBtn.textContent.includes('Back'))) {
+                        const newCancelBtn = document.createElement('button');
+                        newCancelBtn.type = 'button';
+                        newCancelBtn.className = 'btn btn-secondary';
+                        newCancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                        newCancelBtn.onclick = () => closeModal('editModal');
+                        cancelBtn.replaceWith(newCancelBtn);
+                    }
+                    
+                    // Remove the edit header since we have it in the modal header
+                    const editHeader = content.querySelector('.edit-header');
+                    if (editHeader) {
+                        editHeader.remove();
+                    }
+                    
+                    modalBody.innerHTML = content.innerHTML;
+                    
+                    // Setup form submission after content is loaded
+                    const loadedForm = modalBody.querySelector('form');
+                    if (loadedForm) {
+                        loadedForm.addEventListener('submit', (e) => submitEditForm(e, staffId));
+                    } else {
+                        modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                    }
+                } else {
+                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading edit form. Please try again.</p>';
+            }
+        }
+
+        async function submitEditForm(event, staffId) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            // Get or add anti-forgery token
+            let token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                formData.append('__RequestVerificationToken', token.value);
+            }
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/Clinicstaff/Edit/${staffId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showNotification(result.message || 'Staff information updated successfully!', 'success');
+                        closeModal('editModal');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        // Display validation errors
+                        let errorMessage = result.error || result.message || 'Failed to update staff information.';
+                        
+                        if (result.errors) {
+                            const errorList = Object.entries(result.errors)
+                                .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                                .join('<br>');
+                            errorMessage += '<br><small>' + errorList + '</small>';
+                        }
+                        
+                        showNotification(errorMessage, 'error');
+                        submitBtn.innerHTML = originalHtml;
+                        submitBtn.disabled = false;
+                    }
+                } else {
+                    // If not JSON, might be HTML (validation errors)
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const validationSummary = doc.querySelector('.validation-summary');
+                    
+                    if (validationSummary) {
+                        showNotification('Validation errors occurred. Please check the form.', 'error');
+                    } else {
+                        showNotification('Staff information updated successfully!', 'success');
+                        closeModal('editModal');
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error updating staff information. Please try again.', 'error');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showToggleModal(staffId, staffName, isCurrentlyActive) {
+            currentToggleId = staffId;
+            currentToggleIsActive = isCurrentlyActive;
+            
+            const toggleModal = document.getElementById('toggleModal');
+            const toggleMessage = document.getElementById('toggleMessage');
+            const toggleTitle = document.getElementById('toggleModalTitle');
+            const toggleHeader = document.getElementById('toggleModalHeader');
+            const toggleConfirmButton = document.getElementById('toggleConfirmButton');
+            const toggleConfirmText = document.getElementById('toggleConfirmText');
+            
+            if (isCurrentlyActive) {
+                // Deactivating
+                toggleTitle.textContent = 'Confirm Deactivate';
+                toggleMessage.textContent = `Are you sure you want to deactivate staff member "${staffName}"? They will no longer be able to login to the system.`;
+                toggleHeader.className = 'modal-header modal-header-danger';
+                toggleConfirmButton.className = 'btn';
+                toggleConfirmButton.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                toggleConfirmButton.style.color = 'white';
+                toggleConfirmButton.style.padding = '0.75rem 2rem';
+                toggleConfirmButton.style.minWidth = '120px';
+                toggleConfirmText.innerHTML = '<i class="fas fa-ban"></i> Deactivate';
+            } else {
+                // Activating
+                toggleTitle.textContent = 'Confirm Activate';
+                toggleMessage.textContent = `Are you sure you want to activate staff member "${staffName}"? They will be able to login to the system again.`;
+                toggleHeader.className = 'modal-header';
+                toggleHeader.style.background = 'linear-gradient(135deg, rgba(78, 205, 196, 0.95) 0%, rgba(68, 160, 141, 0.95) 100%)';
+                toggleConfirmButton.className = 'btn btn-primary';
+                toggleConfirmButton.style.padding = '0.75rem 2rem';
+                toggleConfirmButton.style.minWidth = '120px';
+                toggleConfirmText.innerHTML = '<i class="fas fa-check"></i> Activate';
+            }
+            
+            openModal('toggleModal');
+        }
+
+        async function confirmToggle() {
+            if (!currentToggleId) return;
+
+            const toggleModal = document.getElementById('toggleModal');
+            const modalBody = toggleModal.querySelector('.modal-body');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Updating...</div>';
+
+            try {
+                const formData = new FormData();
+                
+                let token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    formData.append('__RequestVerificationToken', token.value);
+                }
+
+                const response = await fetch(`/Clinicstaff/ToggleActiveStaff/${currentToggleId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification(result.message || 'Staff status updated successfully!', 'success');
+                    closeModal('toggleModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    throw new Error(result.message || 'Failed to update staff status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error updating staff status. Please try again.', 'error');
+                closeModal('toggleModal');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '300px';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+    </script>
+}
