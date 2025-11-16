@@ -144,6 +144,57 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] TriageNotes column already exists in appointments table.");
             }
             
+            // Check and add Symptoms column to appointments table (case-insensitive check)
+            Console.WriteLine("[INIT] Checking for Symptoms column in appointments table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND UPPER(COLUMN_NAME) = 'SYMPTOMS'";
+            
+            var symptomsColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] Symptoms column exists in appointments table: {symptomsColumnExists}");
+            
+            if (!symptomsColumnExists)
+            {
+                Console.WriteLine("[CRITICAL] Symptoms column missing! Adding to appointments table...");
+                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `Symptoms` longtext CHARACTER SET utf8mb4 NOT NULL DEFAULT ''";
+                
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Symptoms column added successfully to appointments table!");
+                    
+                    // Verify it was added
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'appointments' 
+                        AND UPPER(COLUMN_NAME) = 'SYMPTOMS'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] Symptoms column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("Symptoms column verification failed - column was not added successfully");
+                    }
+                }
+                catch (Exception addEx)
+                {
+                    Console.WriteLine($"[CRITICAL ERROR] Failed to add Symptoms column: {addEx.Message}");
+                    Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                    Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                    throw; // Re-throw to be caught by outer catch
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] Symptoms column already exists in appointments table.");
+            }
+            
             // Check and add IsActive column to students table (case-insensitive check)
             Console.WriteLine("[INIT] Checking for IsActive column in students table...");
             command.CommandText = @"

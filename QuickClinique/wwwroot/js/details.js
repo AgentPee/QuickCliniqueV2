@@ -1,5 +1,80 @@
 ﻿// Appointment Details JavaScript Functions
 
+// Refresh appointment status in background
+async function refreshAppointmentStatus() {
+    try {
+        // Get appointment ID from URL or page
+        const appointmentId = getAppointmentIdFromPage();
+        if (!appointmentId) {
+            console.error('Could not find appointment ID');
+            return;
+        }
+
+        const response = await fetch(`/Appointments/Details/${appointmentId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch appointment details');
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update status banner
+        const statusBanner = doc.querySelector('.status-banner');
+        if (statusBanner) {
+            const currentBanner = document.querySelector('.status-banner');
+            if (currentBanner) {
+                currentBanner.outerHTML = statusBanner.outerHTML;
+            }
+        }
+
+        // Update action buttons
+        const actionButtons = doc.querySelector('.action-buttons');
+        if (actionButtons) {
+            const currentButtons = document.querySelector('.action-buttons');
+            if (currentButtons) {
+                currentButtons.outerHTML = actionButtons.outerHTML;
+            }
+        }
+
+        // Update status in info section
+        const statusInfo = doc.querySelector('.info-section [data-status]');
+        if (statusInfo) {
+            const currentStatus = document.querySelector('.info-section [data-status]');
+            if (currentStatus) {
+                currentStatus.outerHTML = statusInfo.outerHTML;
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing appointment status:', error);
+        // Fallback to full reload if refresh fails
+        location.reload();
+    }
+}
+
+// Get appointment ID from page
+function getAppointmentIdFromPage() {
+    // Try to get from URL
+    const urlMatch = window.location.pathname.match(/\/Appointments\/Details\/(\d+)/);
+    if (urlMatch) {
+        return urlMatch[1];
+    }
+    
+    // Try to get from data attribute
+    const appointmentElement = document.querySelector('[data-appointment-id]');
+    if (appointmentElement) {
+        return appointmentElement.getAttribute('data-appointment-id');
+    }
+    
+    // Try to get from hidden input
+    const hiddenInput = document.querySelector('input[name="appointmentId"], input[id*="appointmentId"]');
+    if (hiddenInput) {
+        return hiddenInput.value;
+    }
+    
+    return null;
+}
+
 function confirmAppointment(appointmentId) {
     if (!confirm('Are you sure you want to confirm this appointment?')) {
         return;
@@ -15,7 +90,8 @@ function confirmAppointment(appointmentId) {
         success: function (response) {
             if (response.success) {
                 alert('Appointment confirmed successfully!');
-                location.reload();
+                // Refresh appointment status in background
+                refreshAppointmentStatus();
             } else {
                 alert('Error: ' + (response.error || 'Failed to confirm appointment'));
             }
@@ -45,7 +121,8 @@ function cancelAppointment(appointmentId) {
         success: function (response) {
             if (response.success) {
                 alert('Appointment cancelled successfully!');
-                location.reload();
+                // Refresh appointment status in background
+                refreshAppointmentStatus();
             } else {
                 alert('Error: ' + (response.error || 'Failed to cancel appointment'));
             }
@@ -73,7 +150,8 @@ function startAppointment(appointmentId) {
         success: function (response) {
             if (response.success) {
                 alert('Appointment started!');
-                location.reload();
+                // Refresh appointment status in background
+                refreshAppointmentStatus();
             } else {
                 alert('Error: ' + (response.error || 'Failed to start appointment'));
             }
@@ -101,7 +179,8 @@ function completeAppointment(appointmentId) {
         success: function (response) {
             if (response.success) {
                 alert('Appointment completed!');
-                location.reload();
+                // Refresh appointment status in background
+                refreshAppointmentStatus();
             } else {
                 alert('Error: ' + (response.error || 'Failed to complete appointment'));
             }

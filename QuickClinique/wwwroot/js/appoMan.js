@@ -46,8 +46,180 @@ function clearFilters() {
     filterTable();
 }
 
-function refreshAppointments() {
-    location.reload();
+// Refresh appointments data in background without page reload
+async function refreshAppointments() {
+    try {
+        const response = await fetch('/Appointments/GetManageData');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            // Update statistics
+            updateManageStats(result.data.stats);
+            
+            // Update appointments table
+            updateAppointmentsTable(result.data.appointments);
+        }
+    } catch (error) {
+        console.error('Error refreshing appointments:', error);
+    }
+}
+
+// Update management statistics
+function updateManageStats(stats) {
+    const totalEl = document.getElementById('totalAppointments');
+    const pendingEl = document.getElementById('pendingAppointments');
+    const confirmedEl = document.getElementById('confirmedAppointments');
+    const todayEl = document.getElementById('todayAppointments');
+    
+    if (totalEl) totalEl.textContent = stats.totalAppointments;
+    if (pendingEl) pendingEl.textContent = stats.pendingAppointments;
+    if (confirmedEl) confirmedEl.textContent = stats.confirmedAppointments;
+    if (todayEl) todayEl.textContent = stats.todayAppointments;
+}
+
+// Update appointments table
+function updateAppointmentsTable(appointments) {
+    const tbody = document.querySelector('#appointmentsTable tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows (except the "no appointments" row if it exists)
+    const existingRows = tbody.querySelectorAll('tr');
+    existingRows.forEach(row => row.remove());
+    
+    if (appointments.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center">
+                    <div class="no-appointments">
+                        <i class="fas fa-calendar-times"></i>
+                        <h5>No Appointments Found</h5>
+                        <p>There are no appointments to display at this time.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Update table count
+    const tableCountEl = document.getElementById('tableCount');
+    if (tableCountEl) {
+        tableCountEl.textContent = `Showing ${appointments.length} appointments`;
+    }
+    
+    // Add new rows
+    appointments.forEach(appointment => {
+        const statusClass = appointment.appointmentStatus.toLowerCase().replace(' ', '-');
+        const statusIcon = getStatusIcon(appointment.appointmentStatus);
+        
+        const rowHtml = `
+            <tr data-status="${appointment.appointmentStatus}" data-date="${appointment.scheduleDate}" data-patient="${appointment.patientName.toLowerCase()}">
+                <td>
+                    <div class="patient-info">
+                        <i class="fas fa-user-circle patient-icon"></i>
+                        <span>${escapeHtml(appointment.patientName)}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="date-info">
+                        <div class="date-primary">${appointment.scheduleDate}</div>
+                        <div class="appointment-time">
+                            <i class="fas fa-clock"></i> ${appointment.startTime} - ${appointment.endTime}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge status-${statusClass}">
+                        ${statusIcon}
+                        ${escapeHtml(appointment.appointmentStatus)}
+                    </span>
+                </td>
+                <td>
+                    <div class="queue-info-cell">
+                        <span class="queue-badge">#${appointment.queueNumber}</span>
+                        <div class="queue-status">${escapeHtml(appointment.queueStatus)}</div>
+                    </div>
+                </td>
+                <td>
+                    <span class="reason-badge">${escapeHtml(appointment.reasonForVisit)}</span>
+                </td>
+                <td>
+                    <div class="symptoms-text" title="${escapeHtml(appointment.symptoms)}">
+                        ${escapeHtml(appointment.symptoms)}
+                    </div>
+                </td>
+                <td>
+                    <div class="date-booked">
+                        ${appointment.dateBooked}
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        ${getActionButtons(appointment)}
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', rowHtml);
+    });
+    
+    // Re-apply filters if any are active
+    filterTable();
+}
+
+// Get status icon
+function getStatusIcon(status) {
+    switch (status) {
+        case "Pending": return '<i class="fas fa-clock"></i>';
+        case "Confirmed": return '<i class="fas fa-check"></i>';
+        case "In Progress": return '<i class="fas fa-spinner"></i>';
+        case "Completed": return '<i class="fas fa-check-circle"></i>';
+        case "Cancelled": return '<i class="fas fa-times-circle"></i>';
+        default: return '';
+    }
+}
+
+// Get action buttons for appointment
+function getActionButtons(appointment) {
+    let buttons = '';
+    
+    if (appointment.appointmentStatus === "Pending") {
+        buttons += `<button class="btn btn-success btn-sm" onclick="updateStatus(${appointment.appointmentId}, 'Confirmed')" title="Confirm Appointment">
+            <i class="fas fa-check"></i>
+        </button>`;
+    }
+    
+    if (appointment.appointmentStatus === "Confirmed") {
+        buttons += `<button class="btn btn-primary btn-sm" onclick="showStartAppointmentModal(${appointment.appointmentId})" title="Start Appointment">
+            <i class="fas fa-play"></i>
+        </button>`;
+    }
+    
+    if (appointment.appointmentStatus === "In Progress") {
+        buttons += `<button class="btn btn-success btn-sm" onclick="completeAppointment(${appointment.appointmentId}, ${appointment.patientId})" title="Complete Appointment">
+            <i class="fas fa-check-circle"></i>
+        </button>`;
+    }
+    
+    if (appointment.appointmentStatus !== "Completed" && appointment.appointmentStatus !== "Cancelled") {
+        buttons += `<button class="btn btn-warning btn-sm" onclick="updateStatus(${appointment.appointmentId}, 'Cancelled')" title="Cancel Appointment">
+            <i class="fas fa-times"></i>
+        </button>`;
+    }
+    
+    buttons += `<a href="/Appointments/Details/${appointment.appointmentId}" class="btn btn-info btn-sm" title="View Details">
+        <i class="fas fa-eye"></i>
+    </a>`;
+    
+    return buttons;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 async function updateStatus(appointmentId, status) {
@@ -82,7 +254,8 @@ async function updateStatus(appointmentId, status) {
 
         if (result.success) {
             alert(result.message);
-            location.reload(); // Refresh to show updated status
+            // Refresh appointments data in background
+            setTimeout(() => refreshAppointments(), 500);
         } else {
             alert('Error: ' + result.error);
         }
@@ -181,7 +354,8 @@ async function submitCompleteAppointment() {
                 modal.hide();
             }
             alert('Appointment completed successfully! Medical record has been created.');
-            location.reload(); // Refresh to show updated status
+            // Refresh appointments data in background
+            setTimeout(() => refreshAppointments(), 500);
         } else {
             console.error('Error from server:', result.error, result.details);
             let errorMsg = 'Error: ' + (result.error || 'Failed to complete appointment');
@@ -260,7 +434,8 @@ async function submitStartAppointment() {
             }
             
             alert(result.message || 'Appointment started successfully!');
-            location.reload();
+            // Refresh appointments data in background
+            setTimeout(() => refreshAppointments(), 500);
         } else {
             alert('Error: ' + (result.error || 'Failed to start appointment'));
         }
