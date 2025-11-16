@@ -1,6 +1,17 @@
 {
   "format": 1,
   "restore": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\caw\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\caw\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\caw\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "projectName": "QuickClinique",
+        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\caw\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\caw\\QuickCliniqueV2\\QuickClinique\\obj\\",
     "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {

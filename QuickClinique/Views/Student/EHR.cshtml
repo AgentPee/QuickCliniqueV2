@@ -1,0 +1,191 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "My Electronic Health Records";
+}
+
+@section styles {
+    <link rel="stylesheet" href="~/css/student-ehr.css" />
+}
+
+<div class="ehr-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="@Url.Action("Profile", "Student")" class="btn-back-header">
+                <i class="fas fa-arrow-left"></i>
+                Back to Profile
+            </a>
+        </div>
+        <div class="header-separator"></div>
+        <div class="header-content">
+            <div>
+                <h1>
+                    <i class="fas fa-file-medical"></i>
+                    My Electronic Health Records (EHR)
+                </h1>
+                <p>View your complete medical information including diagnosis, medications, allergies, appointments, and BMI</p>
+            </div>
+            <div class="header-bmi">
+                @if (Model.Precords != null && Model.Precords.Any())
+                {
+                    var latestRecord = Model.Precords.OrderByDescending(r => r.RecordId).First();
+                    var bmi = latestRecord.Bmi;
+                    string bmiCategory = "";
+                    if (bmi < 18.5) bmiCategory = "Underweight";
+                    else if (bmi < 25) bmiCategory = "Normal";
+                    else if (bmi < 30) bmiCategory = "Overweight";
+                    else bmiCategory = "Obese";
+                    <div class="bmi-header-card">
+                        <div class="bmi-header-label">BMI</div>
+                        <div class="bmi-header-value">@bmi</div>
+                        <div class="bmi-header-category">@bmiCategory</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content: 3 Columns - Medical Records | Appointments | BMI -->
+    <div class="ehr-content">
+        <!-- Medical Records Section -->
+        <div class="ehr-section">
+            <h2 class="section-title">
+                <i class="fas fa-file-medical-alt"></i>
+                Medical Records
+            </h2>
+
+            @if (Model.Precords != null && Model.Precords.Any())
+            {
+                <div class="record-list">
+                    @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
+                    {
+                        <div class="record-item">
+                            <div class="record-header">
+                                <div class="record-title">
+                                    <i class="fas fa-file-medical"></i>
+                                    Record #@record.RecordId
+                                </div>
+                            </div>
+                            <div class="record-content">
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-stethoscope"></i>
+                                        <div>
+                                            <div class="info-card-label">Diagnosis</div>
+                                            <div class="info-card-value">@(string.IsNullOrEmpty(record.Diagnosis) ? "No diagnosis recorded" : record.Diagnosis)</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-pills"></i>
+                                        <div>
+                                            <div class="info-card-label">Medications</div>
+                                            <div class="info-card-value">@(string.IsNullOrEmpty(record.Medications) ? "No medications recorded" : record.Medications)</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <div>
+                                            <div class="info-card-label">Allergies</div>
+                                            <div class="info-card-value">@(string.IsNullOrEmpty(record.Allergies) ? "No known allergies" : record.Allergies)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fas fa-file-medical"></i>
+                    <h3>No Medical Records</h3>
+                    <p>Your medical records will appear here once they are added by clinic staff.</p>
+                </div>
+            }
+        </div>
+
+        <!-- Appointments Section -->
+        <div class="ehr-section">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-alt"></i>
+                Appointments
+            </h2>
+
+            @if (Model.Appointments != null && Model.Appointments.Any())
+            {
+                @foreach (var appointment in Model.Appointments)
+                {
+                    var statusClass = appointment.AppointmentStatus.ToLower().Replace(" ", "-");
+                    var date = appointment.Schedule?.Date ?? appointment.DateBooked;
+                    var formattedDate = date.ToString("MMM dd, yyyy");
+
+                    <div class="appointment-item">
+                        <div class="appointment-header">
+                            <span class="appointment-date">
+                                <i class="fas fa-calendar-day"></i>
+                                @formattedDate
+                            </span>
+                            <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                        </div>
+
+                        <div class="appointment-details">
+                            <div>
+                                <i class="fas fa-stethoscope"></i>
+                                <span><strong>Service:</strong> @appointment.ReasonForVisit</span>
+                            </div>
+
+                            @if (appointment.Schedule != null)
+                            {
+                                <div>
+                                    <i class="fas fa-clock"></i>
+                                    <span><strong>Time:</strong> @appointment.Schedule.StartTime.ToString(@"hh\:mm tt") - @appointment.Schedule.EndTime.ToString(@"hh\:mm tt")</span>
+                                </div>
+                            }
+
+                            <div>
+                                <i class="fas fa-list-ol"></i>
+                                <span><strong>Queue:</strong> #@appointment.QueueNumber</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(appointment.Symptoms) && appointment.Symptoms != "No symptoms provided")
+                            {
+                                <div>
+                                    <i class="fas fa-notes-medical"></i>
+                                    <span><strong>Symptoms:</strong> @appointment.Symptoms</span>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(appointment.TriageNotes))
+                            {
+                                <div>
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <span><strong>Notes:</strong> @appointment.TriageNotes</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <h3>No Appointments</h3>
+                    <p>You haven't booked any appointments yet.</p>
+                    <a href="@Url.Action("Index", "Home")" class="btn-primary">
+                        <i class="fas fa-calendar-plus"></i>
+                        Book Appointment
+                    </a>
+                </div>
+            }
+        </div>
+
+    </div>
+</div>
+
