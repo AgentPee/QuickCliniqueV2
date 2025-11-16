@@ -9,7 +9,7 @@
 
 /* Page Header */
 .page-header {
-    background: linear-gradient(135deg, rgb(0, 93, 101) 0%, rgb(0, 73, 81) 100%);
+    background: linear-gradient(135deg, #4ECDC4, #44A08D);
     color: white;
     padding: 2rem;
     border-radius: 15px;
@@ -64,21 +64,21 @@
     box-shadow: 0 0 0 3px rgba(0, 93, 101, 0.1);
 }
 
-.search-box button,
-.btn-search {
-    padding: 0.75rem 2rem;
-    background: rgb(0, 93, 101);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+    .search-box button,
+    .btn-search {
+        padding: 0.75rem 2rem;
+        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
 .search-box button:hover,
 .btn-search:hover {
@@ -123,10 +123,10 @@
     border-collapse: collapse;
 }
 
-.patients-table thead {
-    background: linear-gradient(135deg, rgb(0, 93, 101) 0%, rgb(0, 73, 81) 100%);
-    color: white;
-}
+    .patients-table thead {
+        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        color: white;
+    }
 
 .patients-table th {
     padding: 1.25rem 1rem;
