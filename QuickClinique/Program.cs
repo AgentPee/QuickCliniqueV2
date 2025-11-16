@@ -41,6 +41,13 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 
 var app = builder.Build();
 
+// Configure port for Railway (Railway sets PORT environment variable)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -532,5 +539,4 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.Run();
 app.Run();
