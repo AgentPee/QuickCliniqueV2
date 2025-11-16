@@ -8,17 +8,19 @@ COPY ["NuGet.config", "."]
 # Copy csproj file first for better layer caching
 COPY ["QuickClinique/QuickClinique.csproj", "QuickClinique/"]
 
-# Copy everything else
+# Copy everything else (excluding bin/obj folders)
 COPY QuickClinique/ QuickClinique/
 
 # Set working directory
 WORKDIR /src/QuickClinique
 
-# Restore dependencies (this will download all packages including transitive ones)
-RUN dotnet restore "QuickClinique.csproj"
+# Clean any existing build artifacts
+RUN rm -rf bin obj
 
-# Build the project (restore is included by default, but we already restored)
-RUN dotnet build "QuickClinique.csproj" -c Release -o /app/build
+# Restore and build in a single command to ensure packages persist
+# This prevents package resolution issues between restore and build steps
+RUN dotnet restore "QuickClinique.csproj" && \
+    dotnet build "QuickClinique.csproj" -c Release -o /app/build
 
 # Publish the app
 FROM build AS publish
