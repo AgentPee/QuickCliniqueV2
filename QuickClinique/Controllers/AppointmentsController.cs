@@ -518,6 +518,92 @@ namespace QuickClinique.Controllers
             return View(appointments);
         }
 
+        // GET: Appointments/GetQueueData - Get queue data for background refresh
+        [HttpGet]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> GetQueueData()
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var appointments = await _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Schedule)
+                .Where(a => a.Schedule.Date == today && 
+                           (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress" || a.AppointmentStatus == "Completed") &&
+                           a.QueueStatus != "Done")
+                .OrderBy(a => a.QueueNumber)
+                .ToListAsync();
+
+            var currentPatient = appointments.FirstOrDefault(a => a.AppointmentStatus == "In Progress");
+            var waitingPatients = appointments.Where(a => a.AppointmentStatus == "Confirmed" && a.QueueStatus == "Waiting")
+                .OrderBy(a => a.QueueNumber)
+                .ToList();
+
+            return Json(new { 
+                success = true, 
+                data = new {
+                    stats = new {
+                        totalWaiting = appointments.Count(a => a.AppointmentStatus == "Confirmed" && a.QueueStatus == "Waiting"),
+                        inProgress = appointments.Count(a => a.AppointmentStatus == "In Progress"),
+                        completedToday = appointments.Count(a => a.AppointmentStatus == "Completed")
+                    },
+                    currentPatient = currentPatient != null ? new {
+                        appointmentId = currentPatient.AppointmentId,
+                        patientId = currentPatient.PatientId,
+                        patientName = currentPatient.Patient?.FullName,
+                        queueNumber = currentPatient.QueueNumber,
+                        hasWaitingPatients = waitingPatients.Any()
+                    } : null,
+                    waitingPatients = waitingPatients.Select(a => new {
+                        appointmentId = a.AppointmentId,
+                        patientName = a.Patient?.FullName,
+                        queueNumber = a.QueueNumber,
+                        reasonForVisit = a.ReasonForVisit,
+                        startTime = a.Schedule?.StartTime.ToString("h:mm tt"),
+                        endTime = a.Schedule?.EndTime.ToString("h:mm tt")
+                    }).ToList()
+                }
+            });
+        }
+
+        // GET: Appointments/GetManageData - Get appointment management data for background refresh
+        [HttpGet]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> GetManageData()
+        {
+            var appointments = await _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Schedule)
+                .OrderByDescending(a => a.DateBooked)
+                .ThenBy(a => a.QueueNumber)
+                .ToListAsync();
+
+            return Json(new { 
+                success = true, 
+                data = new {
+                    stats = new {
+                        totalAppointments = appointments.Count,
+                        pendingAppointments = appointments.Count(a => a.AppointmentStatus == "Pending"),
+                        confirmedAppointments = appointments.Count(a => a.AppointmentStatus == "Confirmed"),
+                        todayAppointments = appointments.Count(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Now))
+                    },
+                    appointments = appointments.Select(a => new {
+                        appointmentId = a.AppointmentId,
+                        patientId = a.PatientId,
+                        patientName = a.Patient?.FullName,
+                        scheduleDate = a.Schedule.Date.ToString("MMM dd, yyyy"),
+                        startTime = a.Schedule.StartTime.ToString("h:mm tt"),
+                        endTime = a.Schedule.EndTime.ToString("h:mm tt"),
+                        appointmentStatus = a.AppointmentStatus,
+                        queueNumber = a.QueueNumber,
+                        queueStatus = a.QueueStatus,
+                        reasonForVisit = a.ReasonForVisit,
+                        symptoms = a.Symptoms,
+                        dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
+                    }).ToList()
+                }
+            });
+        }
+
         // POST: Appointments/NextInQueue - Move to next patient in queue
         [HttpPost]
         [ValidateAntiForgeryToken]

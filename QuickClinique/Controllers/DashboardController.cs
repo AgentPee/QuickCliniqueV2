@@ -172,6 +172,76 @@ namespace QuickClinique.Controllers
             });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetDashboardData()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var dashboardData = new
+            {
+                // Statistics
+                stats = new
+                {
+                    totalAppointments = await _context.Appointments.CountAsync(),
+                    pendingCount = await _context.Appointments.CountAsync(a => a.AppointmentStatus == "Pending"),
+                    confirmedCount = await _context.Appointments.CountAsync(a => a.AppointmentStatus == "Confirmed"),
+                    completedCount = await _context.Appointments.CountAsync(a => a.AppointmentStatus == "Completed"),
+                    totalPatients = await _context.Students.CountAsync(),
+                    availableSlots = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes" && s.Date >= DateOnly.FromDateTime(DateTime.Today))
+                },
+                // Today's appointments
+                todaysAppointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Today))
+                    .OrderBy(a => a.QueueNumber)
+                    .Select(a => new
+                    {
+                        appointmentId = a.AppointmentId,
+                        patientName = $"{a.Patient.FirstName} {a.Patient.LastName}",
+                        queueNumber = a.QueueNumber,
+                        status = a.AppointmentStatus,
+                        timeSlot = $"{a.Schedule.StartTime} - {a.Schedule.EndTime}",
+                        reason = a.ReasonForVisit
+                    })
+                    .ToListAsync(),
+                // Pending appointments
+                pendingAppointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.AppointmentStatus == "Pending")
+                    .OrderBy(a => a.DateBooked)
+                    .Take(10)
+                    .Select(a => new
+                    {
+                        appointmentId = a.AppointmentId,
+                        patientName = $"{a.Patient.FirstName} {a.Patient.LastName}",
+                        scheduleDate = a.Schedule.Date.ToString("MMM dd, yyyy"),
+                        timeSlot = $"{a.Schedule.StartTime} - {a.Schedule.EndTime}",
+                        reason = a.ReasonForVisit
+                    })
+                    .ToListAsync(),
+                // Recent notifications
+                recentNotifications = await _context.Notifications
+                    .Include(n => n.Patient)
+                    .Where(n => n.ClinicStaffId == clinicStaffId)
+                    .OrderByDescending(n => n.NotifDateTime)
+                    .Take(5)
+                    .Select(n => new
+                    {
+                        content = n.Content,
+                        dateTime = n.NotifDateTime.ToString("MMM dd, HH:mm")
+                    })
+                    .ToListAsync()
+            };
+
+            return Json(new { success = true, data = dashboardData });
+        }
+
         // GET: Dashboard/GetMessages - Get ALL messages between students and clinic staff (shared inbox)
         [HttpGet]
         public async Task<IActionResult> GetMessages()

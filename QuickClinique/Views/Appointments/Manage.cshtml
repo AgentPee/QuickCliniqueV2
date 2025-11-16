@@ -347,8 +347,44 @@
                                         <i class="fas fa-weight"></i> BMI
                                     </label>
                                     <input type="number" class="form-control" id="triageBMI" name="bmi"
-                                           placeholder="Body Mass Index" step="0.1" min="10" max="50">
+                                           placeholder="Body Mass Index" step="0.1" min="10" max="50" readonly>
+                                    <small class="form-text text-muted">Calculated from height and weight below</small>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- BMI Calculator Section -->
+                        <div class="form-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                            <h6 class="section-title"><i class="fas fa-heartbeat"></i> BMI Calculator</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="triageHeight">
+                                            <i class="fas fa-ruler-vertical"></i> Height (cm)
+                                        </label>
+                                        <input type="number" class="form-control" id="triageHeight" 
+                                               placeholder="170" min="100" max="250">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="triageWeight">
+                                            <i class="fas fa-weight-hanging"></i> Weight (kg)
+                                        </label>
+                                        <input type="number" class="form-control" id="triageWeight" 
+                                               placeholder="70" min="30" max="200">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary btn-sm" id="calculateTriageBMI" style="margin-bottom: 1rem;">
+                                <i class="fas fa-calculator"></i> Calculate BMI
+                            </button>
+                            
+                            <div class="bmi-result-modal" id="bmiResultModal" style="display: none;">
+                                <div class="bmi-result-value-modal" id="bmiValueModal">0.0</div>
+                                <div class="bmi-result-category-modal" id="bmiCategoryModal">Category</div>
                             </div>
                         </div>
 
@@ -386,4 +422,143 @@
 
 @section Scripts {
     <script src="~/js/appoMan.js"></script>
+    <script>
+        // BMI Calculation for Next Patient Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculateTriageBMI');
+            if (calculateBtn) {
+                calculateBtn.addEventListener('click', calculateTriageBMI);
+            }
+            
+            const heightInput = document.getElementById('triageHeight');
+            const weightInput = document.getElementById('triageWeight');
+            
+            if (heightInput) {
+                heightInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        calculateTriageBMI();
+                    }
+                });
+            }
+            
+            if (weightInput) {
+                weightInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        calculateTriageBMI();
+                    }
+                });
+            }
+        });
+
+        function calculateTriageBMI() {
+            const height = parseFloat(document.getElementById('triageHeight')?.value);
+            const weight = parseFloat(document.getElementById('triageWeight')?.value);
+            const bmiInput = document.getElementById('triageBMI');
+            const bmiResult = document.getElementById('bmiResultModal');
+            const bmiValue = document.getElementById('bmiValueModal');
+            const bmiCategory = document.getElementById('bmiCategoryModal');
+
+            if (!height || height < 100 || height > 250) {
+                alert('Please enter a valid height between 100 and 250 cm');
+                return;
+            }
+
+            if (!weight || weight < 30 || weight > 200) {
+                alert('Please enter a valid weight between 30 and 200 kg');
+                return;
+            }
+
+            const heightInMeters = height / 100;
+            const bmi = weight / (heightInMeters * heightInMeters);
+            const roundedBMI = Math.round(bmi * 10) / 10;
+
+            if (bmiInput) {
+                bmiInput.value = roundedBMI;
+            }
+
+            let category = '';
+            let categoryClass = '';
+
+            if (bmi < 18.5) {
+                category = 'Underweight';
+                categoryClass = 'underweight';
+            } else if (bmi < 25) {
+                category = 'Normal';
+                categoryClass = 'normal';
+            } else if (bmi < 30) {
+                category = 'Overweight';
+                categoryClass = 'overweight';
+            } else {
+                category = 'Obese';
+                categoryClass = 'obese';
+            }
+
+            if (bmiValue) {
+                bmiValue.textContent = roundedBMI;
+            }
+            if (bmiCategory) {
+                bmiCategory.textContent = category;
+                bmiCategory.className = 'bmi-result-category-modal ' + categoryClass;
+            }
+            if (bmiResult) {
+                bmiResult.style.display = 'block';
+            }
+        }
+    </script>
+    <style>
+        .bmi-result-modal {
+            background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+            border-left: 4px solid #4ECDC4;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .bmi-result-value-modal {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .bmi-result-category-modal {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .bmi-result-category-modal.underweight {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+        }
+
+        .bmi-result-category-modal.normal {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+        }
+
+        .bmi-result-category-modal.overweight {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+        }
+
+        .bmi-result-category-modal.obese {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+        }
+
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 }

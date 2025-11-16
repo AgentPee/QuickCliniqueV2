@@ -8,21 +8,50 @@ namespace QuickClinique.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "TriageNotes",
-                table: "appointments",
-                type: "longtext",
-                nullable: false,
-                defaultValue: "")
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .Annotation("MySql:Collation", "utf8mb4_general_ci");
+            // Check if column exists before adding (case-insensitive check)
+            var sql = @"
+                SET @col_exists = (
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'appointments' 
+                    AND UPPER(COLUMN_NAME) = 'TRIAGENOTES'
+                );
+                
+                SET @sql = IF(@col_exists = 0,
+                    'ALTER TABLE `appointments` ADD COLUMN `TriageNotes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''''',
+                    'SELECT ''TriageNotes column already exists'' AS message'
+                );
+                
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;";
+            
+            migrationBuilder.Sql(sql);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "TriageNotes",
-                table: "appointments");
+            // Check if column exists before dropping (case-insensitive check)
+            var sql = @"
+                SET @col_exists = (
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'appointments' 
+                    AND UPPER(COLUMN_NAME) = 'TRIAGENOTES'
+                );
+                
+                SET @sql = IF(@col_exists > 0,
+                    'ALTER TABLE `appointments` DROP COLUMN `TriageNotes`',
+                    'SELECT ''TriageNotes column does not exist'' AS message'
+                );
+                
+                PREPARE stmt FROM @sql;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;";
+            
+            migrationBuilder.Sql(sql);
         }
     }
 }
