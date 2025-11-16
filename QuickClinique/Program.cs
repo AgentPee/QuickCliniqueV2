@@ -195,6 +195,57 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] Symptoms column already exists in appointments table.");
             }
             
+            // Check and add CancellationReason column to appointments table (case-insensitive check)
+            Console.WriteLine("[INIT] Checking for CancellationReason column in appointments table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON'";
+            
+            var cancellationReasonColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] CancellationReason column exists in appointments table: {cancellationReasonColumnExists}");
+            
+            if (!cancellationReasonColumnExists)
+            {
+                Console.WriteLine("[CRITICAL] CancellationReason column missing! Adding to appointments table...");
+                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
+                
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] CancellationReason column added successfully to appointments table!");
+                    
+                    // Verify it was added
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'appointments' 
+                        AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] CancellationReason column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("CancellationReason column verification failed - column was not added successfully");
+                    }
+                }
+                catch (Exception addEx)
+                {
+                    Console.WriteLine($"[CRITICAL ERROR] Failed to add CancellationReason column: {addEx.Message}");
+                    Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                    Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                    throw; // Re-throw to be caught by outer catch
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] CancellationReason column already exists in appointments table.");
+            }
+            
             // Check and add IsActive column to students table (case-insensitive check)
             Console.WriteLine("[INIT] Checking for IsActive column in students table...");
             command.CommandText = @"

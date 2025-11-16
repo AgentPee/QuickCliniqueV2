@@ -202,7 +202,7 @@ function getActionButtons(appointment) {
     }
     
     if (appointment.appointmentStatus !== "Completed" && appointment.appointmentStatus !== "Cancelled") {
-        buttons += `<button class="btn btn-warning btn-sm" onclick="updateStatus(${appointment.appointmentId}, 'Cancelled')" title="Cancel Appointment">
+        buttons += `<button class="btn btn-warning btn-sm" onclick="showCancelAppointmentModal(${appointment.appointmentId})" title="Cancel Appointment">
             <i class="fas fa-times"></i>
         </button>`;
     }
@@ -223,6 +223,12 @@ function escapeHtml(text) {
 }
 
 async function updateStatus(appointmentId, status) {
+    // Don't allow direct cancellation - use the cancel modal instead
+    if (status === 'Cancelled') {
+        showCancelAppointmentModal(appointmentId);
+        return;
+    }
+
     if (!confirm(`Are you sure you want to change the appointment status to "${status}"?`)) {
         return;
     }
@@ -262,6 +268,78 @@ async function updateStatus(appointmentId, status) {
     } catch (error) {
         console.error('Error updating status:', error);
         alert('An error occurred while updating the appointment status.\n\nError: ' + error.message);
+    }
+}
+
+// Show the cancel appointment modal
+function showCancelAppointmentModal(appointmentId) {
+    // Set the appointment ID
+    document.getElementById('cancelAppointmentId').value = appointmentId;
+    
+    // Reset form - clear any previously selected reason
+    const form = document.getElementById('cancelAppointmentForm');
+    form.reset();
+    document.getElementById('cancelAppointmentId').value = appointmentId;
+
+    // Show the modal using Bootstrap 5
+    const modalElement = document.getElementById('cancelAppointmentModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+// Submit cancel appointment with reason
+async function submitCancelAppointment() {
+    const appointmentId = document.getElementById('cancelAppointmentId').value;
+    
+    if (!appointmentId) {
+        alert('Error: Missing appointment ID. Please try again.');
+        return;
+    }
+
+    // Get selected cancellation reason
+    const reasonRadios = document.querySelectorAll('input[name="cancellationReason"]:checked');
+    if (reasonRadios.length === 0) {
+        alert('Please select a cancellation reason.');
+        return;
+    }
+
+    const reason = reasonRadios[0].value;
+
+    try {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        const response = await fetch('/Appointments/CancelAppointment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
+            body: new URLSearchParams({
+                appointmentId: appointmentId,
+                reason: reason,
+                __RequestVerificationToken: token
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Hide modal
+            const modalElement = document.getElementById('cancelAppointmentModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+            
+            alert(result.message || 'Appointment cancelled successfully!');
+            // Refresh appointments data in background
+            setTimeout(() => refreshAppointments(), 500);
+        } else {
+            alert('Error: ' + (result.error || 'Failed to cancel appointment'));
+        }
+    } catch (error) {
+        console.error('Error cancelling appointment:', error);
+        alert('An error occurred while cancelling the appointment. Please try again.');
     }
 }
 
@@ -459,6 +537,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (nextPatientModalElement) {
         nextPatientModalElement.addEventListener('hidden.bs.modal', function () {
             document.getElementById('nextPatientForm').reset();
+        });
+    }
+
+    // Reset cancel appointment modal when hidden
+    const cancelModalElement = document.getElementById('cancelAppointmentModal');
+    if (cancelModalElement) {
+        cancelModalElement.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('cancelAppointmentForm').reset();
         });
     }
 });
