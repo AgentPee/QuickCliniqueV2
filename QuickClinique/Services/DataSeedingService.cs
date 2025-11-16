@@ -49,7 +49,8 @@ namespace QuickClinique.Services
                 Email = "admin@quickclinique.com",
                 PhoneNumber = "09123456789",
                 Password = _passwordService.HashPassword("Admin123!"),
-                IsEmailVerified = true
+                IsEmailVerified = true,
+                IsActive = true
             };
 
             _context.Clinicstaffs.Add(adminStaff);
