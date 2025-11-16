@@ -217,7 +217,7 @@
                                         }
                                         @if (item.AppointmentStatus != "Completed" && item.AppointmentStatus != "Cancelled")
                                         {
-                                            <button class="btn btn-warning btn-sm" onclick="updateStatus(@item.AppointmentId, 'Cancelled')" title="Cancel Appointment">
+                                            <button class="btn btn-warning btn-sm" onclick="showCancelAppointmentModal(@item.AppointmentId)" title="Cancel Appointment">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         }
@@ -414,6 +414,70 @@
                 </button>
                 <button type="button" class="btn btn-primary" onclick="submitStartAppointment()">
                     <i class="fas fa-play"></i> Start Appointment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Appointment Modal -->
+<div class="modal fade" id="cancelAppointmentModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="cancelModalLabel">
+                    <i class="fas fa-times-circle"></i> Cancel Appointment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. Please select a reason for cancellation.
+                </div>
+                
+                <form id="cancelAppointmentForm">
+                    <input type="hidden" id="cancelAppointmentId" name="appointmentId">
+                    
+                    <div class="form-section">
+                        <h6 class="section-title"><i class="fas fa-list"></i> Cancellation Reason <span class="text-danger">*</span></h6>
+                        <div class="form-group">
+                            <div class="cancellation-reasons">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cancellationReason" id="reasonNoShow" value="No show" required>
+                                    <label class="form-check-label" for="reasonNoShow">
+                                        <i class="fas fa-user-slash"></i> No show
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cancellationReason" id="reasonDoubleBooking" value="Double booking" required>
+                                    <label class="form-check-label" for="reasonDoubleBooking">
+                                        <i class="fas fa-calendar-times"></i> Double booking
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cancellationReason" id="reasonClinicHours" value="Change in clinic hours" required>
+                                    <label class="form-check-label" for="reasonClinicHours">
+                                        <i class="fas fa-clock"></i> Change in clinic hours
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cancellationReason" id="reasonNoDoctor" value="No doctor available" required>
+                                    <label class="form-check-label" for="reasonNoDoctor">
+                                        <i class="fas fa-user-md"></i> No doctor available
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Close
+                </button>
+                <button type="button" class="btn btn-warning" onclick="submitCancelAppointment()">
+                    <i class="fas fa-times-circle"></i> Cancel Appointment
                 </button>
             </div>
         </div>

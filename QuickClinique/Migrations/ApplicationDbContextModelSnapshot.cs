@@ -67,6 +67,10 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("CancellationReason")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("AppointmentId")
                         .HasName("PRIMARY");
 

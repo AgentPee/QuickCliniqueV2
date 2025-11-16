@@ -1,0 +1,31 @@
+-- SQL Script to add CancellationReason column to appointments table
+-- This script checks if the column exists before adding it (case-insensitive check)
+
+SET @col_exists = (
+    SELECT COUNT(*) 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'appointments' 
+    AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON'
+);
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''''',
+    'SELECT ''CancellationReason column already exists'' AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Verify the column was added
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = DATABASE() 
+AND TABLE_NAME = 'appointments' 
+AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON';
+
