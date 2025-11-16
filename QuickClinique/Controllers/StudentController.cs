@@ -579,6 +579,38 @@ namespace QuickClinique.Controllers
             return View(appointments);
         }
 
+        // GET: Student/EHR - Electronic Health Records
+        [StudentOnly]
+        public async Task<IActionResult> EHR()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var student = await _context.Students
+                .Include(s => s.Precords)
+                .Include(s => s.Appointments)
+                    .ThenInclude(a => a.Schedule)
+                .FirstOrDefaultAsync(s => s.StudentId == studentId.Value);
+
+            if (student == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Order appointments by date descending (most recent first)
+            var orderedAppointments = student.Appointments
+                .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
+                .ToList();
+
+            student.Appointments = orderedAppointments;
+
+            return View(student);
+        }
+
         // GET: Student/GetCurrentStudentId - Get logged in student ID
         [HttpGet]
         public IActionResult GetCurrentStudentId()
