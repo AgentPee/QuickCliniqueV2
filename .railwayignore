@@ -1,0 +1,17 @@
+# Railway ignore file
+# Files and directories to exclude from deployment
+
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/*.user
+**/bin
+**/obj
+**/node_modules
+**/.dockerignore
+README.md
+*.md
+**/Migrations/*.sql
+**/*.sql
+
