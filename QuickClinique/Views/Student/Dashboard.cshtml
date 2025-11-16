@@ -294,94 +294,6 @@
             font-size: 0.8rem;
         }
 
-        .appointment-item {
-            background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%);
-            border-left: 4px solid var(--primary-teal);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 2px solid var(--border-color);
-            border-left: 4px solid var(--primary-teal);
-        }
-
-            .appointment-item:hover {
-                background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
-                transform: translateX(8px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                border-color: var(--primary-teal);
-            }
-
-        .appointment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .appointment-date {
-            font-weight: 700;
-            color: var(--text-dark);
-            font-size: 1.1rem;
-        }
-
-        .status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-            .status-badge.pending {
-                background: linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%);
-                color: #92400E;
-                border-left: 4px solid var(--warning);
-            }
-
-            .status-badge.confirmed {
-                background: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%);
-                color: #065F46;
-                border-left: 4px solid var(--success);
-            }
-
-            .status-badge.completed {
-                background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%);
-                color: #1E40AF;
-                border-left: 4px solid var(--info);
-            }
-
-            .status-badge.cancelled {
-                background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
-                color: #991B1B;
-                border-left: 4px solid var(--danger);
-            }
-
-        .appointment-details {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            font-weight: 500;
-        }
-
-            .appointment-details div {
-                display: flex;
-                align-items: center;
-            }
-
-            .appointment-details i {
-                margin-right: 0.75rem;
-                color: var(--primary-teal);
-                width: 20px;
-                text-align: center;
-            }
-
         .action-btn {
             display: flex;
             align-items: center;
@@ -580,19 +492,32 @@
 
         <!-- Content Grid -->
         <div class="content-grid">
-            <!-- Appointments Section -->
+            <!-- Clinic Communications Section -->
             <div class="appointments-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-calendar-alt"></i> My Appointments</h2>
-                    <a href="@Url.Action("Index", "Home")" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus"></i> Book New
-                    </a>
+                    <h2><i class="fas fa-comments"></i> Clinic Communications</h2>
+                    <button class="btn btn-sm btn-primary" onclick="loadMessages()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
 
-                <div id="appointmentsList">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                        <p>Loading appointments...</p>
+                <div class="messaging-container" style="margin-top: 1rem;">
+                    <div class="chat-header" style="background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%); color: white; padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                        <i class="fas fa-user-md"></i> Clinic Staff
+                    </div>
+                    <div class="chat-messages" id="chatMessages" style="height: 400px; overflow-y: auto; padding: 1rem; background: #F7FAFC; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                        <div class="message received">
+                            <div class="message-content">
+                                Welcome to QuickClinique! How can we assist you today?
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                    <div class="chat-input" style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500" style="flex: 1; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: var(--radius-sm);">
+                        <button class="btn btn-primary" id="sendMessage" style="padding: 0.75rem 1.5rem;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -641,119 +566,216 @@
 
 @section Scripts {
     <script>
+        let messagesInterval = null;
+
         $(document).ready(function() {
-            loadDashboardData();
+            initializeMessaging();
         });
 
-        async function loadDashboardData() {
-            try {
-                const studentIdResponse = await fetch('/Student/GetCurrentStudentId');
-                const studentIdResult = await studentIdResponse.json();
+        // Initialize messaging
+        function initializeMessaging() {
+            console.log('Initializing messaging...');
+            
+            // Load messages on page load
+            loadMessages();
 
-                if (!studentIdResult.success) {
-                    console.error('Failed to get student ID');
-                    return;
-                }
+            // Auto-refresh messages every 10 seconds
+            startMessagingAutoRefresh();
 
-                const studentId = studentIdResult.studentId;
+            // Send message button click
+            const sendButton = document.getElementById('sendMessage');
+            if (sendButton) {
+                sendButton.addEventListener('click', sendMessageToStaff);
+            }
 
-                const response = await fetch(`/Appointments/GetStudentAppointments?studentId=${studentId}`);
-                const result = await response.json();
-
-                if (result.success) {
-                    displayAppointments(result.data);
-                    updateStats(result.data);
-                } else {
-                    showEmptyState();
-                }
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                showError();
+            // Send message on Enter key
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessageToStaff();
+                    }
+                });
             }
         }
 
-        function displayAppointments(appointments) {
-            const container = $('#appointmentsList');
+        // Load messages from server
+        async function loadMessages() {
+            try {
+                const response = await fetch('/Home/GetMessages');
+                const result = await response.json();
 
-            if (!appointments || appointments.length === 0) {
-                showEmptyState();
+                if (result.success && result.data) {
+                    displayMessages(result.data);
+                } else {
+                    console.error('Failed to load messages:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Display messages in the chat
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = `
+                    <div class="message received">
+                        <div class="message-content">
+                            Welcome to QuickClinique! How can we assist you today?
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                `;
                 return;
             }
 
-            appointments.sort((a, b) => new Date(b.dateBooked) - new Date(a.dateBooked));
-
-            const recentAppointments = appointments.slice(0, 5);
-
-            let html = '';
-            recentAppointments.forEach(apt => {
-                const statusClass = apt.appointmentStatus.toLowerCase();
-                const date = new Date(apt.schedule?.date || apt.dateBooked);
-                const formattedDate = date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-
-                html += `
-                    <div class="appointment-item">
-                        <div class="appointment-header">
-                            <span class="appointment-date">${formattedDate}</span>
-                            <span class="status-badge ${statusClass}">${apt.appointmentStatus}</span>
-                        </div>
-                        <div class="appointment-details">
-                            <div><i class="fas fa-stethoscope"></i> ${apt.reasonForVisit}</div>
-                            <div><i class="fas fa-clock"></i> ${apt.schedule?.startTime || 'TBA'} - ${apt.schedule?.endTime || 'TBA'}</div>
-                            <div><i class="fas fa-list-ol"></i> Queue #${apt.queueNumber} - ${apt.queueStatus}</div>
-                        </div>
+            chatMessages.innerHTML = messages.map(msg => {
+                const messageClass = msg.isSent ? 'sent' : 'received';
+                const messageTime = formatMessageTime(msg.createdAt);
+                
+                return `
+                    <div class="message ${messageClass}">
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                        <div class="message-time">${messageTime}</div>
                     </div>
                 `;
-            });
+            }).join('');
 
-            container.html(html);
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function updateStats(appointments) {
-            const total = appointments.length;
-            const completed = appointments.filter(a => a.appointmentStatus === 'Completed').length;
-            const pending = appointments.filter(a => a.appointmentStatus === 'Pending').length;
-            const upcoming = appointments.filter(a =>
-                a.appointmentStatus === 'Confirmed' || a.appointmentStatus === 'Pending'
-            ).length;
+        // Send message to clinic staff
+        async function sendMessageToStaff() {
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
 
-            $('#totalAppointments').text(total);
-            $('#completedAppointments').text(completed);
-            $('#pendingAppointments').text(pending);
-            $('#upcomingAppointments').text(upcoming);
+            if (!messageText) {
+                return;
+            }
+
+            // Disable send button
+            const sendButton = document.getElementById('sendMessage');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch('/Home/SendMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ message: messageText })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Clear input
+                    messageInput.value = '';
+
+                    // Reload messages
+                    await loadMessages();
+                } else {
+                    alert('Failed to send message: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
         }
 
-        function showEmptyState() {
-            $('#appointmentsList').html(`
-                <div class="empty-state">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>No appointments yet</p>
-                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Book Your First Appointment
-                    </a>
-                </div>
-            `);
+        // Format message timestamp
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
 
-            $('#totalAppointments').text('0');
-            $('#completedAppointments').text('0');
-            $('#pendingAppointments').text('0');
-            $('#upcomingAppointments').text('0');
+            if (diffMins < 1) {
+                return 'Just now';
+            } else if (diffMins < 60) {
+                return `${diffMins} min ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours} hr ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
         }
 
-        function showError() {
-            $('#appointmentsList').html(`
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Failed to load appointments</p>
-                    <button class="btn btn-primary" onclick="loadDashboardData()">
-                        <i class="fas fa-redo"></i> Retry
-                    </button>
-                </div>
-            `);
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start auto-refresh for messages
+        function startMessagingAutoRefresh() {
+            if (messagesInterval) {
+                clearInterval(messagesInterval);
+            }
+
+            messagesInterval = setInterval(function() {
+                loadMessages();
+            }, 10000); // Refresh every 10 seconds
+        }
+
+        // Stop messaging auto-refresh
+        function stopMessagingAutoRefresh() {
+            if (messagesInterval) {
+                clearInterval(messagesInterval);
+                messagesInterval = null;
+            }
         }
     </script>
+    
+    <style>
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+        }
+
+        .message.received {
+            align-items: flex-start;
+        }
+
+        .message.sent .message-content {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+            color: white;
+        }
+
+        .message.received .message-content {
+            background: #E2E8F0;
+            color: var(--text-dark);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
 }

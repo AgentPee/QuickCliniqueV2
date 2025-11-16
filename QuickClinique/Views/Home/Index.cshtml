@@ -106,37 +106,20 @@
         </div>
     </section>
 
-    <!-- Rest of the sections remain the same -->
-    <!-- Dental Schedule Section -->
-    <section class="section" id="dental-schedule">
-        <!-- ... existing dental schedule content ... -->
-    </section>
-
-    <!-- Messaging Section -->
-    <section class="messaging-section" id="messaging">
-        <div class="messaging-header">
-            <i class="fas fa-comments"></i> Clinic Communications
-            <button class="refresh-messages-btn" onclick="loadMessages()">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+    <!-- My Appointments Section -->
+    <section class="section" id="appointments">
+        <div class="section-header">
+            <h2><i class="fas fa-calendar-alt"></i> My Appointments</h2>
+            <a href="#dashboard" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Book New
+            </a>
         </div>
-        <div class="messaging-container">
-            <div class="chat-header">
-                <i class="fas fa-user-md"></i> Clinic Staff
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="message received">
-                    <div class="message-content">
-                        Welcome to QuickClinique! How can we assist you today?
-                    </div>
-                    <div class="message-time">Just now</div>
+        <div class="appointments-container" style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);">
+            <div id="appointmentsList">
+                <div class="text-center" style="padding: 4rem 2rem;">
+                    <i class="fas fa-spinner fa-spin fa-2x" style="color: #4ECDC4; margin-bottom: 1rem;"></i>
+                    <p style="color: #718096;">Loading appointments...</p>
                 </div>
-            </div>
-            <div class="chat-input">
-                <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
-                <button class="send-btn" id="sendMessage">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
             </div>
         </div>
     </section>
@@ -947,8 +930,8 @@
             // Initialize real-time queue updates
             initializeQueueUpdates();
             
-            // Initialize messaging
-            initializeMessaging();
+            // Initialize appointments display
+            loadDashboardData();
         });
 
                 // Helper function to get current patient ID from server session
@@ -1381,179 +1364,193 @@
             }
         });
 
-        // ===== MESSAGING FUNCTIONALITY =====
-        let messagesInterval = null;
-
-        // Initialize messaging
-        function initializeMessaging() {
-            console.log('Initializing messaging...');
-            
-            // Load messages on page load
-            loadMessages();
-
-            // Auto-refresh messages every 10 seconds
-            startMessagingAutoRefresh();
-
-            // Send message button click
-            const sendButton = document.getElementById('sendMessage');
-            if (sendButton) {
-                sendButton.addEventListener('click', sendMessageToStaff);
-            }
-
-            // Send message on Enter key
-            const messageInput = document.getElementById('messageInput');
-            if (messageInput) {
-                messageInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        sendMessageToStaff();
-                    }
-                });
-            }
-        }
-
-        // Load messages from server
-        async function loadMessages() {
+        // ===== APPOINTMENTS FUNCTIONALITY =====
+        async function loadDashboardData() {
             try {
-                const response = await fetch('/Home/GetMessages');
-                const result = await response.json();
+                const studentIdResponse = await fetch('/Student/GetCurrentStudentId');
+                const studentIdResult = await studentIdResponse.json();
 
-                if (result.success && result.data) {
-                    displayMessages(result.data);
-                } else {
-                    console.error('Failed to load messages:', result.error);
+                if (!studentIdResult.success) {
+                    console.error('Failed to get student ID');
+                    showEmptyState();
+                    return;
                 }
-            } catch (error) {
-                console.error('Error loading messages:', error);
-            }
-        }
 
-        // Display messages in the chat
-        function displayMessages(messages) {
-            const chatMessages = document.getElementById('chatMessages');
-            
-            if (messages.length === 0) {
-                chatMessages.innerHTML = `
-                    <div class="message received">
-                        <div class="message-content">
-                            Welcome to QuickClinique! How can we assist you today?
-                        </div>
-                        <div class="message-time">Just now</div>
-                    </div>
-                `;
-                return;
-            }
+                const studentId = studentIdResult.studentId;
 
-            chatMessages.innerHTML = messages.map(msg => {
-                const messageClass = msg.isSent ? 'sent' : 'received';
-                const messageTime = formatMessageTime(msg.createdAt);
-                
-                return `
-                    <div class="message ${messageClass}">
-                        <div class="message-content">${escapeHtml(msg.message)}</div>
-                        <div class="message-time">${messageTime}</div>
-                    </div>
-                `;
-            }).join('');
-
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Send message to clinic staff
-        async function sendMessageToStaff() {
-            const messageInput = document.getElementById('messageInput');
-            const messageText = messageInput.value.trim();
-
-            if (!messageText) {
-                return;
-            }
-
-            // Disable send button
-            const sendButton = document.getElementById('sendMessage');
-            sendButton.disabled = true;
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-            try {
-                const response = await fetch('/Home/SendMessage', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ message: messageText })
-                });
-
+                const response = await fetch(`/Appointments/GetStudentAppointments?studentId=${studentId}`);
                 const result = await response.json();
 
                 if (result.success) {
-                    // Clear input
-                    messageInput.value = '';
-
-                    // Reload messages
-                    await loadMessages();
+                    displayAppointments(result.data);
                 } else {
-                    alert('Failed to send message: ' + (result.error || 'Unknown error'));
+                    showEmptyState();
                 }
             } catch (error) {
-                console.error('Error sending message:', error);
-                alert('Error sending message. Please try again.');
-            } finally {
-                sendButton.disabled = false;
-                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                console.error('Error loading dashboard data:', error);
+                showError();
             }
         }
 
-        // Format message timestamp
-        function formatMessageTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
+        function displayAppointments(appointments) {
+            const container = document.getElementById('appointmentsList');
 
-            if (diffMins < 1) {
-                return 'Just now';
-            } else if (diffMins < 60) {
-                return `${diffMins} min ago`;
-            } else if (diffHours < 24) {
-                return `${diffHours} hr ago`;
-            } else if (diffDays < 7) {
-                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-            } else {
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Start auto-refresh for messages
-        function startMessagingAutoRefresh() {
-            if (messagesInterval) {
-                clearInterval(messagesInterval);
+            if (!appointments || appointments.length === 0) {
+                showEmptyState();
+                return;
             }
 
-            messagesInterval = setInterval(function() {
-                loadMessages();
-            }, 10000); // Refresh every 10 seconds
+            appointments.sort((a, b) => new Date(b.dateBooked) - new Date(a.dateBooked));
+
+            const recentAppointments = appointments.slice(0, 10);
+
+            let html = '';
+            recentAppointments.forEach(apt => {
+                const statusClass = apt.appointmentStatus.toLowerCase();
+                const date = new Date(apt.schedule?.date || apt.dateBooked);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                html += `
+                    <div class="appointment-item" style="background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; transition: all 0.3s ease; border: 2px solid #E2E8F0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span style="font-weight: 700; color: #2D3748; font-size: 1.1rem;">${formattedDate}</span>
+                            <span class="status-badge ${statusClass}" style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 0.5rem;">${apt.appointmentStatus}</span>
+                        </div>
+                        <div style="color: #718096; font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500;">
+                            <div style="display: flex; align-items: center;"><i class="fas fa-stethoscope" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> ${apt.reasonForVisit}</div>
+                            <div style="display: flex; align-items: center;"><i class="fas fa-clock" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> ${apt.schedule?.startTime || 'TBA'} - ${apt.schedule?.endTime || 'TBA'}</div>
+                            <div style="display: flex; align-items: center;"><i class="fas fa-list-ol" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> Queue #${apt.queueNumber} - ${apt.queueStatus}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
-        // Stop messaging auto-refresh
-        function stopMessagingAutoRefresh() {
-            if (messagesInterval) {
-                clearInterval(messagesInterval);
-                messagesInterval = null;
-            }
+        function showEmptyState() {
+            const container = document.getElementById('appointmentsList');
+            container.innerHTML = `
+                <div class="text-center" style="padding: 4rem 2rem; color: #718096;">
+                    <i class="fas fa-calendar-times" style="font-size: 5rem; margin-bottom: 1.5rem; opacity: 0.3; color: #4ECDC4;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem; font-weight: 600;">No appointments yet</p>
+                    <a href="#dashboard" class="btn btn-primary" style="padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white;">
+                        <i class="fas fa-plus"></i> Book Your First Appointment
+                    </a>
+                </div>
+            `;
+        }
+
+        function showError() {
+            const container = document.getElementById('appointmentsList');
+            container.innerHTML = `
+                <div class="text-center" style="padding: 4rem 2rem; color: #718096;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 5rem; margin-bottom: 1.5rem; opacity: 0.3; color: #DC2626;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem; font-weight: 600;">Failed to load appointments</p>
+                    <button class="btn btn-primary" onclick="loadDashboardData()" style="padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white;">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>
+            `;
         }
 
     </script>
 
     <style>
+        /* Appointment Item Styles */
+        .appointment-item {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%);
+            border-left: 4px solid #4ECDC4;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #E2E8F0;
+        }
+
+        .appointment-item:hover {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #4ECDC4;
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .appointment-date {
+            font-weight: 700;
+            color: #2D3748;
+            font-size: 1.1rem;
+        }
+
+        /* Status Badge Styles */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-badge.pending {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%);
+            color: #92400E;
+            border-left: 4px solid #F59E0B;
+        }
+
+        .status-badge.confirmed {
+            background: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%);
+            color: #065F46;
+            border-left: 4px solid #10B981;
+        }
+
+        .status-badge.completed {
+            background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%);
+            color: #1E40AF;
+            border-left: 4px solid #3B82F6;
+        }
+
+        .status-badge.cancelled {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+            color: #991B1B;
+            border-left: 4px solid #DC2626;
+        }
+
+        .appointment-details {
+            color: #718096;
+            font-size: 0.95rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .appointment-details div {
+            display: flex;
+            align-items: center;
+        }
+
+        .appointment-details i {
+            margin-right: 0.75rem;
+            color: #4ECDC4;
+            width: 20px;
+            text-align: center;
+        }
+
         .available-dates-hint {
             font-size: 0.8rem;
             margin-top: 0.5rem;
