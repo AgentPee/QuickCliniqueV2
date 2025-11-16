@@ -349,5 +349,133 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, message = $"Error updating patient status: {ex.Message}" });
             }
         }
+
+        // GET: Precord/GetPrescriptionForm/5 - Get prescription form for patient
+        [HttpGet]
+        public async Task<IActionResult> GetPrescriptionForm(int? id)
+        {
+            try
+            {
+                if (id == null)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "ID not provided" });
+                    return NotFound();
+                }
+
+                var student = await _context.Students
+                    .Include(s => s.Precords)
+                    .FirstOrDefaultAsync(m => m.StudentId == id);
+
+                if (student == null)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Patient not found" });
+                    return NotFound();
+                }
+
+                // Ensure Precords collection is initialized
+                if (student.Precords == null)
+                {
+                    student.Precords = new List<Precord>();
+                }
+
+                if (IsAjaxRequest())
+                    return PartialView("_PrescriptionForm", student);
+
+                return View("_PrescriptionForm", student);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetPrescriptionForm: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = $"An error occurred: {ex.Message}" });
+                
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        // POST: Precord/SavePrescription/5 - Save prescription for patient
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SavePrescription(int id)
+        {
+            try
+            {
+                var recordIdStr = Request.Form["recordId"];
+                var prescription = Request.Form["prescription"];
+                var prescriptionDate = Request.Form["prescriptionDate"];
+                var doctorName = Request.Form["doctorName"];
+                var doctorSignature = Request.Form["doctorSignature"];
+
+                if (string.IsNullOrWhiteSpace(recordIdStr) || !int.TryParse(recordIdStr, out int recordId))
+                {
+                    return Json(new { success = false, error = "Invalid medical record selected" });
+                }
+
+                if (string.IsNullOrWhiteSpace(prescription))
+                {
+                    return Json(new { success = false, error = "Prescription details are required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(doctorName))
+                {
+                    return Json(new { success = false, error = "Doctor's name is required" });
+                }
+
+                var precord = await _context.Precords
+                    .FirstOrDefaultAsync(p => p.RecordId == recordId && p.PatientId == id);
+
+                if (precord == null)
+                {
+                    return Json(new { success = false, error = "Medical record not found" });
+                }
+
+                // Format prescription with date and doctor info
+                var formattedPrescription = $"PRESCRIPTION\n";
+                formattedPrescription += $"Date: {prescriptionDate}\n";
+                formattedPrescription += $"Doctor: {doctorName}\n";
+                if (!string.IsNullOrWhiteSpace(doctorSignature))
+                {
+                    formattedPrescription += $"Notes: {doctorSignature}\n";
+                }
+                formattedPrescription += $"\n---\n\n";
+                formattedPrescription += prescription;
+
+                precord.Prescription = formattedPrescription;
+                _context.Update(precord);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Prescription saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving prescription: {ex.Message}");
+                return Json(new { success = false, error = "Failed to save prescription" });
+            }
+        }
+
+        // GET: Precord/PrintPrescription/5 - Print prescription
+        [HttpGet]
+        public async Task<IActionResult> PrintPrescription(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var precord = await _context.Precords
+                .Include(p => p.Patient)
+                .FirstOrDefaultAsync(m => m.RecordId == id);
+
+            if (precord == null || string.IsNullOrWhiteSpace(precord.Prescription))
+            {
+                return NotFound();
+            }
+
+            return View("_PrintPrescription", precord);
+        }
     }
 }

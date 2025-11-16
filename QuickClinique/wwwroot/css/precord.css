@@ -1125,3 +1125,465 @@
     }
 }
 
+/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
+
+/* Full width button with custom padding */
+.btn-action-full {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    width: 100%;
+}
+
+/* Flex utilities */
+.flex-align-center {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Button size utilities */
+.btn-sm-custom {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Status colors */
+.text-success-custom {
+    color: #28a745;
+}
+
+.text-danger-custom {
+    color: #dc3545;
+}
+
+/* Spacing utilities */
+.mt-2 {
+    margin-top: 2rem;
+}
+
+.mt-1-5 {
+    margin-top: 1.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 2rem;
+}
+
+/* Display utilities */
+.d-none {
+    display: none;
+}
+
+.d-flex {
+    display: flex;
+}
+
+/* Text alignment */
+.text-center-custom {
+    text-align: center;
+}
+
+/* Icon size utilities */
+.icon-4x {
+    font-size: 4rem;
+}
+
+.icon-3x {
+    font-size: 3rem;
+}
+
+.icon-2x {
+    font-size: 2rem;
+}
+
+/* Padding utilities */
+.p-1-5 {
+    padding: 1.5rem;
+}
+
+.p-2 {
+    padding: 2rem;
+}
+
+/* Border radius */
+.rounded-10 {
+    border-radius: 10px;
+}
+
+/* Box shadow */
+.shadow-custom {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Background and text colors */
+.bg-white {
+    background: white;
+}
+
+.text-color-718096 {
+    color: #718096;
+}
+
+.text-color-4a5568 {
+    color: #4a5568;
+}
+
+/* Grid layout */
+.grid-auto-fit {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* Flex justify */
+.justify-space-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+/* Gap utilities */
+.gap-0-5 {
+    gap: 0.5rem;
+}
+
+.gap-1 {
+    gap: 1rem;
+}
+
+/* Margin utilities */
+.m-0 {
+    margin: 0;
+}
+
+.mt-1 {
+    margin-top: 1rem;
+}
+
+.mb-1 {
+    margin-bottom: 1rem;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+/* Font size utilities */
+.fs-1-1 {
+    font-size: 1.1rem;
+}
+
+.fs-0-85 {
+    font-size: 0.85rem;
+}
+
+.fs-0-75 {
+    font-size: 0.75rem;
+}
+
+/* Width utilities */
+.w-100 {
+    width: 100%;
+}
+
+/* Inline block */
+.d-inline-block {
+    display: inline-block;
+}
+
+/* Color utilities for medical records */
+.text-teal-dark {
+    color: rgb(0, 93, 101);
+}
+
+/* Button padding utilities */
+.btn-padding-custom {
+    padding: 0.75rem 2rem;
+}
+
+.btn-padding-sm {
+    padding: 0.5rem 1rem;
+}
+
+/* Background color utilities */
+.bg-teal-dark {
+    background-color: rgb(0, 93, 101);
+}
+
+/* Text decoration */
+.text-decoration-none {
+    text-decoration: none;
+}
+
+/* Flex wrap */
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+/* Justify center */
+.justify-center {
+    justify-content: center;
+}
+
+/* Font size for toggle message */
+.toggle-message-text {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/* Min width utilities */
+.min-width-120 {
+    min-width: 120px;
+}
+
+/* Chat container styles */
+.chat-content-hidden {
+    display: none;
+}
+
+.messaging-container-mt {
+    margin-top: 1rem;
+}
+
+.chat-header-gradient {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.chat-messages-container {
+    height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #F7FAFC;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.chat-input-flex {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chat-input-field {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.chat-send-btn {
+    padding: 0.75rem 1.5rem;
+}
+
+/* Queue info styles */
+.queue-info-mt {
+    margin-top: 15px;
+}
+
+.queue-last-updated-mt {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+.queue-status-indicator {
+    font-size: 0.5rem;
+    color: #28a745;
+}
+
+/* Loading message */
+.loading-message-hidden {
+    display: none;
+}
+
+/* Form section separator */
+.form-section-border {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* BMI result modal */
+.bmi-result-modal-hidden {
+    display: none;
+}
+
+/* Button margin bottom */
+.btn-mb-1 {
+    margin-bottom: 1rem;
+}
+
+/* Medical records section */
+.medical-records-section-mt {
+    margin-top: 2rem;
+}
+
+.medical-record-item-style {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.medical-record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.medical-record-title {
+    margin: 0;
+    color: rgb(0, 93, 101);
+}
+
+.medical-record-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.medical-record-edit-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.medical-record-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.medical-record-text {
+    margin: 0.5rem 0 0 0;
+    color: #4a5568;
+}
+
+.no-appointments-style {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.no-appointments-icon {
+    font-size: 3rem;
+    color: #cbd5e0;
+    margin-bottom: 1rem;
+}
+
+.no-appointments-text {
+    color: #718096;
+    margin: 0;
+}
+
+.no-appointments-link {
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+.action-buttons-container {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-button-style {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+}
+
+.action-button-teal {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    background-color: rgb(0, 93, 101);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-back-custom {
+    margin: 0;
+    padding: 0.75rem 2rem;
+}
+
+.toggle-modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.toggle-modal-button {
+    padding: 0.75rem 2rem;
+}
+
+/* Status display styles */
+.status-display-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.status-button-activate {
+    background-color: #28a745;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Modal body error text */
+.modal-error-text {
+    text-align: center;
+    color: #dc3545;
+}
+
+/* BMI result display */
+.bmi-result-hidden {
+    display: none;
+}
+
+/* Chat area styles */
+.chat-empty-hidden {
+    display: none;
+}
+
+/* Queue form section */
+.queue-form-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Queue button margin */
+.queue-btn-mb {
+    margin-bottom: 1rem;
+}
+
+/* Additional utilities */
+.d-block {
+    display: block;
+}
+
+.text-muted {
+    color: #cbd5e0;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.p-2-rem {
+    padding: 2rem;
+}
+
+.text-color-718096-2 {
+    color: #718096;
+}

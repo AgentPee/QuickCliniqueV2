@@ -947,3 +947,22 @@ textarea.form-control {
         font-size: 0.85rem;
     }
 }
+
+/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
+
+/* Queue form section */
+.queue-form-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Queue button margin bottom */
+.queue-btn-mb {
+    margin-bottom: 1rem;
+}
+
+/* BMI result modal hidden */
+.bmi-result-modal-hidden {
+    display: none;
+}

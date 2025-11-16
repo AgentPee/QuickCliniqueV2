@@ -684,18 +684,36 @@ select.form-control {
         padding: 1.5rem;
     }
 
+    /* Fix main row layout for tablet */
+    .container-fluid > .row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
     .card-body {
         padding: 2rem;
     }
 
-    .row {
+    .card-body > .row {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* Date selection grid - reduce to 2 columns on tablet */
+    #dateSelection > .row {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
     .container-fluid {
         padding: 1rem;
+    }
+
+    /* Fix main row layout for mobile */
+    .container-fluid > .row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .card-body {
@@ -719,8 +737,9 @@ select.form-control {
             grid-template-columns: repeat(2, 1fr);
         }
 
-    .card-body .row {
+    .card-body > .row {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .btn {
@@ -741,7 +760,19 @@ select.form-control {
 }
 
 @media (max-width: 576px) {
+    .container-fluid {
+        padding: 0.75rem;
+    }
+
+    .container-fluid > .row {
+        gap: 0.75rem;
+    }
+
     #dateSelection .row {
+        grid-template-columns: 1fr;
+    }
+
+    #dateSelection > .row {
         grid-template-columns: 1fr;
     }
 
@@ -751,6 +782,15 @@ select.form-control {
 
     .card-body {
         padding: 1.25rem;
+    }
+
+    .card-header {
+        padding: 1rem;
+    }
+
+    .card-header h4,
+    .card-header h5 {
+        font-size: 1.1rem;
     }
 }
 

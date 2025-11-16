@@ -920,3 +920,10 @@ body {
         padding-top: 1.25rem;
     }
 }
+
+/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
+
+/* Icon size utilities */
+.icon-4x {
+    font-size: 4rem;
+}

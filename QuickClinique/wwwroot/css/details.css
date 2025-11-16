@@ -288,3 +288,17 @@
         padding: 1rem 1.5rem;
     }
 }
+
+/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
+
+/* Status subtext */
+.status-subtext {
+    font-size: 0.9rem;
+    font-weight: normal;
+    margin-top: 0.25rem;
+}
+
+/* Text muted symptoms */
+.text-muted-symptoms {
+    color: #6c757d;
+}

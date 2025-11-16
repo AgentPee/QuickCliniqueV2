@@ -1,0 +1,219 @@
+@model QuickClinique.Models.Precord
+@{
+    Layout = null;
+    ViewData["Title"] = "Prescription";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prescription - @Model.Patient?.FullName</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+
+        .prescription-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .prescription-header {
+            text-align: center;
+            border-bottom: 3px solid #4ECDC4;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prescription-header h1 {
+            color: #4ECDC4;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .prescription-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .patient-info {
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .patient-info h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #4a5568;
+            width: 150px;
+        }
+
+        .info-value {
+            color: #2d3748;
+            flex: 1;
+        }
+
+        .prescription-content {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border: 2px solid #4ECDC4;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .prescription-content h3 {
+            color: #4ECDC4;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .prescription-text {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .prescription-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        @@media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .prescription-container {
+                box-shadow: none;
+                padding: 2rem;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        .print-button {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .print-button button {
+            background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .print-button button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-button no-print">
+        <button onclick="window.print()">
+            <i class="fas fa-print"></i> Print Prescription
+        </button>
+    </div>
+
+    <div class="prescription-container">
+        <div class="prescription-header">
+            <h1><i class="fas fa-prescription"></i> MEDICAL PRESCRIPTION</h1>
+            <p>QuickClinique Medical Center</p>
+        </div>
+
+        <div class="patient-info">
+            <h3>Patient Information</h3>
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value">@Model.Patient?.FullName</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ID Number:</span>
+                <span class="info-value">@Model.Patient?.Idnumber</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Age:</span>
+                <span class="info-value">@Model.Age years</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Gender:</span>
+                <span class="info-value">@Model.Gender</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">@Model.Patient?.Email</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">@Model.Patient?.PhoneNumber</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Record ID:</span>
+                <span class="info-value">#@Model.RecordId</span>
+            </div>
+        </div>
+
+        <div class="prescription-content">
+            <h3>Prescription Details</h3>
+            <div class="prescription-text">@Model.Prescription</div>
+        </div>
+
+        <div class="prescription-footer">
+            <p>This is a computer-generated prescription. Please consult with your doctor for any questions.</p>
+            <p>Generated on: @DateTime.Now.ToString("MMMM dd, yyyy 'at' hh:mm tt")</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print when page loads (optional)
+        // window.onload = function() {
+        //     window.print();
+        // }
+    </script>
+</body>
+</html>
+

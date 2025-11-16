@@ -23,5 +23,7 @@ public partial class Precord
 
     public int Bmi { get; set; }
 
+    public string? Prescription { get; set; }
+
     public virtual Student Patient { get; set; } = null!;
 }

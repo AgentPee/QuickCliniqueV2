@@ -55,11 +55,11 @@
                     <div class="info-value">
                         @if (Model.IsEmailVerified)
                         {
-                            <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Verified</span>
+                            <span class="text-success-custom"><i class="fas fa-check-circle"></i> Verified</span>
                         }
                         else
                         {
-                            <span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Not Verified</span>
+                            <span class="text-danger-custom"><i class="fas fa-times-circle"></i> Not Verified</span>
                         }
                     </div>
                 </div>
@@ -85,8 +85,7 @@
                             </span>
                         }
                         <button onclick="showToggleModal(@Model.StudentId, '@Model.FirstName @Model.LastName', @Model.IsActive.ToString().ToLower())" 
-                                class="btn-action @(Model.IsActive ? "btn-delete" : "")" 
-                                style="@(Model.IsActive ? "" : "background-color: #28a745; color: white; margin-left: 10px; padding: 0.4rem 1rem; font-size: 0.85rem;")">
+                                class="btn-action @(Model.IsActive ? "btn-delete" : "status-button-activate ml-10")">
                             <i class="fas fa-@(Model.IsActive ? "ban" : "check")"></i> @(Model.IsActive ? "Deactivate" : "Activate")
                         </button>
                     </div>
@@ -181,7 +180,7 @@
 
     @if (Model.Precords != null && Model.Precords.Any())
     {
-        <div class="medical-records-section" style="margin-top: 2rem;">
+        <div class="medical-records-section medical-records-section-mt">
             <div class="section-header">
                 <h3 class="section-title">
                     <i class="fas fa-file-medical"></i>
@@ -192,42 +191,42 @@
             <div class="medical-records-list">
                 @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
                 {
-                    <div class="medical-record-item" style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                            <h4 style="margin: 0; color: rgb(0, 93, 101);">
+                    <div class="medical-record-item medical-record-item-style">
+                        <div class="medical-record-header">
+                            <h4 class="medical-record-title">
                                 <i class="fas fa-file-medical-alt"></i> Record #@record.RecordId
                             </h4>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a href="@Url.Action("Edit", "Precord", new { id = record.RecordId })" class="btn-action btn-edit" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            <div class="medical-record-actions">
+                                <a href="@Url.Action("Edit", "Precord", new { id = record.RecordId })" class="btn-action btn-edit medical-record-edit-btn">
                                     <i class="fas fa-edit"></i> Edit Record
                                 </a>
                             </div>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div class="medical-record-grid">
                             <div>
                                 <strong><i class="fas fa-stethoscope"></i> Diagnosis:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Diagnosis</p>
+                                <p class="medical-record-text">@record.Diagnosis</p>
                             </div>
                             <div>
                                 <strong><i class="fas fa-pills"></i> Medications:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Medications</p>
+                                <p class="medical-record-text">@record.Medications</p>
                             </div>
                             <div>
                                 <strong><i class="fas fa-exclamation-triangle"></i> Allergies:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Allergies</p>
+                                <p class="medical-record-text">@record.Allergies</p>
                             </div>
                             <div>
                                 <strong><i class="fas fa-user"></i> Age:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Age years</p>
+                                <p class="medical-record-text">@record.Age years</p>
                             </div>
                             <div>
                                 <strong><i class="fas fa-venus-mars"></i> Gender:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Gender</p>
+                                <p class="medical-record-text">@record.Gender</p>
                             </div>
                             <div>
                                 <strong><i class="fas fa-weight"></i> BMI:</strong>
-                                <p style="margin: 0.5rem 0 0 0; color: #4a5568;">@record.Bmi</p>
+                                <p class="medical-record-text">@record.Bmi</p>
                             </div>
                         </div>
                     </div>
@@ -237,31 +236,31 @@
     }
     else
     {
-        <div class="medical-records-section" style="margin-top: 2rem;">
+        <div class="medical-records-section medical-records-section-mt">
             <div class="section-header">
                 <h3 class="section-title">
                     <i class="fas fa-file-medical"></i>
                     Medical Records
                 </h3>
             </div>
-            <div class="no-appointments" style="background: white; padding: 2rem; border-radius: 10px; text-align: center;">
-                <i class="fas fa-file-medical" style="font-size: 3rem; color: #cbd5e0; margin-bottom: 1rem;"></i>
-                <p style="color: #718096; margin: 0;">No medical records found for this patient.</p>
-                <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action btn-edit" style="margin-top: 1rem; display: inline-block;">
+            <div class="no-appointments no-appointments-style">
+                <i class="fas fa-file-medical no-appointments-icon"></i>
+                <p class="no-appointments-text">No medical records found for this patient.</p>
+                <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action btn-edit no-appointments-link">
                     <i class="fas fa-plus"></i> Create Medical Record
                 </a>
             </div>
         </div>
     }
 
-    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <button onclick="showEditModal(@Model.StudentId)" class="btn-action btn-edit" style="padding: 0.75rem 2rem; font-size: 1rem;">
+    <div class="action-buttons-container">
+        <button onclick="showEditModal(@Model.StudentId)" class="btn-action btn-edit action-button-style">
             <i class="fas fa-edit"></i> Edit Patient Info
         </button>
-        <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action" style="padding: 0.75rem 2rem; font-size: 1rem; background-color: rgb(0, 93, 101); color: white; text-decoration: none;">
+        <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action action-button-teal">
             <i class="fas fa-plus"></i> Add Medical Record
         </a>
-        <a href="@Url.Action("Index")" class="btn-back" style="margin: 0; padding: 0.75rem 2rem;">
+        <a href="@Url.Action("Index")" class="btn-back btn-back-custom">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
     </div>
@@ -275,12 +274,12 @@
             <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button onclick="closeModal('toggleModal')" class="btn-action btn-view" style="padding: 0.75rem 2rem;">
+            <p id="toggleMessage" class="toggle-message-text"></p>
+            <div class="toggle-modal-buttons">
+                <button onclick="closeModal('toggleModal')" class="btn-action btn-view toggle-modal-button">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button onclick="confirmToggle()" class="btn-action" id="toggleConfirmButton" style="padding: 0.75rem 2rem;">
+                <button onclick="confirmToggle()" class="btn-action toggle-modal-button" id="toggleConfirmButton">
                     <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
                 </button>
             </div>

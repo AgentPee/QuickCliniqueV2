@@ -187,7 +187,7 @@
                         </div>
 
                         <!-- BMI Calculator Section -->
-                        <div class="form-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                        <div class="form-section queue-form-section">
                             <h6 class="section-title"><i class="fas fa-heartbeat"></i> BMI Calculator</h6>
                             
                             <div class="row">
@@ -211,11 +211,11 @@
                                 </div>
                             </div>
                             
-                            <button type="button" class="btn btn-primary btn-sm" id="calculateTriageBMI" style="margin-bottom: 1rem;">
+                            <button type="button" class="btn btn-primary btn-sm queue-btn-mb" id="calculateTriageBMI">
                                 <i class="fas fa-calculator"></i> Calculate BMI
                             </button>
                             
-                            <div class="bmi-result-modal" id="bmiResultModal" style="display: none;">
+                            <div class="bmi-result-modal bmi-result-modal-hidden" id="bmiResultModal">
                                 <div class="bmi-result-value-modal" id="bmiValueModal">0.0</div>
                                 <div class="bmi-result-category-modal" id="bmiCategoryModal">Category</div>
                             </div>
@@ -411,61 +411,4 @@
             }
         }
     </script>
-    <style>
-        /* BMI Result Modal Styles */
-        .bmi-result-modal {
-            background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-            border-left: 4px solid #4ECDC4;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            animation: slideDown 0.4s ease-out;
-        }
-
-        .bmi-result-value-modal {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-        }
-
-        .bmi-result-category-modal {
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            display: inline-block;
-        }
-
-        .bmi-result-category-modal.underweight {
-            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-            color: white;
-        }
-
-        .bmi-result-category-modal.normal {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
-        }
-
-        .bmi-result-category-modal.overweight {
-            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-            color: white;
-        }
-
-        .bmi-result-category-modal.obese {
-            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-            color: white;
-        }
-
-        @@keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
 }

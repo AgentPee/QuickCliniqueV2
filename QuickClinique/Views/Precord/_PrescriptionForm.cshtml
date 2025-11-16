@@ -1,0 +1,139 @@
+@model QuickClinique.Models.Student
+
+@{
+    var medicalRecords = Model.Precords?.OrderByDescending(r => r.RecordId).ToList() ?? new List<QuickClinique.Models.Precord>();
+    var existingPrescriptions = medicalRecords.Where(r => r.Prescription != null && !string.IsNullOrWhiteSpace(r.Prescription)).ToList();
+}
+
+<form id="prescriptionForm" method="post">
+    @Html.AntiForgeryToken()
+    
+    <div class="form-group">
+        <label><strong>Patient Information</strong></label>
+        <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #4ECDC4;">
+            <p style="margin: 0.5rem 0; color: #2d3748;"><strong>Name:</strong> <span style="color: #4a5568;">@Model.FirstName @Model.LastName</span></p>
+            <p style="margin: 0.5rem 0; color: #2d3748;"><strong>ID Number:</strong> <span style="color: #4a5568;">@Model.Idnumber</span></p>
+            <p style="margin: 0.5rem 0; color: #2d3748;"><strong>Email:</strong> <span style="color: #4a5568;">@Model.Email</span></p>
+            <p style="margin: 0.5rem 0; color: #2d3748;"><strong>Phone:</strong> <span style="color: #4a5568;">@Model.PhoneNumber</span></p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="recordId"><strong>Select Medical Record</strong> <span class="text-danger">*</span></label>
+        <select id="recordId" name="recordId" class="form-control" required>
+            <option value="">-- Select Medical Record --</option>
+            @foreach (var record in medicalRecords)
+            {
+                <option value="@record.RecordId" data-diagnosis="@record.Diagnosis">
+                    Record #@record.RecordId - @record.Diagnosis (Age: @record.Age, Gender: @record.Gender)
+                </option>
+            }
+        </select>
+        @if (!medicalRecords.Any())
+        {
+            <small class="text-danger">No medical records found. Please create a medical record first.</small>
+        }
+    </div>
+
+    <div class="form-group">
+        <label for="prescriptionDate"><strong>Prescription Date</strong> <span class="text-danger">*</span></label>
+        <input type="date" id="prescriptionDate" name="prescriptionDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+    </div>
+
+    <div class="form-group">
+        <label for="prescription"><strong>Prescription Details</strong> <span class="text-danger">*</span></label>
+        <textarea id="prescription" name="prescription" class="form-control" rows="10" required 
+                  placeholder="Enter prescription details here. Include medication names, dosages, frequency, duration, and any special instructions..."></textarea>
+        <small class="form-text text-muted" style="display: block; margin-top: 0.5rem; color: #718096; font-size: 0.875rem;">
+            <i class="fas fa-info-circle"></i> Include: Medication name, dosage, frequency (e.g., "Take 1 tablet twice daily"), duration, and special instructions.
+        </small>
+    </div>
+
+    <div class="form-group">
+        <label for="doctorName"><strong>Doctor's Name</strong> <span class="text-danger">*</span></label>
+        <input type="text" id="doctorName" name="doctorName" class="form-control" required 
+               placeholder="Enter doctor's name" />
+    </div>
+
+    <div class="form-group">
+        <label for="doctorSignature"><strong>Doctor's Signature/Notes</strong></label>
+        <textarea id="doctorSignature" name="doctorSignature" class="form-control" rows="3" 
+                  placeholder="Additional notes or signature..."></textarea>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
+        <button type="button" onclick="closeModal('prescriptionModal')" class="btn-action btn-view">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" id="printPrescriptionBtn" onclick="printSelectedPrescription()" class="btn-action" style="background-color: #6c757d; color: white; min-width: 120px; display: none;">
+            <i class="fas fa-print"></i> Print
+        </button>
+        <button type="submit" class="btn-action" style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white; min-width: 150px;">
+            <i class="fas fa-save"></i> Save Prescription
+        </button>
+    </div>
+</form>
+
+<script>
+    (function() {
+        // Show/hide print button based on selected record
+        const recordSelect = document.getElementById('recordId');
+        const printBtn = document.getElementById('printPrescriptionBtn');
+        
+        if (recordSelect && printBtn) {
+            var prescriptionData = @Html.Raw(Json.Serialize(existingPrescriptions.Select(r => new { RecordId = r.RecordId, HasPrescription = !string.IsNullOrWhiteSpace(r.Prescription) })));
+            
+            recordSelect.addEventListener('change', function() {
+                const selectedRecordId = parseInt(this.value);
+                const hasPrescription = prescriptionData.find(function(r) { return r.recordId === selectedRecordId && r.hasPrescription; });
+                
+                if (hasPrescription) {
+                    printBtn.style.display = 'inline-block';
+                    printBtn.setAttribute('data-record-id', selectedRecordId);
+                } else {
+                    printBtn.style.display = 'none';
+                    printBtn.removeAttribute('data-record-id');
+                }
+            });
+        }
+        
+        // Make printSelectedPrescription available globally
+        window.printSelectedPrescription = function() {
+            const printBtn = document.getElementById('printPrescriptionBtn');
+            if (printBtn) {
+                const recordId = printBtn.getAttribute('data-record-id');
+                if (recordId) {
+                    window.open(`/Precord/PrintPrescription/${recordId}`, '_blank');
+                }
+            }
+        };
+    })();
+</script>
+
+@if (existingPrescriptions.Any())
+{
+    <div style="margin-top: 2rem; padding-top: 2rem; border-top: 3px solid #e2e8f0;">
+        <h4 style="margin-bottom: 1.5rem; color: #2d3748; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-file-prescription" style="color: #4ECDC4;"></i> Existing Prescriptions
+        </h4>
+        <div id="existingPrescriptions">
+            @foreach (var record in existingPrescriptions)
+                {
+                    <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #4ECDC4;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <strong style="color: #2d3748; font-size: 1.1rem;">Record #@record.RecordId</strong>
+                                <p style="margin: 0.25rem 0 0 0; color: #718096; font-size: 0.875rem;">Diagnosis: @record.Diagnosis</p>
+                            </div>
+                            <button onclick="printPrescription(@record.RecordId)" class="btn-action btn-sm-custom" style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white; white-space: nowrap;">
+                                <i class="fas fa-print"></i> Print
+                            </button>
+                        </div>
+                        <div style="color: #4a5568; white-space: pre-wrap; line-height: 1.6; background: white; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0;">@record.Prescription</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+

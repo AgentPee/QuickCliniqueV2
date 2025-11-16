@@ -52,7 +52,7 @@
                             <td>@patient.Email</td>
                             <td>@patient.PhoneNumber</td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                <div class="flex-align-center">
                                     @if (patient.IsActive)
                                     {
                                         <span class="badge badge-success">
@@ -67,13 +67,13 @@
                                     }
                                     @if (patient.IsActive)
                                     {
-                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', true)" class="btn-action btn-delete" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', true)" class="btn-action btn-delete btn-sm-custom">
                                             <i class="fas fa-ban"></i> Deactivate
                                         </button>
                                     }
                                     else
                                     {
-                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', false)" class="btn-action" style="background-color: #28a745; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', false)" class="btn-action status-button-activate">
                                             <i class="fas fa-check"></i> Activate
                                         </button>
                                     }
@@ -86,6 +86,9 @@
                                     </button>
                                     <button onclick="showEditModal(@patient.StudentId)" class="btn-action btn-edit">
                                         <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="showPrescriptionModal(@patient.StudentId)" class="btn-action" style="background-color: #4ECDC4; color: white;">
+                                        <i class="fas fa-prescription"></i> Prescription
                                     </button>
                                 </div>
                             </td>
@@ -143,14 +146,29 @@
             <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button onclick="closeModal('toggleModal')" class="btn-action btn-view" style="padding: 0.75rem 2rem;">
+            <p id="toggleMessage" class="toggle-message-text"></p>
+            <div class="toggle-modal-buttons">
+                <button onclick="closeModal('toggleModal')" class="btn-action btn-view toggle-modal-button">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button onclick="confirmToggle()" class="btn-action" id="toggleConfirmButton" style="padding: 0.75rem 2rem;">
+                <button onclick="confirmToggle()" class="btn-action toggle-modal-button" id="toggleConfirmButton">
                     <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prescription Modal -->
+<div id="prescriptionModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header" style="background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white;">
+            <h2><i class="fas fa-prescription"></i> Prescription</h2>
+            <button class="modal-close" onclick="closeModal('prescriptionModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="prescriptionModalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
         </div>
     </div>
@@ -194,7 +212,7 @@
                 cell.style.textAlign = 'center';
                 cell.style.padding = '2rem';
                 cell.style.color = '#718096';
-                cell.innerHTML = '<i class="fas fa-search" style="font-size: 2rem; display: block; margin-bottom: 1rem; color: #cbd5e0;"></i><p style="margin: 0;">No patients match your search criteria.</p>';
+                cell.innerHTML = '<i class="fas fa-search icon-2x d-block mb-1 text-muted"></i><p class="m-0">No patients match your search criteria.</p>';
             }
         }
 
@@ -257,11 +275,11 @@
                     
                     modalBody.innerHTML = content.innerHTML;
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load patient details.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load patient details.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading patient details. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading patient details. Please try again.</p>';
             }
         }
 
@@ -283,11 +301,11 @@
                 if (form) {
                     form.addEventListener('submit', (e) => submitEditForm(e, patientId));
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load edit form.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading edit form. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading edit form. Please try again.</p>';
             }
         }
 
@@ -416,6 +434,129 @@
                 showNotification('Error updating patient status. Please try again.', 'error');
                 closeModal('toggleModal');
             }
+        }
+
+        // Prescription Modal
+        async function showPrescriptionModal(patientId) {
+            openModal('prescriptionModal');
+            const modalBody = document.getElementById('prescriptionModalBody');
+            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            try {
+                const response = await fetch(`/Precord/GetPrescriptionForm/${patientId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Failed to load prescription form');
+                }
+                
+                const html = await response.text();
+                modalBody.innerHTML = html;
+                
+                // Re-execute any scripts in the loaded HTML
+                const scripts = modalBody.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+                
+                // Setup form submission
+                const form = document.getElementById('prescriptionForm');
+                if (form) {
+                    // Remove any existing event listeners to prevent duplicates
+                    const newForm = form.cloneNode(true);
+                    form.parentNode.replaceChild(newForm, form);
+                    document.getElementById('prescriptionForm').addEventListener('submit', (e) => submitPrescriptionForm(e, patientId));
+                } else {
+                    console.warn('Prescription form not found after loading');
+                }
+            } catch (error) {
+                console.error('Error loading prescription form:', error);
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;"></i>
+                        <p class="modal-error-text" style="color: #dc3545; font-size: 1.1rem; margin-bottom: 0.5rem;">Error loading prescription form</p>
+                        <p style="color: #718096;">${error.message || 'Please try again later.'}</p>
+                        <button onclick="closeModal('prescriptionModal')" class="btn-action btn-view" style="margin-top: 1rem;">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function submitPrescriptionForm(event, patientId) {
+            event.preventDefault();
+            const form = event.target;
+            
+            // Validate required fields
+            const recordId = form.querySelector('#recordId').value;
+            const prescription = form.querySelector('#prescription').value;
+            const doctorName = form.querySelector('#doctorName').value;
+            
+            if (!recordId) {
+                showNotification('Please select a medical record.', 'error');
+                return;
+            }
+            
+            if (!prescription || prescription.trim() === '') {
+                showNotification('Please enter prescription details.', 'error');
+                return;
+            }
+            
+            if (!doctorName || doctorName.trim() === '') {
+                showNotification('Please enter doctor\'s name.', 'error');
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/Precord/SavePrescription/${patientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showNotification(result.message || 'Prescription saved successfully!', 'success');
+                        closeModal('prescriptionModal');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        throw new Error(result.error || result.message || 'Failed to save prescription');
+                    }
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            } catch (error) {
+                console.error('Error saving prescription:', error);
+                showNotification(error.message || 'Error saving prescription. Please try again.', 'error');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function printPrescription(recordId) {
+            window.open(`/Precord/PrintPrescription/${recordId}`, '_blank');
         }
 
         // Notification System
