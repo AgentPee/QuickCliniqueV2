@@ -144,22 +144,56 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] TriageNotes column already exists in appointments table.");
             }
             
-            // Check and add IsActive column to students table
+            // Check and add IsActive column to students table (case-insensitive check)
+            Console.WriteLine("[INIT] Checking for IsActive column in students table...");
             command.CommandText = @"
                 SELECT COUNT(*) 
                 FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_SCHEMA = DATABASE() 
                 AND TABLE_NAME = 'students' 
-                AND COLUMN_NAME = 'IsActive'";
+                AND UPPER(COLUMN_NAME) = 'ISACTIVE'";
             
             var columnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] IsActive column exists in students table: {columnExists}");
             
             if (!columnExists)
             {
-                Console.WriteLine("Attempting to add IsActive column directly...");
+                Console.WriteLine("[CRITICAL] IsActive column missing! Adding to students table...");
                 command.CommandText = "ALTER TABLE `students` ADD COLUMN `IsActive` tinyint(1) NOT NULL DEFAULT 1";
-                await command.ExecuteNonQueryAsync();
-                Console.WriteLine("IsActive column added successfully to students table!");
+                
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] IsActive column added successfully to students table!");
+                    
+                    // Verify it was added
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'students' 
+                        AND UPPER(COLUMN_NAME) = 'ISACTIVE'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] IsActive column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("IsActive column verification failed - column was not added successfully");
+                    }
+                }
+                catch (Exception addEx)
+                {
+                    Console.WriteLine($"[CRITICAL ERROR] Failed to add IsActive column: {addEx.Message}");
+                    Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                    Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                    Console.WriteLine("[CRITICAL ERROR] Please run FIX_IsActive_Column.sql manually or check database permissions.");
+                    throw; // Re-throw to be caught by outer catch
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] IsActive column already exists in students table.");
             }
 
             // Check and add IsActive column to clinicstaff table
