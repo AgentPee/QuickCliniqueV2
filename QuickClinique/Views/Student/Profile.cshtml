@@ -17,17 +17,6 @@
         <p><i class="fas fa-id-card"></i> @Model.Idnumber</p>
     </div>
 
-    <div class="profile-body">
-        <div id="messageContainer"></div>
-
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-        }
-
         <div class="info-card">
             <p>
                 <i class="fas fa-info-circle"></i>

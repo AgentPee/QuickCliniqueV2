@@ -38,11 +38,7 @@
 
                             @if (Context.Session.GetInt32("ClinicStaffId") != null)
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">
-                                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                                    </a>
-                                </li>
+                              
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Clinicstaff" asp-action="Index">
                                         <i class="fas fa-user-md"></i> Clinic Staff
