@@ -791,11 +791,8 @@ namespace QuickClinique.Controllers
                 appointment.AppointmentStatus = "Cancelled";
                 appointment.QueueStatus = "Cancelled";
                 
-                // Optionally store the cancellation reason in symptoms or create a new field
-                if (!string.IsNullOrEmpty(reason))
-                {
-                    appointment.Symptoms = $"{appointment.Symptoms}\n\nCancellation Reason: {reason}";
-                }
+                // Store the cancellation reason in the dedicated field
+                appointment.CancellationReason = !string.IsNullOrEmpty(reason) ? reason : "Cancelled by clinic staff";
                 
                 await _context.SaveChangesAsync();
 

@@ -19,6 +19,8 @@ public partial class Appointment
 
     public string TriageNotes { get; set; } = string.Empty; // Triage notes from clinical assessment
 
+    public string CancellationReason { get; set; } = string.Empty; // Reason for appointment cancellation
+
     public DateOnly DateBooked { get; set; }
 
     public int QueueNumber { get; set; }
