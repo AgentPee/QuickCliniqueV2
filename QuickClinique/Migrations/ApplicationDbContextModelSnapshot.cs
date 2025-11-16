@@ -331,7 +331,8 @@ namespace QuickClinique.Migrations
 
                     b.Property<string>("IsAvailable")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("isAvailable");
 
                     b.Property<TimeOnly>("StartTime")

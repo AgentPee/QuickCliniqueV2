@@ -15,6 +15,25 @@ namespace QuickClinique.Migrations
             migrationBuilder.AlterDatabase()
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            // Check if schedules table exists, if not create it
+            migrationBuilder.Sql(@"
+                CREATE TABLE IF NOT EXISTS `schedules` (
+                    `ScheduleID` int(100) NOT NULL AUTO_INCREMENT,
+                    `Date` date NOT NULL,
+                    `StartTime` time(6) NOT NULL,
+                    `EndTime` time(6) NOT NULL,
+                    `isAvailable` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Yes',
+                    CONSTRAINT `PRIMARY` PRIMARY KEY (`ScheduleID`)
+                ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
+            ");
+
+            // Alter existing column if table already exists with TEXT type
+            migrationBuilder.Sql(@"
+                ALTER TABLE `schedules` 
+                MODIFY COLUMN `isAvailable` VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Yes';
+            ");
+
+            /* Original CreateTable - commented out since we're using SQL directly to handle existing table
             migrationBuilder.CreateTable(
                 name: "schedules",
                 columns: table => new
@@ -24,7 +43,7 @@ namespace QuickClinique.Migrations
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time(6)", maxLength: 6, nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time(6)", maxLength: 6, nullable: false),
-                    isAvailable = table.Column<string>(type: "text", nullable: false, collation: "utf8mb4_general_ci")
+                    isAvailable = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -33,6 +52,7 @@ namespace QuickClinique.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4")
                 .Annotation("Relational:Collation", "utf8mb4_general_ci");
+            */
 
             migrationBuilder.CreateTable(
                 name: "usertypes",

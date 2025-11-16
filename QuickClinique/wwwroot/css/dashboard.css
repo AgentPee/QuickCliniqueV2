@@ -1333,6 +1333,161 @@ input:invalid {
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
+/* Responsive Design for Main Content */
+@media (max-width: 1200px) {
+    .main-content .container {
+        max-width: 100%;
+        padding: 0 1.5rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .hero {
+        padding: 60px 0;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+    }
+    
+    .hero p {
+        font-size: 1.1rem;
+    }
+    
+    .dashboard-section {
+        padding: 2rem;
+    }
+    
+    .dashboard-header {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 20px 0;
+    }
+    
+    .main-content .container {
+        padding: 0 1rem;
+    }
+    
+    .hero {
+        padding: 40px 20px;
+        margin-bottom: 30px;
+    }
+    
+    .hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 15px;
+    }
+    
+    .hero p {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .hero-buttons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .dashboard-section {
+        padding: 1.5rem;
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-header {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .appointment-card {
+        padding: 1.5rem;
+    }
+    
+    .appointment-card h3 {
+        font-size: 1.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 15px 0;
+    }
+    
+    .main-content .container {
+        padding: 0 0.75rem;
+    }
+    
+    .hero {
+        padding: 30px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .hero h1 {
+        font-size: 1.5rem;
+    }
+    
+    .hero p {
+        font-size: 0.9rem;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+    }
+    
+    .dashboard-header {
+        font-size: 1.35rem;
+    }
+    
+    .appointment-card {
+        padding: 1.25rem;
+    }
+    
+    .appointment-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
 /* Responsive Design for Footer */
 @media (max-width: 1024px) {
     .footer-content {
