@@ -2,13 +2,22 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy csproj file and restore dependencies
-COPY ["QuickClinique/QuickClinique.csproj", "QuickClinique/"]
-RUN dotnet restore "QuickClinique/QuickClinique.csproj"
+# Copy NuGet.config if it exists (for package source configuration)
+COPY ["NuGet.config", "."]
 
-# Copy everything else and build
+# Copy csproj file first for better layer caching
+COPY ["QuickClinique/QuickClinique.csproj", "QuickClinique/"]
+
+# Copy everything else
 COPY QuickClinique/ QuickClinique/
+
+# Set working directory
 WORKDIR /src/QuickClinique
+
+# Restore dependencies (this will download all packages including transitive ones)
+RUN dotnet restore "QuickClinique.csproj"
+
+# Build the project (restore is included by default, but we already restored)
 RUN dotnet build "QuickClinique.csproj" -c Release -o /app/build
 
 # Publish the app
