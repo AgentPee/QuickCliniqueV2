@@ -1,31 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\cas\\QuickClinique\\QuickClinique.csproj": {}
+    "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\cas\\QuickClinique\\QuickClinique.csproj": {
+    "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cas\\QuickClinique\\QuickClinique.csproj",
+        "projectUniqueName": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cas\\QuickClinique\\QuickClinique.csproj",
-        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\cas\\QuickClinique\\obj\\",
+        "projectPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "packagesPath": "C:\\Users\\Ayan\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Ayan\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -72,12 +66,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.Net.Sdk.Compilers.Toolset",
-              "version": "[9.0.307, 9.0.307]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -86,7 +74,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

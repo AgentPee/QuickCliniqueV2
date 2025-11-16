@@ -397,10 +397,10 @@ namespace QuickClinique.Controllers
                     HttpContext.Session.SetString("StudentName", student.FirstName + " " + student.LastName);
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Login successful!", redirectUrl = Url.Action("Index", "Home") });
+                        return Json(new { success = true, message = "Login successful!", redirectUrl = Url.Action("Dashboard", "Student") });
 
                     TempData["SuccessMessage"] = "Login successful!";
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Dashboard", "Student");
                 }
 
                 if (IsAjaxRequest())
