@@ -277,7 +277,8 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("ScheduleID");
             entity.Property(e => e.EndTime).HasMaxLength(6);
             entity.Property(e => e.IsAvailable)
-                .HasColumnType("text")
+                .HasMaxLength(10)
+                .HasColumnType("varchar(10)")
                 .HasColumnName("isAvailable");
             entity.Property(e => e.StartTime).HasMaxLength(6);
         });

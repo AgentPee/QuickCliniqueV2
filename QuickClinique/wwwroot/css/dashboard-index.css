@@ -1382,33 +1382,242 @@
     }
 }
 
+@media (max-width: 992px) {
+    .dashboard-container {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-header {
+        padding: 2rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .quick-actions {
+        padding: 1.5rem;
+    }
+    
+    .notifications-panel {
+        padding: 1.5rem;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-container {
         padding: 1rem;
     }
+    
+    .dashboard-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .dashboard-header p {
+        font-size: 0.95rem;
+    }
 
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .appointments-section {
+        padding: 1.5rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .appointment-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .appointment-info {
+        width: 100%;
+    }
+    
+    .appointment-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .status-btn {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .sidebar {
+        order: -1;
+    }
+    
+    .quick-actions {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.875rem;
+        font-size: 0.8rem;
+    }
+    
+    .notifications-panel {
+        padding: 1.25rem;
+    }
+    
+    .notification-item {
+        padding: 0.875rem;
     }
 
     .messages-content {
         grid-template-columns: 1fr;
         height: 400px;
     }
+    
+    .patient-list {
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .chat-area {
+        height: calc(100% - 200px);
+    }
+    
+    .chat-header-patient {
+        padding: 1rem;
+    }
+    
+    .chat-messages-staff {
+        padding: 1rem;
+    }
+    
+    .chat-input-staff {
+        padding: 1rem;
+    }
+    
+    .chat-input-staff input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
 
     .bmi-categories {
         grid-template-columns: repeat(2, 1fr);
     }
+}
 
-    .appointment-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 0.75rem;
     }
-
-    .appointment-actions {
-        width: 100%;
-        justify-content: flex-end;
+    
+    .dashboard-header {
+        padding: 1.25rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-header p {
+        font-size: 0.9rem;
+    }
+    
+    .stats-grid {
+        gap: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .appointments-section {
+        padding: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+    }
+    
+    .appointment-item {
+        padding: 0.875rem;
+    }
+    
+    .patient-name {
+        font-size: 1rem;
+    }
+    
+    .appointment-details {
+        font-size: 0.85rem;
+    }
+    
+    .quick-actions {
+        padding: 1rem;
+    }
+    
+    .action-btn {
+        padding: 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .notifications-panel {
+        padding: 1rem;
+    }
+    
+    .messages-content {
+        height: 350px;
+    }
+    
+    .patient-list {
+        max-height: 150px;
+    }
+    
+    .chat-area {
+        height: calc(100% - 150px);
     }
 }
 

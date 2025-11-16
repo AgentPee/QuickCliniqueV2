@@ -99,17 +99,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===================================
-    // 5. NAVBAR COLLAPSE ON MOBILE (Optional Enhancement)
+    // 5. NAVBAR COLLAPSE ON MOBILE (Simple Dropdown)
     // ===================================
     // Auto-collapse navbar on mobile when clicking a link
     const navbarToggler = document.querySelector('.navbar-toggler');
     const navbarCollapse = document.querySelector('.navbar-collapse');
 
     if (navbarToggler && navbarCollapse) {
+        // Close menu when clicking a nav link (on mobile)
         navLinks.forEach(link => {
             link.addEventListener('click', function () {
                 // Check if navbar is expanded (on mobile)
-                if (window.innerWidth < 768 && navbarCollapse.classList.contains('show')) {
+                if (window.innerWidth <= 992 && navbarCollapse.classList.contains('show')) {
                     navbarToggler.click(); // Collapse the navbar
                 }
             });

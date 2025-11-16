@@ -938,7 +938,105 @@
 }
 
 /* Responsive Modal Styles */
+/* Enhanced Responsive Design */
+@media (max-width: 1200px) {
+    .patients-container {
+        padding: 0 1.5rem;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .patient-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .patients-container {
+        margin: 1.5rem auto;
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .search-section {
+        padding: 1.25rem;
+    }
+    
+    .search-box {
+        flex-direction: column;
+    }
+    
+    .search-box input,
+    .search-box button {
+        width: 100%;
+        border-radius: 8px;
+    }
+    
+    .patient-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+}
+
 @media (max-width: 768px) {
+    .patients-container {
+        margin: 1rem auto;
+        padding: 0 1rem;
+    }
+    
+    .page-header {
+        padding: 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-header h1 i {
+        font-size: 1.75rem;
+    }
+    
+    .search-section {
+        padding: 1rem;
+    }
+    
+    .patient-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .patient-card {
+        padding: 1.25rem;
+    }
+    
+    .patient-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .patient-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .patient-actions .btn {
+        width: 100%;
+    }
+    
     .modal-content {
         max-height: 95vh;
         margin: 0.5rem;
@@ -975,6 +1073,37 @@
 }
 
 @media (max-width: 480px) {
+    .patients-container {
+        margin: 0.75rem auto;
+        padding: 0 0.75rem;
+    }
+    
+    .page-header {
+        padding: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.35rem;
+    }
+    
+    .page-header h1 i {
+        font-size: 1.5rem;
+    }
+    
+    .search-section {
+        padding: 0.875rem;
+    }
+    
+    .patient-card {
+        padding: 1rem;
+    }
+    
+    .patient-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
     .modal-header {
         padding: 1rem;
     }

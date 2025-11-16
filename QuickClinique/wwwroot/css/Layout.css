@@ -58,6 +58,15 @@ body {
     padding: 0 !important;
 }
 
+.navbar .container-fluid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+}
+
 .navbar-brand {
     display: flex;
     align-items: center;
@@ -310,14 +319,165 @@ body {
         color: #4ECDC4 !important;
     }
 
+/* Navbar Toggler (Burger Button) Styles */
+.navbar-toggler {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+}
+
+    .navbar-toggler:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.3);
+        outline: none;
+    }
+
+    .navbar-toggler[aria-expanded="true"] {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+
+/* Custom 3-line burger icon */
+.navbar-toggler-icon {
+    background-image: none !important;
+    width: 24px;
+    height: 3px;
+    position: relative;
+    display: block;
+    background-color: #ffffff;
+    border-radius: 2px;
+    margin: 7.5px 0;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+    /* Top line */
+    .navbar-toggler-icon::before {
+        content: '';
+        position: absolute;
+        top: -7.5px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #ffffff;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+    
+    /* Bottom line */
+    .navbar-toggler-icon::after {
+        content: '';
+        position: absolute;
+        top: 7.5px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #ffffff;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+
+/* Animated burger icon when expanded */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    background-color: transparent;
+    margin: 0;
+}
+
+    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+        top: 0;
+        transform: rotate(45deg);
+    }
+
+    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+        top: 0;
+        transform: rotate(-45deg);
+    }
+
+/* Scrolled header burger button */
+.header.scrolled .navbar-toggler {
+    border-color: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+    .header.scrolled .navbar-toggler:hover {
+        background: rgba(0, 0, 0, 0.1);
+        border-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .header.scrolled .navbar-toggler-icon::before {
+        background-color: #333;
+    }
+    
+    .header.scrolled .navbar-toggler-icon {
+        background-color: #333;
+    }
+    
+    .header.scrolled .navbar-toggler-icon::after {
+        background-color: #333;
+    }
+
+    .header.scrolled .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+        background-color: transparent;
+    }
+
 /* Responsive Design for Navbar */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+    .navbar-toggler {
+        display: flex !important;
+    }
+    
     .navbar-collapse {
+        display: none;
+    }
+    
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing {
+        display: block !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-toggler {
+        margin-left: auto;
+        order: 2;
+        position: relative;
+    }
+    
+    .navbar-brand {
+        order: 1;
+    }
+    
+    /* Mobile Navigation Dropdown - appears next to burger button */
+    .navbar-collapse {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        left: auto;
         background: rgb(17 59 85 / 98%);
-        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 15px;
-        margin-top: 10px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 1050;
+        min-width: 250px;
+        max-width: 90vw;
+        border-radius: 12px;
+        order: 3;
+        width: auto;
     }
 
     .navbar-nav {
@@ -347,6 +507,37 @@ body {
             justify-content: center;
             margin: 10px 0;
         }
+        
+    /* Ensure dropdowns work in mobile menu */
+    .navbar-nav .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100%;
+        margin-top: 0.5rem;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+    
+    .navbar-nav .dropdown-item {
+        color: rgba(255, 255, 255, 0.9) !important;
+        padding: 10px 15px;
+    }
+    
+    .navbar-nav .dropdown-item:hover {
+        background: rgba(78, 205, 196, 0.2);
+        color: #4ECDC4 !important;
+    }
+}
+
+@media (min-width: 993px) {
+    .navbar-toggler {
+        display: none !important;
+    }
+    
+    .navbar-collapse {
+        display: flex !important;
+    }
 }
 
 @media (max-width: 480px) {

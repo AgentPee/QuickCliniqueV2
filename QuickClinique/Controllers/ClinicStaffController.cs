@@ -732,6 +732,166 @@ namespace QuickClinique.Controllers
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
 
+        // GET: Clinicstaff/Analytics
+        [ClinicStaffOnly]
+        public IActionResult Analytics()
+        {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
+        }
+
+        // GET: Clinicstaff/GetAnalyticsData
+        [HttpGet]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> GetAnalyticsData(int timeRange = 30)
+        {
+            try
+            {
+                var startDate = DateTime.Now.AddDays(-timeRange);
+                var endDate = DateTime.Now;
+
+                // Get all appointments with related data
+                var appointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.DateBooked >= DateOnly.FromDateTime(startDate) && 
+                                a.DateBooked <= DateOnly.FromDateTime(endDate))
+                    .ToListAsync();
+
+                // Get all patients
+                var patients = await _context.Students
+                    .Where(s => s.IsActive)
+                    .ToListAsync();
+
+                // Get patient records for demographics
+                var patientRecords = await _context.Precords
+                    .Include(p => p.Patient)
+                    .ToListAsync();
+
+                // Calculate appointment volume by schedule date
+                var appointmentVolume = appointments
+                    .Where(a => a.Schedule != null)
+                    .GroupBy(a => a.Schedule.Date)
+                    .Select(g => new
+                    {
+                        date = g.Key.ToString("MMM dd, yyyy"),
+                        day = g.Key.DayOfWeek.ToString().Substring(0, 3),
+                        count = g.Count()
+                    })
+                    .OrderBy(x => x.date)
+                    .ToList();
+
+                // Calculate age distribution from patient records
+                var ageDistribution = patientRecords
+                    .GroupBy(p => GetAgeGroup(p.Age))
+                    .Select(g => new
+                    {
+                        ageGroup = g.Key,
+                        count = g.Count()
+                    })
+                    .ToDictionary(x => x.ageGroup, x => x.count);
+
+                // Calculate visit frequency
+                var visitFrequency = appointments
+                    .GroupBy(a => a.PatientId)
+                    .Select(g => new
+                    {
+                        patientId = g.Key,
+                        visitCount = g.Count()
+                    })
+                    .GroupBy(v => v.visitCount)
+                    .Select(g => new
+                    {
+                        visits = g.Key.ToString(),
+                        count = g.Count()
+                    })
+                    .ToDictionary(x => x.visits, x => x.count);
+
+                // Calculate no-show and cancellation statistics
+                var noShows = appointments.Count(a => a.AppointmentStatus == "Cancelled" && 
+                    a.Schedule.Date < DateOnly.FromDateTime(DateTime.Now));
+                var cancellations = appointments.Count(a => a.AppointmentStatus == "Cancelled");
+                var completed = appointments.Count(a => a.AppointmentStatus == "Completed");
+
+                // Calculate demographics stats
+                var avgAge = patientRecords.Any() ? patientRecords.Average(p => (double)p.Age) : 0;
+                var commonAgeGroup = ageDistribution.Any() 
+                    ? ageDistribution.OrderByDescending(x => x.Value).First().Key 
+                    : "N/A";
+
+                // Calculate visit frequency stats
+                var avgVisits = appointments.Any() 
+                    ? appointments.GroupBy(a => a.PatientId).Average(g => g.Count()) 
+                    : 0;
+                var returnPatients = appointments.GroupBy(a => a.PatientId).Count(g => g.Count() > 1);
+
+                // Return raw data for JavaScript to process
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        // Overview stats
+                        totalAppointments = appointments.Count,
+                        totalPatients = patients.Count,
+                        noShowRate = appointments.Any() ? (noShows / (double)appointments.Count * 100) : 0,
+                        avgSatisfaction = 4.2, // Placeholder - no feedback system yet
+
+                        // Appointment volume
+                        appointmentVolume = appointmentVolume,
+
+                        // Demographics
+                        ageDistribution = ageDistribution,
+                        avgAge = avgAge,
+                        commonAgeGroup = commonAgeGroup,
+
+                        // Visit frequency
+                        visitFrequency = visitFrequency,
+                        avgVisits = avgVisits,
+                        returnPatients = returnPatients,
+
+                        // No-show and cancellation
+                        noShowCancellation = new
+                        {
+                            noShows = noShows,
+                            cancellations = cancellations,
+                            completed = completed
+                        },
+
+                        // Satisfaction (placeholder - no feedback system)
+                        satisfactionRatings = new Dictionary<string, int>
+                        {
+                            { "5", 0 },
+                            { "4", 0 },
+                            { "3", 0 },
+                            { "2", 0 },
+                            { "1", 0 }
+                        },
+                        totalFeedback = 0,
+                        positiveFeedback = 0
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Helper method to get age group
+        private string GetAgeGroup(int age)
+        {
+            if (age < 18) return "Under 18";
+            if (age < 26) return "18-25";
+            if (age < 36) return "26-35";
+            if (age < 46) return "36-45";
+            if (age < 56) return "46-55";
+            if (age < 66) return "56-65";
+            return "65+";
+        }
+
         private bool IsAjaxRequest()
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||

@@ -633,10 +633,57 @@
         }
 }
 
+@media (max-width: 992px) {
+    .schedule-availability-container {
+        margin: 1.5rem auto;
+        padding: 0 1rem;
+    }
+    
+    .page-header {
+        flex-wrap: wrap;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 480px) {
+    .schedule-availability-container {
+        margin: 1rem auto;
+        padding: 0 0.75rem;
+    }
+    
+    .page-header {
+        padding: 1rem 0;
+    }
+    
     .page-header h1 {
         font-size: 1.5rem;
     }
+    
+    .page-header h1 i {
+        font-size: 1.75rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-grid {
+        gap: 1rem;
+    }
+    
+    .schedules-table {
+        font-size: 0.8rem;
+    }
+    
+    .schedules-table th,
+    .schedules-table td {
+        padding: 0.75rem 0.25rem;
+    }
+}
 
     .stat-number {
         font-size: 2rem;
