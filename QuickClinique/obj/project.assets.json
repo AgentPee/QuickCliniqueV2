@@ -2799,14 +2799,14 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+      "projectUniqueName": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Magic_swap\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
       "projectName": "QuickClinique",
-      "projectPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+      "projectPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Magic_swap\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
       "packagesPath": "C:\\Users\\Ayan\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\QuickClinique\\obj\\",
+      "outputPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Magic_swap\\QuickCliniqueV2\\QuickClinique\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\NuGet.Config",
+        "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Magic_swap\\QuickCliniqueV2\\NuGet.Config",
         "C:\\Users\\Ayan\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
