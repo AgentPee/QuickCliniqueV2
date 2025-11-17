@@ -28,14 +28,34 @@ if (!connectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
     connectionString += (connectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
 }
 
-// Ensure database name is present and not empty
-var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-if (!dbNameMatch.Success || string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Value))
+// Check for unresolved template variables first
+if (connectionString.Contains("${{") || connectionString.Contains("${"))
 {
-    Console.WriteLine("[WARNING] Connection string missing or has empty Database parameter.");
+    Console.WriteLine("[ERROR] Connection string contains unresolved template variables!");
+    Console.WriteLine("[ERROR] Make sure you're using the actual MySQL service variable names in Railway.");
+    Console.WriteLine("[ERROR] Template variables should be resolved by Railway automatically.");
+    Console.WriteLine("[ERROR] Falling back to 'railway' as database name.");
+    
+    // Remove any Database parameter (even if it has template variables)
+    connectionString = System.Text.RegularExpressions.Regex.Replace(
+        connectionString, 
+        @"Database=[^;]*;?", 
+        "", 
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+    );
+    connectionString = connectionString.TrimEnd(';') + ";Database=railway;";
+}
+
+// Ensure database name is present and not empty
+var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+var dbName = dbNameMatch.Success ? dbNameMatch.Groups[1].Value.Trim() : null;
+
+if (string.IsNullOrWhiteSpace(dbName) || dbName.Contains("$"))
+{
+    Console.WriteLine("[WARNING] Connection string missing or has empty/invalid Database parameter.");
     Console.WriteLine("[WARNING] Railway MySQL typically uses 'railway' as the database name.");
     
-    // Remove existing empty Database parameter if present
+    // Remove existing empty/invalid Database parameter if present
     connectionString = System.Text.RegularExpressions.Regex.Replace(
         connectionString, 
         @"Database=[^;]*;?", 
@@ -43,9 +63,34 @@ if (!dbNameMatch.Success || string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Valu
         System.Text.RegularExpressions.RegexOptions.IgnoreCase
     );
     
-    // Add the database name (Railway MySQL usually uses 'railway or the service name)
-    connectionString += "Database=railway;";
+    // Add the database name (Railway MySQL usually uses 'railway')
+    connectionString = connectionString.TrimEnd(';') + ";Database=railway;";
     Console.WriteLine("[INFO] Added Database=railway to connection string.");
+    dbName = "railway";
+}
+else
+{
+    Console.WriteLine($"[INFO] Database name found in connection string: {dbName}");
+}
+
+// Update the configuration with the modified connection string
+// This ensures any code that reads from config gets the corrected version
+builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+
+// Log the final connection string (without password) for debugging
+var safeConnectionString = System.Text.RegularExpressions.Regex.Replace(
+    connectionString, 
+    @"Pwd=[^;]+", 
+    "Pwd=***", 
+    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+);
+Console.WriteLine($"[INFO] Final connection string: {safeConnectionString}");
+
+// Verify database name one more time before using it
+var finalDbCheck = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+if (!finalDbCheck.Success || string.IsNullOrWhiteSpace(finalDbCheck.Groups[1].Value))
+{
+    throw new InvalidOperationException("Connection string is missing a valid database name after validation!");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
