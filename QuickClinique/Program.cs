@@ -17,19 +17,45 @@ builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
 
 // DB Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (!string.IsNullOrEmpty(connectionString))
+if (string.IsNullOrEmpty(connectionString))
 {
-    // Add SSL mode if not present (Railway MySQL may require this)
-    if (!connectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
-    {
-        connectionString += (connectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
-    }
+    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+}
+
+// Add SSL mode if not present (Railway MySQL may require this)
+if (!connectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
+{
+    connectionString += (connectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
+}
+
+// Ensure database name is present and not empty
+var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+if (!dbNameMatch.Success || string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Value))
+{
+    Console.WriteLine("[WARNING] Connection string missing or has empty Database parameter.");
+    Console.WriteLine("[WARNING] Railway MySQL typically uses 'railway' as the database name.");
+    
+    // Remove existing empty Database parameter if present
+    connectionString = System.Text.RegularExpressions.Regex.Replace(
+        connectionString, 
+        @"Database=[^;]*;?", 
+        "", 
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+    );
+    
+    // Add the database name (Railway MySQL usually uses 'railway or the service name)
+    connectionString += "Database=railway;";
+    Console.WriteLine("[INFO] Added Database=railway to connection string.");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
-        connectionString ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."),
-        new MySqlServerVersion(new Version(8, 0, 21))));
+        connectionString,
+        new MySqlServerVersion(new Version(8, 0, 21)),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null)));
 
 // Add session services (required for ClinicStaffController)
 builder.Services.AddSession(options =>
