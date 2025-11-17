@@ -130,6 +130,15 @@ builder.Services.AddSession(options =>
 // Add distributed memory cache (required for session)
 builder.Services.AddDistributedMemoryCache();
 
+// Configure Data Protection for persistent keys (fixes session/antiforgery token issues in containers)
+// In Railway, we'll use the filesystem to persist keys
+var dataProtectionKeysPath = Path.Combine(Environment.GetEnvironmentVariable("HOME") ?? "/tmp", ".aspnet", "DataProtection-Keys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+    .SetApplicationName("QuickClinique")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Strict;
@@ -481,25 +490,14 @@ using (var scope = app.Services.CreateScope())
                 
                 try
                 {
-                    // Use IF NOT EXISTS pattern for MySQL 8.0+
-                    command.CommandText = @"
-                        SET @col_exists = (
-                            SELECT COUNT(*) 
-                            FROM INFORMATION_SCHEMA.COLUMNS 
-                            WHERE TABLE_SCHEMA = DATABASE() 
-                            AND TABLE_NAME = 'appointments' 
-                            AND (COLUMN_NAME = 'CancellationReason' OR UPPER(COLUMN_NAME) = 'CANCELLATIONREASON')
-                        );
-                        SET @sql = IF(@col_exists = 0,
-                            'ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''''',
-                            'SELECT ''CancellationReason column already exists'' AS message'
-                        );
-                        PREPARE stmt FROM @sql;
-                        EXECUTE stmt;
-                        DEALLOCATE PREPARE stmt;";
+                    // Use direct ALTER TABLE - MySQL doesn't support IF NOT EXISTS for ADD COLUMN
+                    command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
                     
                     await command.ExecuteNonQueryAsync();
                     Console.WriteLine("[SUCCESS] CancellationReason column added successfully to appointments table!");
+                    
+                    // Wait a moment for MySQL to commit
+                    await Task.Delay(200);
                     
                     // Verify it was added
                     command.CommandText = @"
@@ -535,15 +533,26 @@ using (var scope = app.Services.CreateScope())
                 }
                 catch (Exception addEx)
                 {
-                    Console.WriteLine($"[CRITICAL ERROR] Failed to add CancellationReason column: {addEx.Message}");
-                    Console.WriteLine($"[CRITICAL ERROR] Error type: {addEx.GetType().Name}");
-                    Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
-                    if (addEx.InnerException != null)
+                    // Check if it's a "duplicate column" error (column already exists) - that's OK
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine($"[CRITICAL ERROR] Inner exception: {addEx.InnerException.Message}");
+                        Console.WriteLine("[INFO] CancellationReason column already exists (caught duplicate error).");
+                        Console.WriteLine("[INFO] This is OK - column was likely added in a previous run.");
                     }
-                    Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
-                    throw; // Re-throw to be caught by outer catch
+                    else
+                    {
+                        Console.WriteLine($"[CRITICAL ERROR] Failed to add CancellationReason column: {addEx.Message}");
+                        Console.WriteLine($"[CRITICAL ERROR] Error type: {addEx.GetType().Name}");
+                        Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                        if (addEx.InnerException != null)
+                        {
+                            Console.WriteLine($"[CRITICAL ERROR] Inner exception: {addEx.InnerException.Message}");
+                        }
+                        Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                        throw; // Re-throw to be caught by outer catch
+                    }
                 }
             }
             else
@@ -672,7 +681,7 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("[WARNING] Continuing despite column check errors - migrations may have already created all columns.");
         }
 
-        // Final verification: Ensure IsActive column exists in clinicstaff before seeding
+        // Final verification: Ensure critical columns exist before seeding
         try
         {
             var connection = context.Database.GetDbConnection();
@@ -682,6 +691,45 @@ using (var scope = app.Services.CreateScope())
             }
             
             using var verifyCommand = connection.CreateCommand();
+            
+            // Check CancellationReason in appointments
+            verifyCommand.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND (COLUMN_NAME = 'CancellationReason' OR UPPER(COLUMN_NAME) = 'CANCELLATIONREASON')";
+            
+            var cancellationReasonExists = Convert.ToInt32(await verifyCommand.ExecuteScalarAsync()) > 0;
+            
+            if (!cancellationReasonExists)
+            {
+                Console.WriteLine("[FINAL CHECK] CancellationReason column missing in appointments! Adding now...");
+                try
+                {
+                    verifyCommand.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
+                    await verifyCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine("[FINAL CHECK] CancellationReason column added successfully!");
+                }
+                catch (Exception addEx)
+                {
+                    if (addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[FINAL CHECK] CancellationReason column already exists.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[FINAL CHECK ERROR] Failed to add CancellationReason: {addEx.Message}");
+                        throw; // Re-throw if it's not a duplicate error
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[FINAL CHECK] CancellationReason column verified in appointments table.");
+            }
+            
+            // Check IsActive in clinicstaff
             verifyCommand.CommandText = @"
                 SELECT COUNT(*) 
                 FROM INFORMATION_SCHEMA.COLUMNS 
@@ -697,19 +745,20 @@ using (var scope = app.Services.CreateScope())
                 verifyCommand.CommandText = "ALTER TABLE `clinicstaff` ADD COLUMN `IsActive` tinyint(1) NOT NULL DEFAULT 1";
                 await verifyCommand.ExecuteNonQueryAsync();
                 Console.WriteLine("[FINAL CHECK] IsActive column added successfully!");
-                
-                // Close connection to refresh EF Core cache
-                await connection.CloseAsync();
             }
             else
             {
                 Console.WriteLine("[FINAL CHECK] IsActive column verified in clinicstaff table.");
             }
+            
+            // Close connection to refresh EF Core cache
+            await connection.CloseAsync();
         }
         catch (Exception verifyEx)
         {
-            Console.WriteLine($"[FINAL CHECK ERROR] Failed to verify/add IsActive column: {verifyEx.Message}");
-            throw; // Don't proceed with seeding if column doesn't exist
+            Console.WriteLine($"[FINAL CHECK ERROR] Failed to verify/add required columns: {verifyEx.Message}");
+            Console.WriteLine($"[FINAL CHECK ERROR] Stack trace: {verifyEx.StackTrace}");
+            throw; // Don't proceed with seeding if critical columns don't exist
         }
 
         // Seed initial data
