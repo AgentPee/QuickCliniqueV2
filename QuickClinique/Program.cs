@@ -130,12 +130,10 @@ builder.Services.AddSession(options =>
 // Add distributed memory cache (required for session)
 builder.Services.AddDistributedMemoryCache();
 
-// Configure Data Protection for persistent keys (fixes session/antiforgery token issues in containers)
-// In Railway, we'll use the filesystem to persist keys
-var dataProtectionKeysPath = Path.Combine(Environment.GetEnvironmentVariable("HOME") ?? "/tmp", ".aspnet", "DataProtection-Keys");
-Directory.CreateDirectory(dataProtectionKeysPath);
+// Configure Data Protection (fixes session/antiforgery token issues)
+// Note: In Railway, containers are ephemeral, so keys will regenerate on restart
+// This is acceptable - users will just need to log in again after deployments
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
     .SetApplicationName("QuickClinique")
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
