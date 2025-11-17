@@ -16,9 +16,19 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
 
 // DB Context
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(connectionString))
+{
+    // Add SSL mode if not present (Railway MySQL may require this)
+    if (!connectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
+    {
+        connectionString += (connectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
+    }
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."),
         new MySqlServerVersion(new Version(8, 0, 21))));
 
 // Add session services (required for ClinicStaffController)
@@ -89,7 +99,7 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var seedingService = services.GetRequiredService<IDataSeedingService>();
 
-        // STEP 1: Ensure database exists
+        // STEP 1: Ensure database exists (optional - Railway MySQL already creates the database)
         Console.WriteLine("[INIT] Checking if database exists...");
         try
         {
@@ -99,61 +109,88 @@ using (var scope = app.Services.CreateScope())
                 throw new Exception("Connection string 'DefaultConnection' is not configured.");
             }
 
-            // Parse database name from connection string
-            var dbName = "QuickClinique"; // Default
-            var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            if (dbNameMatch.Success)
+            // Log connection string (without password for security)
+            var safeConnectionString = System.Text.RegularExpressions.Regex.Replace(
+                connectionString, 
+                @"Pwd=[^;]+", 
+                "Pwd=***", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
+            Console.WriteLine($"[INIT] Connection string: {safeConnectionString}");
+
+            // Check if connection string has unresolved template variables
+            if (connectionString.Contains("${{") || connectionString.Contains("${"))
             {
-                dbName = dbNameMatch.Groups[1].Value;
-            }
-
-            // Create connection string without database
-            var serverConnectionString = connectionString;
-            if (dbNameMatch.Success)
-            {
-                serverConnectionString = System.Text.RegularExpressions.Regex.Replace(connectionString, @"Database=[^;]+;?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            }
-
-            // Connect to MySQL server (without database)
-            using var serverConnection = new MySqlConnection(serverConnectionString);
-            await serverConnection.OpenAsync();
-            Console.WriteLine("[INIT] Connected to MySQL server.");
-
-            // Check if database exists
-            using var checkDbCommand = serverConnection.CreateCommand();
-            checkDbCommand.CommandText = $@"
-                SELECT COUNT(*) 
-                FROM INFORMATION_SCHEMA.SCHEMATA 
-                WHERE SCHEMA_NAME = @dbName";
-            
-            var dbNameParam = checkDbCommand.CreateParameter();
-            dbNameParam.ParameterName = "@dbName";
-            dbNameParam.Value = dbName;
-            checkDbCommand.Parameters.Add(dbNameParam);
-
-            var dbExists = Convert.ToInt32(await checkDbCommand.ExecuteScalarAsync()) > 0;
-            Console.WriteLine($"[INIT] Database '{dbName}' exists: {dbExists}");
-
-            if (!dbExists)
-            {
-                Console.WriteLine($"[INIT] Database '{dbName}' does not exist. Creating it...");
-                using var createDbCommand = serverConnection.CreateCommand();
-                createDbCommand.CommandText = $"CREATE DATABASE IF NOT EXISTS `{dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci";
-                await createDbCommand.ExecuteNonQueryAsync();
-                Console.WriteLine($"[SUCCESS] Database '{dbName}' created successfully!");
+                Console.WriteLine("[WARNING] Connection string appears to have unresolved template variables!");
+                Console.WriteLine("[WARNING] Make sure you're using the actual MySQL service variable names in Railway.");
+                Console.WriteLine("[WARNING] Skipping database creation check - Railway MySQL should already have the database.");
+                // Skip database creation - Railway MySQL already creates it
             }
             else
             {
-                Console.WriteLine($"[OK] Database '{dbName}' already exists.");
-            }
+                // Parse database name from connection string
+                var dbName = "QuickClinique"; // Default
+                var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (dbNameMatch.Success)
+                {
+                    dbName = dbNameMatch.Groups[1].Value;
+                }
 
-            await serverConnection.CloseAsync();
+                // Create connection string without database, add SSL mode if not present
+                var serverConnectionString = connectionString;
+                if (dbNameMatch.Success)
+                {
+                    serverConnectionString = System.Text.RegularExpressions.Regex.Replace(connectionString, @"Database=[^;]+;?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                }
+                
+                // Add SSL mode if not present (Railway MySQL may require this)
+                if (!serverConnectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
+                {
+                    serverConnectionString += (serverConnectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
+                }
+
+                // Connect to MySQL server (without database)
+                using var serverConnection = new MySqlConnection(serverConnectionString);
+                await serverConnection.OpenAsync();
+                Console.WriteLine("[INIT] Connected to MySQL server.");
+
+                // Check if database exists
+                using var checkDbCommand = serverConnection.CreateCommand();
+                checkDbCommand.CommandText = $@"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.SCHEMATA 
+                    WHERE SCHEMA_NAME = @dbName";
+                
+                var dbNameParam = checkDbCommand.CreateParameter();
+                dbNameParam.ParameterName = "@dbName";
+                dbNameParam.Value = dbName;
+                checkDbCommand.Parameters.Add(dbNameParam);
+
+                var dbExists = Convert.ToInt32(await checkDbCommand.ExecuteScalarAsync()) > 0;
+                Console.WriteLine($"[INIT] Database '{dbName}' exists: {dbExists}");
+
+                if (!dbExists)
+                {
+                    Console.WriteLine($"[INIT] Database '{dbName}' does not exist. Creating it...");
+                    using var createDbCommand = serverConnection.CreateCommand();
+                    createDbCommand.CommandText = $"CREATE DATABASE IF NOT EXISTS `{dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci";
+                    await createDbCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"[SUCCESS] Database '{dbName}' created successfully!");
+                }
+                else
+                {
+                    Console.WriteLine($"[OK] Database '{dbName}' already exists.");
+                }
+
+                await serverConnection.CloseAsync();
+            }
         }
         catch (Exception dbEx)
         {
-            Console.WriteLine($"[ERROR] Failed to check/create database: {dbEx.Message}");
-            Console.WriteLine($"[ERROR] Stack trace: {dbEx.StackTrace}");
-            throw; // Re-throw to prevent continuing without database
+            Console.WriteLine($"[WARNING] Failed to check/create database: {dbEx.Message}");
+            Console.WriteLine($"[WARNING] This is usually OK on Railway - MySQL database is already created.");
+            Console.WriteLine($"[WARNING] Continuing with migrations...");
+            // Don't throw - Railway MySQL already creates the database, so we can continue
         }
 
         // STEP 2: Run migrations to create tables
