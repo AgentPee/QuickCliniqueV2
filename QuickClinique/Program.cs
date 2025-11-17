@@ -181,13 +181,13 @@ using (var scope = app.Services.CreateScope())
             }
 
             // Log connection string (without password for security)
-            var safeConnectionString = System.Text.RegularExpressions.Regex.Replace(
+            var initSafeConnectionString = System.Text.RegularExpressions.Regex.Replace(
                 connectionString, 
                 @"Pwd=[^;]+", 
                 "Pwd=***", 
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase
             );
-            Console.WriteLine($"[INIT] Connection string: {safeConnectionString}");
+            Console.WriteLine($"[INIT] Connection string: {initSafeConnectionString}");
 
             // Check if connection string has unresolved template variables
             if (connectionString.Contains("${{") || connectionString.Contains("${"))
@@ -200,10 +200,15 @@ using (var scope = app.Services.CreateScope())
             else
             {
                 // Parse database name from connection string (reuse the match from outer scope)
-                var dbName = "QuickClinique"; // Default
+                var targetDbName = "QuickClinique"; // Default
                 if (dbNameMatch.Success && !string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Value))
                 {
-                    dbName = dbNameMatch.Groups[1].Value;
+                    targetDbName = dbNameMatch.Groups[1].Value;
+                }
+                else if (!string.IsNullOrWhiteSpace(dbName) && dbName != "railway")
+                {
+                    // Use the database name from outer scope if it was set
+                    targetDbName = dbName;
                 }
 
                 // Create connection string without database, add SSL mode if not present
@@ -233,23 +238,23 @@ using (var scope = app.Services.CreateScope())
                 
                 var dbNameParam = checkDbCommand.CreateParameter();
                 dbNameParam.ParameterName = "@dbName";
-                dbNameParam.Value = dbName;
+                dbNameParam.Value = targetDbName;
                 checkDbCommand.Parameters.Add(dbNameParam);
 
                 var dbExists = Convert.ToInt32(await checkDbCommand.ExecuteScalarAsync()) > 0;
-                Console.WriteLine($"[INIT] Database '{dbName}' exists: {dbExists}");
+                Console.WriteLine($"[INIT] Database '{targetDbName}' exists: {dbExists}");
 
                 if (!dbExists)
                 {
-                    Console.WriteLine($"[INIT] Database '{dbName}' does not exist. Creating it...");
+                    Console.WriteLine($"[INIT] Database '{targetDbName}' does not exist. Creating it...");
                     using var createDbCommand = serverConnection.CreateCommand();
-                    createDbCommand.CommandText = $"CREATE DATABASE IF NOT EXISTS `{dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci";
+                    createDbCommand.CommandText = $"CREATE DATABASE IF NOT EXISTS `{targetDbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci";
                     await createDbCommand.ExecuteNonQueryAsync();
-                    Console.WriteLine($"[SUCCESS] Database '{dbName}' created successfully!");
+                    Console.WriteLine($"[SUCCESS] Database '{targetDbName}' created successfully!");
                 }
                 else
                 {
-                    Console.WriteLine($"[OK] Database '{dbName}' already exists.");
+                    Console.WriteLine($"[OK] Database '{targetDbName}' already exists.");
                 }
 
                 await serverConnection.CloseAsync();
