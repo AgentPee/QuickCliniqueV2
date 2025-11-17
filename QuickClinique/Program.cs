@@ -446,12 +446,31 @@ using (var scope = app.Services.CreateScope())
             
             // Check and add CancellationReason column to appointments table (case-insensitive check)
             Console.WriteLine("[INIT] Checking for CancellationReason column in appointments table...");
+            
+            // First, list all columns to debug
+            command.CommandText = @"
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments'
+                ORDER BY COLUMN_NAME";
+            var allColumns = new List<string>();
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    allColumns.Add(reader.GetString(0));
+                }
+            }
+            Console.WriteLine($"[DEBUG] Existing columns in appointments table: {string.Join(", ", allColumns)}");
+            
+            // Check for CancellationReason (case-insensitive)
             command.CommandText = @"
                 SELECT COUNT(*) 
                 FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_SCHEMA = DATABASE() 
                 AND TABLE_NAME = 'appointments' 
-                AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON'";
+                AND (COLUMN_NAME = 'CancellationReason' OR COLUMN_NAME = 'cancellationreason' OR UPPER(COLUMN_NAME) = 'CANCELLATIONREASON')";
             
             var cancellationReasonColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
             Console.WriteLine($"[INIT] CancellationReason column exists in appointments table: {cancellationReasonColumnExists}");
@@ -459,10 +478,26 @@ using (var scope = app.Services.CreateScope())
             if (!cancellationReasonColumnExists)
             {
                 Console.WriteLine("[CRITICAL] CancellationReason column missing! Adding to appointments table...");
-                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
                 
                 try
                 {
+                    // Use IF NOT EXISTS pattern for MySQL 8.0+
+                    command.CommandText = @"
+                        SET @col_exists = (
+                            SELECT COUNT(*) 
+                            FROM INFORMATION_SCHEMA.COLUMNS 
+                            WHERE TABLE_SCHEMA = DATABASE() 
+                            AND TABLE_NAME = 'appointments' 
+                            AND (COLUMN_NAME = 'CancellationReason' OR UPPER(COLUMN_NAME) = 'CANCELLATIONREASON')
+                        );
+                        SET @sql = IF(@col_exists = 0,
+                            'ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''''',
+                            'SELECT ''CancellationReason column already exists'' AS message'
+                        );
+                        PREPARE stmt FROM @sql;
+                        EXECUTE stmt;
+                        DEALLOCATE PREPARE stmt;";
+                    
                     await command.ExecuteNonQueryAsync();
                     Console.WriteLine("[SUCCESS] CancellationReason column added successfully to appointments table!");
                     
@@ -472,20 +507,41 @@ using (var scope = app.Services.CreateScope())
                         FROM INFORMATION_SCHEMA.COLUMNS 
                         WHERE TABLE_SCHEMA = DATABASE() 
                         AND TABLE_NAME = 'appointments' 
-                        AND UPPER(COLUMN_NAME) = 'CANCELLATIONREASON'";
+                        AND (COLUMN_NAME = 'CancellationReason' OR UPPER(COLUMN_NAME) = 'CANCELLATIONREASON')";
                     var verifyResult = await command.ExecuteScalarAsync();
                     var verified = Convert.ToInt32(verifyResult) > 0;
                     Console.WriteLine($"[VERIFY] CancellationReason column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
                     
                     if (!verified)
                     {
+                        // List columns again for debugging
+                        command.CommandText = @"
+                            SELECT COLUMN_NAME 
+                            FROM INFORMATION_SCHEMA.COLUMNS 
+                            WHERE TABLE_SCHEMA = DATABASE() 
+                            AND TABLE_NAME = 'appointments'
+                            ORDER BY COLUMN_NAME";
+                        var columnsAfter = new List<string>();
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                columnsAfter.Add(reader.GetString(0));
+                            }
+                        }
+                        Console.WriteLine($"[DEBUG] Columns after add attempt: {string.Join(", ", columnsAfter)}");
                         throw new Exception("CancellationReason column verification failed - column was not added successfully");
                     }
                 }
                 catch (Exception addEx)
                 {
                     Console.WriteLine($"[CRITICAL ERROR] Failed to add CancellationReason column: {addEx.Message}");
+                    Console.WriteLine($"[CRITICAL ERROR] Error type: {addEx.GetType().Name}");
                     Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                    if (addEx.InnerException != null)
+                    {
+                        Console.WriteLine($"[CRITICAL ERROR] Inner exception: {addEx.InnerException.Message}");
+                    }
                     Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
                     throw; // Re-throw to be caught by outer catch
                 }
