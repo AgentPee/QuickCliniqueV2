@@ -103,7 +103,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("[INIT] Checking if database exists...");
         try
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            // Use the connection string from the outer scope (already configured with SSL)
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new Exception("Connection string 'DefaultConnection' is not configured.");
