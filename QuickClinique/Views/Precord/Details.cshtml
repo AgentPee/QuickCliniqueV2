@@ -228,6 +228,41 @@
                                 <strong><i class="fas fa-weight"></i> BMI:</strong>
                                 <p class="medical-record-text">@record.Bmi</p>
                             </div>
+                            @if (record.PulseRate.HasValue)
+                            {
+                                <div>
+                                    <strong><i class="fas fa-heart"></i> Pulse Rate:</strong>
+                                    <p class="medical-record-text">@record.PulseRate.Value bpm</p>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(record.BloodPressure))
+                            {
+                                <div>
+                                    <strong><i class="fas fa-tachometer-alt"></i> Blood Pressure:</strong>
+                                    <p class="medical-record-text">@record.BloodPressure</p>
+                                </div>
+                            }
+                            @if (record.Temperature.HasValue)
+                            {
+                                <div>
+                                    <strong><i class="fas fa-thermometer-half"></i> Temperature:</strong>
+                                    <p class="medical-record-text">@record.Temperature.Value.ToString("F1")°C</p>
+                                </div>
+                            }
+                            @if (record.RespiratoryRate.HasValue)
+                            {
+                                <div>
+                                    <strong><i class="fas fa-lungs"></i> Respiratory Rate:</strong>
+                                    <p class="medical-record-text">@record.RespiratoryRate.Value breaths/min</p>
+                                </div>
+                            }
+                            @if (record.OxygenSaturation.HasValue)
+                            {
+                                <div>
+                                    <strong><i class="fas fa-wind"></i> Oxygen Saturation:</strong>
+                                    <p class="medical-record-text">@record.OxygenSaturation.Value%</p>
+                                </div>
+                            }
                         </div>
                     </div>
                 }

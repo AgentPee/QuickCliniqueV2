@@ -158,8 +158,10 @@ async function submitNextPatient() {
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
         // Collect triage data from form
-        const age = document.getElementById('triageAge').value ? parseInt(document.getElementById('triageAge').value) : null;
-        const gender = document.getElementById('triageGender').value || null;
+        const pulseRate = document.getElementById('triagePulseRate').value ? parseInt(document.getElementById('triagePulseRate').value) : null;
+        const bloodPressure = document.getElementById('triageBloodPressure').value.trim() || null;
+        const temperature = document.getElementById('triageTemperature').value ? parseFloat(document.getElementById('triageTemperature').value) : null;
+        const oxygenSaturation = document.getElementById('triageOxygenSaturation').value ? parseInt(document.getElementById('triageOxygenSaturation').value) : null;
         const bmi = document.getElementById('triageBMI').value ? parseFloat(document.getElementById('triageBMI').value) : null;
         const allergies = document.getElementById('triageAllergies').value.trim() || null;
         const triageNotes = document.getElementById('triageNotes').value.trim() || null;
@@ -172,8 +174,10 @@ async function submitNextPatient() {
                 'X-CSRF-TOKEN': token
             },
             body: JSON.stringify({
-                age: age,
-                gender: gender,
+                pulseRate: pulseRate,
+                bloodPressure: bloodPressure,
+                temperature: temperature,
+                oxygenSaturation: oxygenSaturation,
                 bmi: bmi,
                 allergies: allergies,
                 triageNotes: triageNotes
