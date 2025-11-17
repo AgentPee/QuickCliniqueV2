@@ -24,7 +24,7 @@
             </p>
         </div>
 
-        <form id="profileForm" asp-action="UpdateProfile" method="post">
+        <form id="profileForm" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="StudentId" />
             <input type="hidden" asp-for="UserId" />
@@ -77,6 +77,43 @@
                     </label>
                     <input asp-for="PhoneNumber" type="tel" class="form-control" required />
                     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Insurance Receipt Upload -->
+            <div class="form-section">
+                <h3><i class="fas fa-file-invoice"></i> Insurance Receipt</h3>
+                <p class="text-muted-custom">
+                    Upload a clear image of your insurance receipt for verification purposes.
+                </p>
+
+                <div class="form-group">
+                    <label for="InsuranceReceiptFile">
+                        <i class="fas fa-upload"></i> Insurance Receipt Image
+                    </label>
+                    <div class="file-upload-container">
+                        <input type="file" id="InsuranceReceiptFile" name="InsuranceReceiptFile" class="form-control file-input" accept="image/*" />
+                        <div class="file-preview-container" id="insuranceReceiptPreview" style="@(string.IsNullOrEmpty(Model.InsuranceReceipt) ? "display:none;" : "")">
+                            @if (!string.IsNullOrEmpty(Model.InsuranceReceipt))
+                            {
+                                <div class="current-file">
+                                    <p><strong>Current Receipt:</strong></p>
+                                    <img src="@Model.InsuranceReceipt" alt="Insurance Receipt" class="preview-image" />
+                                    <a href="@Model.InsuranceReceipt" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                        <i class="fas fa-external-link-alt"></i> View Full Size
+                                    </a>
+                                </div>
+                            }
+                            <div class="new-file-preview" id="newReceiptPreview" style="display:none;">
+                                <p><strong>New Receipt Preview:</strong></p>
+                                <img id="receiptPreviewImg" src="" alt="Preview" class="preview-image" />
+                            </div>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        Accepted formats: JPG, PNG, GIF, BMP, WEBP. Maximum file size: 5MB.
+                    </small>
+                    <span class="text-danger" id="insuranceReceiptError"></span>
                 </div>
             </div>
 
@@ -149,6 +186,42 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         $(document).ready(function() {
+            // Insurance receipt file preview
+            $('#InsuranceReceiptFile').on('change', function(e) {
+                const file = e.target.files[0];
+                const errorSpan = $('#insuranceReceiptError');
+                errorSpan.text('');
+
+                if (file) {
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        errorSpan.text('Invalid file type. Please upload an image file.');
+                        $(this).val('');
+                        return;
+                    }
+
+                    // Validate file size (5MB)
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    if (file.size > maxSize) {
+                        errorSpan.text('File size exceeds 5MB limit.');
+                        $(this).val('');
+                        return;
+                    }
+
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#receiptPreviewImg').attr('src', e.target.result);
+                        $('#newReceiptPreview').show();
+                        $('#insuranceReceiptPreview').show();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    $('#newReceiptPreview').hide();
+                }
+            });
+
             // Profile form submission
             $('#profileForm').on('submit', function(e) {
                 e.preventDefault();
@@ -157,17 +230,39 @@
                     return;
                 }
 
-                const formData = $(this).serialize();
+                // Use FormData to handle file uploads
+                const formData = new FormData(this);
+                const errorSpan = $('#insuranceReceiptError');
+                errorSpan.text('');
+
+                // Validate file if selected
+                const fileInput = $('#InsuranceReceiptFile')[0];
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        errorSpan.text('Invalid file type. Please upload an image file.');
+                        return;
+                    }
+
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    if (file.size > maxSize) {
+                        errorSpan.text('File size exceeds 5MB limit.');
+                        return;
+                    }
+                }
 
                 $.ajax({
                     url: '@Url.Action("UpdateProfile", "Student")',
                     type: 'POST',
                     data: formData,
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
                         if (response.success) {
                             showMessage('Profile updated successfully!', 'success');
                             setTimeout(function() {
-                                window.location.href = '@Url.Action("Dashboard", "Student")';
+                                window.location.href = '@Url.Action("Profile", "Student")';
                             }, 1500);
                         } else {
                             showMessage(response.error || 'Failed to update profile', 'error');

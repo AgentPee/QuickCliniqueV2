@@ -5,6 +5,7 @@ using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Attributes;
 using System.Text;
+using Microsoft.AspNetCore.Hosting;
 
 namespace QuickClinique.Controllers
 {
@@ -13,12 +14,14 @@ namespace QuickClinique.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService)
+        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Student
@@ -295,6 +298,54 @@ namespace QuickClinique.Controllers
                     // Generate email verification token
                     var emailToken = GenerateToken();
 
+                    // Handle image upload
+                    string imagePath = null;
+                    if (model.StudentIdImage != null && model.StudentIdImage.Length > 0)
+                    {
+                        // Validate file type
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+                        var fileExtension = Path.GetExtension(model.StudentIdImage.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { success = false, error = "Invalid file type. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+
+                            ModelState.AddModelError("StudentIdImage", "Invalid file type. Please upload an image file.");
+                            return View(model);
+                        }
+
+                        // Validate file size (max 5MB)
+                        const long maxFileSize = 5 * 1024 * 1024; // 5MB
+                        if (model.StudentIdImage.Length > maxFileSize)
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { success = false, error = "File size exceeds the maximum limit of 5MB." });
+
+                            ModelState.AddModelError("StudentIdImage", "File size exceeds the maximum limit of 5MB.");
+                            return View(model);
+                        }
+
+                        // Create directory if it doesn't exist
+                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "student-ids");
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+
+                        // Generate unique filename
+                        var fileName = $"{model.Idnumber}_{Guid.NewGuid()}{fileExtension}";
+                        var filePath = Path.Combine(uploadsFolder, fileName);
+
+                        // Save the file
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await model.StudentIdImage.CopyToAsync(fileStream);
+                        }
+
+                        // Store relative path for database
+                        imagePath = $"/img/student-ids/{fileName}";
+                    }
+
                     // Create the Student
                     var student = new Student
                     {
@@ -304,6 +355,9 @@ namespace QuickClinique.Controllers
                         LastName = model.LastName,
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
+                        Gender = model.Gender,
+                        Birthdate = model.Birthdate,
+                        Image = imagePath,
                         Password = _passwordService.HashPassword(model.Password), // Hash the password
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
@@ -469,7 +523,7 @@ namespace QuickClinique.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [StudentOnly]
-        public async Task<IActionResult> UpdateProfile(Student model)
+        public async Task<IActionResult> UpdateProfile(Student model, IFormFile? InsuranceReceiptFile)
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
             if (!studentId.HasValue || studentId.Value != model.StudentId)
@@ -481,6 +535,70 @@ namespace QuickClinique.Controllers
             if (student == null)
             {
                 return Json(new { success = false, error = "Student not found" });
+            }
+
+            // Handle insurance receipt file upload
+            if (InsuranceReceiptFile != null && InsuranceReceiptFile.Length > 0)
+            {
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+                var fileExtension = Path.GetExtension(InsuranceReceiptFile.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Invalid file type. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+
+                    ModelState.AddModelError("InsuranceReceiptFile", "Invalid file type. Please upload an image file.");
+                    return View(model);
+                }
+
+                // Validate file size (max 5MB)
+                const long maxFileSize = 5 * 1024 * 1024; // 5MB
+                if (InsuranceReceiptFile.Length > maxFileSize)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "File size exceeds the maximum limit of 5MB." });
+
+                    ModelState.AddModelError("InsuranceReceiptFile", "File size exceeds the maximum limit of 5MB.");
+                    return View(model);
+                }
+
+                // Create directory if it doesn't exist
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "insurance-receipts");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Delete old file if exists
+                if (!string.IsNullOrEmpty(student.InsuranceReceipt))
+                {
+                    var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, student.InsuranceReceipt.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                        catch
+                        {
+                            // Ignore deletion errors
+                        }
+                    }
+                }
+
+                // Generate unique filename
+                var fileName = $"{student.Idnumber}_{Guid.NewGuid()}{fileExtension}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Save the file
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await InsuranceReceiptFile.CopyToAsync(fileStream);
+                }
+
+                // Store relative path for database
+                student.InsuranceReceipt = $"/img/insurance-receipts/{fileName}";
             }
 
             // Update only allowed fields
@@ -806,6 +924,54 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
+        // POST: Student/SendSOS
+        [HttpPost]
+        [StudentOnly]
+        public async Task<IActionResult> SendSOS([FromBody] SOSRequest request)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Location))
+            {
+                return Json(new { success = false, error = "Location is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Needs))
+            {
+                return Json(new { success = false, error = "Please specify what you need" });
+            }
+
+            var student = await _context.Students.FindAsync(studentId.Value);
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found" });
+            }
+
+            var emergency = new Emergency
+            {
+                StudentId = student.StudentId,
+                StudentName = $"{student.FirstName} {student.LastName}",
+                StudentIdNumber = student.Idnumber,
+                Location = request.Location,
+                Needs = request.Needs,
+                IsResolved = false,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Emergencies.Add(emergency);
+            await _context.SaveChangesAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "SOS Emergency request sent successfully!", emergencyId = emergency.EmergencyId });
+
+            TempData["SuccessMessage"] = "SOS Emergency request sent successfully!";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
         // Helper method to generate tokens
         private string GenerateToken()
         {
@@ -817,5 +983,11 @@ namespace QuickClinique.Controllers
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
                    Request.ContentType == "application/json";
         }
+    }
+
+    public class SOSRequest
+    {
+        public string Location { get; set; } = null!;
+        public string Needs { get; set; } = null!;
     }
 }

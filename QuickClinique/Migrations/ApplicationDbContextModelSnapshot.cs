@@ -460,6 +460,9 @@ namespace QuickClinique.Migrations
                     b.Property<string>("Image")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<string>("InsuranceReceipt")
+                        .HasColumnType("varchar(500)");
+
                     b.HasKey("StudentId")
                         .HasName("PRIMARY");
 

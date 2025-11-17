@@ -281,9 +281,7 @@
             <div class="no-appointments no-appointments-style">
                 <i class="fas fa-file-medical no-appointments-icon"></i>
                 <p class="no-appointments-text">No medical records found for this patient.</p>
-                <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action btn-edit no-appointments-link">
-                    <i class="fas fa-plus"></i> Create Medical Record
-                </a>
+           
             </div>
         </div>
     }
@@ -292,9 +290,7 @@
         <button onclick="showEditModal(@Model.StudentId)" class="btn-action btn-edit action-button-style">
             <i class="fas fa-edit"></i> Edit Patient Info
         </button>
-        <a href="@Url.Action("Create", "Precord", new { PatientId = Model.StudentId })" class="btn-action action-button-teal">
-            <i class="fas fa-plus"></i> Add Medical Record
-        </a>
+    
         <a href="@Url.Action("Index")" class="btn-back btn-back-custom">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>

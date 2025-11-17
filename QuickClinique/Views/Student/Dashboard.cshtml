@@ -120,6 +120,86 @@
                 <a href="@Url.Action("History", "Student")" class="action-btn secondary">
                     <i class="fas fa-history"></i> View History
                 </a>
+
+                <button type="button" class="action-btn sos-btn" data-bs-toggle="modal" data-bs-target="#sosModal">
+                    <i class="fas fa-exclamation-triangle"></i> SOS Emergency
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SOS Emergency Modal -->
+<div class="modal fade" id="sosModal" tabindex="-1" aria-labelledby="sosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header sos-header">
+                <h5 class="modal-title" id="sosModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Emergency SOS Request
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> <strong>Emergency Alert:</strong> This will notify clinic staff immediately. Use only for genuine emergencies.
+                </div>
+
+                <form id="sosForm">
+                    <div class="form-group mb-3">
+                        <label for="studentName"><i class="fas fa-user"></i> Student Name</label>
+                        <input type="text" class="form-control" id="studentName" value="@Model.FirstName @Model.LastName" readonly />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="studentId"><i class="fas fa-id-card"></i> Student ID</label>
+                        <input type="text" class="form-control" id="studentId" value="@Model.Idnumber" readonly />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="emergencyLocation"><i class="fas fa-map-marker-alt"></i> Location <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="emergencyLocation" placeholder="Enter your current location" required />
+                        <small class="form-text text-muted">e.g., Building A, Room 201 or Main Campus, Library</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label><i class="fas fa-tools"></i> What do you need? <span class="text-danger">*</span></label>
+                        <div class="needs-options">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="needs" value="First Aid Kit" id="needFirstAid">
+                                <label class="form-check-label" for="needFirstAid">
+                                    <i class="fas fa-medkit"></i> First Aid Kit
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="needs" value="Wheelchair" id="needWheelchair">
+                                <label class="form-check-label" for="needWheelchair">
+                                    <i class="fas fa-wheelchair"></i> Wheelchair
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="needs" value="Stretcher" id="needStretcher">
+                                <label class="form-check-label" for="needStretcher">
+                                    <i class="fas fa-bed"></i> Stretcher
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="needs" value="Other" id="needOther">
+                                <label class="form-check-label" for="needOther">
+                                    <i class="fas fa-ellipsis-h"></i> Other
+                                </label>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control mt-2" id="otherNeeds" placeholder="Please specify other needs" style="display:none;" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="sendSOSBtn">
+                    <i class="fas fa-paper-plane"></i> Send SOS
+                </button>
             </div>
         </div>
     </div>
@@ -299,5 +379,82 @@
                 messagesInterval = null;
             }
         }
+
+        // SOS Emergency functionality
+        $('#needOther').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#otherNeeds').show().prop('required', true);
+            } else {
+                $('#otherNeeds').hide().prop('required', false).val('');
+            }
+        });
+
+        $('#sosModal').on('hidden.bs.modal', function() {
+            // Reset form when modal is closed
+            $('#sosForm')[0].reset();
+            $('input[name="needs"]').prop('checked', false);
+            $('#otherNeeds').hide().val('');
+        });
+
+        $('#sendSOSBtn').on('click', async function() {
+            const location = $('#emergencyLocation').val().trim();
+            const selectedNeeds = $('input[name="needs"]:checked').map(function() {
+                return $(this).val();
+            }).get();
+            const otherNeeds = $('#otherNeeds').val().trim();
+
+            // Validation
+            if (!location) {
+                alert('Please enter your location');
+                return;
+            }
+
+            if (selectedNeeds.length === 0) {
+                alert('Please select at least one item you need');
+                return;
+            }
+
+            // Build needs string
+            let needsList = selectedNeeds;
+            if (selectedNeeds.includes('Other') && otherNeeds) {
+                needsList = selectedNeeds.filter(n => n !== 'Other');
+                needsList.push(`Other: ${otherNeeds}`);
+            }
+            const needs = needsList.join(', ');
+
+            // Disable button
+            const sendBtn = $(this);
+            sendBtn.prop('disabled', true);
+            sendBtn.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+
+            try {
+                const response = await fetch('@Url.Action("SendSOS", "Student")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        location: location,
+                        needs: needs
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('SOS Emergency request sent successfully! Clinic staff have been notified.');
+                    $('#sosModal').modal('hide');
+                } else {
+                    alert('Failed to send SOS: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error sending SOS:', error);
+                alert('Error sending SOS. Please try again.');
+            } finally {
+                sendBtn.prop('disabled', false);
+                sendBtn.html('<i class="fas fa-paper-plane"></i> Send SOS');
+            }
+        });
     </script>
 }

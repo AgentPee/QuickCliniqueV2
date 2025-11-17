@@ -859,6 +859,26 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] Image column already exists in students table.");
             }
 
+            // Check InsuranceReceipt
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'INSURANCERECEIPT'";
+            var insuranceReceiptExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!insuranceReceiptExists)
+            {
+                Console.WriteLine("[INIT] Adding InsuranceReceipt column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `InsuranceReceipt` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] InsuranceReceipt column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] InsuranceReceipt column already exists in students table.");
+            }
+
             // Check and create emergencies table if it doesn't exist
             Console.WriteLine("[INIT] Checking for emergencies table...");
             command.CommandText = @"
@@ -874,10 +894,16 @@ using (var scope = app.Services.CreateScope())
                 command.CommandText = @"
                     CREATE TABLE IF NOT EXISTS `emergencies` (
                         `EmergencyID` int(100) NOT NULL AUTO_INCREMENT,
+                        `StudentID` int(100) NULL,
+                        `StudentName` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                        `StudentIdNumber` int(100) NOT NULL,
                         `Location` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
                         `Needs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                        `IsResolved` tinyint(1) NOT NULL DEFAULT 0,
                         `CreatedAt` timestamp(6) NOT NULL DEFAULT current_timestamp(6),
-                        CONSTRAINT `PRIMARY` PRIMARY KEY (`EmergencyID`)
+                        CONSTRAINT `PRIMARY` PRIMARY KEY (`EmergencyID`),
+                        KEY `StudentID` (`StudentID`),
+                        CONSTRAINT `emergencies_ibfk_1` FOREIGN KEY (`StudentID`) REFERENCES `students` (`StudentID`)
                     ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci";
                 
                 try
@@ -910,6 +936,89 @@ using (var scope = app.Services.CreateScope())
             else
             {
                 Console.WriteLine("[OK] emergencies table already exists.");
+            }
+
+            // Check and add new columns to emergencies table if they don't exist
+            Console.WriteLine("[INIT] Checking for new columns in emergencies table...");
+            
+            // Check StudentID
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'emergencies' 
+                AND UPPER(COLUMN_NAME) = 'STUDENTID'";
+            var studentIdExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!studentIdExists)
+            {
+                Console.WriteLine("[INIT] Adding StudentID column to emergencies table...");
+                command.CommandText = "ALTER TABLE `emergencies` ADD COLUMN `StudentID` int(100) NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] StudentID column added to emergencies table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] StudentID column already exists in emergencies table.");
+            }
+
+            // Check StudentName
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'emergencies' 
+                AND UPPER(COLUMN_NAME) = 'STUDENTNAME'";
+            var studentNameExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!studentNameExists)
+            {
+                Console.WriteLine("[INIT] Adding StudentName column to emergencies table...");
+                command.CommandText = "ALTER TABLE `emergencies` ADD COLUMN `StudentName` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] StudentName column added to emergencies table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] StudentName column already exists in emergencies table.");
+            }
+
+            // Check StudentIdNumber
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'emergencies' 
+                AND UPPER(COLUMN_NAME) = 'STUDENTIDNUMBER'";
+            var studentIdNumberExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!studentIdNumberExists)
+            {
+                Console.WriteLine("[INIT] Adding StudentIdNumber column to emergencies table...");
+                command.CommandText = "ALTER TABLE `emergencies` ADD COLUMN `StudentIdNumber` int(100) NOT NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] StudentIdNumber column added to emergencies table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] StudentIdNumber column already exists in emergencies table.");
+            }
+
+            // Check IsResolved
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'emergencies' 
+                AND UPPER(COLUMN_NAME) = 'ISRESOLVED'";
+            var isResolvedExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!isResolvedExists)
+            {
+                Console.WriteLine("[INIT] Adding IsResolved column to emergencies table...");
+                command.CommandText = "ALTER TABLE `emergencies` ADD COLUMN `IsResolved` tinyint(1) NOT NULL DEFAULT 0";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] IsResolved column added to emergencies table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] IsResolved column already exists in emergencies table.");
             }
 
                 // Close the connection to ensure EF Core picks up schema changes
