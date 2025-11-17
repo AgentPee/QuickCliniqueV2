@@ -86,6 +86,22 @@ var safeConnectionString = System.Text.RegularExpressions.Regex.Replace(
 );
 Console.WriteLine($"[INFO] Final connection string: {safeConnectionString}");
 
+// Debug: Check if password is present and its length (for troubleshooting)
+var pwdMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Pwd=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+if (pwdMatch.Success)
+{
+    var pwdLength = pwdMatch.Groups[1].Value.Length;
+    Console.WriteLine($"[DEBUG] Password found in connection string, length: {pwdLength}");
+    if (pwdLength == 0)
+    {
+        Console.WriteLine("[ERROR] Password is empty in connection string!");
+    }
+}
+else
+{
+    Console.WriteLine("[ERROR] Password parameter not found in connection string!");
+}
+
 // Verify database name one more time before using it
 var finalDbCheck = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 if (!finalDbCheck.Success || string.IsNullOrWhiteSpace(finalDbCheck.Groups[1].Value))
@@ -174,15 +190,22 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("[INIT] Checking if database exists...");
         try
         {
-            // Use the connection string from the outer scope (already configured with SSL)
-            if (string.IsNullOrEmpty(connectionString))
+            // Re-read connection string from configuration to ensure we have the latest
+            var initConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(initConnectionString))
+            {
+                // Fall back to the one we configured
+                initConnectionString = connectionString;
+            }
+            
+            if (string.IsNullOrEmpty(initConnectionString))
             {
                 throw new Exception("Connection string 'DefaultConnection' is not configured.");
             }
 
             // Log connection string (without password for security)
             var initSafeConnectionString = System.Text.RegularExpressions.Regex.Replace(
-                connectionString, 
+                initConnectionString, 
                 @"Pwd=[^;]+", 
                 "Pwd=***", 
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase
@@ -190,7 +213,7 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine($"[INIT] Connection string: {initSafeConnectionString}");
 
             // Check if connection string has unresolved template variables
-            if (connectionString.Contains("${{") || connectionString.Contains("${"))
+            if (initConnectionString.Contains("${{") || initConnectionString.Contains("${"))
             {
                 Console.WriteLine("[WARNING] Connection string appears to have unresolved template variables!");
                 Console.WriteLine("[WARNING] Make sure you're using the actual MySQL service variable names in Railway.");
@@ -199,23 +222,19 @@ using (var scope = app.Services.CreateScope())
             }
             else
             {
-                // Parse database name from connection string (reuse the match from outer scope)
-                var targetDbName = "QuickClinique"; // Default
-                if (dbNameMatch.Success && !string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Value))
+                // Parse database name from connection string
+                var initDbNameMatch = System.Text.RegularExpressions.Regex.Match(initConnectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                var targetDbName = "railway"; // Default to Railway's default database name
+                if (initDbNameMatch.Success && !string.IsNullOrWhiteSpace(initDbNameMatch.Groups[1].Value))
                 {
-                    targetDbName = dbNameMatch.Groups[1].Value;
-                }
-                else if (!string.IsNullOrWhiteSpace(dbName) && dbName != "railway")
-                {
-                    // Use the database name from outer scope if it was set
-                    targetDbName = dbName;
+                    targetDbName = initDbNameMatch.Groups[1].Value.Trim();
                 }
 
                 // Create connection string without database, add SSL mode if not present
-                var serverConnectionString = connectionString;
-                if (dbNameMatch.Success)
+                var serverConnectionString = initConnectionString;
+                if (initDbNameMatch.Success)
                 {
-                    serverConnectionString = System.Text.RegularExpressions.Regex.Replace(connectionString, @"Database=[^;]+;?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    serverConnectionString = System.Text.RegularExpressions.Regex.Replace(initConnectionString, @"Database=[^;]+;?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 }
                 
                 // Add SSL mode if not present (Railway MySQL may require this)
