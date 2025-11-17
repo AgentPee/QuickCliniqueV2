@@ -859,6 +859,26 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] Image column already exists in students table.");
             }
 
+            // Check InsuranceReceipt
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'INSURANCERECEIPT'";
+            var insuranceReceiptExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!insuranceReceiptExists)
+            {
+                Console.WriteLine("[INIT] Adding InsuranceReceipt column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `InsuranceReceipt` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] InsuranceReceipt column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] InsuranceReceipt column already exists in students table.");
+            }
+
             // Check and create emergencies table if it doesn't exist
             Console.WriteLine("[INIT] Checking for emergencies table...");
             command.CommandText = @"

@@ -31,6 +31,7 @@ public partial class Student
     public DateOnly? Birthdate { get; set; }
     public string? Gender { get; set; }
     public string? Image { get; set; }
+    public string? InsuranceReceipt { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<History> Histories { get; set; } = new List<History>();

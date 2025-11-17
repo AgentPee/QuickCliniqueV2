@@ -42,7 +42,7 @@
                     </div>
                 }
 
-                <form asp-action="Register" method="post" class="auth-form">
+                <form asp-action="Register" method="post" enctype="multipart/form-data" class="auth-form">
                     <div asp-validation-summary="ModelOnly" class="error-message"></div>
 
                     <div class="input-group">
@@ -85,6 +85,35 @@
                         <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                         <span class="input-icon">📱</span>
                         <small class="input-hint">Must start with 09 and be 11 digits total</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label asp-for="Gender" class="control-label">Gender</label>
+                            <select asp-for="Gender" class="form-control" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger"></span>
+                            <span class="input-icon">⚧️</span>
+                        </div>
+
+                        <div class="input-group">
+                            <label asp-for="Birthdate" class="control-label">Birthdate</label>
+                            <input asp-for="Birthdate" class="form-control" type="date" required />
+                            <span asp-validation-for="Birthdate" class="text-danger"></span>
+                            <span class="input-icon">📅</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label asp-for="StudentIdImage" class="control-label">Student ID Image</label>
+                        <input asp-for="StudentIdImage" class="form-control" type="file" accept="image/*" required />
+                        <span asp-validation-for="StudentIdImage" class="text-danger"></span>
+                        <span class="input-icon">🖼️</span>
+                        <small class="input-hint">Upload a clear image of your student ID</small>
                     </div>
 
                     <div class="input-group">

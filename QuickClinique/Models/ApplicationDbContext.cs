@@ -367,6 +367,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Image)
                 .HasColumnType("varchar(500)")
                 .HasColumnName("Image");
+            entity.Property(e => e.InsuranceReceipt)
+                .HasColumnType("varchar(500)")
+                .HasColumnName("InsuranceReceipt");
 
             entity.HasOne(d => d.User).WithMany(p => p.Students)
                 .HasForeignKey(d => d.UserId)

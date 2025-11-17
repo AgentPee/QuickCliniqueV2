@@ -858,3 +858,50 @@ body {
 .mt-1-5 {
     margin-top: 1.5rem;
 }
+
+/* File Upload Styles */
+.file-upload-container {
+    margin-top: 0.5rem;
+}
+
+.file-input {
+    padding: 0.75rem;
+    cursor: pointer;
+}
+
+.file-preview-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--border-color);
+}
+
+.current-file,
+.new-file-preview {
+    margin-top: 1rem;
+}
+
+.current-file p,
+.new-file-preview p {
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--border-color);
+    object-fit: contain;
+    background: white;
+    padding: 0.5rem;
+}
+
+.file-preview-container .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
