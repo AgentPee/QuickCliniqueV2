@@ -51,7 +51,7 @@ if (!dbNameMatch.Success || string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Valu
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(new Version(8, 0, 21)),
+        new MySqlServerVersion(new Version(9, 4, 0)), // Updated to match Railway MySQL 9.4.0
         mySqlOptions => mySqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(30),
