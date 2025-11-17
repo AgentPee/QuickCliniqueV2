@@ -71,15 +71,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("ScheduleID");
             
             // Configure new columns with explicit types
+            // Note: MySQL doesn't allow DEFAULT values for TEXT/BLOB columns
+            // The application code handles empty strings via model defaults (= string.Empty)
             entity.Property(e => e.Symptoms)
-                .HasColumnType("longtext")
-                .HasDefaultValue(string.Empty);
+                .HasColumnType("longtext");
             entity.Property(e => e.TriageNotes)
-                .HasColumnType("longtext")
-                .HasDefaultValue(string.Empty);
+                .HasColumnType("longtext");
             entity.Property(e => e.CancellationReason)
-                .HasColumnType("longtext")
-                .HasDefaultValue(string.Empty);
+                .HasColumnType("longtext");
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.PatientId)

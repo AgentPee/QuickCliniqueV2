@@ -369,12 +369,23 @@ using (var scope = app.Services.CreateScope())
             if (!triageNotesColumnExists)
             {
                 Console.WriteLine("[CRITICAL] TriageNotes column missing! Adding to appointments table...");
-                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `TriageNotes` longtext NOT NULL DEFAULT ''";
+                // MySQL doesn't allow DEFAULT for TEXT/BLOB columns, so we add as nullable
+                // Then update existing rows and set to NOT NULL
+                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `TriageNotes` longtext NULL";
                 
                 try
                 {
                     await command.ExecuteNonQueryAsync();
                     Console.WriteLine("[SUCCESS] TriageNotes column added successfully to appointments table!");
+                    
+                    // Update existing NULL values to empty string
+                    command.CommandText = @"UPDATE `appointments` SET `TriageNotes` = '' WHERE `TriageNotes` IS NULL";
+                    await command.ExecuteNonQueryAsync();
+                    
+                    // Now alter to NOT NULL
+                    command.CommandText = @"ALTER TABLE `appointments` MODIFY COLUMN `TriageNotes` longtext NOT NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] TriageNotes column set to NOT NULL!");
                     
                     // Verify it was added
                     command.CommandText = @"
@@ -414,12 +425,23 @@ using (var scope = app.Services.CreateScope())
             if (!symptomsColumnExists)
             {
                 Console.WriteLine("[CRITICAL] Symptoms column missing! Adding to appointments table...");
-                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `Symptoms` longtext CHARACTER SET utf8mb4 NOT NULL DEFAULT ''";
+                // MySQL doesn't allow DEFAULT for TEXT/BLOB columns, so we add as nullable
+                // Then update existing rows and set to NOT NULL
+                command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `Symptoms` longtext CHARACTER SET utf8mb4 NULL";
                 
                 try
                 {
                     await command.ExecuteNonQueryAsync();
                     Console.WriteLine("[SUCCESS] Symptoms column added successfully to appointments table!");
+                    
+                    // Update existing NULL values to empty string
+                    command.CommandText = @"UPDATE `appointments` SET `Symptoms` = '' WHERE `Symptoms` IS NULL";
+                    await command.ExecuteNonQueryAsync();
+                    
+                    // Now alter to NOT NULL
+                    command.CommandText = @"ALTER TABLE `appointments` MODIFY COLUMN `Symptoms` longtext CHARACTER SET utf8mb4 NOT NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Symptoms column set to NOT NULL!");
                     
                     // Verify it was added
                     command.CommandText = @"
@@ -487,11 +509,21 @@ using (var scope = app.Services.CreateScope())
                 
                 try
                 {
-                    // Use direct ALTER TABLE - MySQL doesn't support IF NOT EXISTS for ADD COLUMN
-                    command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
+                    // MySQL doesn't allow DEFAULT for TEXT/BLOB columns, so we add as nullable
+                    // Then update existing rows and set to NOT NULL
+                    command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
                     
                     await command.ExecuteNonQueryAsync();
                     Console.WriteLine("[SUCCESS] CancellationReason column added successfully to appointments table!");
+                    
+                    // Update existing NULL values to empty string
+                    command.CommandText = @"UPDATE `appointments` SET `CancellationReason` = '' WHERE `CancellationReason` IS NULL";
+                    await command.ExecuteNonQueryAsync();
+                    
+                    // Now alter to NOT NULL
+                    command.CommandText = @"ALTER TABLE `appointments` MODIFY COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] CancellationReason column set to NOT NULL!");
                     
                     // Wait a moment for MySQL to commit
                     await Task.Delay(200);
@@ -704,7 +736,16 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[FINAL CHECK] CancellationReason column missing in appointments! Adding now...");
                 try
                 {
-                    verifyCommand.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT ''";
+                    // MySQL doesn't allow DEFAULT for TEXT/BLOB columns, so we add as nullable first
+                    verifyCommand.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                    await verifyCommand.ExecuteNonQueryAsync();
+                    
+                    // Update existing NULL values to empty string
+                    verifyCommand.CommandText = @"UPDATE `appointments` SET `CancellationReason` = '' WHERE `CancellationReason` IS NULL";
+                    await verifyCommand.ExecuteNonQueryAsync();
+                    
+                    // Now alter to NOT NULL
+                    verifyCommand.CommandText = @"ALTER TABLE `appointments` MODIFY COLUMN `CancellationReason` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL";
                     await verifyCommand.ExecuteNonQueryAsync();
                     Console.WriteLine("[FINAL CHECK] CancellationReason column added successfully!");
                 }
