@@ -133,9 +133,8 @@ builder.Services.AddDistributedMemoryCache();
 // Configure Data Protection (fixes session/antiforgery token issues)
 // Note: In Railway, containers are ephemeral, so keys will regenerate on restart
 // This is acceptable - users will just need to log in again after deployments
-builder.Services.AddDataProtection()
-    .SetApplicationName("QuickClinique")
-    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+// Basic configuration is sufficient - ASP.NET Core will handle key management automatically
+builder.Services.AddDataProtection();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
