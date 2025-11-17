@@ -69,6 +69,17 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.ScheduleId)
                 .HasColumnType("int(100)")
                 .HasColumnName("ScheduleID");
+            
+            // Configure new columns with explicit types
+            entity.Property(e => e.Symptoms)
+                .HasColumnType("longtext")
+                .HasDefaultValue(string.Empty);
+            entity.Property(e => e.TriageNotes)
+                .HasColumnType("longtext")
+                .HasDefaultValue(string.Empty);
+            entity.Property(e => e.CancellationReason)
+                .HasColumnType("longtext")
+                .HasDefaultValue(string.Empty);
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.PatientId)
