@@ -209,6 +209,7 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
+    margin-bottom: 0;
 }
 
 .main-content {
@@ -1013,13 +1014,14 @@
         font-size: 1.75rem;
     }
 }
-}
+
 /* Patient Messages Section */
 .messages-section {
     background: var(--white);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     margin-top: 2rem;
+    margin-bottom: 2rem;
     overflow: hidden;
 }
 
@@ -1185,12 +1187,22 @@
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
 }
 
     .chat-empty i {
         font-size: 4rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         opacity: 0.5;
+        color: var(--primary-teal);
+    }
+
+    .chat-empty p {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin: 0;
     }
 
 .chat-content {
@@ -1505,6 +1517,10 @@
         padding: 0.875rem;
     }
 
+    .messages-section {
+        margin-top: 2rem;
+    }
+
     .messages-content {
         grid-template-columns: 1fr;
         height: 400px;
@@ -1519,6 +1535,19 @@
     
     .chat-area {
         height: calc(100% - 200px);
+    }
+    
+    .chat-empty {
+        padding: 1.5rem;
+    }
+
+    .chat-empty i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .chat-empty p {
+        font-size: 1rem;
     }
     
     .chat-header-patient {

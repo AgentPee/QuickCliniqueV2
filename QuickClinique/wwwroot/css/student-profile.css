@@ -833,3 +833,28 @@ body {
         justify-content: center;
     }
 }
+
+/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
+
+/* Button with teal gradient */
+.btn-ehr-gradient {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%) !important;
+}
+
+/* Section separator */
+.form-section-separator {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 3px solid #e2e8f0;
+}
+
+/* Muted text */
+.text-muted-custom {
+    color: #718096;
+    margin-bottom: 1.5rem;
+}
+
+/* Spacing utilities */
+.mt-1-5 {
+    margin-top: 1.5rem;
+}

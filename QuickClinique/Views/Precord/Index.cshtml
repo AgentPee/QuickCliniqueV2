@@ -52,7 +52,7 @@
                             <td>@patient.Email</td>
                             <td>@patient.PhoneNumber</td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                <div class="flex-align-center">
                                     @if (patient.IsActive)
                                     {
                                         <span class="badge badge-success">
@@ -67,13 +67,13 @@
                                     }
                                     @if (patient.IsActive)
                                     {
-                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', true)" class="btn-action btn-delete" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', true)" class="btn-action btn-delete btn-sm-custom">
                                             <i class="fas fa-ban"></i> Deactivate
                                         </button>
                                     }
                                     else
                                     {
-                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', false)" class="btn-action" style="background-color: #28a745; color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                        <button onclick="showToggleModal(@patient.StudentId, '@patient.FirstName @patient.LastName', false)" class="btn-action status-button-activate">
                                             <i class="fas fa-check"></i> Activate
                                         </button>
                                     }
@@ -143,12 +143,12 @@
             <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button onclick="closeModal('toggleModal')" class="btn-action btn-view" style="padding: 0.75rem 2rem;">
+            <p id="toggleMessage" class="toggle-message-text"></p>
+            <div class="toggle-modal-buttons">
+                <button onclick="closeModal('toggleModal')" class="btn-action btn-view toggle-modal-button">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button onclick="confirmToggle()" class="btn-action" id="toggleConfirmButton" style="padding: 0.75rem 2rem;">
+                <button onclick="confirmToggle()" class="btn-action toggle-modal-button" id="toggleConfirmButton">
                     <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
                 </button>
             </div>
@@ -194,7 +194,7 @@
                 cell.style.textAlign = 'center';
                 cell.style.padding = '2rem';
                 cell.style.color = '#718096';
-                cell.innerHTML = '<i class="fas fa-search" style="font-size: 2rem; display: block; margin-bottom: 1rem; color: #cbd5e0;"></i><p style="margin: 0;">No patients match your search criteria.</p>';
+                cell.innerHTML = '<i class="fas fa-search icon-2x d-block mb-1 text-muted"></i><p class="m-0">No patients match your search criteria.</p>';
             }
         }
 
@@ -257,11 +257,11 @@
                     
                     modalBody.innerHTML = content.innerHTML;
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load patient details.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load patient details.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading patient details. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading patient details. Please try again.</p>';
             }
         }
 
@@ -283,11 +283,11 @@
                 if (form) {
                     form.addEventListener('submit', (e) => submitEditForm(e, patientId));
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load edit form.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading edit form. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading edit form. Please try again.</p>';
             }
         }
 

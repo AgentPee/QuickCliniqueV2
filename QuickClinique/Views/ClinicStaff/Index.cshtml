@@ -5,380 +5,6 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/StaffIndex.css" />
-    <style>
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-success {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .badge-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        /* ===== ENHANCED MODAL STYLES - THEME CONSISTENT ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal[style*="flex"] {
-            display: flex !important;
-        }
-
-        @@keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .modal-content {
-            background: var(--white, #FFFFFF);
-            margin: 1rem;
-            padding: 0;
-            border: none;
-            border-radius: var(--radius-lg, 16px);
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            box-shadow: var(--shadow-lg, 0 16px 48px rgba(0, 0, 0, 0.12));
-            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @@keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-content.modal-large {
-            max-width: 1000px;
-        }
-
-        .modal-content.modal-medium {
-            max-width: 700px;
-        }
-
-        /* Modal Header - Enhanced with Teal Gradient */
-        .modal-header {
-            padding: 1.75rem 2rem;
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.95) 0%, rgba(68, 160, 141, 0.95) 100%);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            color: var(--white, #FFFFFF);
-            border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-            pointer-events: none;
-            animation: headerShimmer 8s ease-in-out infinite;
-        }
-
-        @@keyframes headerShimmer {
-            0%, 100% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-            50% {
-                transform: translate(30%, 30%) rotate(180deg);
-            }
-        }
-
-        .modal-header-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            letter-spacing: -0.02em;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .modal-header h2 i {
-            font-size: 1.75rem;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-        }
-
-        /* Enhanced Close Button */
-        .modal-close {
-            background: rgba(255, 255, 255, 0.15);
-            border: none;
-            color: var(--white, #FFFFFF);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            z-index: 1;
-            line-height: 1;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg) scale(1.1);
-        }
-
-        .modal-close:active {
-            transform: rotate(90deg) scale(0.95);
-        }
-
-        /* Modal Body - Enhanced */
-        .modal-body {
-            padding: 2.5rem;
-            max-height: calc(90vh - 100px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            background: var(--white, #FFFFFF);
-        }
-
-        /* Custom Scrollbar for Modal Body */
-        .modal-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-body::-webkit-scrollbar-track {
-            background: var(--light-bg, #F0F4F8);
-            border-radius: 4px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-            background: var(--primary-teal, #4ECDC4);
-            border-radius: 4px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb:hover {
-            background: var(--dark-teal, #3BA89F);
-        }
-
-        /* Loading Spinner - Theme Consistent */
-        .loading-spinner {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: var(--primary-teal, #4ECDC4);
-        }
-
-        .loading-spinner i {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            display: block;
-            animation: spin 1s linear infinite;
-        }
-
-        @@keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading-spinner span {
-            display: block;
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--text-muted, #718096);
-            margin-top: 0.5rem;
-        }
-
-        /* Form Styles in Modal - Theme Consistent */
-        .modal-body .staff-details-container,
-        .modal-body .staff-edit-container,
-        .modal-body .edit-form-container {
-            padding: 0;
-        }
-
-        .modal-body form {
-            max-width: 100%;
-        }
-
-        .modal-body .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-body label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-dark, #2D3748);
-            font-size: 0.95rem;
-        }
-
-        .modal-body input,
-        .modal-body select,
-        .modal-body textarea {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--border-color, #E2E8F0);
-            border-radius: var(--radius-sm, 8px);
-            font-size: 1rem;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            transition: all 0.3s ease;
-            background: var(--white, #FFFFFF);
-            color: var(--text-dark, #2D3748);
-        }
-
-        .modal-body input:focus,
-        .modal-body select:focus,
-        .modal-body textarea:focus {
-            outline: none;
-            border-color: var(--primary-teal, #4ECDC4);
-            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
-        }
-
-        .modal-body textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .modal-body .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius-sm, 8px);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .modal-body .btn-primary {
-            background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
-            color: var(--white, #FFFFFF);
-        }
-
-        .modal-body .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
-        }
-
-        .modal-body .btn-secondary {
-            background: var(--light-bg, #F0F4F8);
-            color: var(--text-dark, #2D3748);
-        }
-
-        .modal-body .btn-secondary:hover {
-            background: var(--border-color, #E2E8F0);
-        }
-
-        .modal-body .btn-danger,
-        .modal-body .btn[style*="background: linear-gradient"][style*="#dc3545"] {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
-            color: var(--white, #FFFFFF) !important;
-        }
-
-        .modal-body .btn-danger:hover,
-        .modal-body .btn[style*="background: linear-gradient"][style*="#dc3545"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
-        }
-
-        /* Responsive Modal Styles */
-        @@media (max-width: 768px) {
-            .modal-content {
-                width: 95%;
-                margin: 0.5rem;
-                max-height: 95vh;
-            }
-
-            .modal-header {
-                padding: 1.25rem 1.5rem;
-            }
-
-            .modal-header h2 {
-                font-size: 1.25rem;
-            }
-
-            .modal-body {
-                padding: 1.5rem;
-            }
-
-            .modal-content.modal-large,
-            .modal-content.modal-medium {
-                max-width: 100%;
-            }
-        }
-
-        @@media (max-width: 480px) {
-            .modal-header {
-                padding: 1rem;
-            }
-
-            .modal-header h2 {
-                font-size: 1.1rem;
-            }
-
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .modal-close {
-                width: 32px;
-                height: 32px;
-                font-size: 1.25rem;
-            }
-        }
-    </style>
 }
 
 <div class="staff-management">
@@ -414,7 +40,7 @@
                         <td>@item.PhoneNumber</td>
                         <td>@item.User?.Role</td>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="flex-align-center">
                                 @{
                                     var isActive = item.IsActive;
                                     var staffName = $"{item.FirstName} {item.LastName}";
@@ -434,13 +60,13 @@
                                 }
                                 @if (isActive)
                                 {
-                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', true)" class="btn btn-danger btn-sm" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', true)" class="btn btn-danger btn-sm btn-sm-custom">
                                         <i class="fas fa-ban"></i> Deactivate
                                     </button>
                                 }
                                 else
                                 {
-                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', false)" class="btn btn-success btn-sm" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                    <button onclick="showToggleModal(@item.ClinicStaffId, '@Html.Raw(escapedName)', false)" class="btn btn-success btn-sm btn-sm-custom">
                                         <i class="fas fa-check"></i> Activate
                                     </button>
                                 }
@@ -505,12 +131,12 @@
             <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="toggleMessage" style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center; color: var(--text-dark, #2D3748); line-height: 1.6;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <button onclick="closeModal('toggleModal')" class="btn btn-secondary" style="padding: 0.75rem 2rem; min-width: 120px;">
+            <p id="toggleMessage" class="toggle-message-text"></p>
+            <div class="toggle-modal-buttons">
+                <button onclick="closeModal('toggleModal')" class="btn btn-secondary toggle-modal-button">
                     <i class="fas fa-times"></i> Cancel
                 </button>
-                <button onclick="confirmToggle()" class="btn btn-primary" id="toggleConfirmButton" style="padding: 0.75rem 2rem; min-width: 120px;">
+                <button onclick="confirmToggle()" class="btn btn-primary toggle-modal-button" id="toggleConfirmButton">
                     <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
                 </button>
             </div>
@@ -568,11 +194,11 @@
                     
                     modalBody.innerHTML = content.innerHTML;
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load staff details.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load staff details.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading staff details. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading staff details. Please try again.</p>';
             }
         }
 
@@ -616,14 +242,14 @@
                     if (loadedForm) {
                         loadedForm.addEventListener('submit', (e) => submitEditForm(e, staffId));
                     } else {
-                        modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                        modalBody.innerHTML = '<p class="modal-error-text">Failed to load edit form.</p>';
                     }
                 } else {
-                    modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Failed to load edit form.</p>';
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load edit form.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modalBody.innerHTML = '<p style="text-align: center; color: #dc3545;">Error loading edit form. Please try again.</p>';
+                modalBody.innerHTML = '<p class="modal-error-text">Error loading edit form. Please try again.</p>';
             }
         }
 

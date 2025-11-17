@@ -349,5 +349,6 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, message = $"Error updating patient status: {ex.Message}" });
             }
         }
+
     }
 }

@@ -22,7 +22,7 @@
             <i class="fas fa-info-circle"></i>
             <div>
                 <strong>Status:</strong> @Model.AppointmentStatus
-                <div style="font-size: 0.9rem; font-weight: normal; margin-top: 0.25rem;">
+                <div class="status-subtext">
                     Queue Status: @Model.QueueStatus | Queue Number: #@Model.QueueNumber
                 </div>
             </div>
@@ -113,7 +113,7 @@
                         }
                         else
                         {
-                            <em style="color: #6c757d;">No symptoms provided</em>
+                            <em class="text-muted-symptoms">No symptoms provided</em>
                         }
                     </div>
                 </span>
