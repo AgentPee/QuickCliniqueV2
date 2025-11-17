@@ -27,6 +27,11 @@ public partial class Student
     // Account activation status
     public bool IsActive { get; set; } = true;
 
+    // Personal information
+    public DateOnly? Birthdate { get; set; }
+    public string? Gender { get; set; }
+    public string? Image { get; set; }
+
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<History> Histories { get; set; } = new List<History>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();

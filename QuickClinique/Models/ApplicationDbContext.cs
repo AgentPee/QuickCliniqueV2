@@ -20,6 +20,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Clinicstaff> Clinicstaffs { get; set; }
 
+    public virtual DbSet<Emergency> Emergencies { get; set; }
+
     public virtual DbSet<History> Histories { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
@@ -134,6 +136,27 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Clinicstaffs)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("clinicstaff_ibfk_1");
+        });
+
+        modelBuilder.Entity<Emergency>(entity =>
+        {
+            entity.HasKey(e => e.EmergencyId).HasName("PRIMARY");
+
+            entity.ToTable("emergencies");
+
+            entity.Property(e => e.EmergencyId)
+                .HasColumnType("int(100)")
+                .HasColumnName("EmergencyID");
+            entity.Property(e => e.Location)
+                .HasColumnType("text")
+                .HasColumnName("Location");
+            entity.Property(e => e.Needs)
+                .HasColumnType("text")
+                .HasColumnName("Needs");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("current_timestamp(6)")
+                .HasColumnType("timestamp(6)")
+                .HasColumnName("CreatedAt");
         });
 
         modelBuilder.Entity<History>(entity =>
@@ -270,6 +293,21 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.PatientId)
                 .HasColumnType("int(100)")
                 .HasColumnName("PatientID");
+            entity.Property(e => e.PulseRate)
+                .HasColumnType("int(50)")
+                .HasColumnName("PulseRate");
+            entity.Property(e => e.BloodPressure)
+                .HasColumnType("varchar(20)")
+                .HasColumnName("BloodPressure");
+            entity.Property(e => e.Temperature)
+                .HasColumnType("decimal(5,2)")
+                .HasColumnName("Temperature");
+            entity.Property(e => e.RespiratoryRate)
+                .HasColumnType("int(50)")
+                .HasColumnName("RespiratoryRate");
+            entity.Property(e => e.OxygenSaturation)
+                .HasColumnType("int(50)")
+                .HasColumnName("OxygenSaturation");
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Precords)
                 .HasForeignKey(d => d.PatientId)
@@ -320,6 +358,15 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasColumnType("tinyint(1)")
                 .HasDefaultValue(true);
+            entity.Property(e => e.Birthdate)
+                .HasColumnType("date")
+                .HasColumnName("Birthdate");
+            entity.Property(e => e.Gender)
+                .HasColumnType("varchar(50)")
+                .HasColumnName("Gender");
+            entity.Property(e => e.Image)
+                .HasColumnType("varchar(500)")
+                .HasColumnName("Image");
 
             entity.HasOne(d => d.User).WithMany(p => p.Students)
                 .HasForeignKey(d => d.UserId)

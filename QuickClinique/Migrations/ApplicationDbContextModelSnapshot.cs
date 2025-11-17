@@ -308,6 +308,21 @@ namespace QuickClinique.Migrations
                         .HasColumnType("int(100)")
                         .HasColumnName("PatientID");
 
+                    b.Property<int?>("PulseRate")
+                        .HasColumnType("int(50)");
+
+                    b.Property<string>("BloodPressure")
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<decimal?>("Temperature")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int?>("RespiratoryRate")
+                        .HasColumnType("int(50)");
+
+                    b.Property<int?>("OxygenSaturation")
+                        .HasColumnType("int(50)");
+
                     b.HasKey("RecordId")
                         .HasName("PRIMARY");
 
@@ -315,6 +330,36 @@ namespace QuickClinique.Migrations
                         .HasDatabaseName("PatientID3");
 
                     b.ToTable("precords", (string)null);
+                });
+
+            modelBuilder.Entity("QuickClinique.Models.Emergency", b =>
+                {
+                    b.Property<int>("EmergencyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(100)")
+                        .HasColumnName("EmergencyID");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("EmergencyId"));
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp(6)")
+                        .HasDefaultValueSql("current_timestamp(6)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Location");
+
+                    b.Property<string>("Needs")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Needs");
+
+                    b.HasKey("EmergencyId")
+                        .HasName("PRIMARY");
+
+                    b.ToTable("emergencies", (string)null);
                 });
 
             modelBuilder.Entity("QuickClinique.Models.Schedule", b =>
@@ -405,6 +450,15 @@ namespace QuickClinique.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int(100)")
                         .HasColumnName("UserID");
+
+                    b.Property<DateOnly?>("Birthdate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("varchar(500)");
 
                     b.HasKey("StudentId")
                         .HasName("PRIMARY");
