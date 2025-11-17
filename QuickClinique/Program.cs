@@ -693,6 +693,225 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] IsActive column already exists in clinicstaff table.");
             }
 
+            // Check and add vitals columns to precords table
+            Console.WriteLine("[INIT] Checking for vitals columns in precords table...");
+            
+            // Check PulseRate
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'precords' 
+                AND UPPER(COLUMN_NAME) = 'PULSERATE'";
+            var pulseRateExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!pulseRateExists)
+            {
+                Console.WriteLine("[INIT] Adding PulseRate column to precords table...");
+                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `PulseRate` int(50) NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] PulseRate column added to precords table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] PulseRate column already exists in precords table.");
+            }
+
+            // Check BloodPressure
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'precords' 
+                AND UPPER(COLUMN_NAME) = 'BLOODPRESSURE'";
+            var bloodPressureExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!bloodPressureExists)
+            {
+                Console.WriteLine("[INIT] Adding BloodPressure column to precords table...");
+                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `BloodPressure` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] BloodPressure column added to precords table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] BloodPressure column already exists in precords table.");
+            }
+
+            // Check Temperature
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'precords' 
+                AND UPPER(COLUMN_NAME) = 'TEMPERATURE'";
+            var temperatureExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!temperatureExists)
+            {
+                Console.WriteLine("[INIT] Adding Temperature column to precords table...");
+                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `Temperature` decimal(5,2) NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] Temperature column added to precords table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] Temperature column already exists in precords table.");
+            }
+
+            // Check RespiratoryRate
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'precords' 
+                AND UPPER(COLUMN_NAME) = 'RESPIRATORYRATE'";
+            var respiratoryRateExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!respiratoryRateExists)
+            {
+                Console.WriteLine("[INIT] Adding RespiratoryRate column to precords table...");
+                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `RespiratoryRate` int(50) NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] RespiratoryRate column added to precords table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] RespiratoryRate column already exists in precords table.");
+            }
+
+            // Check OxygenSaturation
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'precords' 
+                AND UPPER(COLUMN_NAME) = 'OXYGENSATURATION'";
+            var oxygenSaturationExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!oxygenSaturationExists)
+            {
+                Console.WriteLine("[INIT] Adding OxygenSaturation column to precords table...");
+                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `OxygenSaturation` int(50) NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] OxygenSaturation column added to precords table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] OxygenSaturation column already exists in precords table.");
+            }
+
+            // Check and add Birthdate, Gender, and Image columns to students table
+            Console.WriteLine("[INIT] Checking for Birthdate, Gender, and Image columns in students table...");
+            
+            // Check Birthdate
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'BIRTHDATE'";
+            var birthdateExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!birthdateExists)
+            {
+                Console.WriteLine("[INIT] Adding Birthdate column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `Birthdate` date NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] Birthdate column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] Birthdate column already exists in students table.");
+            }
+
+            // Check Gender
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'GENDER'";
+            var genderExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!genderExists)
+            {
+                Console.WriteLine("[INIT] Adding Gender column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `Gender` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] Gender column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] Gender column already exists in students table.");
+            }
+
+            // Check Image
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'IMAGE'";
+            var imageExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!imageExists)
+            {
+                Console.WriteLine("[INIT] Adding Image column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `Image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] Image column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] Image column already exists in students table.");
+            }
+
+            // Check and create emergencies table if it doesn't exist
+            Console.WriteLine("[INIT] Checking for emergencies table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'emergencies'";
+            var emergenciesTableExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            
+            if (!emergenciesTableExists)
+            {
+                Console.WriteLine("[INIT] emergencies table does not exist. Creating it...");
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS `emergencies` (
+                        `EmergencyID` int(100) NOT NULL AUTO_INCREMENT,
+                        `Location` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                        `Needs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                        `CreatedAt` timestamp(6) NOT NULL DEFAULT current_timestamp(6),
+                        CONSTRAINT `PRIMARY` PRIMARY KEY (`EmergencyID`)
+                    ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci";
+                
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] emergencies table created successfully!");
+                    
+                    // Verify it was created
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.TABLES 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'emergencies'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] emergencies table verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("emergencies table verification failed - table was not created successfully");
+                    }
+                }
+                catch (Exception createEx)
+                {
+                    Console.WriteLine($"[ERROR] Failed to create emergencies table: {createEx.Message}");
+                    Console.WriteLine($"[ERROR] Stack trace: {createEx.StackTrace}");
+                    throw;
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] emergencies table already exists.");
+            }
+
                 // Close the connection to ensure EF Core picks up schema changes
                 if (connection.State == System.Data.ConnectionState.Open)
                 {
