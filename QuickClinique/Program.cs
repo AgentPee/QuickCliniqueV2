@@ -154,10 +154,9 @@ using (var scope = app.Services.CreateScope())
             }
             else
             {
-                // Parse database name from connection string
+                // Parse database name from connection string (reuse the match from outer scope)
                 var dbName = "QuickClinique"; // Default
-                var dbNameMatch = System.Text.RegularExpressions.Regex.Match(connectionString, @"Database=([^;]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                if (dbNameMatch.Success)
+                if (dbNameMatch.Success && !string.IsNullOrWhiteSpace(dbNameMatch.Groups[1].Value))
                 {
                     dbName = dbNameMatch.Groups[1].Value;
                 }
