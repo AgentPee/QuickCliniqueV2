@@ -144,19 +144,38 @@ public partial class ApplicationDbContext : DbContext
 
             entity.ToTable("emergencies");
 
+            entity.HasIndex(e => e.StudentId, "StudentID");
+
             entity.Property(e => e.EmergencyId)
                 .HasColumnType("int(100)")
                 .HasColumnName("EmergencyID");
+            entity.Property(e => e.StudentId)
+                .HasColumnType("int(100)")
+                .HasColumnName("StudentID");
+            entity.Property(e => e.StudentName)
+                .HasColumnType("text")
+                .HasColumnName("StudentName");
+            entity.Property(e => e.StudentIdNumber)
+                .HasColumnType("int(100)")
+                .HasColumnName("StudentIdNumber");
             entity.Property(e => e.Location)
                 .HasColumnType("text")
                 .HasColumnName("Location");
             entity.Property(e => e.Needs)
                 .HasColumnType("text")
                 .HasColumnName("Needs");
+            entity.Property(e => e.IsResolved)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false)
+                .HasColumnName("IsResolved");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("current_timestamp(6)")
                 .HasColumnType("timestamp(6)")
                 .HasColumnName("CreatedAt");
+
+            entity.HasOne(d => d.Student).WithMany()
+                .HasForeignKey(d => d.StudentId)
+                .HasConstraintName("emergencies_ibfk_1");
         });
 
         modelBuilder.Entity<History>(entity =>

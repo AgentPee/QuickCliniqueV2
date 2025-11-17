@@ -924,6 +924,54 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
+        // POST: Student/SendSOS
+        [HttpPost]
+        [StudentOnly]
+        public async Task<IActionResult> SendSOS([FromBody] SOSRequest request)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Location))
+            {
+                return Json(new { success = false, error = "Location is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Needs))
+            {
+                return Json(new { success = false, error = "Please specify what you need" });
+            }
+
+            var student = await _context.Students.FindAsync(studentId.Value);
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found" });
+            }
+
+            var emergency = new Emergency
+            {
+                StudentId = student.StudentId,
+                StudentName = $"{student.FirstName} {student.LastName}",
+                StudentIdNumber = student.Idnumber,
+                Location = request.Location,
+                Needs = request.Needs,
+                IsResolved = false,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Emergencies.Add(emergency);
+            await _context.SaveChangesAsync();
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, message = "SOS Emergency request sent successfully!", emergencyId = emergency.EmergencyId });
+
+            TempData["SuccessMessage"] = "SOS Emergency request sent successfully!";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
         // Helper method to generate tokens
         private string GenerateToken()
         {
@@ -935,5 +983,11 @@ namespace QuickClinique.Controllers
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
                    Request.ContentType == "application/json";
         }
+    }
+
+    public class SOSRequest
+    {
+        public string Location { get; set; } = null!;
+        public string Needs { get; set; } = null!;
     }
 }

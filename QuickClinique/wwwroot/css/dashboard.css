@@ -2813,3 +2813,74 @@ input[type="date"] {
     color: #666;
     margin-bottom: 30px;
 }
+
+/* SOS Emergency Button */
+.student-dashboard .action-btn.sos-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.student-dashboard .action-btn.sos-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(220, 53, 69, 0.8);
+    }
+}
+
+/* SOS Modal Styles */
+.sos-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.sos-header .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.sos-header .btn-close {
+    filter: invert(1);
+}
+
+.needs-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.needs-options .form-check {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.needs-options .form-check:hover {
+    background: #e9ecef;
+    border-color: #4ECDC4;
+}
+
+.needs-options .form-check-input:checked ~ .form-check-label {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.needs-options .form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}

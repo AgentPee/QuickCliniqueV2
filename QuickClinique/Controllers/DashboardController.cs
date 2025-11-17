@@ -394,6 +394,56 @@ namespace QuickClinique.Controllers
 
             return Json(new { success = true, data = patientMessages });
         }
+
+        // GET: Dashboard/GetActiveEmergencies - Get unresolved emergencies
+        [HttpGet]
+        public async Task<IActionResult> GetActiveEmergencies()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var emergencies = await _context.Emergencies
+                .Where(e => !e.IsResolved)
+                .OrderByDescending(e => e.CreatedAt)
+                .Select(e => new
+                {
+                    emergencyId = e.EmergencyId,
+                    studentId = e.StudentId,
+                    studentName = e.StudentName,
+                    studentIdNumber = e.StudentIdNumber,
+                    location = e.Location,
+                    needs = e.Needs,
+                    createdAt = e.CreatedAt
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = emergencies });
+        }
+
+        // POST: Dashboard/MarkEmergencyResolved - Mark emergency as resolved
+        [HttpPost]
+        public async Task<IActionResult> MarkEmergencyResolved([FromBody] EmergencyResolveRequest request)
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var emergency = await _context.Emergencies.FindAsync(request.EmergencyId);
+            if (emergency == null)
+            {
+                return Json(new { success = false, error = "Emergency not found" });
+            }
+
+            emergency.IsResolved = true;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Emergency marked as resolved" });
+        }
     }
 
     public class DashboardViewModel
@@ -419,5 +469,10 @@ namespace QuickClinique.Controllers
     {
         public int ReceiverId { get; set; }
         public string Message { get; set; } = string.Empty;
+    }
+
+    public class EmergencyResolveRequest
+    {
+        public int EmergencyId { get; set; }
     }
 }
