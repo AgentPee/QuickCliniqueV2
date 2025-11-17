@@ -147,33 +147,80 @@
                         <strong>Clinical Triage:</strong> Record initial patient information before consultation.
                     </div>
 
-                    <!-- Patient Information Section -->
+                    <!-- Vital Signs Section -->
                     <div class="form-section">
-                        <h6 class="section-title"><i class="fas fa-user-md"></i> Patient Information</h6>
+                        <h6 class="section-title"><i class="fas fa-heartbeat"></i> Vital Signs</h6>
                         
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="triageAge">
-                                        <i class="fas fa-birthday-cake"></i> Age
+                                    <label for="triagePulseRate">
+                                        <i class="fas fa-heart"></i> Pulse Rate (bpm)
                                     </label>
-                                    <input type="number" class="form-control" id="triageAge" name="age"
-                                           placeholder="Age" min="1" max="120">
+                                    <input type="number" class="form-control" id="triagePulseRate" name="pulseRate"
+                                           placeholder="e.g., 72" min="30" max="200" oninput="updatePulseRateIndicator()">
+                                    <div class="vital-result-modal vital-result-modal-hidden" id="pulseRateResultModal">
+                                        <div class="vital-result-value-modal" id="pulseRateValueModal">-</div>
+                                        <div class="vital-result-category-modal" id="pulseRateCategoryModal">Enter value</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="triageGender">
-                                        <i class="fas fa-venus-mars"></i> Gender
+                                    <label for="triageBPSystolic">
+                                        <i class="fas fa-tachometer-alt"></i> Blood Pressure
                                     </label>
-                                    <select class="form-control" id="triageGender" name="gender">
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" id="triageBPSystolic" 
+                                                   placeholder="120" min="70" max="250" oninput="updateBPIndicator()">
+                                            <small class="form-text text-muted">Systolic</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" id="triageBPDiastolic" 
+                                                   placeholder="80" min="40" max="150" oninput="updateBPIndicator()">
+                                            <small class="form-text text-muted">Diastolic</small>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="triageBloodPressure" name="bloodPressure">
+                                    <div class="vital-result-modal vital-result-modal-hidden" id="bpResultModal">
+                                        <div class="vital-result-value-modal" id="bpValueModal">-</div>
+                                        <div class="vital-result-category-modal" id="bpCategoryModal">Enter values</div>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="triageTemperature">
+                                        <i class="fas fa-thermometer-half"></i> Temperature (°C)
+                                    </label>
+                                    <input type="number" class="form-control" id="triageTemperature" name="temperature"
+                                           placeholder="e.g., 36.5" step="0.1" min="30" max="45" oninput="updateTemperatureIndicator()">
+                                    <div class="vital-result-modal vital-result-modal-hidden" id="temperatureResultModal">
+                                        <div class="vital-result-value-modal" id="temperatureValueModal">-</div>
+                                        <div class="vital-result-category-modal" id="temperatureCategoryModal">Enter value</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="triageOxygenSaturation">
+                                        <i class="fas fa-wind"></i> Oxygen Saturation (%)
+                                    </label>
+                                    <input type="number" class="form-control" id="triageOxygenSaturation" name="oxygenSaturation"
+                                           placeholder="e.g., 98" min="70" max="100" oninput="updateOxygenSaturationIndicator()">
+                                    <div class="vital-result-modal vital-result-modal-hidden" id="oxygenSaturationResultModal">
+                                        <div class="vital-result-value-modal" id="oxygenSaturationValueModal">-</div>
+                                        <div class="vital-result-category-modal" id="oxygenSaturationCategoryModal">Enter value</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="triageBMI">
@@ -408,6 +455,197 @@
             }
             if (bmiResult) {
                 bmiResult.style.display = 'block';
+            }
+        }
+
+        // Pulse Rate Indicator
+        function updatePulseRateIndicator() {
+            const pulseRate = parseInt(document.getElementById('triagePulseRate')?.value);
+            const resultModal = document.getElementById('pulseRateResultModal');
+            const valueModal = document.getElementById('pulseRateValueModal');
+            const categoryModal = document.getElementById('pulseRateCategoryModal');
+
+            if (!pulseRate || pulseRate < 30 || pulseRate > 200) {
+                if (resultModal) resultModal.classList.add('vital-result-modal-hidden');
+                return;
+            }
+            
+            // Remove hidden class to show the modal
+            if (resultModal) resultModal.classList.remove('vital-result-modal-hidden');
+
+            let category = '';
+            let categoryClass = '';
+            let emoji = '';
+
+            if (pulseRate < 60) {
+                category = 'Bradycardia';
+                categoryClass = 'abnormal';
+                emoji = '⚠️';
+            } else if (pulseRate <= 100) {
+                category = 'Normal';
+                categoryClass = 'normal';
+                emoji = '✅';
+            } else {
+                category = 'Tachycardia';
+                categoryClass = 'abnormal';
+                emoji = '⚠️';
+            }
+
+            if (valueModal) valueModal.textContent = pulseRate + ' bpm';
+            if (categoryModal) {
+                categoryModal.textContent = emoji + ' ' + category;
+                categoryModal.className = 'vital-result-category-modal ' + categoryClass;
+            }
+        }
+
+        // Blood Pressure Indicator
+        function updateBPIndicator() {
+            const systolic = parseInt(document.getElementById('triageBPSystolic')?.value);
+            const diastolic = parseInt(document.getElementById('triageBPDiastolic')?.value);
+            const bpInput = document.getElementById('triageBloodPressure');
+            const resultModal = document.getElementById('bpResultModal');
+            const valueModal = document.getElementById('bpValueModal');
+            const categoryModal = document.getElementById('bpCategoryModal');
+
+            // Update hidden field
+            if (bpInput && systolic && diastolic) {
+                bpInput.value = systolic + '/' + diastolic;
+            }
+
+            if (!systolic || !diastolic || systolic < 70 || systolic > 250 || diastolic < 40 || diastolic > 150) {
+                if (resultModal) resultModal.classList.add('vital-result-modal-hidden');
+                return;
+            }
+            
+            // Remove hidden class to show the modal
+            if (resultModal) resultModal.classList.remove('vital-result-modal-hidden');
+
+            let category = '';
+            let categoryClass = '';
+            let emoji = '';
+
+            if (systolic < 120 && diastolic < 80) {
+                category = 'Normal';
+                categoryClass = 'normal';
+                emoji = '✅';
+            } else if (systolic < 130 && diastolic < 80) {
+                category = 'Elevated';
+                categoryClass = 'warning';
+                emoji = '⚠️';
+            } else if (systolic < 140 || diastolic < 90) {
+                category = 'High Stage 1';
+                categoryClass = 'abnormal';
+                emoji = '⚠️';
+            } else if (systolic < 180 || diastolic < 120) {
+                category = 'High Stage 2';
+                categoryClass = 'abnormal';
+                emoji = '🔴';
+            } else {
+                category = 'Hypertensive Crisis';
+                categoryClass = 'critical';
+                emoji = '🔴';
+            }
+
+            if (valueModal) valueModal.textContent = systolic + '/' + diastolic;
+            if (categoryModal) {
+                categoryModal.textContent = emoji + ' ' + category;
+                categoryModal.className = 'vital-result-category-modal ' + categoryClass;
+            }
+        }
+
+        // Temperature Indicator
+        function updateTemperatureIndicator() {
+            const temperature = parseFloat(document.getElementById('triageTemperature')?.value);
+            const resultModal = document.getElementById('temperatureResultModal');
+            const valueModal = document.getElementById('temperatureValueModal');
+            const categoryModal = document.getElementById('temperatureCategoryModal');
+
+            if (!temperature || temperature < 30 || temperature > 45) {
+                if (resultModal) resultModal.classList.add('vital-result-modal-hidden');
+                return;
+            }
+            
+            // Remove hidden class to show the modal
+            if (resultModal) resultModal.classList.remove('vital-result-modal-hidden');
+
+            let category = '';
+            let categoryClass = '';
+            let emoji = '';
+
+            if (temperature < 35) {
+                category = 'Hypothermia';
+                categoryClass = 'critical';
+                emoji = '🔴';
+            } else if (temperature < 36.1) {
+                category = 'Low';
+                categoryClass = 'warning';
+                emoji = '⚠️';
+            } else if (temperature <= 37.2) {
+                category = 'Normal';
+                categoryClass = 'normal';
+                emoji = '✅';
+            } else if (temperature <= 38.3) {
+                category = 'Low-grade Fever';
+                categoryClass = 'warning';
+                emoji = '⚠️';
+            } else if (temperature <= 39.4) {
+                category = 'Fever';
+                categoryClass = 'abnormal';
+                emoji = '🔴';
+            } else {
+                category = 'High Fever';
+                categoryClass = 'critical';
+                emoji = '🔴';
+            }
+
+            if (valueModal) valueModal.textContent = temperature.toFixed(1) + '°C';
+            if (categoryModal) {
+                categoryModal.textContent = emoji + ' ' + category;
+                categoryModal.className = 'vital-result-category-modal ' + categoryClass;
+            }
+        }
+
+        // Oxygen Saturation Indicator
+        function updateOxygenSaturationIndicator() {
+            const oxygenSat = parseInt(document.getElementById('triageOxygenSaturation')?.value);
+            const resultModal = document.getElementById('oxygenSaturationResultModal');
+            const valueModal = document.getElementById('oxygenSaturationValueModal');
+            const categoryModal = document.getElementById('oxygenSaturationCategoryModal');
+
+            if (!oxygenSat || oxygenSat < 70 || oxygenSat > 100) {
+                if (resultModal) resultModal.classList.add('vital-result-modal-hidden');
+                return;
+            }
+            
+            // Remove hidden class to show the modal
+            if (resultModal) resultModal.classList.remove('vital-result-modal-hidden');
+
+            let category = '';
+            let categoryClass = '';
+            let emoji = '';
+
+            if (oxygenSat >= 95) {
+                category = 'Normal';
+                categoryClass = 'normal';
+                emoji = '✅';
+            } else if (oxygenSat >= 90) {
+                category = 'Mild Hypoxemia';
+                categoryClass = 'warning';
+                emoji = '⚠️';
+            } else if (oxygenSat >= 85) {
+                category = 'Moderate Hypoxemia';
+                categoryClass = 'abnormal';
+                emoji = '🔴';
+            } else {
+                category = 'Severe Hypoxemia';
+                categoryClass = 'critical';
+                emoji = '🔴';
+            }
+
+            if (valueModal) valueModal.textContent = oxygenSat + '%';
+            if (categoryModal) {
+                categoryModal.textContent = emoji + ' ' + category;
+                categoryModal.className = 'vital-result-category-modal ' + categoryClass;
             }
         }
     </script>

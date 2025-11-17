@@ -628,3 +628,63 @@ input:checked + .slider {
 .bmi-result-modal-hidden {
     display: none;
 }
+
+/* Vital Signs Result Modal (same style as BMI) */
+.vital-result-modal {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+    border-left: 4px solid #4ECDC4;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+.vital-result-modal-hidden {
+    display: none;
+}
+
+.vital-result-value-modal {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.vital-result-category-modal {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    display: inline-block;
+    text-align: center;
+}
+
+.vital-result-category-modal.normal {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+}
+
+.vital-result-category-modal.warning {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+}
+
+.vital-result-category-modal.abnormal {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+}
+
+.vital-result-category-modal.critical {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}

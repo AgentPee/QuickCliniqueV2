@@ -490,9 +490,12 @@ namespace QuickClinique.Controllers
         // Helper class for NextInQueue request
         public class NextInQueueRequest
         {
-            // Optional triage data for next patient
-            public int? Age { get; set; }
-            public string? Gender { get; set; }
+            // Optional triage data for next patient - Vital Signs
+            public int? PulseRate { get; set; }
+            public string? BloodPressure { get; set; }
+            public decimal? Temperature { get; set; }
+            public int? RespiratoryRate { get; set; }
+            public int? OxygenSaturation { get; set; }
             public double? Bmi { get; set; }
             public string? Allergies { get; set; }
             public string? TriageNotes { get; set; }
@@ -648,8 +651,9 @@ namespace QuickClinique.Controllers
 
                 // Create Precord with triage data if provided
                 if (request != null && 
-                    (request.Age.HasValue || request.Gender != null || 
-                     request.Bmi.HasValue || request.Allergies != null))
+                    (request.PulseRate.HasValue || request.BloodPressure != null || 
+                     request.Temperature.HasValue || request.RespiratoryRate.HasValue ||
+                     request.OxygenSaturation.HasValue || request.Bmi.HasValue || request.Allergies != null))
                 {
                     var medicalRecord = new Precord
                     {
@@ -658,9 +662,14 @@ namespace QuickClinique.Controllers
                         Medications = "None",
                         Allergies = request.Allergies ?? "None",
                         Name = nextAppointment.Patient?.FullName ?? "Unknown",
-                        Age = request.Age ?? 0,
-                        Gender = request.Gender ?? "Not specified",
-                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0
+                        Age = 0, // Age removed from triage, will be set from patient profile if available
+                        Gender = "Not specified", // Gender removed from triage, will be set from patient profile if available
+                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0,
+                        PulseRate = request.PulseRate,
+                        BloodPressure = request.BloodPressure,
+                        Temperature = request.Temperature,
+                        RespiratoryRate = request.RespiratoryRate,
+                        OxygenSaturation = request.OxygenSaturation
                     };
 
                     _context.Precords.Add(medicalRecord);
