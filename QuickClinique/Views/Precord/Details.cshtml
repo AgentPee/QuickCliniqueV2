@@ -196,11 +196,7 @@
                             <h4 class="medical-record-title">
                                 <i class="fas fa-file-medical-alt"></i> Record #@record.RecordId
                             </h4>
-                            <div class="medical-record-actions">
-                                <a href="@Url.Action("Edit", "Precord", new { id = record.RecordId })" class="btn-action btn-edit medical-record-edit-btn">
-                                    <i class="fas fa-edit"></i> Edit Record
-                                </a>
-                            </div>
+                          
                         </div>
                         
                         <div class="medical-record-grid">
@@ -228,41 +224,26 @@
                                 <strong><i class="fas fa-weight"></i> BMI:</strong>
                                 <p class="medical-record-text">@record.Bmi</p>
                             </div>
-                            @if (record.PulseRate.HasValue)
-                            {
-                                <div>
-                                    <strong><i class="fas fa-heart"></i> Pulse Rate:</strong>
-                                    <p class="medical-record-text">@record.PulseRate.Value bpm</p>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(record.BloodPressure))
-                            {
-                                <div>
-                                    <strong><i class="fas fa-tachometer-alt"></i> Blood Pressure:</strong>
-                                    <p class="medical-record-text">@record.BloodPressure</p>
-                                </div>
-                            }
-                            @if (record.Temperature.HasValue)
-                            {
-                                <div>
-                                    <strong><i class="fas fa-thermometer-half"></i> Temperature:</strong>
-                                    <p class="medical-record-text">@record.Temperature.Value.ToString("F1")°C</p>
-                                </div>
-                            }
-                            @if (record.RespiratoryRate.HasValue)
-                            {
-                                <div>
-                                    <strong><i class="fas fa-lungs"></i> Respiratory Rate:</strong>
-                                    <p class="medical-record-text">@record.RespiratoryRate.Value breaths/min</p>
-                                </div>
-                            }
-                            @if (record.OxygenSaturation.HasValue)
-                            {
-                                <div>
-                                    <strong><i class="fas fa-wind"></i> Oxygen Saturation:</strong>
-                                    <p class="medical-record-text">@record.OxygenSaturation.Value%</p>
-                                </div>
-                            }
+                            <div>
+                                <strong><i class="fas fa-heart"></i> Pulse Rate:</strong>
+                                <p class="medical-record-text">@(record.PulseRate.HasValue ? record.PulseRate.Value + " bpm" : "N/A")</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-tachometer-alt"></i> Blood Pressure:</strong>
+                                <p class="medical-record-text">@(!string.IsNullOrEmpty(record.BloodPressure) ? record.BloodPressure : "N/A")</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-thermometer-half"></i> Temperature:</strong>
+                                <p class="medical-record-text">@(record.Temperature.HasValue ? record.Temperature.Value.ToString("F1") + "°C" : "N/A")</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-lungs"></i> Respiratory Rate:</strong>
+                                <p class="medical-record-text">@(record.RespiratoryRate.HasValue ? record.RespiratoryRate.Value + " breaths/min" : "N/A")</p>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-wind"></i> Oxygen Saturation:</strong>
+                                <p class="medical-record-text">@(record.OxygenSaturation.HasValue ? record.OxygenSaturation.Value + "%" : "N/A")</p>
+                            </div>
                         </div>
                     </div>
                 }
