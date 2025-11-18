@@ -95,6 +95,66 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-weight"></i>
+                                        <div>
+                                            <div class="info-card-label">BMI</div>
+                                            <div class="info-card-value">@record.Bmi</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-heart"></i>
+                                        <div>
+                                            <div class="info-card-label">Pulse Rate</div>
+                                            <div class="info-card-value">@(record.PulseRate.HasValue ? record.PulseRate.Value + " bpm" : "N/A")</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        <div>
+                                            <div class="info-card-label">Blood Pressure</div>
+                                            <div class="info-card-value">@(!string.IsNullOrEmpty(record.BloodPressure) ? record.BloodPressure : "N/A")</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-thermometer-half"></i>
+                                        <div>
+                                            <div class="info-card-label">Temperature</div>
+                                            <div class="info-card-value">@(record.Temperature.HasValue ? record.Temperature.Value.ToString("F1") + "°C" : "N/A")</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-lungs"></i>
+                                        <div>
+                                            <div class="info-card-label">Respiratory Rate</div>
+                                            <div class="info-card-value">@(record.RespiratoryRate.HasValue ? record.RespiratoryRate.Value + " breaths/min" : "N/A")</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fas fa-wind"></i>
+                                        <div>
+                                            <div class="info-card-label">Oxygen Saturation</div>
+                                            <div class="info-card-value">@(record.OxygenSaturation.HasValue ? record.OxygenSaturation.Value + "%" : "N/A")</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     }

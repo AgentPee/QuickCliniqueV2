@@ -33,6 +33,58 @@
     background: linear-gradient(135deg, #F0F4F8 0%, #E2E8F0 100%);
 }
 
+/* Back Button */
+.btn-back {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-back::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-back:hover {
+    background: linear-gradient(135deg, var(--dark-teal) 0%, var(--primary-teal) 100%);
+    transform: translateX(-5px);
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-back:hover::before {
+    left: 100%;
+}
+
+.btn-back i {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-back:hover i {
+    transform: translateX(-3px);
+}
+
 /* Header */
 .analytics-header {
     margin-bottom: 2.5rem;
@@ -435,6 +487,12 @@
 }
 
 @media (max-width: 992px) {
+    .btn-back {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+    
     .analytics-header {
         padding: 2rem;
     }
@@ -471,6 +529,12 @@
 }
 
 @media (max-width: 768px) {
+    .btn-back {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    
     .analytics-container {
         padding: 1.5rem;
     }
@@ -586,6 +650,16 @@
 }
 
 @media (max-width: 480px) {
+    .btn-back {
+        padding: 0.55rem 0.9rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .btn-back i {
+        font-size: 0.8rem;
+    }
+    
     .analytics-container {
         padding: 1rem;
     }
