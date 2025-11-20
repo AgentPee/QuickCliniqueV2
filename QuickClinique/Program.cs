@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Middleware;
@@ -134,8 +135,12 @@ builder.Services.AddDistributedMemoryCache();
 // Configure Data Protection to persist keys to database
 // This ensures keys persist across application restarts and deployments
 // Without this, session cookies and antiforgery tokens become invalid after restarts
+// Register our custom XML repository that uses Entity Framework Core
+builder.Services.AddSingleton<IXmlRepository, EntityFrameworkCoreXmlRepository>();
+
+// Configure Data Protection - it will automatically use the registered IXmlRepository
 builder.Services.AddDataProtection()
-    .PersistKeysToDbContext<ApplicationDbContext>();
+    .SetApplicationName("QuickClinique");
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
