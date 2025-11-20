@@ -754,6 +754,162 @@ namespace QuickClinique.Controllers
             }
         }
 
+        // POST: Appointments/PatientCancelAppointment - Patient-facing cancel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PatientCancelAppointment([FromBody] PatientCancelRequest request)
+        {
+            try
+            {
+                if (request == null || request.AppointmentId <= 0)
+                {
+                    return Json(new { success = false, error = "Invalid request data" });
+                }
+
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == request.AppointmentId);
+
+                if (appointment == null)
+                {
+                    return Json(new { success = false, error = "Appointment not found" });
+                }
+
+                // Verify patient ownership (optional - you may want to add session check)
+                // var studentId = HttpContext.Session.GetInt32("StudentId");
+                // if (studentId == null || appointment.PatientId != studentId)
+                // {
+                //     return Json(new { success = false, error = "Unauthorized" });
+                // }
+
+                if (appointment.AppointmentStatus == "Cancelled")
+                {
+                    return Json(new { success = false, error = "Appointment is already cancelled" });
+                }
+
+                if (appointment.AppointmentStatus == "Completed")
+                {
+                    return Json(new { success = false, error = "Cannot cancel a completed appointment" });
+                }
+
+                if (appointment.AppointmentStatus == "In Progress")
+                {
+                    return Json(new { success = false, error = "Cannot cancel an appointment that is in progress" });
+                }
+
+                appointment.AppointmentStatus = "Cancelled";
+                appointment.QueueStatus = "Cancelled";
+                appointment.CancellationReason = "Cancelled by patient";
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Appointment cancelled successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to cancel appointment" });
+            }
+        }
+
+        // POST: Appointments/PatientRescheduleAppointment - Patient-facing reschedule
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PatientRescheduleAppointment([FromBody] PatientRescheduleRequest request)
+        {
+            try
+            {
+                if (request == null || request.AppointmentId <= 0 || string.IsNullOrEmpty(request.NewDate))
+                {
+                    return Json(new { success = false, error = "Invalid request data" });
+                }
+
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == request.AppointmentId);
+
+                if (appointment == null)
+                {
+                    return Json(new { success = false, error = "Appointment not found" });
+                }
+
+                // Verify patient ownership (optional)
+                // var studentId = HttpContext.Session.GetInt32("StudentId");
+                // if (studentId == null || appointment.PatientId != studentId)
+                // {
+                //     return Json(new { success = false, error = "Unauthorized" });
+                // }
+
+                if (appointment.AppointmentStatus == "Completed")
+                {
+                    return Json(new { success = false, error = "Cannot reschedule a completed appointment" });
+                }
+
+                if (appointment.AppointmentStatus == "In Progress")
+                {
+                    return Json(new { success = false, error = "Cannot reschedule an appointment that is in progress" });
+                }
+
+                // Parse the new date
+                if (!DateOnly.TryParse(request.NewDate, out DateOnly newDate))
+                {
+                    return Json(new { success = false, error = "Invalid date format" });
+                }
+
+                // Check if date is in the future
+                if (newDate <= DateOnly.FromDateTime(DateTime.Today))
+                {
+                    return Json(new { success = false, error = "Please select a future date" });
+                }
+
+                // Find available schedule for the new date
+                var availableSchedule = await _context.Schedules
+                    .Where(s => s.Date == newDate && s.IsAvailable == "Yes")
+                    .OrderBy(s => s.StartTime)
+                    .FirstOrDefaultAsync();
+
+                if (availableSchedule == null)
+                {
+                    return Json(new { success = false, error = "No available slots for the selected date. Please choose another date." });
+                }
+
+                // Update appointment to pending status and assign new schedule
+                appointment.AppointmentStatus = "Pending";
+                appointment.QueueStatus = "Pending";
+                appointment.ScheduleId = availableSchedule.ScheduleId;
+                appointment.QueueNumber = 0; // Reset queue number
+
+                // Mark old schedule as available
+                if (appointment.Schedule != null)
+                {
+                    appointment.Schedule.IsAvailable = "Yes";
+                }
+
+                // Mark new schedule as unavailable
+                availableSchedule.IsAvailable = "No";
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Appointment rescheduled successfully. Please wait for confirmation." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = "Failed to reschedule appointment" });
+            }
+        }
+
+        // Helper classes for patient requests
+        public class PatientCancelRequest
+        {
+            public int AppointmentId { get; set; }
+        }
+
+        public class PatientRescheduleRequest
+        {
+            public int AppointmentId { get; set; }
+            public string NewDate { get; set; } = string.Empty;
+        }
+
         // POST: Appointments/ConfirmAppointment
         [HttpPost]
         [ValidateAntiForgeryToken]

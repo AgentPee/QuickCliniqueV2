@@ -1305,17 +1305,41 @@
                     day: 'numeric'
                 });
 
+                // Determine if buttons should be shown (only for Pending, Confirmed, or Waiting status)
+                const canCancel = apt.appointmentStatus === 'Pending' || apt.appointmentStatus === 'Confirmed' || apt.queueStatus === 'Waiting';
+                const canReschedule = apt.appointmentStatus === 'Pending' || apt.appointmentStatus === 'Confirmed';
+                
                 html += `
                     <div class="appointment-item" style="background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%); border-left: 4px solid #4ECDC4; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; transition: all 0.3s ease; border: 2px solid #E2E8F0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                             <span style="font-weight: 700; color: #2D3748; font-size: 1.1rem;">${formattedDate}</span>
                             <span class="status-badge ${statusClass}" style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 0.5rem;">${apt.appointmentStatus}</span>
                         </div>
-                        <div style="color: #718096; font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500;">
+                        <div style="color: #718096; font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500; margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center;"><i class="fas fa-stethoscope" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> ${apt.reasonForVisit}</div>
                             <div style="display: flex; align-items: center;"><i class="fas fa-clock" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> ${apt.schedule?.startTime || 'TBA'} - ${apt.schedule?.endTime || 'TBA'}</div>
                             <div style="display: flex; align-items: center;"><i class="fas fa-list-ol" style="margin-right: 0.75rem; color: #4ECDC4; width: 20px; text-align: center;"></i> Queue #${apt.queueNumber} - ${apt.queueStatus}</div>
                         </div>
+                        ${(canCancel || canReschedule) ? `
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E2E8F0;">
+                            ${canCancel ? `
+                            <button onclick="cancelPatientAppointment(${apt.appointmentId})" 
+                                    style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.3)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <i class="fas fa-times-circle"></i> Cancel
+                            </button>
+                            ` : ''}
+                            ${canReschedule ? `
+                            <button onclick="reschedulePatientAppointment(${apt.appointmentId})" 
+                                    style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(78, 205, 196, 0.3)'"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <i class="fas fa-calendar-alt"></i> Reschedule
+                            </button>
+                            ` : ''}
+                        </div>
+                        ` : ''}
                     </div>
                 `;
             });
@@ -1347,6 +1371,93 @@
                     </button>
                 </div>
             `;
+        }
+
+        // Cancel Patient Appointment
+        async function cancelPatientAppointment(appointmentId) {
+            if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const response = await fetch('/Appointments/PatientCancelAppointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token,
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({ appointmentId: appointmentId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Appointment cancelled successfully.');
+                    loadDashboardData(); // Reload appointments
+                } else {
+                    alert('Failed to cancel appointment: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                alert('An error occurred while cancelling the appointment. Please try again.');
+            }
+        }
+
+        // Reschedule Patient Appointment
+        async function reschedulePatientAppointment(appointmentId) {
+            // Prompt for new date
+            const newDate = prompt('Please enter the new date for your appointment (YYYY-MM-DD):');
+            
+            if (!newDate) {
+                return;
+            }
+
+            // Validate date format
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(newDate)) {
+                alert('Invalid date format. Please use YYYY-MM-DD format.');
+                return;
+            }
+
+            // Check if date is in the future
+            const selectedDate = new Date(newDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                alert('Please select a future date.');
+                return;
+            }
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const response = await fetch('/Appointments/PatientRescheduleAppointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token,
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({ 
+                        appointmentId: appointmentId,
+                        newDate: newDate
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Appointment rescheduled successfully. Please wait for confirmation.');
+                    loadDashboardData(); // Reload appointments
+                } else {
+                    alert('Failed to reschedule appointment: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error rescheduling appointment:', error);
+                alert('An error occurred while rescheduling the appointment. Please try again.');
+            }
         }
 
     </script>
