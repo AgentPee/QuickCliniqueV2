@@ -256,6 +256,40 @@
                     if (bottomButtons) bottomButtons.remove();
                     
                     modalBody.innerHTML = content.innerHTML;
+                    
+                    // Fix image paths - convert relative paths to absolute URLs
+                    const images = modalBody.querySelectorAll('img[src]');
+                    images.forEach(img => {
+                        const src = img.getAttribute('src');
+                        if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
+                            // If it's a relative path, make it absolute
+                            if (src.startsWith('/')) {
+                                // Already absolute from root, keep as is
+                                img.src = src;
+                            } else if (src.startsWith('~/')) {
+                                // Convert ~/ to root
+                                img.src = src.replace('~/', '/');
+                            } else {
+                                // Relative path, make absolute from root
+                                img.src = '/' + src;
+                            }
+                        }
+                    });
+                    
+                    // Fix anchor hrefs for image links
+                    const imageLinks = modalBody.querySelectorAll('a[href]');
+                    imageLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('#')) {
+                            if (href.startsWith('/')) {
+                                link.href = href;
+                            } else if (href.startsWith('~/')) {
+                                link.href = href.replace('~/', '/');
+                            } else {
+                                link.href = '/' + href;
+                            }
+                        }
+                    });
                 } else {
                     modalBody.innerHTML = '<p class="modal-error-text">Failed to load patient details.</p>';
                 }

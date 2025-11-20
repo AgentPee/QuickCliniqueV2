@@ -89,22 +89,146 @@ document.addEventListener('DOMContentLoaded', function () {
     setupFilePreview('StudentIdImageBack', 'preview-back');
 });
 
+// Helper function to copy file from one input to another (cross-browser compatible)
+function copyFileToInput(sourceInput, targetInput) {
+    if (!sourceInput.files || sourceInput.files.length === 0) return;
+    
+    const file = sourceInput.files[0];
+    
+    // Modern browsers (Chrome, Firefox, Edge, Safari 14+)
+    if (typeof DataTransfer !== 'undefined') {
+        try {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            targetInput.files = dataTransfer.files;
+            return true;
+        } catch (e) {
+            console.warn('DataTransfer not fully supported, using fallback');
+        }
+    }
+    
+    // Fallback for older browsers: directly assign files if possible
+    try {
+        // This works in some browsers
+        Object.defineProperty(targetInput, 'files', {
+            value: sourceInput.files,
+            writable: false
+        });
+        return true;
+    } catch (e) {
+        // If that doesn't work, we'll need to use a different approach
+        console.warn('Direct file assignment not supported');
+    }
+    
+    return false;
+}
+
+// Function to open file upload (file explorer)
+function openFileUpload(inputId) {
+    const uploadInput = document.getElementById(inputId + 'Upload');
+    const mainInput = document.getElementById(inputId);
+    
+    if (!uploadInput || !mainInput) return;
+    
+    // Remove capture attribute to open file explorer
+    uploadInput.removeAttribute('capture');
+    
+    // Set up one-time change handler
+    const handleFileSelect = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Copy file to main input
+            if (copyFileToInput(uploadInput, mainInput)) {
+                // Trigger change event on main input to update preview
+                const changeEvent = new Event('change', { bubbles: true });
+                mainInput.dispatchEvent(changeEvent);
+            } else {
+                // Fallback: use the upload input directly for preview
+                const previewId = inputId === 'StudentIdImageFront' ? 'preview-front' : 'preview-back';
+                const preview = document.getElementById(previewId);
+                if (preview && file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        preview.classList.add('has-image');
+                    };
+                    reader.readAsDataURL(file);
+                }
+                // Note: Form submission will need to handle this case
+                alert('Please note: Some browsers may require you to use the same input for file selection and submission.');
+            }
+        }
+        // Remove the handler after use
+        uploadInput.removeEventListener('change', handleFileSelect);
+    };
+    
+    uploadInput.addEventListener('change', handleFileSelect, { once: true });
+    uploadInput.click();
+}
+
 // Function to open camera
 function openCamera(inputId) {
-    const fileInput = document.getElementById(inputId);
-    if (!fileInput) return;
-
-    // Check if device has camera support
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Set capture attribute to use camera
-        fileInput.setAttribute('capture', 'environment');
-        // Trigger file input click
-        fileInput.click();
+    const cameraInput = document.getElementById(inputId + 'Camera');
+    const mainInput = document.getElementById(inputId);
+    
+    if (!cameraInput || !mainInput) return;
+    
+    // Check browser support for camera
+    const hasCameraSupport = 
+        (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ||
+        (navigator.getUserMedia) ||
+        (navigator.webkitGetUserMedia) ||
+        (navigator.mozGetUserMedia) ||
+        (navigator.msGetUserMedia);
+    
+    // Set capture attribute for mobile devices
+    // 'environment' = back camera, 'user' = front camera
+    // Try environment first (back camera), fallback to user (front camera)
+    if (hasCameraSupport) {
+        // For mobile devices, use capture attribute
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            cameraInput.setAttribute('capture', 'environment');
+        } else {
+            // For desktop, try to use camera if available
+            // Some browsers support camera on desktop
+            cameraInput.setAttribute('capture', 'user');
+        }
     } else {
-        // Fallback: just open file picker
-        fileInput.removeAttribute('capture');
-        fileInput.click();
+        // Fallback: remove capture and just open file picker
+        cameraInput.removeAttribute('capture');
     }
+    
+    // Set up one-time change handler
+    const handleFileSelect = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Copy file to main input
+            if (copyFileToInput(cameraInput, mainInput)) {
+                // Trigger change event on main input to update preview
+                const changeEvent = new Event('change', { bubbles: true });
+                mainInput.dispatchEvent(changeEvent);
+            } else {
+                // Fallback: use the camera input directly for preview
+                const previewId = inputId === 'StudentIdImageFront' ? 'preview-front' : 'preview-back';
+                const preview = document.getElementById(previewId);
+                if (preview && file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                        preview.classList.add('has-image');
+                    };
+                    reader.readAsDataURL(file);
+                }
+                // Note: Form submission will need to handle this case
+                alert('Please note: Some browsers may require you to use the same input for file selection and submission.');
+            }
+        }
+        // Remove the handler after use
+        cameraInput.removeEventListener('change', handleFileSelect);
+    };
+    
+    cameraInput.addEventListener('change', handleFileSelect, { once: true });
+    cameraInput.click();
 }
 
 // Function to setup file preview

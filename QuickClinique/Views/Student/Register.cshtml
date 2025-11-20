@@ -111,9 +111,14 @@
                     <div class="input-group">
                         <label class="control-label">Student ID Image (Front)</label>
                         <div class="file-input-container">
-                            <input asp-for="StudentIdImageFront" id="StudentIdImageFront" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <!-- Hidden main input for form submission -->
+                            <input asp-for="StudentIdImageFront" id="StudentIdImageFront" class="form-control file-input" type="file" accept="image/*" required style="display: none;" />
+                            <!-- Hidden input for file upload (no capture) -->
+                            <input type="file" id="StudentIdImageFrontUpload" accept="image/*" style="display: none;" />
+                            <!-- Hidden input for camera (with capture) -->
+                            <input type="file" id="StudentIdImageFrontCamera" accept="image/*" capture="environment" style="display: none;" />
                             <div class="file-input-buttons">
-                                <button type="button" class="btn-upload" onclick="document.getElementById('StudentIdImageFront').click()">
+                                <button type="button" class="btn-upload" onclick="openFileUpload('StudentIdImageFront')">
                                     📤 Upload File
                                 </button>
                                 <button type="button" class="btn-camera" onclick="openCamera('StudentIdImageFront')">
@@ -129,9 +134,14 @@
                     <div class="input-group">
                         <label class="control-label">Student ID Image (Back)</label>
                         <div class="file-input-container">
-                            <input asp-for="StudentIdImageBack" id="StudentIdImageBack" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <!-- Hidden main input for form submission -->
+                            <input asp-for="StudentIdImageBack" id="StudentIdImageBack" class="form-control file-input" type="file" accept="image/*" required style="display: none;" />
+                            <!-- Hidden input for file upload (no capture) -->
+                            <input type="file" id="StudentIdImageBackUpload" accept="image/*" style="display: none;" />
+                            <!-- Hidden input for camera (with capture) -->
+                            <input type="file" id="StudentIdImageBackCamera" accept="image/*" capture="environment" style="display: none;" />
                             <div class="file-input-buttons">
-                                <button type="button" class="btn-upload" onclick="document.getElementById('StudentIdImageBack').click()">
+                                <button type="button" class="btn-upload" onclick="openFileUpload('StudentIdImageBack')">
                                     📤 Upload File
                                 </button>
                                 <button type="button" class="btn-camera" onclick="openCamera('StudentIdImageBack')">

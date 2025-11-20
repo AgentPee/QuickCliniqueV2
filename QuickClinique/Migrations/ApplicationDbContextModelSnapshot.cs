@@ -526,6 +526,28 @@ namespace QuickClinique.Migrations
                     b.ToTable("usertypes", (string)null);
                 });
 
+            modelBuilder.Entity("QuickClinique.Models.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Xml")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id")
+                        .HasName("PRIMARY");
+
+                    b.ToTable("DataProtectionKeys", (string)null);
+                });
+
             modelBuilder.Entity("QuickClinique.Models.Appointment", b =>
                 {
                     b.HasOne("QuickClinique.Models.Student", "Patient")
