@@ -130,11 +130,11 @@ builder.Services.AddSession(options =>
 // Add distributed memory cache (required for session)
 builder.Services.AddDistributedMemoryCache();
 
-// Configure Data Protection (fixes session/antiforgery token issues)
-// Note: In Railway, containers are ephemeral, so keys will regenerate on restart
-// This is acceptable - users will just need to log in again after deployments
-// Basic configuration is sufficient - ASP.NET Core will handle key management automatically
-builder.Services.AddDataProtection();
+// Configure Data Protection to persist keys to database
+// This ensures keys persist across application restarts and deployments
+// Without this, session cookies and antiforgery tokens become invalid after restarts
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
@@ -877,6 +877,43 @@ using (var scope = app.Services.CreateScope())
             else
             {
                 Console.WriteLine("[OK] InsuranceReceipt column already exists in students table.");
+            }
+
+            // Check and create DataProtectionKeys table if it doesn't exist
+            Console.WriteLine("[INIT] Checking for DataProtectionKeys table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'DataProtectionKeys'";
+            var dataProtectionKeysTableExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            
+            if (!dataProtectionKeysTableExists)
+            {
+                Console.WriteLine("[INIT] DataProtectionKeys table does not exist. Creating it...");
+                command.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS `DataProtectionKeys` (
+                        `Id` int NOT NULL AUTO_INCREMENT,
+                        `FriendlyName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
+                        `Xml` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                        CONSTRAINT `PRIMARY` PRIMARY KEY (`Id`)
+                    ) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci";
+                
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] DataProtectionKeys table created successfully!");
+                }
+                catch (Exception createEx)
+                {
+                    Console.WriteLine($"[ERROR] Failed to create DataProtectionKeys table: {createEx.Message}");
+                    Console.WriteLine($"[ERROR] Stack trace: {createEx.StackTrace}");
+                    // Don't throw - migrations may create it
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] DataProtectionKeys table already exists.");
             }
 
             // Check and create emergencies table if it doesn't exist
