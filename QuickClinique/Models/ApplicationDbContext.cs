@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace QuickClinique.Models;
 
-public partial class ApplicationDbContext : DbContext
+public partial class ApplicationDbContext : DbContext, IDataProtectionKeyContext
 {
     public ApplicationDbContext()
     {
