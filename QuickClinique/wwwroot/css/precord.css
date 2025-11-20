@@ -374,6 +374,168 @@
     font-weight: 500;
 }
 
+/* Documents Section */
+.documents-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.document-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.document-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: rgb(0, 93, 101);
+}
+
+.document-header {
+    background: linear-gradient(135deg, rgb(0, 93, 101) 0%, rgb(0, 73, 81) 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.document-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.document-content {
+    padding: 1.5rem;
+}
+
+.document-image-container {
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.document-image-container:hover {
+    transform: scale(1.02);
+}
+
+.document-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.document-placeholder {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    border-radius: 8px;
+    color: #6c757d;
+}
+
+.document-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.document-placeholder p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+/* Insurance Receipt Styling (matching student profile) */
+.insurance-receipt-container {
+    width: 100%;
+}
+
+.insurance-receipt-container .current-file {
+    margin-top: 0;
+}
+
+.insurance-receipt-container .current-file p {
+    margin-bottom: 0.75rem;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.insurance-receipt-container .preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e2e8f0;
+    object-fit: contain;
+    background: white;
+    padding: 0.5rem;
+    width: 100%;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.insurance-receipt-container .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.insurance-receipt-container .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.insurance-receipt-container .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.insurance-receipt-container .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.insurance-receipt-container .mt-2 {
+    margin-top: 0.5rem;
+}
+
 /* Appointment History Section */
 .appointments-section {
     background: white;
@@ -623,6 +785,14 @@
     .time-badge {
         flex: 1;
     }
+
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .document-image-container {
+        height: 250px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -664,6 +834,23 @@
 
     .detail-row strong {
         min-width: unset;
+    }
+
+    .documents-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .document-image-container {
+        height: 200px;
+    }
+
+    .document-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .document-title {
+        font-size: 1rem;
     }
 }
 
