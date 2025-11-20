@@ -98,6 +98,10 @@
                     <h4>Your Queue Number:</h4>
                     <p id="userQueueNumber">-</p>
                 </div>
+                <div class="queue-info queue-info-mt" id="estimatedWaitTimeContainer" style="display: none;">
+                    <h4>Estimated Wait Time:</h4>
+                    <p id="estimatedWaitTime">-</p>
+                </div>
                 <div class="queue-last-updated queue-last-updated-mt">
                     <i class="fas fa-circle queue-status-indicator" id="queueStatusIndicator"></i>
                     <span id="queueLastUpdated">Loading...</span>
@@ -1142,21 +1146,39 @@
                         } else {
                             statusMessage = 'You are in the queue. Please wait for your turn.';
                         }
+                        
+                        // Display estimated wait time
+                        const estimatedWaitTimeContainer = document.getElementById('estimatedWaitTimeContainer');
+                        const estimatedWaitTimeElement = document.getElementById('estimatedWaitTime');
+                        if (data.estimatedWaitTime && estimatedWaitTimeContainer && estimatedWaitTimeElement) {
+                            estimatedWaitTimeContainer.style.display = 'block';
+                            estimatedWaitTimeElement.innerHTML = '<span style="font-size: 1.5rem; font-weight: bold; color: #ffc107;">' +
+                                data.estimatedWaitTime + ' <small style="font-size: 1rem;">minutes</small></span>';
+                        }
                         break;
                     case 'Being Served':
                         statusIcon = '<i class="fas fa-user-md"></i>';
                         statusColor = '#28a745';
                         statusMessage = 'You are currently being served. Please proceed to the clinic.';
+                        // Hide wait time when being served
+                        const waitTimeContainerServed = document.getElementById('estimatedWaitTimeContainer');
+                        if (waitTimeContainerServed) waitTimeContainerServed.style.display = 'none';
                         break;
                     case 'Pending':
                         statusIcon = '<i class="fas fa-hourglass-half"></i>';
                         statusColor = '#6c757d';
                         statusMessage = 'Your appointment is pending confirmation.';
+                        // Hide wait time when pending
+                        const waitTimeContainerPending = document.getElementById('estimatedWaitTimeContainer');
+                        if (waitTimeContainerPending) waitTimeContainerPending.style.display = 'none';
                         break;
                     default:
                         statusIcon = '<i class="fas fa-info-circle"></i>';
                         statusColor = '#007bff';
                         statusMessage = 'You have an appointment today.';
+                        // Hide wait time for other statuses
+                        const waitTimeContainerDefault = document.getElementById('estimatedWaitTimeContainer');
+                        if (waitTimeContainerDefault) waitTimeContainerDefault.style.display = 'none';
                 }
 
                 queueMessageElement.innerHTML = '<div style="padding: 1rem; background-color: ' + statusColor + '20; border-left: 4px solid ' + statusColor + '; border-radius: 0.375rem;">' +
@@ -1166,6 +1188,9 @@
                 userQueueNumberElement.innerHTML = '<span style="color: #6c757d;">-</span>';
                 queueMessageElement.innerHTML = '<p style="color: #6c757d; font-style: italic;">' +
                     '<i class="fas fa-info-circle"></i> You have no active appointment in the queue today.</p>';
+                // Hide wait time when no appointment
+                const waitTimeContainerNoAppt = document.getElementById('estimatedWaitTimeContainer');
+                if (waitTimeContainerNoAppt) waitTimeContainerNoAppt.style.display = 'none';
             }
 
             // Update last updated time
