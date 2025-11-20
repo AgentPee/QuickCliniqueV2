@@ -47,9 +47,10 @@
 
                     <div class="input-group">
                         <label asp-for="Idnumber" class="control-label">ID Number</label>
-                        <input asp-for="Idnumber" class="form-control" maxlength="8" pattern="[0-9]{8}" required placeholder="Enter 8-digit ID" />
+                        <input asp-for="Idnumber" class="form-control" pattern="[0-9]{8,}" required placeholder="Enter ID number (at least 8 digits)" />
                         <span asp-validation-for="Idnumber" class="text-danger"></span>
                         <span class="input-icon">🆔</span>
+                        <small class="input-hint">Must be at least 8 digits</small>
                     </div>
 
                     <div class="form-row">

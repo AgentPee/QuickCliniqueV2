@@ -548,3 +548,133 @@ body {
 .input-group.shake .form-control {
     animation: shake 0.5s ease-in-out;
 }
+
+/* File Input Container Styles */
+.file-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-input-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-upload,
+.btn-camera {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #4ECDC4;
+    border-radius: 10px;
+    background: white;
+    color: #4ECDC4;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-upload:hover,
+.btn-camera:hover {
+    background: #4ECDC4;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.btn-upload:active,
+.btn-camera:active {
+    transform: translateY(0);
+}
+
+.image-preview {
+    margin-top: 10px;
+    display: none;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 10px;
+    border: 2px solid #e1e5e9;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    background: #f8f9fa;
+    padding: 5px;
+}
+
+.image-preview.has-image {
+    display: block;
+}
+
+/* Select dropdown styling */
+.input-group select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234ECDC4' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    padding-right: 40px;
+}
+
+.input-group select.form-control:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2344A08D' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* Date input styling */
+.input-group input[type="date"].form-control {
+    position: relative;
+}
+
+.input-group input[type="date"].form-control::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.input-group input[type="date"].form-control::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Responsive adjustments for file inputs */
+@media (max-width: 768px) {
+    .file-input-buttons {
+        flex-direction: column;
+    }
+
+    .btn-upload,
+    .btn-camera {
+        width: 100%;
+    }
+
+    .image-preview img {
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .file-input-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-upload,
+    .btn-camera {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+
+    .image-preview img {
+        max-height: 120px;
+    }
+}

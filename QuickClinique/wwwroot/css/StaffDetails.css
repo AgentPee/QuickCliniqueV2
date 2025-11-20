@@ -659,3 +659,360 @@
     cursor: not-allowed;
     transform: none !important;
 }
+
+/* Documents Section */
+.documents-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    border-left: 5px solid #06B6D4;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: fadeInUp 0.6s ease 0.2s both;
+}
+
+.documents-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #06B6D4 0%, #0891B2 50%, #67E8F9 100%);
+}
+
+.documents-section:hover {
+    box-shadow: var(--shadow-lg);
+    border-left-width: 6px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+}
+
+.section-title i {
+    color: #06B6D4;
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.documents-section:hover .section-title i {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.document-card {
+    background: linear-gradient(135deg, rgba(247,250,252,0.8) 0%, rgba(255,255,255,0.8) 100%);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.document-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #06B6D4 0%, #0891B2 50%, #67E8F9 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.document-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: #06B6D4;
+}
+
+.document-card:hover::before {
+    transform: scaleX(1);
+}
+
+.document-header {
+    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.document-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.document-content {
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+/* Photo Container - matches Student Profile file-preview-container */
+.insurance-receipt-container {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--border-color);
+    display: block;
+}
+
+.insurance-receipt-container .current-file,
+.insurance-receipt-container .new-file-preview {
+    margin-top: 0;
+    width: 100%;
+}
+
+.insurance-receipt-container .current-file p,
+.insurance-receipt-container .new-file-preview p {
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-top: 0;
+}
+
+/* Preview image - matches Student Profile insurance section styling */
+.insurance-receipt-container .preview-image,
+.preview-image {
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--border-color);
+    object-fit: contain;
+    background: white;
+    padding: 0.5rem;
+    display: block;
+    margin: 0 auto 1rem auto;
+}
+
+.insurance-receipt-container .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-width: auto;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.insurance-receipt-container .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.insurance-receipt-container .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.insurance-receipt-container .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.insurance-receipt-container .btn::before {
+    display: none;
+}
+
+.insurance-receipt-container .mt-2 {
+    margin-top: 0.5rem;
+}
+
+.document-placeholder {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(248,249,250,0.9) 0%, rgba(255,255,255,0.9) 100%);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    border: 2px dashed var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.document-placeholder::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+    animation: pulse 3s infinite ease-in-out;
+}
+
+.document-placeholder:hover {
+    border-color: #06B6D4;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(255,255,255,0.9) 100%);
+}
+
+.document-placeholder i {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+    color: #06B6D4;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.document-placeholder:hover i {
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+.document-placeholder p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.7;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.document-placeholder:hover p {
+    opacity: 0.9;
+    color: #06B6D4;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translate(20px, 20px) scale(1.1);
+        opacity: 0.5;
+    }
+}
+
+/* Responsive for documents */
+@media (max-width: 768px) {
+    .documents-section {
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .documents-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .insurance-receipt-container .preview-image {
+        max-height: 250px;
+    }
+
+    .document-placeholder {
+        height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .documents-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .documents-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .document-card {
+        border-radius: var(--radius-sm);
+    }
+
+    .document-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .document-title {
+        font-size: 0.95rem;
+    }
+
+    .document-content {
+        padding: 1rem;
+    }
+
+    .insurance-receipt-container .preview-image {
+        max-height: 200px;
+    }
+
+    .document-placeholder {
+        height: 200px;
+    }
+
+    .document-placeholder i {
+        font-size: 2.5rem;
+    }
+
+    .document-placeholder p {
+        font-size: 0.9rem;
+    }
+}

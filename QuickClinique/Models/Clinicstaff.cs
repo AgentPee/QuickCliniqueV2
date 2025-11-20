@@ -29,6 +29,11 @@ public partial class Clinicstaff
     // Account activation status
     public bool IsActive { get; set; } = true;
 
+    // Personal information
+    public DateOnly? Birthdate { get; set; }
+    public string? Gender { get; set; }
+    public string? Image { get; set; }
+
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual Usertype User { get; set; } = null!;

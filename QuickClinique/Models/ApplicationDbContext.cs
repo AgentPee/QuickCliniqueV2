@@ -133,6 +133,17 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("tinyint(1)")
                 .HasDefaultValue(true);
 
+            // Add Birthdate, Gender, and Image property configurations
+            entity.Property(e => e.Birthdate)
+                .HasColumnType("date")
+                .HasColumnName("Birthdate");
+            entity.Property(e => e.Gender)
+                .HasColumnType("varchar(50)")
+                .HasColumnName("Gender");
+            entity.Property(e => e.Image)
+                .HasColumnType("varchar(500)")
+                .HasColumnName("Image");
+
             entity.HasOne(d => d.User).WithMany(p => p.Clinicstaffs)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("clinicstaff_ibfk_1");

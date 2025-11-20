@@ -62,6 +62,26 @@
                         </span>
                         <span class="detail-value">@Html.DisplayFor(model => model.PhoneNumber)</span>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Gender))
+                    {
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                <i class="fas fa-venus-mars"></i> Gender
+                            </span>
+                            <span class="detail-value">@Html.DisplayFor(model => model.Gender)</span>
+                        </div>
+                    }
+
+                    @if (Model.Birthdate.HasValue)
+                    {
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                <i class="fas fa-calendar"></i> Birthdate
+                            </span>
+                            <span class="detail-value">@Model.Birthdate.Value.ToString("MMMM dd, yyyy")</span>
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -91,6 +111,96 @@
                                 @Html.DisplayFor(model => model.User.Role)
                             </span>
                         </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @{
+            // Parse ID images (comma-separated: front, back)
+            string? idFrontImage = null;
+            string? idBackImage = null;
+            if (!string.IsNullOrEmpty(Model.Image))
+            {
+                var imagePaths = Model.Image.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (imagePaths.Length > 0)
+                {
+                    idFrontImage = imagePaths[0];
+                }
+                if (imagePaths.Length > 1)
+                {
+                    idBackImage = imagePaths[1];
+                }
+            }
+        }
+
+        <!-- ID Documents Section -->
+        <div class="documents-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    Identification Documents
+                </h3>
+            </div>
+
+            <div class="documents-grid">
+                <!-- ID Front -->
+                <div class="document-card">
+                    <div class="document-header">
+                        <h4 class="document-title">
+                            <i class="fas fa-id-card"></i> ID Front
+                        </h4>
+                    </div>
+                    <div class="document-content">
+                        @if (!string.IsNullOrEmpty(idFrontImage))
+                        {
+                            <div class="insurance-receipt-container">
+                                <div class="current-file">
+                                    <p><strong>Current ID Front:</strong></p>
+                                    <img src="@idFrontImage" alt="ID Front" class="preview-image" />
+                                    <a href="@idFrontImage" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                        <i class="fas fa-external-link-alt"></i> View Full Size
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="document-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>No ID Front image available</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- ID Back -->
+                <div class="document-card">
+                    <div class="document-header">
+                        <h4 class="document-title">
+                            <i class="fas fa-id-card"></i> ID Back
+                        </h4>
+                    </div>
+                    <div class="document-content">
+                        @if (!string.IsNullOrEmpty(idBackImage))
+                        {
+                            <div class="insurance-receipt-container">
+                                <div class="current-file">
+                                    <p><strong>Current ID Back:</strong></p>
+                                    <img src="@idBackImage" alt="ID Back" class="preview-image" />
+                                    <a href="@idBackImage" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                        <i class="fas fa-external-link-alt"></i> View Full Size
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="document-placeholder">
+                                <i class="fas fa-image"></i>
+                                <p>No ID Back image available</p>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>

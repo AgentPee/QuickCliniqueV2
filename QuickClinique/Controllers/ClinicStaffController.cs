@@ -5,6 +5,9 @@ using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Attributes;
 using System.Text;
+using System.Linq;
+using Microsoft.AspNetCore.Hosting;
+using System.Collections.Generic;
 
 namespace QuickClinique.Controllers
 {
@@ -13,12 +16,14 @@ namespace QuickClinique.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Clinicstaff
@@ -443,22 +448,92 @@ namespace QuickClinique.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(ClinicStaffRegisterViewModel model)
         {
-            Console.WriteLine($"ModelState IsValid: {ModelState.IsValid}");
+            // Validate required fields with specific error messages
+            if (string.IsNullOrWhiteSpace(model.FirstName))
+            {
+                ModelState.AddModelError("FirstName", "First Name is required. Please enter your first name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.LastName))
+            {
+                ModelState.AddModelError("LastName", "Last Name is required. Please enter your last name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                ModelState.AddModelError("Email", "Email address is required. Please enter your email address.");
+            }
+            else if (!model.Email.Contains("@") || !model.Email.Contains("."))
+            {
+                ModelState.AddModelError("Email", "Please enter a valid email address.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.PhoneNumber))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone Number is required. Please enter your phone number.");
+            }
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^09[0-9]{9}$"))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone number must start with 09 and be 11 digits total (e.g., 09345672824).");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Gender))
+            {
+                ModelState.AddModelError("Gender", "Gender is required. Please select your gender.");
+            }
+
+            if (model.Birthdate == default(DateOnly))
+            {
+                ModelState.AddModelError("Birthdate", "Birthdate is required. Please select your date of birth.");
+            }
+
+            if (model.StaffIdImageFront == null || model.StaffIdImageFront.Length == 0)
+            {
+                ModelState.AddModelError("StaffIdImageFront", "Staff ID Front image is required. Please upload a photo of the front of your ID.");
+            }
+
+            if (model.StaffIdImageBack == null || model.StaffIdImageBack.Length == 0)
+            {
+                ModelState.AddModelError("StaffIdImageBack", "Staff ID Back image is required. Please upload a photo of the back of your ID.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError("Password", "Password is required. Please enter a password.");
+            }
+            else if (model.Password.Length < 6)
+            {
+                ModelState.AddModelError("Password", "Password must be at least 6 characters long.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.ConfirmPassword))
+            {
+                ModelState.AddModelError("ConfirmPassword", "Please confirm your password.");
+            }
+            else if (model.Password != model.ConfirmPassword)
+            {
+                ModelState.AddModelError("ConfirmPassword", "Passwords do not match. Please make sure both passwords are the same.");
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
                     // Check if email already exists
-                    if (await _context.Clinicstaffs.AnyAsync(x => x.Email == model.Email))
+                    if (await _context.Clinicstaffs.AnyAsync(x => x.Email.ToLower() == model.Email.ToLower()))
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Email already registered." });
+                            return Json(new { 
+                                success = false, 
+                                error = "This email address is already registered. Please use a different email or try logging in instead.",
+                                field = "Email"
+                            });
 
-                        ModelState.AddModelError("Email", "Email already registered.");
+                        ModelState.AddModelError("Email", "This email address is already registered. Please use a different email or try logging in instead.");
                         return View(model);
                     }
 
+                 
                     // Create and save the Usertype first
                     var usertype = new Usertype
                     {
@@ -466,11 +541,194 @@ namespace QuickClinique.Controllers
                         Role = "ClinicStaff"
                     };
 
-                    _context.Usertypes.Add(usertype);
-                    await _context.SaveChangesAsync();
+                    try
+                    {
+                        _context.Usertypes.Add(usertype);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        Console.WriteLine($"Database error creating user type: {dbEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "An error occurred while creating your account. Please try again. If the problem persists, contact support."
+                            });
+
+                        ModelState.AddModelError("", "An error occurred while creating your account. Please try again.");
+                        return View(model);
+                    }
 
                     // Generate email verification token
                     var emailToken = GenerateToken();
+
+                    // Handle image uploads (Front and Back)
+                    var imagePaths = new List<string>();
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+                    const long maxFileSize = 5 * 1024 * 1024; // 5MB
+
+                    // Create directory if it doesn't exist
+                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "staff-ids");
+                    try
+                    {
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+                    }
+                    catch (Exception dirEx)
+                    {
+                        Console.WriteLine($"Error creating upload directory: {dirEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Unable to process file uploads. Please try again or contact support."
+                            });
+
+                        ModelState.AddModelError("", "Unable to process file uploads. Please try again.");
+                        return View(model);
+                    }
+
+                    // Process Front Image
+                    if (model.StaffIdImageFront != null && model.StaffIdImageFront.Length > 0)
+                    {
+                        try
+                        {
+                            var fileExtension = Path.GetExtension(model.StaffIdImageFront.FileName).ToLowerInvariant();
+                            if (!allowedExtensions.Contains(fileExtension))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "Invalid file type for ID front image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                        field = "StaffIdImageFront"
+                                    });
+
+                                ModelState.AddModelError("StaffIdImageFront", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                                return View(model);
+                            }
+
+                            if (model.StaffIdImageFront.Length > maxFileSize)
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "ID front image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                        field = "StaffIdImageFront"
+                                    });
+
+                                ModelState.AddModelError("StaffIdImageFront", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                                return View(model);
+                            }
+
+                            var frontFileName = $"staff_{Guid.NewGuid()}_front{fileExtension}";
+                            var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
+
+                            using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
+                            {
+                                await model.StaffIdImageFront.CopyToAsync(fileStream);
+                            }
+
+                            imagePaths.Add($"/img/staff-ids/{frontFileName}");
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Permission denied while uploading ID front image. Please contact support.",
+                                    field = "StaffIdImageFront"
+                                });
+
+                            ModelState.AddModelError("StaffIdImageFront", "Permission denied while uploading file. Please contact support.");
+                            return View(model);
+                        }
+                        catch (IOException ioEx)
+                        {
+                            Console.WriteLine($"IO error uploading front image: {ioEx.Message}");
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Error saving ID front image. Please try again or contact support.",
+                                    field = "StaffIdImageFront"
+                                });
+
+                            ModelState.AddModelError("StaffIdImageFront", "Error saving file. Please try again.");
+                            return View(model);
+                        }
+                    }
+
+                    // Process Back Image
+                    if (model.StaffIdImageBack != null && model.StaffIdImageBack.Length > 0)
+                    {
+                        try
+                        {
+                            var fileExtension = Path.GetExtension(model.StaffIdImageBack.FileName).ToLowerInvariant();
+                            if (!allowedExtensions.Contains(fileExtension))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "Invalid file type for ID back image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                        field = "StaffIdImageBack"
+                                    });
+
+                                ModelState.AddModelError("StaffIdImageBack", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                                return View(model);
+                            }
+
+                            if (model.StaffIdImageBack.Length > maxFileSize)
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "ID back image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                        field = "StaffIdImageBack"
+                                    });
+
+                                ModelState.AddModelError("StaffIdImageBack", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                                return View(model);
+                            }
+
+                            var backFileName = $"staff_{Guid.NewGuid()}_back{fileExtension}";
+                            var backFilePath = Path.Combine(uploadsFolder, backFileName);
+
+                            using (var fileStream = new FileStream(backFilePath, FileMode.Create))
+                            {
+                                await model.StaffIdImageBack.CopyToAsync(fileStream);
+                            }
+
+                            imagePaths.Add($"/img/staff-ids/{backFileName}");
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Permission denied while uploading ID back image. Please contact support.",
+                                    field = "StaffIdImageBack"
+                                });
+
+                            ModelState.AddModelError("StaffIdImageBack", "Permission denied while uploading file. Please contact support.");
+                            return View(model);
+                        }
+                        catch (IOException ioEx)
+                        {
+                            Console.WriteLine($"IO error uploading back image: {ioEx.Message}");
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Error saving ID back image. Please try again or contact support.",
+                                    field = "StaffIdImageBack"
+                                });
+
+                            ModelState.AddModelError("StaffIdImageBack", "Error saving file. Please try again.");
+                            return View(model);
+                        }
+                    }
+
+                    // Combine image paths (comma-separated) or use first image if only one provided
+                    string imagePath = imagePaths.Count > 0 ? string.Join(",", imagePaths) : null;
 
                     // Create the Clinicstaff
                     var clinicstaff = new Clinicstaff
@@ -480,20 +738,80 @@ namespace QuickClinique.Controllers
                         LastName = model.LastName,
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
+                        Gender = model.Gender,
+                        Birthdate = model.Birthdate,
+                        Image = imagePath,
                         Password = _passwordService.HashPassword(model.Password),
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
                     };
 
-                    _context.Clinicstaffs.Add(clinicstaff);
-                    await _context.SaveChangesAsync();
+                    try
+                    {
+                        _context.Clinicstaffs.Add(clinicstaff);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        // Check for unique constraint violations
+                        if (dbEx.InnerException != null && 
+                            (dbEx.InnerException.Message.Contains("Duplicate entry") || 
+                             dbEx.InnerException.Message.Contains("UNIQUE constraint") ||
+                             dbEx.InnerException.Message.Contains("duplicate key")))
+                        {
+                            // Check which field caused the violation
+                            if (dbEx.InnerException.Message.Contains("Email") || dbEx.InnerException.Message.Contains("email"))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "This email address is already registered. Please use a different email.",
+                                        field = "Email"
+                                    });
+
+                                ModelState.AddModelError("Email", "This email address is already registered. Please use a different email.");
+                                return View(model);
+                            }
+                            else if (dbEx.InnerException.Message.Contains("PhoneNumber") || dbEx.InnerException.Message.Contains("phone"))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "This phone number is already registered. Please use a different phone number.",
+                                        field = "PhoneNumber"
+                                    });
+
+                                ModelState.AddModelError("PhoneNumber", "This phone number is already registered. Please use a different phone number.");
+                                return View(model);
+                            }
+                        }
+
+                        Console.WriteLine($"Database error saving clinic staff: {dbEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "An error occurred while saving your registration. Please try again. If the problem persists, contact support."
+                            });
+
+                        ModelState.AddModelError("", "An error occurred while saving your registration. Please try again.");
+                        return View(model);
+                    }
 
                     // Send verification email
-                    var verificationLink = Url.Action("VerifyEmail", "Clinicstaff",
-                        new { token = emailToken, email = clinicstaff.Email }, Request.Scheme);
+                    try
+                    {
+                        var verificationLink = Url.Action("VerifyEmail", "Clinicstaff",
+                            new { token = emailToken, email = clinicstaff.Email }, Request.Scheme);
 
-                    await _emailService.SendVerificationEmail(clinicstaff.Email, clinicstaff.FirstName, verificationLink);
+                        await _emailService.SendVerificationEmail(clinicstaff.Email, clinicstaff.FirstName, verificationLink);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail registration
+                        Console.WriteLine($"Error sending verification email: {emailEx.Message}");
+                        // Continue with registration success - user can request resend later
+                    }
 
                     if (IsAjaxRequest())
                         return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
@@ -501,34 +819,74 @@ namespace QuickClinique.Controllers
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
                     return RedirectToAction(nameof(Login));
                 }
+                catch (DbUpdateException dbEx)
+                {
+                    Console.WriteLine($"Database error during registration: {dbEx.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { 
+                            success = false, 
+                            error = "A database error occurred. Please try again. If the problem persists, contact support."
+                        });
+
+                    ModelState.AddModelError("", "A database error occurred. Please try again.");
+                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Registration error: {ex.Message}");
-
+                    Console.WriteLine($"Unexpected error during registration: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
                     if (IsAjaxRequest())
-                        return Json(new { success = false, error = "An error occurred during registration. Please try again." });
+                        return Json(new { 
+                            success = false, 
+                            error = "An unexpected error occurred during registration. Please try again. If the problem persists, contact support."
+                        });
 
-                    ModelState.AddModelError("", "An error occurred during registration. Please try again.");
-                }
-            }
-            else
-            {
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    Console.WriteLine($"Validation Error: {error.ErrorMessage}");
+                    ModelState.AddModelError("", "An unexpected error occurred during registration. Please try again.");
                 }
             }
 
             if (IsAjaxRequest())
+            {
+                // Get the first error message for the main error field
+                var firstError = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault();
+
+                // Build detailed error response
+                var errors = ModelState.ToDictionary(
+                    k => k.Key,
+                    v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+                // Count missing required fields
+                var missingFields = errors.Keys.Where(k => 
+                    errors[k].Any(e => e.Contains("required") || e.Contains("Required"))).ToList();
+
+                string mainError;
+                if (missingFields.Count > 0)
+                {
+                    if (missingFields.Count == 1)
+                    {
+                        mainError = $"Please fill in the required field: {string.Join(", ", missingFields)}";
+                    }
+                    else
+                    {
+                        mainError = $"Please fill in all required fields: {string.Join(", ", missingFields)}";
+                    }
+                }
+                else
+                {
+                    mainError = firstError ?? "Please correct the errors below and try again.";
+                }
+
                 return Json(new
                 {
                     success = false,
-                    error = "Validation failed",
-                    errors = ModelState.ToDictionary(
-                        k => k.Key,
-                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    )
+                    error = mainError,
+                    errors = errors,
+                    missingFields = missingFields
                 });
+            }
 
             return View(model);
         }
