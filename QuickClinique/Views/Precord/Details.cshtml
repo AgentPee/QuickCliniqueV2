@@ -104,6 +104,126 @@
         </div>
     </div>
 
+    @{
+        // Parse ID images (comma-separated: front, back)
+        string? idFrontImage = null;
+        string? idBackImage = null;
+        if (!string.IsNullOrEmpty(Model.Image))
+        {
+            var imagePaths = Model.Image.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (imagePaths.Length > 0)
+            {
+                idFrontImage = imagePaths[0];
+            }
+            if (imagePaths.Length > 1)
+            {
+                idBackImage = imagePaths[1];
+            }
+        }
+    }
+
+    <!-- ID and Insurance Documents Section -->
+    <div class="documents-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-id-card"></i>
+                Identification & Insurance Documents
+            </h3>
+        </div>
+
+        <div class="documents-grid">
+            <!-- ID Front -->
+            <div class="document-card">
+                <div class="document-header">
+                    <h4 class="document-title">
+                        <i class="fas fa-id-card"></i> ID Front
+                    </h4>
+                </div>
+                <div class="document-content">
+                    @if (!string.IsNullOrEmpty(idFrontImage))
+                    {
+                        <div class="insurance-receipt-container">
+                            <div class="current-file">
+                                <p><strong>Current ID Front:</strong></p>
+                                <img src="@idFrontImage" alt="ID Front" class="preview-image" />
+                                <a href="@idFrontImage" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                    <i class="fas fa-external-link-alt"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="document-placeholder">
+                            <i class="fas fa-image"></i>
+                            <p>No ID Front image available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ID Back -->
+            <div class="document-card">
+                <div class="document-header">
+                    <h4 class="document-title">
+                        <i class="fas fa-id-card"></i> ID Back
+                    </h4>
+                </div>
+                <div class="document-content">
+                    @if (!string.IsNullOrEmpty(idBackImage))
+                    {
+                        <div class="insurance-receipt-container">
+                            <div class="current-file">
+                                <p><strong>Current ID Back:</strong></p>
+                                <img src="@idBackImage" alt="ID Back" class="preview-image" />
+                                <a href="@idBackImage" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                    <i class="fas fa-external-link-alt"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="document-placeholder">
+                            <i class="fas fa-image"></i>
+                            <p>No ID Back image available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Insurance Receipt -->
+            <div class="document-card">
+                <div class="document-header">
+                    <h4 class="document-title">
+                        <i class="fas fa-file-medical"></i> Insurance Receipt
+                    </h4>
+                </div>
+                <div class="document-content">
+                    @if (!string.IsNullOrEmpty(Model.InsuranceReceipt))
+                    {
+                        <div class="insurance-receipt-container">
+                            <div class="current-file">
+                                <p><strong>Current Receipt:</strong></p>
+                                <img src="@Model.InsuranceReceipt" alt="Insurance Receipt" class="preview-image" />
+                                <a href="@Model.InsuranceReceipt" target="_blank" class="btn btn-sm btn-secondary mt-2">
+                                    <i class="fas fa-external-link-alt"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="document-placeholder">
+                            <i class="fas fa-file-medical"></i>
+                            <p>No insurance receipt available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="appointments-section">
         <div class="section-header">
             <h3 class="section-title">
@@ -278,6 +398,19 @@
     </div>
 </div>
 
+<!-- Image View Modal -->
+<div id="imageModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-image"></i> <span id="imageModalTitle">Image</span></h2>
+            <button class="modal-close" onclick="closeModal('imageModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 2rem;">
+            <img id="modalImage" src="" alt="Document Image" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" />
+        </div>
+    </div>
+</div>
+
 <!-- Toggle Active Modal (same as in Index.cshtml) -->
 <div id="toggleModal" class="modal">
     <div class="modal-content modal-small">
@@ -408,6 +541,17 @@
             // This will be handled by the modal from Index.cshtml if loaded via AJAX
             // For now, redirect to edit page or use the same modal approach
             window.location.href = `/Precord/EditPatient/${patientId}`;
+        }
+
+        // Image Modal Functions
+        function openImageModal(imageSrc, title) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('imageModalTitle');
+            
+            modalImage.src = imageSrc;
+            modalTitle.textContent = title;
+            openModal('imageModal');
         }
 
         // Notification System
