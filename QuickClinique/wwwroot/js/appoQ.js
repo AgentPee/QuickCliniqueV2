@@ -146,6 +146,18 @@ function showNextPatientModal() {
     // Reset form
     document.getElementById('nextPatientForm').reset();
 
+    // Reset all vital result displays
+    const vitalResults = document.querySelectorAll('.vital-result-modal');
+    vitalResults.forEach(result => {
+        result.classList.add('vital-result-modal-hidden');
+    });
+    
+    // Reset BMI vital result display
+    const bmiVitalResult = document.getElementById('bmiVitalResultModal');
+    if (bmiVitalResult) {
+        bmiVitalResult.classList.add('vital-result-modal-hidden');
+    }
+
     // Show the modal using Bootstrap 5
     const modalElement = document.getElementById('nextPatientModal');
     const modal = new bootstrap.Modal(modalElement);

@@ -552,31 +552,391 @@ input:checked + .slider {
     }
 }
 
-/* ===== EXTRACTED FROM Appointments/Queue.cshtml ===== */
+/* ===== TRIAGE MODAL ENHANCED STYLES ===== */
+
+/* Modal Content Improvements */
+#nextPatientModal .modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+#nextPatientModal .modal-header {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+    border-radius: 0;
+}
+
+#nextPatientModal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#nextPatientModal .modal-title i {
+    font-size: 1.75rem;
+    opacity: 0.95;
+}
+
+#nextPatientModal .modal-body {
+    padding: 2rem;
+    background: #fafbfc;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar for Modal Body */
+#nextPatientModal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#nextPatientModal .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#nextPatientModal .modal-body::-webkit-scrollbar-thumb {
+    background: #4ECDC4;
+    border-radius: 10px;
+}
+
+#nextPatientModal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #3db5ad;
+}
+
+#nextPatientModal .modal-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 1.25rem 2rem;
+    background: #ffffff;
+    border-radius: 0;
+}
+
+/* Alert Styling */
+#nextPatientModal .alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#nextPatientModal .alert-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+}
+
+#nextPatientModal .alert-info i {
+    font-size: 1.25rem;
+    color: #3b82f6;
+}
+
+/* Form Section Styling */
+#nextPatientModal .form-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+#nextPatientModal .form-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #4ECDC4;
+}
+
+#nextPatientModal .section-title {
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 2px solid #4ECDC4;
+    position: relative;
+}
+
+#nextPatientModal .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+    border-radius: 2px;
+}
+
+#nextPatientModal .section-title i {
+    color: #4ECDC4;
+    font-size: 1.25rem;
+    background: linear-gradient(135deg, #e0f7f5 0%, #d1f2ef 100%);
+    padding: 0.5rem;
+    border-radius: 8px;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Form Group Styling */
+#nextPatientModal .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+#nextPatientModal .form-group:last-child {
+    margin-bottom: 0;
+}
+
+#nextPatientModal .form-group label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+    margin-bottom: 0.625rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#nextPatientModal .form-group label i {
+    color: #4ECDC4;
+    font-size: 1rem;
+    width: 1.25rem;
+    flex-shrink: 0;
+}
+
+#nextPatientModal .form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    width: 100%;
+}
+
+#nextPatientModal .form-control:focus {
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    outline: none;
+    background: #ffffff;
+}
+
+#nextPatientModal .form-control:read-only {
+    background: #f9fafb;
+    cursor: not-allowed;
+    border-color: #d1d5db;
+}
+
+#nextPatientModal .form-control::placeholder {
+    color: #9ca3af;
+    opacity: 0.7;
+}
+
+#nextPatientModal .form-text {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 0.375rem;
+    display: block;
+    line-height: 1.4;
+}
+
+/* Row Spacing Improvements */
+#nextPatientModal .form-section .row {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    margin-bottom: 0;
+}
+
+#nextPatientModal .form-section .row > [class*="col-"] {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    margin-bottom: 0;
+}
+
+/* Better spacing between vital signs rows */
+#nextPatientModal .form-section .row + .row {
+    margin-top: 1rem;
+}
+
+/* Blood Pressure Inputs - Better Arrangement */
+#nextPatientModal .form-group .row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    margin-top: 0.5rem;
+}
+
+#nextPatientModal .form-group .row .col-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#nextPatientModal .form-group .row .col-6 small {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: 500;
+}
+
+/* Vital Signs Grid - Better Alignment */
+#nextPatientModal .form-section .row:first-of-type {
+    margin-bottom: 1.5rem;
+}
+
+/* Ensure consistent height for vital sign cards */
+#nextPatientModal .form-section .row [class*="col-md-4"],
+#nextPatientModal .form-section .row [class*="col-md-6"] {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group,
+#nextPatientModal .form-section .row [class*="col-md-6"] .form-group {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Better alignment for vital signs in grid */
+#nextPatientModal .form-section .row [class*="col-md-4"] .vital-result-modal,
+#nextPatientModal .form-section .row [class*="col-md-6"] .vital-result-modal {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+/* Vital Signs Result Display */
+.vital-result-modal {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+    border: 2px solid #4ECDC4;
+    border-left: 5px solid #4ECDC4;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 0.875rem;
+    animation: slideDown 0.4s ease-out;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.15);
+    transition: all 0.3s ease;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vital-result-modal:hover {
+    box-shadow: 0 6px 16px rgba(78, 205, 196, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Ensure vital results don't break layout */
+#nextPatientModal .form-group .vital-result-modal {
+    margin-top: 0.875rem;
+    flex-shrink: 0;
+}
+
+.vital-result-modal-hidden {
+    display: none;
+}
+
+.vital-result-value-modal {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.vital-result-category-modal {
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.vital-result-category-modal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.vital-result-category-modal.normal {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+}
+
+.vital-result-category-modal.warning {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+}
+
+.vital-result-category-modal.abnormal {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+}
+
+.vital-result-category-modal.critical {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
 
 /* BMI Result Modal Styles */
 .bmi-result-modal {
     background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    border-left: 4px solid #4ECDC4;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 1rem;
+    border: 2px solid #4ECDC4;
+    border-left: 5px solid #4ECDC4;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.25rem;
     animation: slideDown 0.4s ease-out;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.15);
 }
 
 .bmi-result-value-modal {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     color: #1f2937;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.5px;
 }
 
 .bmi-result-category-modal {
     font-size: 1rem;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    display: inline-block;
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.bmi-result-category-modal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .bmi-result-category-modal.underweight {
@@ -599,10 +959,91 @@ input:checked + .slider {
     color: white;
 }
 
+.bmi-result-modal-hidden {
+    display: none;
+}
+
+/* Queue Form Section - BMI Calculator */
+.queue-form-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e5e7eb;
+    background: #f9fafb;
+    margin-left: -1.75rem;
+    margin-right: -1.75rem;
+    margin-bottom: -1.75rem;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+    padding-bottom: 1.75rem;
+    border-radius: 0 0 12px 12px;
+}
+
+
+/* Allergies Field - Better Spacing */
+#nextPatientModal .form-section > .form-group:last-of-type {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Button Styling in Modal */
+#nextPatientModal .btn {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#nextPatientModal .btn-primary {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+#nextPatientModal .btn-primary:hover {
+    background: linear-gradient(135deg, #3db5ad 0%, #3a8f7d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(78, 205, 196, 0.4);
+}
+
+#nextPatientModal .btn-secondary {
+    background: #6b7280;
+    color: white;
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.2);
+}
+
+#nextPatientModal .btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(107, 114, 128, 0.3);
+}
+
+#nextPatientModal .btn-sm {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+}
+
+.queue-btn-mb {
+    margin-bottom: 1rem;
+}
+
+/* Textarea Styling */
+#nextPatientModal textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+/* Animations */
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-15px);
     }
     to {
         opacity: 1;
@@ -610,81 +1051,121 @@ input:checked + .slider {
     }
 }
 
-/* ===== UTILITY CLASSES FOR INLINE STYLES ===== */
-
-/* Queue form section */
-.queue-form-section {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
-}
-
-/* Queue button margin bottom */
-.queue-btn-mb {
-    margin-bottom: 1rem;
-}
-
-/* BMI result modal hidden */
-.bmi-result-modal-hidden {
-    display: none;
-}
-
-/* Vital Signs Result Modal (same style as BMI) */
-.vital-result-modal {
-    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    border-left: 4px solid #4ECDC4;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 0.5rem;
-    animation: slideDown 0.4s ease-out;
-}
-
-.vital-result-modal-hidden {
-    display: none;
-}
-
-.vital-result-value-modal {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-}
-
-.vital-result-category-modal {
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    display: inline-block;
-    text-align: center;
-}
-
-.vital-result-category-modal.normal {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    color: white;
-}
-
-.vital-result-category-modal.warning {
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-    color: white;
-}
-
-.vital-result-category-modal.abnormal {
-    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-    color: white;
-}
-
-.vital-result-category-modal.critical {
-    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-    color: white;
-    animation: pulse 2s infinite;
-}
-
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
+        transform: scale(1);
     }
     50% {
-        opacity: 0.7;
+        opacity: 0.85;
+        transform: scale(1.02);
+    }
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 992px) {
+    /* Better spacing for medium screens */
+    #nextPatientModal .form-section .row [class*="col-md-4"] {
+        margin-bottom: 1.5rem;
+    }
+    
+    #nextPatientModal .form-section .row [class*="col-md-4"]:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    #nextPatientModal .modal-body {
+        padding: 1.5rem;
+    }
+
+    #nextPatientModal .form-section {
+        padding: 1.25rem;
+    }
+    
+    .queue-form-section {
+        margin-left: -1.25rem;
+        margin-right: -1.25rem;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    #nextPatientModal .section-title {
+        font-size: 1rem;
+    }
+    
+    #nextPatientModal .form-section .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    #nextPatientModal .form-section .row > [class*="col-"] {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .vital-result-value-modal {
+        font-size: 1.75rem;
+    }
+
+    .bmi-result-value-modal {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #nextPatientModal .modal-body {
+        padding: 1rem;
+    }
+
+    #nextPatientModal .form-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .queue-form-section {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+    }
+
+    #nextPatientModal .modal-header {
+        padding: 1rem 1.25rem;
+    }
+
+    #nextPatientModal .modal-title {
+        font-size: 1.25rem;
+    }
+    
+    #nextPatientModal .form-section .row > [class*="col-"] {
+        margin-bottom: 1.5rem;
+    }
+    
+    #nextPatientModal .form-section .row > [class*="col-"]:last-child {
+        margin-bottom: 0;
+    }
+
+    #nextPatientModal .modal-footer {
+        padding: 1rem;
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+    }
+
+    #nextPatientModal .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .vital-result-modal {
+        min-height: 90px;
+        padding: 1rem;
+    }
+    
+    .vital-result-value-modal {
+        font-size: 1.5rem;
     }
 }

@@ -216,53 +216,29 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="triageBMI">
-                                        <i class="fas fa-weight"></i> BMI
+                                        <i class="fas fa-user"></i> BMI
                                     </label>
-                                    <input type="number" class="form-control" id="triageBMI" name="bmi"
-                                           placeholder="Body Mass Index" step="0.1" min="10" max="50" readonly>
-                                    <small class="form-text text-muted">Calculated from height and weight below</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- BMI Calculator Section -->
-                        <div class="form-section queue-form-section">
-                            <h6 class="section-title"><i class="fas fa-heartbeat"></i> BMI Calculator</h6>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="triageHeight">
-                                            <i class="fas fa-ruler-vertical"></i> Height (cm)
-                                        </label>
-                                        <input type="number" class="form-control" id="triageHeight" 
-                                               placeholder="170" min="100" max="250">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" id="triageHeight" 
+                                                   placeholder="170" min="100" max="250" oninput="updateBMIIndicator()">
+                                            <small class="form-text text-muted">Height (cm)</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" id="triageWeight" 
+                                                   placeholder="70" min="30" max="200" oninput="updateBMIIndicator()">
+                                            <small class="form-text text-muted">Weight (kg)</small>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="triageBMI" name="bmi">
+                                    <div class="vital-result-modal vital-result-modal-hidden" id="bmiVitalResultModal">
+                                        <div class="vital-result-value-modal" id="bmiVitalValueModal">-</div>
+                                        <div class="vital-result-category-modal" id="bmiVitalCategoryModal">Enter height & weight</div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="triageWeight">
-                                            <i class="fas fa-weight-hanging"></i> Weight (kg)
-                                        </label>
-                                        <input type="number" class="form-control" id="triageWeight" 
-                                               placeholder="70" min="30" max="200">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <button type="button" class="btn btn-primary btn-sm queue-btn-mb" id="calculateTriageBMI">
-                                <i class="fas fa-calculator"></i> Calculate BMI
-                            </button>
-                            
-                            <div class="bmi-result-modal bmi-result-modal-hidden" id="bmiResultModal">
-                                <div class="bmi-result-value-modal" id="bmiValueModal">0.0</div>
-                                <div class="bmi-result-category-modal" id="bmiCategoryModal">Category</div>
                             </div>
                         </div>
 
@@ -419,96 +395,62 @@
     <script src="~/js/appoQ.js"></script>
     @Html.AntiForgeryToken()
     <script>
-        // BMI Calculation for Next Patient Modal
-        document.addEventListener('DOMContentLoaded', function() {
-            const calculateBtn = document.getElementById('calculateTriageBMI');
-            if (calculateBtn) {
-                calculateBtn.addEventListener('click', calculateTriageBMI);
-            }
-            
-            // Also calculate on Enter key in height/weight fields
-            const heightInput = document.getElementById('triageHeight');
-            const weightInput = document.getElementById('triageWeight');
-            
-            if (heightInput) {
-                heightInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        calculateTriageBMI();
-                    }
-                });
-            }
-            
-            if (weightInput) {
-                weightInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        calculateTriageBMI();
-                    }
-                });
-            }
-        });
-
-        function calculateTriageBMI() {
+        // BMI Indicator (similar to Blood Pressure)
+        function updateBMIIndicator() {
             const height = parseFloat(document.getElementById('triageHeight')?.value);
             const weight = parseFloat(document.getElementById('triageWeight')?.value);
             const bmiInput = document.getElementById('triageBMI');
-            const bmiResult = document.getElementById('bmiResultModal');
-            const bmiValue = document.getElementById('bmiValueModal');
-            const bmiCategory = document.getElementById('bmiCategoryModal');
+            const resultModal = document.getElementById('bmiVitalResultModal');
+            const valueModal = document.getElementById('bmiVitalValueModal');
+            const categoryModal = document.getElementById('bmiVitalCategoryModal');
 
-            // Validate inputs
-            if (!height || height < 100 || height > 250) {
-                alert('Please enter a valid height between 100 and 250 cm');
-                return;
+            // Update hidden field
+            if (bmiInput && height && weight) {
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                const roundedBMI = Math.round(bmi * 10) / 10;
+                bmiInput.value = roundedBMI;
             }
 
-            if (!weight || weight < 30 || weight > 200) {
-                alert('Please enter a valid weight between 30 and 200 kg');
+            if (!height || !weight || height < 100 || height > 250 || weight < 30 || weight > 200) {
+                if (resultModal) resultModal.classList.add('vital-result-modal-hidden');
                 return;
             }
+            
+            // Remove hidden class to show the modal
+            if (resultModal) resultModal.classList.remove('vital-result-modal-hidden');
 
             // Calculate BMI: weight (kg) / (height (m))^2
             const heightInMeters = height / 100;
             const bmi = weight / (heightInMeters * heightInMeters);
             const roundedBMI = Math.round(bmi * 10) / 10;
 
-            // Update BMI input field
-            if (bmiInput) {
-                bmiInput.value = roundedBMI;
-            }
-
-            // Determine category
             let category = '';
-            let description = '';
             let categoryClass = '';
+            let emoji = '';
 
             if (bmi < 18.5) {
                 category = 'Underweight';
-                description = 'BMI below 18.5';
-                categoryClass = 'underweight';
+                categoryClass = 'warning';
+                emoji = '⚠️';
             } else if (bmi < 25) {
                 category = 'Normal';
-                description = 'Healthy weight range';
                 categoryClass = 'normal';
+                emoji = '✅';
             } else if (bmi < 30) {
                 category = 'Overweight';
-                description = 'BMI between 25-30';
-                categoryClass = 'overweight';
+                categoryClass = 'warning';
+                emoji = '⚠️';
             } else {
                 category = 'Obese';
-                description = 'BMI 30 or above';
-                categoryClass = 'obese';
+                categoryClass = 'abnormal';
+                emoji = '⚠️';
             }
 
-            // Update result display
-            if (bmiValue) {
-                bmiValue.textContent = roundedBMI;
-            }
-            if (bmiCategory) {
-                bmiCategory.textContent = category;
-                bmiCategory.className = 'bmi-result-category-modal ' + categoryClass;
-            }
-            if (bmiResult) {
-                bmiResult.style.display = 'block';
+            if (valueModal) valueModal.textContent = roundedBMI;
+            if (categoryModal) {
+                categoryModal.textContent = emoji + ' ' + category;
+                categoryModal.className = 'vital-result-category-modal ' + categoryClass;
             }
         }
 
