@@ -16,14 +16,14 @@ namespace QuickClinique.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IFileStorageService _fileStorageService;
 
-        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IWebHostEnvironment webHostEnvironment)
+        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
-            _webHostEnvironment = webHostEnvironment;
+            _fileStorageService = fileStorageService;
         }
 
         // GET: Student
@@ -400,28 +400,6 @@ namespace QuickClinique.Controllers
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
                     const long maxFileSize = 5 * 1024 * 1024; // 5MB
 
-                    // Create directory if it doesn't exist
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "student-ids");
-                    try
-                    {
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-                    }
-                    catch (Exception dirEx)
-                    {
-                        Console.WriteLine($"Error creating upload directory: {dirEx.Message}");
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "Unable to process file uploads. Please try again or contact support."
-                            });
-
-                        ModelState.AddModelError("", "Unable to process file uploads. Please try again.");
-                        return View(model);
-                    }
-
                     // Process Front Image
                     if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
                     {
@@ -454,31 +432,13 @@ namespace QuickClinique.Controllers
                                 return View(model);
                             }
 
-                            var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}{fileExtension}";
-                            var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
-
-                            using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
-                            {
-                                await model.StudentIdImageFront.CopyToAsync(fileStream);
-                            }
-
-                            imagePaths.Add($"/img/student-ids/{frontFileName}");
+                            var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}";
+                            var frontImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageFront, "student-ids", frontFileName);
+                            imagePaths.Add(frontImagePath);
                         }
-                        catch (UnauthorizedAccessException)
+                        catch (Exception ex)
                         {
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Permission denied while uploading ID front image. Please contact support.",
-                                    field = "StudentIdImageFront"
-                                });
-
-                            ModelState.AddModelError("StudentIdImageFront", "Permission denied while uploading file. Please contact support.");
-                            return View(model);
-                        }
-                        catch (IOException ioEx)
-                        {
-                            Console.WriteLine($"IO error uploading front image: {ioEx.Message}");
+                            Console.WriteLine($"Error uploading front image: {ex.Message}");
                             if (IsAjaxRequest())
                                 return Json(new { 
                                     success = false, 
@@ -523,31 +483,13 @@ namespace QuickClinique.Controllers
                                 return View(model);
                             }
 
-                            var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}{fileExtension}";
-                            var backFilePath = Path.Combine(uploadsFolder, backFileName);
-
-                            using (var fileStream = new FileStream(backFilePath, FileMode.Create))
-                            {
-                                await model.StudentIdImageBack.CopyToAsync(fileStream);
-                            }
-
-                            imagePaths.Add($"/img/student-ids/{backFileName}");
+                            var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}";
+                            var backImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageBack, "student-ids", backFileName);
+                            imagePaths.Add(backImagePath);
                         }
-                        catch (UnauthorizedAccessException)
+                        catch (Exception ex)
                         {
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Permission denied while uploading ID back image. Please contact support.",
-                                    field = "StudentIdImageBack"
-                                });
-
-                            ModelState.AddModelError("StudentIdImageBack", "Permission denied while uploading file. Please contact support.");
-                            return View(model);
-                        }
-                        catch (IOException ioEx)
-                        {
-                            Console.WriteLine($"IO error uploading back image: {ioEx.Message}");
+                            Console.WriteLine($"Error uploading back image: {ex.Message}");
                             if (IsAjaxRequest())
                                 return Json(new { 
                                     success = false, 
@@ -886,42 +828,17 @@ namespace QuickClinique.Controllers
                     return View(model);
                 }
 
-                // Create directory if it doesn't exist
-                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "insurance-receipts");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
                 // Delete old file if exists
                 if (!string.IsNullOrEmpty(student.InsuranceReceipt))
                 {
-                    var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, student.InsuranceReceipt.TrimStart('/'));
-                    if (System.IO.File.Exists(oldFilePath))
-                    {
-                        try
-                        {
-                            System.IO.File.Delete(oldFilePath);
-                        }
-                        catch
-                        {
-                            // Ignore deletion errors
-                        }
-                    }
+                    await _fileStorageService.DeleteFileAsync(student.InsuranceReceipt);
                 }
 
                 // Generate unique filename
-                var fileName = $"{student.Idnumber}_{Guid.NewGuid()}{fileExtension}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                // Save the file
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await InsuranceReceiptFile.CopyToAsync(fileStream);
-                }
-
-                // Store relative path for database
-                student.InsuranceReceipt = $"/img/insurance-receipts/{fileName}";
+                var fileName = $"{student.Idnumber}_{Guid.NewGuid()}";
+                
+                // Upload the file using storage service
+                student.InsuranceReceipt = await _fileStorageService.UploadFileAsync(InsuranceReceiptFile, "insurance-receipts", fileName);
             }
 
             // Update only allowed fields

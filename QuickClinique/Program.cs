@@ -7,6 +7,8 @@ using QuickClinique.Services;
 using QuickClinique.Middleware;
 using System.Linq;
 using MySqlConnector;
+using Amazon.S3;
+using Amazon;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,38 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
+
+// Configure file storage service
+var storageProvider = builder.Configuration["Storage:Provider"] ?? "Local";
+if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase))
+{
+    // Configure AWS S3
+    var awsAccessKeyId = builder.Configuration["Storage:S3:AccessKeyId"] 
+        ?? Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
+    var awsSecretAccessKey = builder.Configuration["Storage:S3:SecretAccessKey"] 
+        ?? Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
+    var region = builder.Configuration["Storage:S3:Region"] ?? "us-east-1";
+
+    if (string.IsNullOrEmpty(awsAccessKeyId) || string.IsNullOrEmpty(awsSecretAccessKey))
+    {
+        Console.WriteLine("[WARNING] AWS credentials not found. Falling back to Local storage.");
+        builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+    }
+    else
+    {
+        var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+        builder.Services.AddSingleton<IAmazonS3>(sp => 
+            new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, regionEndpoint));
+        builder.Services.AddScoped<IFileStorageService, S3FileStorageService>();
+        Console.WriteLine($"[INFO] Using S3 storage provider with region: {region}");
+    }
+}
+else
+{
+    // Use local file storage (default)
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+    Console.WriteLine("[INFO] Using Local file storage provider");
+}
 
 // DB Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
