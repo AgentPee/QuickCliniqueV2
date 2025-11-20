@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace QuickClinique.Models;
 
-public partial class ApplicationDbContext : DbContext, IDataProtectionKeyContext
+public partial class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext()
     {
@@ -35,9 +34,9 @@ public partial class ApplicationDbContext : DbContext, IDataProtectionKeyContext
 
     public virtual DbSet<Student> Students { get; set; }
 
-    public virtual DbSet<Usertype> Usertypes { get; set; }
+    public virtual DbSet<Usertype> Usertypes { get; set; } = null!;
 
-    public virtual DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+    public virtual DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
