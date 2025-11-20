@@ -1127,6 +1127,62 @@ namespace QuickClinique.Controllers
                     : 0;
                 var returnPatients = appointments.GroupBy(a => a.PatientId).Count(g => g.Count() > 1);
 
+                // Get all emergency data (not just within time range for day/week/month/year stats)
+                var allEmergencies = await _context.Emergencies
+                    .Where(e => e.CreatedAt.HasValue)
+                    .ToListAsync();
+
+                // Calculate emergency statistics by time period
+                var now = DateTime.Now;
+                var todayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
+                var weekStart = todayStart.AddDays(-(int)now.DayOfWeek);
+                var monthStart = new DateTime(now.Year, now.Month, 1);
+                var yearStart = new DateTime(now.Year, 1, 1);
+
+                var emergenciesToday = allEmergencies.Count(e => e.CreatedAt.Value >= todayStart);
+                var emergenciesThisWeek = allEmergencies.Count(e => e.CreatedAt.Value >= weekStart);
+                var emergenciesThisMonth = allEmergencies.Count(e => e.CreatedAt.Value >= monthStart);
+                var emergenciesThisYear = allEmergencies.Count(e => e.CreatedAt.Value >= yearStart);
+
+                // Get emergency data within the time range for trend chart
+                var emergencies = allEmergencies
+                    .Where(e => e.CreatedAt.Value >= startDate && e.CreatedAt.Value <= endDate)
+                    .ToList();
+
+                // Calculate emergency volume by date for trend chart
+                var emergencyVolume = emergencies
+                    .GroupBy(e => DateOnly.FromDateTime(e.CreatedAt.Value))
+                    .Select(g => new
+                    {
+                        date = g.Key.ToString("MMM dd, yyyy"),
+                        day = g.Key.DayOfWeek.ToString().Substring(0, 3),
+                        count = g.Count()
+                    })
+                    .OrderBy(x => x.date)
+                    .ToList();
+
+                // Calculate most common reasons for visit
+                var reasonsDistribution = appointments
+                    .Where(a => !string.IsNullOrWhiteSpace(a.ReasonForVisit))
+                    .GroupBy(a => a.ReasonForVisit)
+                    .Select(g => new
+                    {
+                        reason = g.Key,
+                        count = g.Count()
+                    })
+                    .OrderByDescending(x => x.count)
+                    .Take(10) // Top 10 reasons
+                    .ToDictionary(x => x.reason, x => x.count);
+
+                var mostCommonReason = reasonsDistribution.Any() 
+                    ? reasonsDistribution.OrderByDescending(x => x.Value).First().Key 
+                    : "N/A";
+                var totalUniqueReasons = appointments
+                    .Where(a => !string.IsNullOrWhiteSpace(a.ReasonForVisit))
+                    .Select(a => a.ReasonForVisit)
+                    .Distinct()
+                    .Count();
+
                 // Return raw data for JavaScript to process
                 return Json(new
                 {
@@ -1158,6 +1214,24 @@ namespace QuickClinique.Controllers
                             noShows = noShows,
                             cancellations = cancellations,
                             completed = completed
+                        },
+
+                        // Emergency statistics
+                        emergencyStatistics = new
+                        {
+                            emergenciesToday = emergenciesToday,
+                            emergenciesThisWeek = emergenciesThisWeek,
+                            emergenciesThisMonth = emergenciesThisMonth,
+                            emergenciesThisYear = emergenciesThisYear,
+                            emergencyVolume = emergencyVolume
+                        },
+
+                        // Reasons for visit
+                        reasonsForVisit = new
+                        {
+                            reasonsDistribution = reasonsDistribution,
+                            mostCommonReason = mostCommonReason,
+                            totalUniqueReasons = totalUniqueReasons
                         },
 
                         // Satisfaction (placeholder - no feedback system)

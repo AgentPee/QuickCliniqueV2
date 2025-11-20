@@ -463,6 +463,119 @@
     color: var(--success);
 }
 
+/* Emergency Statistics */
+.emergency-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.emergency-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.emergency-stat.day {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border-left: 4px solid var(--danger);
+}
+
+.emergency-stat.week {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border-left: 4px solid var(--warning);
+}
+
+.emergency-stat.month {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-left: 4px solid #3B82F6;
+}
+
+.emergency-stat.year {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-left: 4px solid var(--success);
+}
+
+.emergency-stat .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.emergency-stat .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.emergency-stat.day .stat-value {
+    color: var(--danger);
+}
+
+.emergency-stat.week .stat-value {
+    color: var(--warning);
+}
+
+.emergency-stat.month .stat-value {
+    color: #3B82F6;
+}
+
+.emergency-stat.year .stat-value {
+    color: var(--success);
+}
+
+.emergency-trends {
+    margin-top: 2rem;
+}
+
+.emergency-trends canvas {
+    max-height: 300px;
+}
+
+/* Reasons for Visit Statistics */
+.reasons-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.reason-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-teal);
+}
+
+.reason-stat .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reason-stat .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    word-break: break-word;
+}
 
 /* Responsive Design */
 @media (max-width: 1400px) {
@@ -633,18 +746,26 @@
     }
     
     .frequency-stats,
-    .cancellation-stats {
+    .cancellation-stats,
+    .reasons-stats {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
     
+    .emergency-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
     .frequency-stat,
-    .cancellation-stat {
+    .cancellation-stat,
+    .emergency-stat {
         padding: 1.25rem;
     }
     
     .frequency-stat .stat-value,
-    .cancellation-stat .stat-value {
+    .cancellation-stat .stat-value,
+    .emergency-stat .stat-value {
         font-size: 1.5rem;
     }
 }
@@ -720,13 +841,19 @@
     }
     
     .frequency-stat,
-    .cancellation-stat {
+    .cancellation-stat,
+    .emergency-stat {
         padding: 1rem;
     }
     
     .frequency-stat .stat-value,
-    .cancellation-stat .stat-value {
+    .cancellation-stat .stat-value,
+    .emergency-stat .stat-value {
         font-size: 1.25rem;
+    }
+    
+    .emergency-stats {
+        grid-template-columns: 1fr;
     }
 }
 
