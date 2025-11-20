@@ -109,11 +109,39 @@
                     </div>
 
                     <div class="input-group">
-                        <label asp-for="StudentIdImage" class="control-label">Student ID Image</label>
-                        <input asp-for="StudentIdImage" class="form-control" type="file" accept="image/*" required />
-                        <span asp-validation-for="StudentIdImage" class="text-danger"></span>
-                        <span class="input-icon">🖼️</span>
-                        <small class="input-hint">Upload a clear image of your student ID</small>
+                        <label class="control-label">Student ID Image (Front)</label>
+                        <div class="file-input-container">
+                            <input asp-for="StudentIdImageFront" id="StudentIdImageFront" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <div class="file-input-buttons">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('StudentIdImageFront').click()">
+                                    📤 Upload File
+                                </button>
+                                <button type="button" class="btn-camera" onclick="openCamera('StudentIdImageFront')">
+                                    📷 Take Photo
+                                </button>
+                            </div>
+                            <div id="preview-front" class="image-preview"></div>
+                            <span asp-validation-for="StudentIdImageFront" class="text-danger"></span>
+                        </div>
+                        <small class="input-hint">Upload or take a photo of the front of your student ID</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="control-label">Student ID Image (Back)</label>
+                        <div class="file-input-container">
+                            <input asp-for="StudentIdImageBack" id="StudentIdImageBack" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <div class="file-input-buttons">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('StudentIdImageBack').click()">
+                                    📤 Upload File
+                                </button>
+                                <button type="button" class="btn-camera" onclick="openCamera('StudentIdImageBack')">
+                                    📷 Take Photo
+                                </button>
+                            </div>
+                            <div id="preview-back" class="image-preview"></div>
+                            <span asp-validation-for="StudentIdImageBack" class="text-danger"></span>
+                        </div>
+                        <small class="input-hint">Upload or take a photo of the back of your student ID</small>
                     </div>
 
                     <div class="input-group">

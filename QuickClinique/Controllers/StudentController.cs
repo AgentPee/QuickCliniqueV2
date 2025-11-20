@@ -6,6 +6,7 @@ using QuickClinique.Services;
 using QuickClinique.Attributes;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
+using System.Collections.Generic;
 
 namespace QuickClinique.Controllers
 {
@@ -298,53 +299,86 @@ namespace QuickClinique.Controllers
                     // Generate email verification token
                     var emailToken = GenerateToken();
 
-                    // Handle image upload
-                    string imagePath = null;
-                    if (model.StudentIdImage != null && model.StudentIdImage.Length > 0)
+                    // Handle image uploads (Front and Back)
+                    var imagePaths = new List<string>();
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+                    const long maxFileSize = 5 * 1024 * 1024; // 5MB
+
+                    // Create directory if it doesn't exist
+                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "student-ids");
+                    if (!Directory.Exists(uploadsFolder))
                     {
-                        // Validate file type
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-                        var fileExtension = Path.GetExtension(model.StudentIdImage.FileName).ToLowerInvariant();
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    // Process Front Image
+                    if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(model.StudentIdImageFront.FileName).ToLowerInvariant();
                         if (!allowedExtensions.Contains(fileExtension))
                         {
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "Invalid file type. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+                                return Json(new { success = false, error = "Invalid file type for front image. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
 
-                            ModelState.AddModelError("StudentIdImage", "Invalid file type. Please upload an image file.");
+                            ModelState.AddModelError("StudentIdImageFront", "Invalid file type. Please upload an image file.");
                             return View(model);
                         }
 
-                        // Validate file size (max 5MB)
-                        const long maxFileSize = 5 * 1024 * 1024; // 5MB
-                        if (model.StudentIdImage.Length > maxFileSize)
+                        if (model.StudentIdImageFront.Length > maxFileSize)
                         {
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "File size exceeds the maximum limit of 5MB." });
+                                return Json(new { success = false, error = "Front image file size exceeds the maximum limit of 5MB." });
 
-                            ModelState.AddModelError("StudentIdImage", "File size exceeds the maximum limit of 5MB.");
+                            ModelState.AddModelError("StudentIdImageFront", "File size exceeds the maximum limit of 5MB.");
                             return View(model);
                         }
 
-                        // Create directory if it doesn't exist
-                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "student-ids");
-                        if (!Directory.Exists(uploadsFolder))
+                        var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}{fileExtension}";
+                        var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
+
+                        using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
                         {
-                            Directory.CreateDirectory(uploadsFolder);
+                            await model.StudentIdImageFront.CopyToAsync(fileStream);
                         }
 
-                        // Generate unique filename
-                        var fileName = $"{model.Idnumber}_{Guid.NewGuid()}{fileExtension}";
-                        var filePath = Path.Combine(uploadsFolder, fileName);
-
-                        // Save the file
-                        using (var fileStream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await model.StudentIdImage.CopyToAsync(fileStream);
-                        }
-
-                        // Store relative path for database
-                        imagePath = $"/img/student-ids/{fileName}";
+                        imagePaths.Add($"/img/student-ids/{frontFileName}");
                     }
+
+                    // Process Back Image
+                    if (model.StudentIdImageBack != null && model.StudentIdImageBack.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(model.StudentIdImageBack.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { success = false, error = "Invalid file type for back image. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+
+                            ModelState.AddModelError("StudentIdImageBack", "Invalid file type. Please upload an image file.");
+                            return View(model);
+                        }
+
+                        if (model.StudentIdImageBack.Length > maxFileSize)
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { success = false, error = "Back image file size exceeds the maximum limit of 5MB." });
+
+                            ModelState.AddModelError("StudentIdImageBack", "File size exceeds the maximum limit of 5MB.");
+                            return View(model);
+                        }
+
+                        var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}{fileExtension}";
+                        var backFilePath = Path.Combine(uploadsFolder, backFileName);
+
+                        using (var fileStream = new FileStream(backFilePath, FileMode.Create))
+                        {
+                            await model.StudentIdImageBack.CopyToAsync(fileStream);
+                        }
+
+                        imagePaths.Add($"/img/student-ids/{backFileName}");
+                    }
+
+                    // Combine image paths (comma-separated) or use first image if only one provided
+                    string imagePath = imagePaths.Count > 0 ? string.Join(",", imagePaths) : null;
 
                     // Create the Student
                     var student = new Student
@@ -606,6 +640,8 @@ namespace QuickClinique.Controllers
             student.LastName = model.LastName;
             student.Email = model.Email;
             student.PhoneNumber = model.PhoneNumber;
+            student.Birthdate = model.Birthdate;
+            student.Gender = model.Gender;
 
             await _context.SaveChangesAsync();
 

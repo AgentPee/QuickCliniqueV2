@@ -57,6 +57,46 @@
                     <input asp-for="LastName" class="form-control" required />
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
+
+                <div class="form-group">
+                    <label asp-for="Birthdate">
+                        <i class="fas fa-calendar"></i> Birthdate
+                    </label>
+                    <input asp-for="Birthdate" id="Birthdate" type="date" class="form-control" />
+                    <span asp-validation-for="Birthdate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Gender">
+                        <i class="fas fa-venus-mars"></i> Gender
+                    </label>
+                    <select asp-for="Gender" class="form-control">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-birthday-cake"></i> Age
+                    </label>
+                    @{
+                        string ageDisplay = "N/A";
+                        if (Model.Birthdate.HasValue)
+                        {
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            var birthdate = Model.Birthdate.Value;
+                            var age = today.Year - birthdate.Year;
+                            if (birthdate > today.AddYears(-age)) age--;
+                            ageDisplay = age.ToString() + " years old";
+                        }
+                    }
+                    <input type="text" id="AgeDisplay" class="form-control" value="@ageDisplay" disabled />
+                    
+                </div>
             </div>
 
             <!-- Contact Information -->
@@ -186,6 +226,27 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         $(document).ready(function() {
+            // Calculate and update age when birthdate changes
+            $('#Birthdate').on('change', function() {
+                const birthdateValue = $(this).val();
+                if (birthdateValue) {
+                    const birthdate = new Date(birthdateValue);
+                    if (!isNaN(birthdate.getTime())) {
+                        const today = new Date();
+                        let age = today.getFullYear() - birthdate.getFullYear();
+                        const monthDiff = today.getMonth() - birthdate.getMonth();
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+                            age--;
+                        }
+                        $('#AgeDisplay').val(age + ' years');
+                    } else {
+                        $('#AgeDisplay').val('N/A');
+                    }
+                } else {
+                    $('#AgeDisplay').val('N/A');
+                }
+            });
+
             // Insurance receipt file preview
             $('#InsuranceReceiptFile').on('change', function(e) {
                 const file = e.target.files[0];

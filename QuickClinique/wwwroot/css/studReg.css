@@ -631,3 +631,78 @@ input[type="date"]::-moz-calendar-picker-indicator {
 .input-group.shake .form-control {
     animation: shake 0.5s ease-in-out;
 }
+
+/* File Input Container Styles */
+.file-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-input-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-upload,
+.btn-camera {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #4ECDC4;
+    border-radius: 10px;
+    background: white;
+    color: #4ECDC4;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-upload:hover,
+.btn-camera:hover {
+    background: #4ECDC4;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.btn-upload:active,
+.btn-camera:active {
+    transform: translateY(0);
+}
+
+.image-preview {
+    margin-top: 10px;
+    display: none;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 10px;
+    border: 2px solid #e1e5e9;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.image-preview.has-image {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .file-input-buttons {
+        flex-direction: column;
+    }
+
+    .btn-upload,
+    .btn-camera {
+        width: 100%;
+    }
+}
