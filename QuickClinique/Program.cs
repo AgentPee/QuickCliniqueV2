@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Middleware;
