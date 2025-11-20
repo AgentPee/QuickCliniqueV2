@@ -36,6 +36,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Usertype> Usertypes { get; set; }
 
+    public virtual DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         // Configuration is handled in Program.cs
@@ -406,6 +408,21 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("UserID");
             entity.Property(e => e.Name).HasColumnType("text");
             entity.Property(e => e.Role).HasColumnType("text");
+        });
+
+        modelBuilder.Entity<DataProtectionKey>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("DataProtectionKeys");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+            entity.Property(e => e.FriendlyName)
+                .HasColumnType("varchar(255)")
+                .HasMaxLength(255);
+            entity.Property(e => e.Xml)
+                .HasColumnType("longtext");
         });
 
         OnModelCreatingPartial(modelBuilder);
