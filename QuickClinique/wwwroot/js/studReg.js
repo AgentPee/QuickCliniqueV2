@@ -83,4 +83,69 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // File input preview functionality
+    setupFilePreview('StudentIdImageFront', 'preview-front');
+    setupFilePreview('StudentIdImageBack', 'preview-back');
 });
+
+// Function to open camera
+function openCamera(inputId) {
+    const fileInput = document.getElementById(inputId);
+    if (!fileInput) return;
+
+    // Check if device has camera support
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Set capture attribute to use camera
+        fileInput.setAttribute('capture', 'environment');
+        // Trigger file input click
+        fileInput.click();
+    } else {
+        // Fallback: just open file picker
+        fileInput.removeAttribute('capture');
+        fileInput.click();
+    }
+}
+
+// Function to setup file preview
+function setupFilePreview(inputId, previewId) {
+    const fileInput = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+
+    if (!fileInput || !preview) return;
+
+    fileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                e.target.value = '';
+                preview.classList.remove('has-image');
+                preview.innerHTML = '';
+                return;
+            }
+
+            // Validate file size (5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('File size exceeds 5MB. Please choose a smaller file.');
+                e.target.value = '';
+                preview.classList.remove('has-image');
+                preview.innerHTML = '';
+                return;
+            }
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                preview.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.classList.remove('has-image');
+            preview.innerHTML = '';
+        }
+    });
+}

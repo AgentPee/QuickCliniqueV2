@@ -36,8 +36,12 @@ namespace QuickClinique.Models
         public DateOnly Birthdate { get; set; }
 
         [Required]
-        [Display(Name = "Student ID Image")]
-        public IFormFile StudentIdImage { get; set; } = null!;
+        [Display(Name = "Student ID Image (Front)")]
+        public IFormFile StudentIdImageFront { get; set; } = null!;
+
+        [Required]
+        [Display(Name = "Student ID Image (Back)")]
+        public IFormFile StudentIdImageBack { get; set; } = null!;
 
         [Required]
         [DataType(DataType.Password)]
