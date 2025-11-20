@@ -45,6 +45,15 @@
                 <div class="overview-label">No-Show Rate</div>
             </div>
         </div>
+        <div class="overview-card">
+            <div class="overview-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="overview-content">
+                <div class="overview-value" id="totalEmergencies">0</div>
+                <div class="overview-label">Total Emergencies</div>
+            </div>
+        </div>
     </div>
 
     <!-- Analytics Sections -->
@@ -144,6 +153,61 @@
             </div>
         </div>
 
+        <!-- Emergency Statistics -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-ambulance"></i> Emergency Statistics
+                </h2>
+            </div>
+            <div class="card-body">
+                <canvas id="emergencyPeriodChart"></canvas>
+                <div class="emergency-stats">
+                    <div class="emergency-stat day">
+                        <span class="stat-label">Today</span>
+                        <span class="stat-value" id="emergenciesToday">0</span>
+                    </div>
+                    <div class="emergency-stat week">
+                        <span class="stat-label">This Week</span>
+                        <span class="stat-value" id="emergenciesThisWeek">0</span>
+                    </div>
+                    <div class="emergency-stat month">
+                        <span class="stat-label">This Month</span>
+                        <span class="stat-value" id="emergenciesThisMonth">0</span>
+                    </div>
+                    <div class="emergency-stat year">
+                        <span class="stat-label">This Year</span>
+                        <span class="stat-value" id="emergenciesThisYear">0</span>
+                    </div>
+                </div>
+                <div class="emergency-trends">
+                    <canvas id="emergencyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Common Reasons for Visit -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-stethoscope"></i> Most Common Reasons for Visit
+                </h2>
+            </div>
+            <div class="card-body">
+                <canvas id="reasonsForVisitChart"></canvas>
+                <div class="reasons-stats">
+                    <div class="reason-stat">
+                        <span class="stat-label">Most Common Reason</span>
+                        <span class="stat-value" id="mostCommonReason">-</span>
+                    </div>
+                    <div class="reason-stat">
+                        <span class="stat-label">Total Unique Reasons</span>
+                        <span class="stat-value" id="totalUniqueReasons">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
     </div>
 </div>
 

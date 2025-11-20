@@ -106,6 +106,24 @@ function processAnalyticsData(data) {
             completed: data.noShowCancellation?.completed || 0
         },
         
+        emergencyStatistics: {
+            emergenciesToday: data.emergencyStatistics?.emergenciesToday || 0,
+            emergenciesThisWeek: data.emergencyStatistics?.emergenciesThisWeek || 0,
+            emergenciesThisMonth: data.emergencyStatistics?.emergenciesThisMonth || 0,
+            emergenciesThisYear: data.emergencyStatistics?.emergenciesThisYear || 0,
+            emergencyVolume: (data.emergencyStatistics?.emergencyVolume || []).map(item => ({
+                date: item.date,
+                day: item.day,
+                count: item.count
+            }))
+        },
+        
+        reasonsForVisit: {
+            reasonsDistribution: data.reasonsForVisit?.reasonsDistribution || {},
+            mostCommonReason: data.reasonsForVisit?.mostCommonReason || 'N/A',
+            totalUniqueReasons: data.reasonsForVisit?.totalUniqueReasons || 0
+        },
+        
         satisfactionRatings: data.satisfactionRatings || {
             '5': 0,
             '4': 0,
@@ -145,6 +163,18 @@ function getEmptyData() {
             cancellations: 0,
             completed: 0
         },
+        emergencyStatistics: {
+            emergenciesToday: 0,
+            emergenciesThisWeek: 0,
+            emergenciesThisMonth: 0,
+            emergenciesThisYear: 0,
+            emergencyVolume: []
+        },
+        reasonsForVisit: {
+            reasonsDistribution: {},
+            mostCommonReason: 'N/A',
+            totalUniqueReasons: 0
+        },
         satisfactionRatings: {
             '5': 0,
             '4': 0,
@@ -164,6 +194,8 @@ function updateOverviewCards() {
     document.getElementById('totalAppointments').textContent = data.totalAppointments.toLocaleString();
     document.getElementById('totalPatients').textContent = data.totalPatients.toLocaleString();
     document.getElementById('noShowRate').textContent = data.noShowRate.toFixed(1) + '%';
+    const totalEmergencies = data.emergencyStatistics?.emergenciesThisYear || 0;
+    document.getElementById('totalEmergencies').textContent = totalEmergencies.toLocaleString();
 }
 
 // Render all charts
@@ -172,9 +204,14 @@ function renderCharts() {
     renderAgeDistributionChart();
     renderVisitFrequencyChart();
     renderNoShowCancellationChart();
+    renderEmergencyPeriodChart();
+    renderEmergencyTrendChart();
+    renderReasonsForVisitChart();
     updateDemographicsStats();
     updateFrequencyStats();
     updateCancellationStats();
+    updateEmergencyStats();
+    updateReasonsStats();
 }
 
 // Render Appointment Volume Trend Chart
@@ -445,5 +482,235 @@ function updateCancellationStats() {
     
     document.getElementById('totalCompleted').textContent = data.completed.toLocaleString();
     document.getElementById('completedPercentage').textContent = ((data.completed / total) * 100).toFixed(1) + '%';
+}
+
+// Render Emergency Period Chart
+function renderEmergencyPeriodChart() {
+    const ctx = document.getElementById('emergencyPeriodChart');
+    if (!ctx) return;
+    
+    if (charts.emergencyPeriod) {
+        charts.emergencyPeriod.destroy();
+    }
+    
+    const data = analyticsData.emergencyStatistics || { 
+        emergenciesToday: 0, 
+        emergenciesThisWeek: 0, 
+        emergenciesThisMonth: 0, 
+        emergenciesThisYear: 0 
+    };
+    
+    charts.emergencyPeriod = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Today', 'This Week', 'This Month', 'This Year'],
+            datasets: [{
+                label: 'Emergency Appointments',
+                data: [
+                    data.emergenciesToday,
+                    data.emergenciesThisWeek,
+                    data.emergenciesThisMonth,
+                    data.emergenciesThisYear
+                ],
+                backgroundColor: [
+                    '#DC2626',
+                    '#F59E0B',
+                    '#3B82F6',
+                    '#10B981'
+                ],
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render Emergency Trend Chart
+function renderEmergencyTrendChart() {
+    const ctx = document.getElementById('emergencyTrendChart');
+    if (!ctx) return;
+    
+    if (charts.emergencyTrend) {
+        charts.emergencyTrend.destroy();
+    }
+    
+    const data = analyticsData.emergencyStatistics?.emergencyVolume || [];
+    
+    charts.emergencyTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.day + ' ' + d.date),
+            datasets: [{
+                label: 'Emergencies',
+                data: data.map(d => d.count),
+                borderColor: '#DC2626',
+                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#DC2626',
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Update emergency statistics
+function updateEmergencyStats() {
+    const data = analyticsData.emergencyStatistics;
+    
+    document.getElementById('emergenciesToday').textContent = (data.emergenciesToday || 0).toLocaleString();
+    document.getElementById('emergenciesThisWeek').textContent = (data.emergenciesThisWeek || 0).toLocaleString();
+    document.getElementById('emergenciesThisMonth').textContent = (data.emergenciesThisMonth || 0).toLocaleString();
+    document.getElementById('emergenciesThisYear').textContent = (data.emergenciesThisYear || 0).toLocaleString();
+}
+
+// Render Reasons for Visit Chart
+function renderReasonsForVisitChart() {
+    const ctx = document.getElementById('reasonsForVisitChart');
+    if (!ctx) return;
+    
+    if (charts.reasonsForVisit) {
+        charts.reasonsForVisit.destroy();
+    }
+    
+    const data = analyticsData.reasonsForVisit?.reasonsDistribution || {};
+    const reasons = Object.keys(data);
+    const counts = reasons.map(reason => data[reason]);
+    
+    if (reasons.length === 0) {
+        return;
+    }
+    
+    // Generate colors for the chart
+    const colors = [
+        '#4ECDC4', '#44A08D', '#3BA89F', '#10B981', '#F59E0B',
+        '#DC2626', '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1'
+    ];
+    
+    charts.reasonsForVisit = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: reasons,
+            datasets: [{
+                data: counts,
+                backgroundColor: reasons.map((_, i) => colors[i % colors.length]),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 11,
+                            weight: '600'
+                        },
+                        boxWidth: 12,
+                        boxHeight: 12
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = counts.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return context.label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Update reasons statistics
+function updateReasonsStats() {
+    const data = analyticsData.reasonsForVisit;
+    
+    document.getElementById('mostCommonReason').textContent = data.mostCommonReason || 'N/A';
+    document.getElementById('totalUniqueReasons').textContent = (data.totalUniqueReasons || 0).toLocaleString();
 }
 
