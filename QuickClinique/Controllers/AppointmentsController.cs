@@ -776,7 +776,7 @@ namespace QuickClinique.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ClinicStaffOnly]
-        public async Task<IActionResult> CancelAppointment(int appointmentId, string reason = null)
+        public async Task<IActionResult> CancelAppointment(int appointmentId, string? reason = null)
         {
             try
             {
