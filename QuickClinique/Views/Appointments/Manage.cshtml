@@ -484,6 +484,64 @@
     </div>
 </div>
 
+
+<!-- Emergency SOS Modal for Clinic Staff -->
+<div class="modal fade" id="emergencyModal" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content emergency-modal-content">
+            <div class="modal-header emergency-header">
+                <h5 class="modal-title" id="emergencyModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> 🚨 EMERGENCY SOS ALERT 🚨
+                </h5>
+            </div>
+            <div class="modal-body emergency-body">
+                <div class="alert alert-danger emergency-alert">
+                    <i class="fas fa-bell"></i> <strong>URGENT:</strong> A student has sent an emergency SOS request!
+                </div>
+
+                <div class="emergency-info">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-user"></i> Student Name:
+                        </div>
+                        <div class="info-value" id="emergencyStudentName"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-id-card"></i> Student ID:
+                        </div>
+                        <div class="info-value" id="emergencyStudentId"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-map-marker-alt"></i> Location:
+                        </div>
+                        <div class="info-value" id="emergencyLocation"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-tools"></i> Needs:
+                        </div>
+                        <div class="info-value" id="emergencyNeeds"></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-clock"></i> Time:
+                        </div>
+                        <div class="info-value" id="emergencyTime"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer emergency-footer">
+                <button type="button" class="btn btn-success" id="resolveEmergencyBtn">
+                    <i class="fas fa-check"></i> Mark as Resolved
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @section Scripts {
     <script src="~/js/appoMan.js"></script>
     <script>
