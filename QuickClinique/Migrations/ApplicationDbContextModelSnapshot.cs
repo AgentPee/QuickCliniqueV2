@@ -104,6 +104,18 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateOnly?>("Birthdate")
+                        .HasColumnType("date")
+                        .HasColumnName("Birthdate");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("Gender");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("Image");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
