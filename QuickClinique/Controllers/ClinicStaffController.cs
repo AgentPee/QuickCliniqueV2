@@ -16,14 +16,14 @@ namespace QuickClinique.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IFileStorageService _fileStorageService;
 
-        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IWebHostEnvironment webHostEnvironment)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
-            _webHostEnvironment = webHostEnvironment;
+            _fileStorageService = fileStorageService;
         }
 
         // GET: Clinicstaff
@@ -567,28 +567,6 @@ namespace QuickClinique.Controllers
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
                     const long maxFileSize = 5 * 1024 * 1024; // 5MB
 
-                    // Create directory if it doesn't exist
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "staff-ids");
-                    try
-                    {
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-                    }
-                    catch (Exception dirEx)
-                    {
-                        Console.WriteLine($"Error creating upload directory: {dirEx.Message}");
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "Unable to process file uploads. Please try again or contact support."
-                            });
-
-                        ModelState.AddModelError("", "Unable to process file uploads. Please try again.");
-                        return View(model);
-                    }
-
                     // Process Front Image
                     if (model.StaffIdImageFront != null && model.StaffIdImageFront.Length > 0)
                     {
@@ -621,31 +599,13 @@ namespace QuickClinique.Controllers
                                 return View(model);
                             }
 
-                            var frontFileName = $"staff_{Guid.NewGuid()}_front{fileExtension}";
-                            var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
-
-                            using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
-                            {
-                                await model.StaffIdImageFront.CopyToAsync(fileStream);
-                            }
-
-                            imagePaths.Add($"/img/staff-ids/{frontFileName}");
+                            var frontFileName = $"staff_{Guid.NewGuid()}_front";
+                            var frontImagePath = await _fileStorageService.UploadFileAsync(model.StaffIdImageFront, "staff-ids", frontFileName);
+                            imagePaths.Add(frontImagePath);
                         }
-                        catch (UnauthorizedAccessException)
+                        catch (Exception ex)
                         {
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Permission denied while uploading ID front image. Please contact support.",
-                                    field = "StaffIdImageFront"
-                                });
-
-                            ModelState.AddModelError("StaffIdImageFront", "Permission denied while uploading file. Please contact support.");
-                            return View(model);
-                        }
-                        catch (IOException ioEx)
-                        {
-                            Console.WriteLine($"IO error uploading front image: {ioEx.Message}");
+                            Console.WriteLine($"Error uploading front image: {ex.Message}");
                             if (IsAjaxRequest())
                                 return Json(new { 
                                     success = false, 
@@ -690,31 +650,13 @@ namespace QuickClinique.Controllers
                                 return View(model);
                             }
 
-                            var backFileName = $"staff_{Guid.NewGuid()}_back{fileExtension}";
-                            var backFilePath = Path.Combine(uploadsFolder, backFileName);
-
-                            using (var fileStream = new FileStream(backFilePath, FileMode.Create))
-                            {
-                                await model.StaffIdImageBack.CopyToAsync(fileStream);
-                            }
-
-                            imagePaths.Add($"/img/staff-ids/{backFileName}");
+                            var backFileName = $"staff_{Guid.NewGuid()}_back";
+                            var backImagePath = await _fileStorageService.UploadFileAsync(model.StaffIdImageBack, "staff-ids", backFileName);
+                            imagePaths.Add(backImagePath);
                         }
-                        catch (UnauthorizedAccessException)
+                        catch (Exception ex)
                         {
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Permission denied while uploading ID back image. Please contact support.",
-                                    field = "StaffIdImageBack"
-                                });
-
-                            ModelState.AddModelError("StaffIdImageBack", "Permission denied while uploading file. Please contact support.");
-                            return View(model);
-                        }
-                        catch (IOException ioEx)
-                        {
-                            Console.WriteLine($"IO error uploading back image: {ioEx.Message}");
+                            Console.WriteLine($"Error uploading back image: {ex.Message}");
                             if (IsAjaxRequest())
                                 return Json(new { 
                                     success = false, 
