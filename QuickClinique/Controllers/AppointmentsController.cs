@@ -85,6 +85,18 @@ namespace QuickClinique.Controllers
 
             if (ModelState.IsValid)
             {
+                // Get the schedule to find the appointment date
+                var schedule = await _context.Schedules.FindAsync(model.ScheduleId);
+                if (schedule == null)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Schedule not found" });
+                    ModelState.AddModelError("ScheduleId", "Selected schedule is not available");
+                    ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", model.PatientId);
+                    ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", model.ScheduleId);
+                    return View(model);
+                }
+
                 // Create the appointment entity
                 var appointment = new Appointment
                 {
@@ -97,8 +109,11 @@ namespace QuickClinique.Controllers
                     QueueStatus = "Waiting"
                 };
 
+                // Assign queue number based on the appointment date (not schedule ID)
+                // All appointments on the same day should share the same queue sequence
                 var lastQueue = await _context.Appointments
-                    .Where(a => a.ScheduleId == model.ScheduleId)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.Schedule.Date == schedule.Date)
                     .OrderByDescending(a => a.QueueNumber)
                     .FirstOrDefaultAsync();
                 appointment.QueueNumber = (lastQueue?.QueueNumber ?? 0) + 1;
@@ -950,6 +965,7 @@ namespace QuickClinique.Controllers
                 int? userQueueNumber = null;
                 string? userQueueStatus = null;
                 int? userPosition = null;
+                int? estimatedWaitTime = null;
 
                 if (studentId.HasValue)
                 {
@@ -967,6 +983,10 @@ namespace QuickClinique.Controllers
                             userPosition = todayAppointments
                                 .Count(a => a.QueueStatus == "Waiting" && 
                                            a.QueueNumber < userAppointment.QueueNumber) + 1;
+                            
+                            // Calculate estimated wait time: 15 minutes for first in line, +5 minutes for each subsequent person
+                            // Formula: 15 + (position - 1) * 5
+                            estimatedWaitTime = 15 + (userPosition.Value - 1) * 5;
                         }
                     }
                 }
@@ -987,6 +1007,7 @@ namespace QuickClinique.Controllers
                         userQueueNumber = userQueueNumber,
                         userQueueStatus = userQueueStatus,
                         userPosition = userPosition,
+                        estimatedWaitTime = estimatedWaitTime,
                         lastUpdated = DateTime.Now
                     }
                 });
