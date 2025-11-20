@@ -7,6 +7,7 @@ using QuickClinique.Attributes;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace QuickClinique.Controllers
 {
@@ -262,6 +263,78 @@ namespace QuickClinique.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(StudentRegisterViewModel model)
         {
+            // Validate required fields with specific error messages
+            if (model.Idnumber == 0 || model.Idnumber < 10000000)
+            {
+                ModelState.AddModelError("Idnumber", "ID Number is required and must be at least 8 digits. Please enter your ID number.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.FirstName))
+            {
+                ModelState.AddModelError("FirstName", "First Name is required. Please enter your first name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.LastName))
+            {
+                ModelState.AddModelError("LastName", "Last Name is required. Please enter your last name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                ModelState.AddModelError("Email", "Email address is required. Please enter your email address.");
+            }
+            else if (!model.Email.Contains("@") || !model.Email.Contains("."))
+            {
+                ModelState.AddModelError("Email", "Please enter a valid email address.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.PhoneNumber))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone Number is required. Please enter your phone number.");
+            }
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^09[0-9]{9}$"))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone number must start with 09 and be 11 digits total (e.g., 09345672824).");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Gender))
+            {
+                ModelState.AddModelError("Gender", "Gender is required. Please select your gender.");
+            }
+
+            if (model.Birthdate == default(DateOnly))
+            {
+                ModelState.AddModelError("Birthdate", "Birthdate is required. Please select your date of birth.");
+            }
+
+            if (model.StudentIdImageFront == null || model.StudentIdImageFront.Length == 0)
+            {
+                ModelState.AddModelError("StudentIdImageFront", "Student ID Front image is required. Please upload a photo of the front of your ID.");
+            }
+
+            if (model.StudentIdImageBack == null || model.StudentIdImageBack.Length == 0)
+            {
+                ModelState.AddModelError("StudentIdImageBack", "Student ID Back image is required. Please upload a photo of the back of your ID.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError("Password", "Password is required. Please enter a password.");
+            }
+            else if (model.Password.Length < 6)
+            {
+                ModelState.AddModelError("Password", "Password must be at least 6 characters long.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.ConfirmPassword))
+            {
+                ModelState.AddModelError("ConfirmPassword", "Please confirm your password.");
+            }
+            else if (model.Password != model.ConfirmPassword)
+            {
+                ModelState.AddModelError("ConfirmPassword", "Passwords do not match. Please make sure both passwords are the same.");
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -270,19 +343,27 @@ namespace QuickClinique.Controllers
                     if (await _context.Students.AnyAsync(x => x.Idnumber == model.Idnumber))
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "ID number already registered." });
+                            return Json(new { 
+                                success = false, 
+                                error = "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.",
+                                field = "Idnumber"
+                            });
 
-                        ModelState.AddModelError("Idnumber", "ID number already registered.");
+                        ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.");
                         return View(model);
                     }
 
                     // Check if email already exists
-                    if (await _context.Students.AnyAsync(x => x.Email == model.Email))
+                    if (await _context.Students.AnyAsync(x => x.Email.ToLower() == model.Email.ToLower()))
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Email already registered." });
+                            return Json(new { 
+                                success = false, 
+                                error = "This email address is already registered. Please use a different email or try logging in instead.",
+                                field = "Email"
+                            });
 
-                        ModelState.AddModelError("Email", "Email already registered.");
+                        ModelState.AddModelError("Email", "This email address is already registered. Please use a different email or try logging in instead.");
                         return View(model);
                     }
 
@@ -293,8 +374,23 @@ namespace QuickClinique.Controllers
                         Role = "Student"
                     };
 
-                    _context.Usertypes.Add(usertype);
-                    await _context.SaveChangesAsync();
+                    try
+                    {
+                        _context.Usertypes.Add(usertype);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        Console.WriteLine($"Database error creating user type: {dbEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "An error occurred while creating your account. Please try again. If the problem persists, contact support."
+                            });
+
+                        ModelState.AddModelError("", "An error occurred while creating your account. Please try again.");
+                        return View(model);
+                    }
 
                     // Generate email verification token
                     var emailToken = GenerateToken();
@@ -306,75 +402,162 @@ namespace QuickClinique.Controllers
 
                     // Create directory if it doesn't exist
                     var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "img", "student-ids");
-                    if (!Directory.Exists(uploadsFolder))
+                    try
                     {
-                        Directory.CreateDirectory(uploadsFolder);
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+                    }
+                    catch (Exception dirEx)
+                    {
+                        Console.WriteLine($"Error creating upload directory: {dirEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Unable to process file uploads. Please try again or contact support."
+                            });
+
+                        ModelState.AddModelError("", "Unable to process file uploads. Please try again.");
+                        return View(model);
                     }
 
                     // Process Front Image
                     if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
                     {
-                        var fileExtension = Path.GetExtension(model.StudentIdImageFront.FileName).ToLowerInvariant();
-                        if (!allowedExtensions.Contains(fileExtension))
+                        try
+                        {
+                            var fileExtension = Path.GetExtension(model.StudentIdImageFront.FileName).ToLowerInvariant();
+                            if (!allowedExtensions.Contains(fileExtension))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "Invalid file type for ID front image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                        field = "StudentIdImageFront"
+                                    });
+
+                                ModelState.AddModelError("StudentIdImageFront", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                                return View(model);
+                            }
+
+                            if (model.StudentIdImageFront.Length > maxFileSize)
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "ID front image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                        field = "StudentIdImageFront"
+                                    });
+
+                                ModelState.AddModelError("StudentIdImageFront", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                                return View(model);
+                            }
+
+                            var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}{fileExtension}";
+                            var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
+
+                            using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
+                            {
+                                await model.StudentIdImageFront.CopyToAsync(fileStream);
+                            }
+
+                            imagePaths.Add($"/img/student-ids/{frontFileName}");
+                        }
+                        catch (UnauthorizedAccessException)
                         {
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "Invalid file type for front image. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Permission denied while uploading ID front image. Please contact support.",
+                                    field = "StudentIdImageFront"
+                                });
 
-                            ModelState.AddModelError("StudentIdImageFront", "Invalid file type. Please upload an image file.");
+                            ModelState.AddModelError("StudentIdImageFront", "Permission denied while uploading file. Please contact support.");
                             return View(model);
                         }
-
-                        if (model.StudentIdImageFront.Length > maxFileSize)
+                        catch (IOException ioEx)
                         {
+                            Console.WriteLine($"IO error uploading front image: {ioEx.Message}");
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "Front image file size exceeds the maximum limit of 5MB." });
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Error saving ID front image. Please try again or contact support.",
+                                    field = "StudentIdImageFront"
+                                });
 
-                            ModelState.AddModelError("StudentIdImageFront", "File size exceeds the maximum limit of 5MB.");
+                            ModelState.AddModelError("StudentIdImageFront", "Error saving file. Please try again.");
                             return View(model);
                         }
-
-                        var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}{fileExtension}";
-                        var frontFilePath = Path.Combine(uploadsFolder, frontFileName);
-
-                        using (var fileStream = new FileStream(frontFilePath, FileMode.Create))
-                        {
-                            await model.StudentIdImageFront.CopyToAsync(fileStream);
-                        }
-
-                        imagePaths.Add($"/img/student-ids/{frontFileName}");
                     }
 
                     // Process Back Image
                     if (model.StudentIdImageBack != null && model.StudentIdImageBack.Length > 0)
                     {
-                        var fileExtension = Path.GetExtension(model.StudentIdImageBack.FileName).ToLowerInvariant();
-                        if (!allowedExtensions.Contains(fileExtension))
+                        try
+                        {
+                            var fileExtension = Path.GetExtension(model.StudentIdImageBack.FileName).ToLowerInvariant();
+                            if (!allowedExtensions.Contains(fileExtension))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "Invalid file type for ID back image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                        field = "StudentIdImageBack"
+                                    });
+
+                                ModelState.AddModelError("StudentIdImageBack", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                                return View(model);
+                            }
+
+                            if (model.StudentIdImageBack.Length > maxFileSize)
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "ID back image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                        field = "StudentIdImageBack"
+                                    });
+
+                                ModelState.AddModelError("StudentIdImageBack", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                                return View(model);
+                            }
+
+                            var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}{fileExtension}";
+                            var backFilePath = Path.Combine(uploadsFolder, backFileName);
+
+                            using (var fileStream = new FileStream(backFilePath, FileMode.Create))
+                            {
+                                await model.StudentIdImageBack.CopyToAsync(fileStream);
+                            }
+
+                            imagePaths.Add($"/img/student-ids/{backFileName}");
+                        }
+                        catch (UnauthorizedAccessException)
                         {
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "Invalid file type for back image. Please upload an image file (jpg, jpeg, png, gif, bmp, or webp)." });
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Permission denied while uploading ID back image. Please contact support.",
+                                    field = "StudentIdImageBack"
+                                });
 
-                            ModelState.AddModelError("StudentIdImageBack", "Invalid file type. Please upload an image file.");
+                            ModelState.AddModelError("StudentIdImageBack", "Permission denied while uploading file. Please contact support.");
                             return View(model);
                         }
-
-                        if (model.StudentIdImageBack.Length > maxFileSize)
+                        catch (IOException ioEx)
                         {
+                            Console.WriteLine($"IO error uploading back image: {ioEx.Message}");
                             if (IsAjaxRequest())
-                                return Json(new { success = false, error = "Back image file size exceeds the maximum limit of 5MB." });
+                                return Json(new { 
+                                    success = false, 
+                                    error = "Error saving ID back image. Please try again or contact support.",
+                                    field = "StudentIdImageBack"
+                                });
 
-                            ModelState.AddModelError("StudentIdImageBack", "File size exceeds the maximum limit of 5MB.");
+                            ModelState.AddModelError("StudentIdImageBack", "Error saving file. Please try again.");
                             return View(model);
                         }
-
-                        var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}{fileExtension}";
-                        var backFilePath = Path.Combine(uploadsFolder, backFileName);
-
-                        using (var fileStream = new FileStream(backFilePath, FileMode.Create))
-                        {
-                            await model.StudentIdImageBack.CopyToAsync(fileStream);
-                        }
-
-                        imagePaths.Add($"/img/student-ids/{backFileName}");
                     }
 
                     // Combine image paths (comma-separated) or use first image if only one provided
@@ -398,14 +581,71 @@ namespace QuickClinique.Controllers
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
                     };
 
-                    _context.Students.Add(student);
-                    await _context.SaveChangesAsync();
+                    try
+                    {
+                        _context.Students.Add(student);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        // Check for unique constraint violations
+                        if (dbEx.InnerException != null && 
+                            (dbEx.InnerException.Message.Contains("Duplicate entry") || 
+                             dbEx.InnerException.Message.Contains("UNIQUE constraint") ||
+                             dbEx.InnerException.Message.Contains("duplicate key")))
+                        {
+                            // Check which field caused the violation
+                            if (dbEx.InnerException.Message.Contains("Idnumber") || dbEx.InnerException.Message.Contains("idnumber"))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "This ID number is already registered. Please use a different ID number.",
+                                        field = "Idnumber"
+                                    });
+
+                                ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number.");
+                                return View(model);
+                            }
+                            else if (dbEx.InnerException.Message.Contains("Email") || dbEx.InnerException.Message.Contains("email"))
+                            {
+                                if (IsAjaxRequest())
+                                    return Json(new { 
+                                        success = false, 
+                                        error = "This email address is already registered. Please use a different email.",
+                                        field = "Email"
+                                    });
+
+                                ModelState.AddModelError("Email", "This email address is already registered. Please use a different email.");
+                                return View(model);
+                            }
+                        }
+
+                        Console.WriteLine($"Database error saving student: {dbEx.Message}");
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "An error occurred while saving your registration. Please try again. If the problem persists, contact support."
+                            });
+
+                        ModelState.AddModelError("", "An error occurred while saving your registration. Please try again.");
+                        return View(model);
+                    }
 
                     // Send verification email
-                    var verificationLink = Url.Action("VerifyEmail", "Student",
-                        new { token = emailToken, email = student.Email }, Request.Scheme);
+                    try
+                    {
+                        var verificationLink = Url.Action("VerifyEmail", "Student",
+                            new { token = emailToken, email = student.Email }, Request.Scheme);
 
-                    await _emailService.SendVerificationEmail(student.Email, student.FirstName, verificationLink);
+                        await _emailService.SendVerificationEmail(student.Email, student.FirstName, verificationLink);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail registration
+                        Console.WriteLine($"Error sending verification email: {emailEx.Message}");
+                        // Continue with registration success - user can request resend later
+                    }
 
                     if (IsAjaxRequest())
                         return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
@@ -413,25 +653,74 @@ namespace QuickClinique.Controllers
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
                     return RedirectToAction(nameof(Login));
                 }
+                catch (DbUpdateException dbEx)
+                {
+                    Console.WriteLine($"Database error during registration: {dbEx.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { 
+                            success = false, 
+                            error = "A database error occurred. Please try again. If the problem persists, contact support."
+                        });
+
+                    ModelState.AddModelError("", "A database error occurred. Please try again.");
+                }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"Unexpected error during registration: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
                     if (IsAjaxRequest())
-                        return Json(new { success = false, error = "An error occurred during registration. Please try again." });
+                        return Json(new { 
+                            success = false, 
+                            error = "An unexpected error occurred during registration. Please try again. If the problem persists, contact support."
+                        });
 
-                    ModelState.AddModelError("", "An error occurred during registration. Please try again.");
+                    ModelState.AddModelError("", "An unexpected error occurred during registration. Please try again.");
                 }
             }
 
             if (IsAjaxRequest())
+            {
+                // Get the first error message for the main error field
+                var firstError = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault();
+
+                // Build detailed error response
+                var errors = ModelState.ToDictionary(
+                    k => k.Key,
+                    v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+
+                // Count missing required fields
+                var missingFields = errors.Keys.Where(k => 
+                    errors[k].Any(e => e.Contains("required") || e.Contains("Required"))).ToList();
+
+                string mainError;
+                if (missingFields.Count > 0)
+                {
+                    if (missingFields.Count == 1)
+                    {
+                        mainError = $"Please fill in the required field: {string.Join(", ", missingFields)}";
+                    }
+                    else
+                    {
+                        mainError = $"Please fill in all required fields: {string.Join(", ", missingFields)}";
+                    }
+                }
+                else
+                {
+                    mainError = firstError ?? "Please correct the errors below and try again.";
+                }
+
                 return Json(new
                 {
                     success = false,
-                    error = "Validation failed",
-                    errors = ModelState.ToDictionary(
-                        k => k.Key,
-                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    )
+                    error = mainError,
+                    errors = errors,
+                    missingFields = missingFields
                 });
+            }
 
             return View(model);
         }

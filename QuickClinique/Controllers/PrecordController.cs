@@ -89,13 +89,44 @@ namespace QuickClinique.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(precord);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    // Verify patient exists
+                    var patientExists = await _context.Students.AnyAsync(s => s.StudentId == precord.PatientId);
+                    if (!patientExists)
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "Selected patient not found. Please select a valid patient." });
 
-                if (IsAjaxRequest())
-                    return Json(new { success = true, message = "Patient record created successfully", id = precord.RecordId });
+                        ModelState.AddModelError("PatientId", "Selected patient not found. Please select a valid patient.");
+                        ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", precord.PatientId);
+                        return View(precord);
+                    }
 
-                return RedirectToAction(nameof(Index));
+                    _context.Add(precord);
+                    await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Patient record created successfully", id = precord.RecordId });
+
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    Console.WriteLine($"Database error creating patient record: {dbEx.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An error occurred while saving the patient record. Please try again." });
+
+                    ModelState.AddModelError("", "An error occurred while saving the patient record. Please try again.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating patient record: {ex.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "An unexpected error occurred. Please try again." });
+
+                    ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
+                }
             }
 
             ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", precord.PatientId);
@@ -104,7 +135,7 @@ namespace QuickClinique.Controllers
                 return Json(new
                 {
                     success = false,
-                    error = "Validation failed",
+                    error = "Please correct the validation errors and try again.",
                     errors = ModelState.ToDictionary(
                         k => k.Key,
                         v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
@@ -316,9 +347,31 @@ namespace QuickClinique.Controllers
                     return Json(new { success = false, message = "An error occurred while updating. Please try again." });
                 }
             }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine($"Database error updating patient: {dbEx.Message}");
+                
+                // Check for specific database errors
+                if (dbEx.InnerException != null && 
+                    (dbEx.InnerException.Message.Contains("Duplicate entry") || 
+                     dbEx.InnerException.Message.Contains("UNIQUE constraint")))
+                {
+                    if (dbEx.InnerException.Message.Contains("Email") || dbEx.InnerException.Message.Contains("email"))
+                    {
+                        return Json(new { success = false, message = "This email address is already in use. Please use a different email." });
+                    }
+                    if (dbEx.InnerException.Message.Contains("Idnumber") || dbEx.InnerException.Message.Contains("idnumber"))
+                    {
+                        return Json(new { success = false, message = "This ID number is already in use. Please use a different ID number." });
+                    }
+                }
+                
+                return Json(new { success = false, message = "An error occurred while updating patient information. Please try again." });
+            }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                Console.WriteLine($"Error updating patient: {ex.Message}");
+                return Json(new { success = false, message = "An unexpected error occurred. Please try again." });
             }
         }
 
@@ -344,9 +397,15 @@ namespace QuickClinique.Controllers
                 string action = student.IsActive ? "activated" : "deactivated";
                 return Json(new { success = true, message = $"Patient {action} successfully", isActive = student.IsActive });
             }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine($"Database error updating patient status: {dbEx.Message}");
+                return Json(new { success = false, message = "An error occurred while updating patient status. Please try again." });
+            }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error updating patient status: {ex.Message}" });
+                Console.WriteLine($"Error updating patient status: {ex.Message}");
+                return Json(new { success = false, message = "An unexpected error occurred. Please try again." });
             }
         }
 

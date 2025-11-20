@@ -699,6 +699,117 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] IsActive column already exists in clinicstaff table.");
             }
 
+            // Check and add Birthdate, Gender, and Image columns to clinicstaff table
+            Console.WriteLine("[INIT] Checking for Birthdate, Gender, and Image columns in clinicstaff table...");
+            
+            // Check Birthdate
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'clinicstaff' 
+                AND UPPER(COLUMN_NAME) = 'BIRTHDATE'";
+            var clinicStaffBirthdateExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!clinicStaffBirthdateExists)
+            {
+                Console.WriteLine("[INIT] Adding Birthdate column to clinicstaff table...");
+                try
+                {
+                    command.CommandText = "ALTER TABLE `clinicstaff` ADD COLUMN `Birthdate` date NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Birthdate column added to clinicstaff table!");
+                }
+                catch (Exception addEx)
+                {
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[INFO] Birthdate column already exists (caught duplicate error).");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ERROR] Failed to add Birthdate column to clinicstaff: {addEx.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] Birthdate column already exists in clinicstaff table.");
+            }
+
+            // Check Gender
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'clinicstaff' 
+                AND UPPER(COLUMN_NAME) = 'GENDER'";
+            var clinicStaffGenderExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!clinicStaffGenderExists)
+            {
+                Console.WriteLine("[INIT] Adding Gender column to clinicstaff table...");
+                try
+                {
+                    command.CommandText = "ALTER TABLE `clinicstaff` ADD COLUMN `Gender` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Gender column added to clinicstaff table!");
+                }
+                catch (Exception addEx)
+                {
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[INFO] Gender column already exists (caught duplicate error).");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ERROR] Failed to add Gender column to clinicstaff: {addEx.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] Gender column already exists in clinicstaff table.");
+            }
+
+            // Check Image
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'clinicstaff' 
+                AND UPPER(COLUMN_NAME) = 'IMAGE'";
+            var clinicStaffImageExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!clinicStaffImageExists)
+            {
+                Console.WriteLine("[INIT] Adding Image column to clinicstaff table...");
+                try
+                {
+                    command.CommandText = "ALTER TABLE `clinicstaff` ADD COLUMN `Image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Image column added to clinicstaff table!");
+                }
+                catch (Exception addEx)
+                {
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[INFO] Image column already exists (caught duplicate error).");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ERROR] Failed to add Image column to clinicstaff: {addEx.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] Image column already exists in clinicstaff table.");
+            }
+
             // Check and add vitals columns to precords table
             Console.WriteLine("[INIT] Checking for vitals columns in precords table...");
             

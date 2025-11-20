@@ -85,8 +85,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // File input preview functionality
+    // Student ID images
     setupFilePreview('StudentIdImageFront', 'preview-front');
     setupFilePreview('StudentIdImageBack', 'preview-back');
+    
+    // Staff ID images
+    setupFilePreview('StaffIdImageFront', 'preview-front');
+    setupFilePreview('StaffIdImageBack', 'preview-back');
 });
 
 // Helper function to copy file from one input to another (cross-browser compatible)

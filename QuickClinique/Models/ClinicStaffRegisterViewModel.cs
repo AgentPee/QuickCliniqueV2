@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace QuickClinique.Models
 {
@@ -18,8 +19,25 @@ namespace QuickClinique.Models
 
         [Required]
         [Display(Name = "Phone Number")]
-        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "Phone number must be exactly 11 digits")]
-        public string PhoneNumber { get; set; } = null!; // Changed to string
+        [RegularExpression(@"^09[0-9]{9}$", ErrorMessage = "Phone number must start with 09 and be 11 digits total")]
+        public string PhoneNumber { get; set; } = null!;
+
+        [Required]
+        [Display(Name = "Gender")]
+        public string Gender { get; set; } = null!;
+
+        [Required]
+        [Display(Name = "Birthdate")]
+        [DataType(DataType.Date)]
+        public DateOnly Birthdate { get; set; }
+
+        [Required]
+        [Display(Name = "Staff ID Image (Front)")]
+        public IFormFile StaffIdImageFront { get; set; } = null!;
+
+        [Required]
+        [Display(Name = "Staff ID Image (Back)")]
+        public IFormFile StaffIdImageBack { get; set; } = null!;
 
         [Required]
         [DataType(DataType.Password)]

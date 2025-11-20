@@ -42,8 +42,8 @@
                     </div>
                 }
 
-                <form asp-action="Register" method="post" class="auth-form">
-                    <div asp-validation-summary="All" class="error-message"></div>
+                <form asp-action="Register" method="post" enctype="multipart/form-data" class="auth-form">
+                    <div asp-validation-summary="ModelOnly" class="error-message"></div>
 
                     <div class="form-row">
                         <div class="input-group">
@@ -72,12 +72,69 @@
                         <label asp-for="PhoneNumber" class="control-label">Phone Number</label>
                         <input asp-for="PhoneNumber" class="form-control"
                                placeholder="e.g., 09345672824"
-                               pattern="[0-9]{11}"
-                               title="Please enter exactly 11 digits"
+                               pattern="09[0-9]{9}"
+                               title="Phone number must start with 09 and be 11 digits"
                                required />
                         <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                         <span class="input-icon">📱</span>
-                        <small class="input-hint">Enter your 11-digit phone number</small>
+                        <small class="input-hint">Must start with 09 and be 11 digits total</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label asp-for="Gender" class="control-label">Gender</label>
+                            <select asp-for="Gender" class="form-control" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger"></span>
+                            <span class="input-icon">⚧️</span>
+                        </div>
+
+                        <div class="input-group">
+                            <label asp-for="Birthdate" class="control-label">Birthdate</label>
+                            <input asp-for="Birthdate" class="form-control" type="date" required />
+                            <span asp-validation-for="Birthdate" class="text-danger"></span>
+                            <span class="input-icon">📅</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="control-label">Staff ID Image (Front)</label>
+                        <div class="file-input-container">
+                            <input asp-for="StaffIdImageFront" id="StaffIdImageFront" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <div class="file-input-buttons">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('StaffIdImageFront').click()">
+                                    📤 Upload File
+                                </button>
+                                <button type="button" class="btn-camera" onclick="openCamera('StaffIdImageFront')">
+                                    📷 Take Photo
+                                </button>
+                            </div>
+                            <div id="preview-front" class="image-preview"></div>
+                            <span asp-validation-for="StaffIdImageFront" class="text-danger"></span>
+                        </div>
+                        <small class="input-hint">Upload or take a photo of the front of your staff ID</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="control-label">Staff ID Image (Back)</label>
+                        <div class="file-input-container">
+                            <input asp-for="StaffIdImageBack" id="StaffIdImageBack" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <div class="file-input-buttons">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('StaffIdImageBack').click()">
+                                    📤 Upload File
+                                </button>
+                                <button type="button" class="btn-camera" onclick="openCamera('StaffIdImageBack')">
+                                    📷 Take Photo
+                                </button>
+                            </div>
+                            <div id="preview-back" class="image-preview"></div>
+                            <span asp-validation-for="StaffIdImageBack" class="text-danger"></span>
+                        </div>
+                        <small class="input-hint">Upload or take a photo of the back of your staff ID</small>
                     </div>
 
                     <div class="input-group">
@@ -110,6 +167,7 @@
     </div>
 
     <script src="~/js/auth.js"></script>
+    <script src="~/js/studReg.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </body>
