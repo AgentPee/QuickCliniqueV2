@@ -986,7 +986,7 @@ namespace QuickClinique.Controllers
                             
                             // Calculate estimated wait time: 15 minutes for first in line, +5 minutes for each subsequent person
                             // Formula: 15 + (position - 1) * 5
-                            estimatedWaitTime = 15 + (userPosition.Value - 1) * 5;
+                            estimatedWaitTime = 15 + (userPosition.Value - 1) * 15;
                         }
                     }
                 }
