@@ -124,16 +124,21 @@ namespace QuickClinique.Services
                 if (string.IsNullOrEmpty(fromEmail))
                 {
                     Console.WriteLine("[EMAIL ERROR] FromEmail is not configured");
+                    Console.WriteLine("[EMAIL ERROR] Check environment variable EMAIL_FROM or appsettings.json");
                     return;
                 }
                 if (string.IsNullOrEmpty(smtpServer))
                 {
                     Console.WriteLine("[EMAIL ERROR] SmtpServer is not configured");
+                    Console.WriteLine("[EMAIL ERROR] Check environment variable SMTP_SERVER or appsettings.json");
                     return;
                 }
                 if (string.IsNullOrEmpty(smtpPassword))
                 {
                     Console.WriteLine("[EMAIL ERROR] SmtpPassword is not configured");
+                    Console.WriteLine("[EMAIL ERROR] For Railway: Set SMTP_PASSWORD environment variable");
+                    Console.WriteLine("[EMAIL ERROR] For Local: Set SMTP_PASSWORD env var or use appsettings.Development.json");
+                    Console.WriteLine("[EMAIL ERROR] Current environment: " + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not set"));
                     return;
                 }
                 if (string.IsNullOrEmpty(smtpPortStr) || !int.TryParse(smtpPortStr, out int smtpPort))
