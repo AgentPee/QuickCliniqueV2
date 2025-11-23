@@ -109,6 +109,10 @@
                     <i class="fas fa-bolt"></i> Quick Actions
                 </h4>
 
+                <button type="button" class="action-btn sos-btn" data-bs-toggle="modal" data-bs-target="#sosModal">
+                    <i class="fas fa-exclamation-triangle"></i> SOS Emergency
+                </button>
+
                 <a href="@Url.Action("Index", "Home")" class="action-btn">
                     <i class="fas fa-calendar-plus"></i> Set Appointment
                 </a>
@@ -120,86 +124,6 @@
                 <a href="@Url.Action("History", "Student")" class="action-btn secondary">
                     <i class="fas fa-history"></i> View History
                 </a>
-
-                <button type="button" class="action-btn sos-btn" data-bs-toggle="modal" data-bs-target="#sosModal">
-                    <i class="fas fa-exclamation-triangle"></i> SOS Emergency
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- SOS Emergency Modal -->
-<div class="modal fade" id="sosModal" tabindex="-1" aria-labelledby="sosModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header sos-header">
-                <h5 class="modal-title" id="sosModalLabel">
-                    <i class="fas fa-exclamation-triangle"></i> Emergency SOS Request
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-info-circle"></i> <strong>Emergency Alert:</strong> This will notify clinic staff immediately. Use only for genuine emergencies.
-                </div>
-
-                <form id="sosForm">
-                    <div class="form-group mb-3">
-                        <label for="studentName"><i class="fas fa-user"></i> Student Name</label>
-                        <input type="text" class="form-control" id="studentName" value="@Model.FirstName @Model.LastName" readonly />
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="studentId"><i class="fas fa-id-card"></i> Student ID</label>
-                        <input type="text" class="form-control" id="studentId" value="@Model.Idnumber" readonly />
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="emergencyLocation"><i class="fas fa-map-marker-alt"></i> Location <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="emergencyLocation" placeholder="Enter your current location" required />
-                        <small class="form-text text-muted">e.g., Building A, Room 201 or Main Campus, Library</small>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label><i class="fas fa-tools"></i> What do you need? <span class="text-danger">*</span></label>
-                        <div class="needs-options">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="needs" value="First Aid Kit" id="needFirstAid">
-                                <label class="form-check-label" for="needFirstAid">
-                                    <i class="fas fa-medkit"></i> First Aid Kit
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="needs" value="Wheelchair" id="needWheelchair">
-                                <label class="form-check-label" for="needWheelchair">
-                                    <i class="fas fa-wheelchair"></i> Wheelchair
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="needs" value="Stretcher" id="needStretcher">
-                                <label class="form-check-label" for="needStretcher">
-                                    <i class="fas fa-bed"></i> Stretcher
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="needs" value="Other" id="needOther">
-                                <label class="form-check-label" for="needOther">
-                                    <i class="fas fa-ellipsis-h"></i> Other
-                                </label>
-                            </div>
-                        </div>
-                        <input type="text" class="form-control mt-2" id="otherNeeds" placeholder="Please specify other needs" style="display:none;" />
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="sendSOSBtn">
-                    <i class="fas fa-paper-plane"></i> Send SOS
-                </button>
             </div>
         </div>
     </div>
@@ -335,6 +259,71 @@
             </ul>
         </div>
     </section>
+</div>
+
+<!-- SOS Emergency Modal -->
+<div class="modal fade" id="sosModal" tabindex="-1" aria-labelledby="sosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="sosModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> SOS Emergency Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle"></i> <strong>Emergency Alert:</strong> This will notify clinic staff immediately. Use only for genuine emergencies.
+                </div>
+
+                <form id="sosForm">
+                    <div class="mb-3">
+                        <label for="studentName" class="form-label">Student Name</label>
+                        <input type="text" class="form-control" id="studentName" value="@Model.FirstName @Model.LastName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentIdNumber" class="form-label">Student ID</label>
+                        <input type="text" class="form-control" id="studentIdNumber" value="@Model.Idnumber" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sosLocation" class="form-label">Location <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sosLocation" placeholder="e.g., Building A, Room 201" required>
+                        <small class="form-text text-muted">Where are you located?</small>
+                        <div class="invalid-feedback" id="locationError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Needs <span class="text-danger">*</span></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="needFirstAid" value="First Aid Kit">
+                            <label class="form-check-label" for="needFirstAid">First Aid Kit</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="needWheelchair" value="Wheelchair">
+                            <label class="form-check-label" for="needWheelchair">Wheelchair</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="needStretcher" value="Stretcher">
+                            <label class="form-check-label" for="needStretcher">Stretcher</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="needOther" value="Other">
+                            <label class="form-check-label" for="needOther">Other</label>
+                        </div>
+                        <div class="mt-2" id="otherInputContainer" style="display: none;">
+                            <input type="text" class="form-control" id="otherInput" placeholder="Please specify">
+                        </div>
+                        <div class="invalid-feedback" id="needsError"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="sendSOSBtn">
+                    <i class="fas fa-paper-plane"></i> Send SOS
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -511,56 +500,67 @@
                 messagesInterval = null;
             }
         }
+    </script>
 
-        // SOS Emergency functionality
-        $('#needOther').on('change', function() {
-            if ($(this).is(':checked')) {
-                $('#otherNeeds').show().prop('required', true);
-            } else {
-                $('#otherNeeds').hide().prop('required', false).val('');
+    <script>
+        // Show/hide other input based on checkbox
+        document.getElementById('needOther').addEventListener('change', function() {
+            document.getElementById('otherInputContainer').style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Handle SOS form submission
+        document.getElementById('sendSOSBtn').addEventListener('click', async function() {
+            const location = document.getElementById('sosLocation').value.trim();
+            const needs = [];
+            
+            if (document.getElementById('needFirstAid').checked) {
+                needs.push('First Aid Kit');
             }
-        });
-
-        $('#sosModal').on('hidden.bs.modal', function() {
-            // Reset form when modal is closed
-            $('#sosForm')[0].reset();
-            $('input[name="needs"]').prop('checked', false);
-            $('#otherNeeds').hide().val('');
-        });
-
-        $('#sendSOSBtn').on('click', async function() {
-            const location = $('#emergencyLocation').val().trim();
-            const selectedNeeds = $('input[name="needs"]:checked').map(function() {
-                return $(this).val();
-            }).get();
-            const otherNeeds = $('#otherNeeds').val().trim();
+            if (document.getElementById('needWheelchair').checked) {
+                needs.push('Wheelchair');
+            }
+            if (document.getElementById('needStretcher').checked) {
+                needs.push('Stretcher');
+            }
+            if (document.getElementById('needOther').checked) {
+                const otherValue = document.getElementById('otherInput').value.trim();
+                if (otherValue) {
+                    needs.push('Other: ' + otherValue);
+                } else {
+                    needs.push('Other');
+                }
+            }
 
             // Validation
+            let isValid = true;
+            document.getElementById('locationError').textContent = '';
+            document.getElementById('needsError').textContent = '';
+            
             if (!location) {
-                alert('Please enter your location');
+                document.getElementById('locationError').textContent = 'Location is required';
+                document.getElementById('sosLocation').classList.add('is-invalid');
+                isValid = false;
+            } else {
+                document.getElementById('sosLocation').classList.remove('is-invalid');
+            }
+
+            if (needs.length === 0) {
+                document.getElementById('needsError').textContent = 'Please select at least one need';
+                isValid = false;
+            }
+
+            if (!isValid) {
                 return;
             }
 
-            if (selectedNeeds.length === 0) {
-                alert('Please select at least one item you need');
-                return;
-            }
-
-            // Build needs string
-            let needsList = selectedNeeds;
-            if (selectedNeeds.includes('Other') && otherNeeds) {
-                needsList = selectedNeeds.filter(n => n !== 'Other');
-                needsList.push(`Other: ${otherNeeds}`);
-            }
-            const needs = needsList.join(', ');
-
-            // Disable button
-            const sendBtn = $(this);
-            sendBtn.prop('disabled', true);
-            sendBtn.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+            // Disable button and show loading
+            const btn = this;
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
             try {
-                const response = await fetch('@Url.Action("SendSOS", "Student")', {
+                const response = await fetch('/Student/SendSOS', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -568,25 +568,56 @@
                     },
                     body: JSON.stringify({
                         location: location,
-                        needs: needs
+                        needs: needs.join(', ')
                     })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('SOS Emergency request sent successfully! Clinic staff have been notified.');
-                    $('#sosModal').modal('hide');
+                    alert('SOS emergency request sent successfully! Clinic staff has been notified.');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('sosModal'));
+                    modal.hide();
+                    
+                    // Reset form
+                    document.getElementById('sosForm').reset();
+                    document.getElementById('otherInputContainer').style.display = 'none';
                 } else {
                     alert('Failed to send SOS: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error sending SOS:', error);
-                alert('Error sending SOS. Please try again.');
+                alert('Error sending SOS: ' + (error.message || 'Please try again.'));
             } finally {
-                sendBtn.prop('disabled', false);
-                sendBtn.html('<i class="fas fa-paper-plane"></i> Send SOS');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             }
         });
     </script>
+
+    <style>
+        .sos-btn {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+            box-shadow: 0 4px 14px rgba(220, 53, 69, 0.5) !important;
+            animation: pulse-red 2s infinite;
+        }
+
+        .sos-btn:hover {
+            box-shadow: 0 8px 24px rgba(220, 53, 69, 0.7) !important;
+            animation: none;
+        }
+
+        @@keyframes pulse-red {
+            0%, 100% {
+                box-shadow: 0 4px 14px rgba(220, 53, 69, 0.5);
+            }
+            50% {
+                box-shadow: 0 4px 20px rgba(220, 53, 69, 0.8), 0 0 0 4px rgba(220, 53, 69, 0.2);
+            }
+        }
+    </style>
 }

@@ -1061,7 +1061,7 @@ namespace QuickClinique.Controllers
         // GET: Clinicstaff/GetAnalyticsData
         [HttpGet]
         [ClinicStaffOnly]
-        public async Task<IActionResult> GetAnalyticsData(int timeRange = 30)
+        public async Task<IActionResult> GetAnalyticsData(int timeRange = 30, string chartType = null)
         {
             try
             {

@@ -1323,17 +1323,26 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
-        // POST: Student/SendSOS
+        // POST: Student/SendSOS - Send emergency SOS request
         [HttpPost]
         [StudentOnly]
-        public async Task<IActionResult> SendSOS([FromBody] SOSRequest request)
+        public async Task<IActionResult> SendSOS([FromBody] SendSOSRequest request)
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
-            if (!studentId.HasValue)
+            if (studentId == null)
             {
-                return Json(new { success = false, error = "Not authenticated" });
+                return Json(new { success = false, error = "Not logged in" });
             }
 
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId.Value);
+
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found" });
+            }
+
+            // Validate request
             if (string.IsNullOrWhiteSpace(request.Location))
             {
                 return Json(new { success = false, error = "Location is required" });
@@ -1341,15 +1350,10 @@ namespace QuickClinique.Controllers
 
             if (string.IsNullOrWhiteSpace(request.Needs))
             {
-                return Json(new { success = false, error = "Please specify what you need" });
+                return Json(new { success = false, error = "At least one need must be specified" });
             }
 
-            var student = await _context.Students.FindAsync(studentId.Value);
-            if (student == null)
-            {
-                return Json(new { success = false, error = "Student not found" });
-            }
-
+            // Create emergency record
             var emergency = new Emergency
             {
                 StudentId = student.StudentId,
@@ -1364,11 +1368,11 @@ namespace QuickClinique.Controllers
             _context.Emergencies.Add(emergency);
             await _context.SaveChangesAsync();
 
-            if (IsAjaxRequest())
-                return Json(new { success = true, message = "SOS Emergency request sent successfully!", emergencyId = emergency.EmergencyId });
-
-            TempData["SuccessMessage"] = "SOS Emergency request sent successfully!";
-            return RedirectToAction(nameof(Dashboard));
+            return Json(new { 
+                success = true, 
+                message = "SOS emergency request sent successfully",
+                emergencyId = emergency.EmergencyId
+            });
         }
 
         // Helper method to generate tokens
@@ -1384,9 +1388,9 @@ namespace QuickClinique.Controllers
         }
     }
 
-    public class SOSRequest
+    public class SendSOSRequest
     {
-        public string Location { get; set; } = null!;
-        public string Needs { get; set; } = null!;
+        public string Location { get; set; } = string.Empty;
+        public string Needs { get; set; } = string.Empty;
     }
 }

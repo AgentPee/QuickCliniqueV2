@@ -395,7 +395,7 @@ namespace QuickClinique.Controllers
             return Json(new { success = true, data = patientMessages });
         }
 
-        // GET: Dashboard/GetActiveEmergencies - Get unresolved emergencies
+        // GET: Dashboard/GetActiveEmergencies - Get all unresolved emergencies
         [HttpGet]
         public async Task<IActionResult> GetActiveEmergencies()
         {
@@ -423,9 +423,9 @@ namespace QuickClinique.Controllers
             return Json(new { success = true, data = emergencies });
         }
 
-        // POST: Dashboard/MarkEmergencyResolved - Mark emergency as resolved
+        // POST: Dashboard/MarkEmergencyResolved - Mark an emergency as resolved
         [HttpPost]
-        public async Task<IActionResult> MarkEmergencyResolved([FromBody] EmergencyResolveRequest request)
+        public async Task<IActionResult> MarkEmergencyResolved([FromBody] MarkEmergencyResolvedRequest request)
         {
             var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
             if (clinicStaffId == null)
@@ -433,7 +433,9 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Not authenticated" });
             }
 
-            var emergency = await _context.Emergencies.FindAsync(request.EmergencyId);
+            var emergency = await _context.Emergencies
+                .FirstOrDefaultAsync(e => e.EmergencyId == request.EmergencyId);
+
             if (emergency == null)
             {
                 return Json(new { success = false, error = "Emergency not found" });
@@ -471,7 +473,7 @@ namespace QuickClinique.Controllers
         public string Message { get; set; } = string.Empty;
     }
 
-    public class EmergencyResolveRequest
+    public class MarkEmergencyResolvedRequest
     {
         public int EmergencyId { get; set; }
     }

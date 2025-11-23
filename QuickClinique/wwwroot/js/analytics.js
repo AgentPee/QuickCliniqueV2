@@ -7,28 +7,101 @@ let analyticsData = {};
 document.addEventListener('DOMContentLoaded', function() {
     loadAnalyticsData();
     
-    // Add event listener for time range change
-    const timeRangeSelect = document.getElementById('volumeTimeRange');
-    if (timeRangeSelect) {
-        timeRangeSelect.addEventListener('change', function() {
-            loadAnalyticsData();
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href && href !== '#') {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
         });
-    }
+    });
+    
+    // Add event listeners for all time range selectors
+    const timeRangeSelectors = {
+        'volumeTimeRange': 'appointmentVolume',
+        'demographicsTimeRange': 'demographics',
+        'visitFrequencyTimeRange': 'visitFrequency',
+        'noShowCancellationTimeRange': 'noShowCancellation',
+        'emergencyTimeRange': 'emergency',
+        'reasonsForVisitTimeRange': 'reasonsForVisit'
+    };
+    
+    Object.keys(timeRangeSelectors).forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.addEventListener('change', function() {
+                const chartType = timeRangeSelectors[selectId];
+                loadChartData(chartType, this.value);
+            });
+        }
+    });
 });
 
-// Load analytics data from server
+// Load analytics data from server (initial load with default time ranges)
 async function loadAnalyticsData() {
     try {
-        const timeRange = document.getElementById('volumeTimeRange')?.value || 30;
+        const defaultTimeRange = 30;
         
-        // For now, we'll use mock data since we don't have a backend endpoint yet
-        // In a real implementation, you would fetch from an API endpoint
-        analyticsData = await fetchAnalyticsData(timeRange);
+        // Load all data with default time range
+        analyticsData = await fetchAnalyticsData(defaultTimeRange);
         
         updateOverviewCards();
         renderCharts();
     } catch (error) {
         console.error('Error loading analytics data:', error);
+    }
+}
+
+// Load data for a specific chart based on its time range
+async function loadChartData(chartType, timeRange) {
+    try {
+        const chartData = await fetchChartData(chartType, timeRange);
+        
+        // Update the specific chart data in analyticsData
+        switch(chartType) {
+            case 'appointmentVolume':
+                analyticsData.appointmentVolume = chartData.appointmentVolume || [];
+                renderAppointmentVolumeChart();
+                break;
+            case 'demographics':
+                analyticsData.ageDistribution = chartData.ageDistribution || analyticsData.ageDistribution;
+                analyticsData.avgAge = chartData.avgAge || analyticsData.avgAge;
+                analyticsData.commonAgeGroup = chartData.commonAgeGroup || analyticsData.commonAgeGroup;
+                renderAgeDistributionChart();
+                updateDemographicsStats();
+                break;
+            case 'visitFrequency':
+                analyticsData.visitFrequency = chartData.visitFrequency || {};
+                analyticsData.avgVisits = chartData.avgVisits || analyticsData.avgVisits;
+                analyticsData.returnPatients = chartData.returnPatients || analyticsData.returnPatients;
+                renderVisitFrequencyChart();
+                updateFrequencyStats();
+                break;
+            case 'noShowCancellation':
+                analyticsData.noShowCancellation = chartData.noShowCancellation || analyticsData.noShowCancellation;
+                renderNoShowCancellationChart();
+                updateCancellationStats();
+                break;
+            case 'emergency':
+                analyticsData.emergencyStatistics = chartData.emergencyStatistics || analyticsData.emergencyStatistics;
+                renderEmergencyTrendChart();
+                break;
+            case 'reasonsForVisit':
+                analyticsData.reasonsForVisit = chartData.reasonsForVisit || analyticsData.reasonsForVisit;
+                renderReasonsForVisitChart();
+                updateReasonsStats();
+                break;
+        }
+    } catch (error) {
+        console.error(`Error loading ${chartType} chart data:`, error);
     }
 }
 
@@ -47,6 +120,51 @@ async function fetchAnalyticsData(timeRange) {
     } catch (error) {
         console.error('Error fetching analytics data:', error);
         return getEmptyData();
+    }
+}
+
+// Fetch data for a specific chart type
+async function fetchChartData(chartType, timeRange) {
+    try {
+        const response = await fetch(`/Clinicstaff/GetAnalyticsData?timeRange=${timeRange}&chartType=${chartType}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            // Process the specific chart data
+            const processedData = processAnalyticsData(result.data);
+            
+            // Return only the relevant data for this chart type
+            switch(chartType) {
+                case 'appointmentVolume':
+                    return { appointmentVolume: processedData.appointmentVolume };
+                case 'demographics':
+                    return {
+                        ageDistribution: processedData.ageDistribution,
+                        avgAge: processedData.avgAge,
+                        commonAgeGroup: processedData.commonAgeGroup
+                    };
+                case 'visitFrequency':
+                    return {
+                        visitFrequency: processedData.visitFrequency,
+                        avgVisits: processedData.avgVisits,
+                        returnPatients: processedData.returnPatients
+                    };
+                case 'noShowCancellation':
+                    return { noShowCancellation: processedData.noShowCancellation };
+                case 'emergency':
+                    return { emergencyStatistics: processedData.emergencyStatistics };
+                case 'reasonsForVisit':
+                    return { reasonsForVisit: processedData.reasonsForVisit };
+                default:
+                    return {};
+            }
+        } else {
+            console.error(`Failed to fetch ${chartType} chart data:`, result.error);
+            return {};
+        }
+    } catch (error) {
+        console.error(`Error fetching ${chartType} chart data:`, error);
+        return {};
     }
 }
 
@@ -196,6 +314,8 @@ function updateOverviewCards() {
     document.getElementById('noShowRate').textContent = data.noShowRate.toFixed(1) + '%';
     const totalEmergencies = data.emergencyStatistics?.emergenciesThisYear || 0;
     document.getElementById('totalEmergencies').textContent = totalEmergencies.toLocaleString();
+    document.getElementById('avgVisitsPerPatient').textContent = (data.avgVisits || 0).toFixed(1);
+    document.getElementById('totalUniqueReasonsCard').textContent = (data.reasonsForVisit?.totalUniqueReasons || 0).toLocaleString();
 }
 
 // Render all charts
@@ -204,13 +324,11 @@ function renderCharts() {
     renderAgeDistributionChart();
     renderVisitFrequencyChart();
     renderNoShowCancellationChart();
-    renderEmergencyPeriodChart();
     renderEmergencyTrendChart();
     renderReasonsForVisitChart();
     updateDemographicsStats();
     updateFrequencyStats();
     updateCancellationStats();
-    updateEmergencyStats();
     updateReasonsStats();
 }
 
@@ -224,7 +342,9 @@ function renderAppointmentVolumeChart() {
         charts.appointmentVolume.destroy();
     }
     
-    const data = analyticsData.appointmentVolume;
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('volumeTimeRange')?.value || 30;
+    const data = analyticsData.appointmentVolume || [];
     
     charts.appointmentVolume = new Chart(ctx, {
         type: 'line',
@@ -293,7 +413,9 @@ function renderAgeDistributionChart() {
         charts.ageDistribution.destroy();
     }
     
-    const data = analyticsData.ageDistribution;
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('demographicsTimeRange')?.value || 30;
+    const data = analyticsData.ageDistribution || {};
     const labels = Object.keys(data).filter(key => data[key] > 0); // Only show groups with data
     const values = labels.map(key => data[key]);
     
@@ -347,7 +469,9 @@ function renderVisitFrequencyChart() {
         charts.visitFrequency.destroy();
     }
     
-    const data = analyticsData.visitFrequency;
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('visitFrequencyTimeRange')?.value || 30;
+    const data = analyticsData.visitFrequency || {};
     // Sort keys numerically, but keep '5+' at the end
     const sortedKeys = Object.keys(data).sort((a, b) => {
         if (a === '5+') return 1;
@@ -405,6 +529,8 @@ function renderNoShowCancellationChart() {
         charts.noShowCancellation.destroy();
     }
     
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('noShowCancellationTimeRange')?.value || 30;
     const data = analyticsData.noShowCancellation || { noShows: 0, cancellations: 0, completed: 0 };
     const total = data.noShows + data.cancellations + data.completed;
     
@@ -465,8 +591,19 @@ function updateDemographicsStats() {
 function updateFrequencyStats() {
     const data = analyticsData;
     
-    document.getElementById('avgVisits').textContent = data.avgVisits.toFixed(1);
-    document.getElementById('returnPatients').textContent = data.returnPatients.toLocaleString();
+    // Calculate total patients (sum of all patients in visit frequency)
+    const visitFrequency = data.visitFrequency || {};
+    const totalPatientsVisited = Object.values(visitFrequency).reduce((sum, count) => sum + count, 0);
+    
+    // Calculate new patients (patients with exactly 1 visit)
+    const newPatients = visitFrequency['1'] || 0;
+    
+    // Return patients (already calculated)
+    const returnPatients = data.returnPatients || 0;
+    
+    document.getElementById('totalPatientsVisited').textContent = totalPatientsVisited.toLocaleString();
+    document.getElementById('newPatients').textContent = newPatients.toLocaleString();
+    document.getElementById('returnPatients').textContent = returnPatients.toLocaleString();
 }
 
 // Update cancellation statistics
@@ -484,83 +621,6 @@ function updateCancellationStats() {
     document.getElementById('completedPercentage').textContent = ((data.completed / total) * 100).toFixed(1) + '%';
 }
 
-// Render Emergency Period Chart
-function renderEmergencyPeriodChart() {
-    const ctx = document.getElementById('emergencyPeriodChart');
-    if (!ctx) return;
-    
-    if (charts.emergencyPeriod) {
-        charts.emergencyPeriod.destroy();
-    }
-    
-    const data = analyticsData.emergencyStatistics || { 
-        emergenciesToday: 0, 
-        emergenciesThisWeek: 0, 
-        emergenciesThisMonth: 0, 
-        emergenciesThisYear: 0 
-    };
-    
-    charts.emergencyPeriod = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Today', 'This Week', 'This Month', 'This Year'],
-            datasets: [{
-                label: 'Emergency Appointments',
-                data: [
-                    data.emergenciesToday,
-                    data.emergenciesThisWeek,
-                    data.emergenciesThisMonth,
-                    data.emergenciesThisYear
-                ],
-                backgroundColor: [
-                    '#DC2626',
-                    '#F59E0B',
-                    '#3B82F6',
-                    '#10B981'
-                ],
-                borderRadius: 8,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold'
-                    },
-                    bodyFont: {
-                        size: 13
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        stepSize: 1
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
-}
-
 // Render Emergency Trend Chart
 function renderEmergencyTrendChart() {
     const ctx = document.getElementById('emergencyTrendChart');
@@ -570,6 +630,8 @@ function renderEmergencyTrendChart() {
         charts.emergencyTrend.destroy();
     }
     
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('emergencyTimeRange')?.value || 30;
     const data = analyticsData.emergencyStatistics?.emergencyVolume || [];
     
     charts.emergencyTrend = new Chart(ctx, {
@@ -630,16 +692,6 @@ function renderEmergencyTrendChart() {
     });
 }
 
-// Update emergency statistics
-function updateEmergencyStats() {
-    const data = analyticsData.emergencyStatistics;
-    
-    document.getElementById('emergenciesToday').textContent = (data.emergenciesToday || 0).toLocaleString();
-    document.getElementById('emergenciesThisWeek').textContent = (data.emergenciesThisWeek || 0).toLocaleString();
-    document.getElementById('emergenciesThisMonth').textContent = (data.emergenciesThisMonth || 0).toLocaleString();
-    document.getElementById('emergenciesThisYear').textContent = (data.emergenciesThisYear || 0).toLocaleString();
-}
-
 // Render Reasons for Visit Chart
 function renderReasonsForVisitChart() {
     const ctx = document.getElementById('reasonsForVisitChart');
@@ -649,6 +701,8 @@ function renderReasonsForVisitChart() {
         charts.reasonsForVisit.destroy();
     }
     
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('reasonsForVisitTimeRange')?.value || 30;
     const data = analyticsData.reasonsForVisit?.reasonsDistribution || {};
     const reasons = Object.keys(data);
     const counts = reasons.map(reason => data[reason]);
