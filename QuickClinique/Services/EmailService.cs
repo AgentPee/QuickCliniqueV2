@@ -1,5 +1,5 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace QuickClinique.Services
 {
@@ -112,111 +112,70 @@ namespace QuickClinique.Services
         {
             try
             {
-                // Read from environment variables first (for production), then fall back to configuration
+                // Read SendGrid API key from environment variable or configuration
+                // Support both SENDGRID_API_KEY (new) and SMTP_PASSWORD (legacy) for backward compatibility
+                var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY") 
+                    ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD") 
+                    ?? _configuration["EmailSettings:SmtpPassword"];
+
+                // Read sender information
                 var fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _configuration["EmailSettings:FromEmail"];
                 var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? _configuration["EmailSettings:FromName"];
-                var smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? _configuration["EmailSettings:SmtpServer"];
-                var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["EmailSettings:SmtpPort"];
-                var smtpUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? _configuration["EmailSettings:SmtpUsername"];
-                var smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _configuration["EmailSettings:SmtpPassword"];
 
                 // Validate configuration
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    Console.WriteLine("[EMAIL ERROR] SendGrid API key is not configured");
+                    Console.WriteLine("[EMAIL ERROR] For Railway: Set SENDGRID_API_KEY or SMTP_PASSWORD environment variable");
+                    Console.WriteLine("[EMAIL ERROR] For Local: Set SENDGRID_API_KEY env var or use appsettings.Development.json");
+                    Console.WriteLine("[EMAIL ERROR] Current environment: " + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not set"));
+                    return;
+                }
+
                 if (string.IsNullOrEmpty(fromEmail))
                 {
                     Console.WriteLine("[EMAIL ERROR] FromEmail is not configured");
                     Console.WriteLine("[EMAIL ERROR] Check environment variable EMAIL_FROM or appsettings.json");
                     return;
                 }
-                if (string.IsNullOrEmpty(smtpServer))
-                {
-                    Console.WriteLine("[EMAIL ERROR] SmtpServer is not configured");
-                    Console.WriteLine("[EMAIL ERROR] Check environment variable SMTP_SERVER or appsettings.json");
-                    return;
-                }
-                if (string.IsNullOrEmpty(smtpPassword))
-                {
-                    Console.WriteLine("[EMAIL ERROR] SmtpPassword is not configured");
-                    Console.WriteLine("[EMAIL ERROR] For Railway: Set SMTP_PASSWORD environment variable");
-                    Console.WriteLine("[EMAIL ERROR] For Local: Set SMTP_PASSWORD env var or use appsettings.Development.json");
-                    Console.WriteLine("[EMAIL ERROR] Current environment: " + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not set"));
-                    return;
-                }
-                if (string.IsNullOrEmpty(smtpPortStr) || !int.TryParse(smtpPortStr, out int smtpPort))
-                {
-                    Console.WriteLine("[EMAIL ERROR] SmtpPort is invalid");
-                    return;
-                }
 
                 Console.WriteLine($"[EMAIL] Attempting to send email to: {toEmail}");
-                Console.WriteLine($"[EMAIL] Using SMTP server: {smtpServer}:{smtpPort}");
+                Console.WriteLine($"[EMAIL] Using SendGrid Web API");
                 Console.WriteLine($"[EMAIL] From: {fromEmail} ({fromName})");
-                Console.WriteLine($"[EMAIL] Username: {smtpUsername}");
-                Console.WriteLine($"[EMAIL] Password length: {(smtpPassword?.Length ?? 0)} characters");
+                Console.WriteLine($"[EMAIL] API Key length: {(apiKey?.Length ?? 0)} characters");
 
-                var message = new MailMessage
+                // Create SendGrid client
+                var client = new SendGridClient(apiKey);
+
+                // Create email message
+                var msg = new SendGridMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new EmailAddress(fromEmail, fromName),
                     Subject = subject,
-                    Body = body,
-                    IsBodyHtml = true
+                    HtmlContent = body
                 };
-                message.To.Add(toEmail);
+                msg.AddTo(new EmailAddress(toEmail));
 
-                using var smtpClient = new SmtpClient(smtpServer, smtpPort)
-                {
-                    Credentials = new NetworkCredential(smtpUsername, smtpPassword),
-                    EnableSsl = true,
-                    Timeout = 60000, // 60 seconds timeout (increased for Railway)
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                Console.WriteLine($"[EMAIL] Connecting to SMTP server...");
+                // Send email
                 var startTime = DateTime.Now;
-                double elapsed = 0;
+                Console.WriteLine($"[EMAIL] Sending via SendGrid API...");
                 
-                // Use Task with timeout to prevent hanging
-                var sendTask = smtpClient.SendMailAsync(message);
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(60));
-                var completedTask = await Task.WhenAny(sendTask, timeoutTask);
+                var response = await client.SendEmailAsync(msg);
                 
-                if (completedTask == timeoutTask)
+                var elapsed = (DateTime.Now - startTime).TotalSeconds;
+
+                if (response.IsSuccessStatusCode)
                 {
-                    elapsed = (DateTime.Now - startTime).TotalSeconds;
-                    Console.WriteLine($"[EMAIL ERROR] Email send timed out after {elapsed:F2} seconds");
-                    Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable or blocking the connection");
-                    Console.WriteLine($"[EMAIL ERROR] Check Railway network settings and firewall rules");
-                    throw new TimeoutException($"Email send operation timed out after {elapsed:F2} seconds. SMTP server may be unreachable.");
+                    Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail} in {elapsed:F2} seconds");
+                    Console.WriteLine($"[EMAIL SUCCESS] Status Code: {response.StatusCode}");
                 }
-                
-                // If sendTask completed, await it to get any exceptions
-                await sendTask;
-                elapsed = (DateTime.Now - startTime).TotalSeconds;
-                Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail} in {elapsed:F2} seconds");
-            }
-            catch (TimeoutException timeoutEx)
-            {
-                Console.WriteLine($"[EMAIL ERROR] Timeout: {timeoutEx.Message}");
-                Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable or blocking the connection");
-                Console.WriteLine($"[EMAIL ERROR] Check Railway network settings and firewall rules");
-            }
-            catch (SmtpException smtpEx)
-            {
-                Console.WriteLine($"[EMAIL ERROR] SMTP Error: {smtpEx.Message}");
-                Console.WriteLine($"[EMAIL ERROR] Status Code: {smtpEx.StatusCode}");
-                if (smtpEx.InnerException != null)
+                else
                 {
-                    Console.WriteLine($"[EMAIL ERROR] Inner Exception: {smtpEx.InnerException.Message}");
-                    Console.WriteLine($"[EMAIL ERROR] Inner Exception Type: {smtpEx.InnerException.GetType().Name}");
+                    var responseBody = await response.Body.ReadAsStringAsync();
+                    Console.WriteLine($"[EMAIL ERROR] SendGrid API Error: Status Code {response.StatusCode}");
+                    Console.WriteLine($"[EMAIL ERROR] Response: {responseBody}");
+                    throw new Exception($"SendGrid API returned status code {response.StatusCode}: {responseBody}");
                 }
-            }
-            catch (System.Net.Sockets.SocketException socketEx)
-            {
-                var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["EmailSettings:SmtpPort"] ?? "587";
-                Console.WriteLine($"[EMAIL ERROR] Network Error: {socketEx.Message}");
-                Console.WriteLine($"[EMAIL ERROR] Socket Error Code: {socketEx.SocketErrorCode}");
-                Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable");
-                Console.WriteLine($"[EMAIL ERROR] Check if Railway allows outbound SMTP connections on port {smtpPortStr}");
             }
             catch (Exception ex)
             {
