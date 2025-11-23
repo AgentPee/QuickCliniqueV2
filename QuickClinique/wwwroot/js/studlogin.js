@@ -6,9 +6,12 @@ function showLogin() {
     document.getElementById('registerToggle').classList.remove('active');
     document.getElementById('tagline').textContent = 'Your Health, Our Priority';
 
-    // Focus on first input
+    // Focus on first input - try to find ID number input by name attribute
     setTimeout(() => {
-        document.getElementById('loginIdNumber').focus();
+        const idNumberInput = document.querySelector('input[name="Idnumber"], input[name="idNumber"]');
+        if (idNumberInput) {
+            idNumberInput.focus();
+        }
     }, 300);
 }
 
@@ -121,8 +124,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
 
-    // ID Number input validation
-    const idNumberInputs = document.querySelectorAll('input[name="idNumber"]');
+    // ID Number input validation - handle both "Idnumber" (ASP.NET Core) and "idNumber" (custom forms)
+    const idNumberInputs = document.querySelectorAll('input[name="Idnumber"], input[name="idNumber"]');
     idNumberInputs.forEach(input => {
         input.addEventListener('input', function (e) {
             // Only allow numbers
@@ -154,12 +157,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // But we can intercept AJAX submissions if needed
             
             const submitBtn = this.querySelector('.submit-btn');
-            const idNumber = document.getElementById('loginIdNumber')?.value.trim() || 
-                           document.querySelector('input[name="Idnumber"]')?.value.trim();
-            const password = document.getElementById('loginPassword')?.value || 
-                           document.querySelector('input[name="Password"]')?.value;
+            // Get inputs by name attribute (ASP.NET Core generates these)
+            const idNumberInput = this.querySelector('input[name="Idnumber"]');
+            const passwordInput = this.querySelector('input[name="Password"]');
+            
+            const idNumber = idNumberInput?.value?.trim() || '';
+            const password = passwordInput?.value || '';
 
-            // Validation
+            // Validation - only validate if values are provided
             if (idNumber && !validateIdNumber(idNumber)) {
                 e.preventDefault();
                 showMessage('Please enter a valid 8-digit ID number', 'error');
@@ -175,7 +180,9 @@ document.addEventListener('DOMContentLoaded', function () {
             // If form has data-ajax="true", handle via AJAX
             if (this.dataset.ajax === 'true') {
                 e.preventDefault();
-                setLoadingState(submitBtn, true);
+                if (submitBtn) {
+                    setLoadingState(submitBtn, true);
+                }
 
                 try {
                     const formData = new FormData(this);
@@ -189,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.success) {
                         showMessage('Login successful! Redirecting...', 'success');
                         setTimeout(() => {
-                            window.location.href = data.redirectUrl || '/Student/Index';
+                            window.location.href = data.redirectUrl || '/Student/Dashboard';
                         }, 1500);
                     } else {
                         showMessage(data.error || 'Login failed', 'error');
@@ -200,9 +207,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 } catch (error) {
+                    console.error('Login error:', error);
                     showMessage('An error occurred. Please try again.', 'error');
                 } finally {
-                    setLoadingState(submitBtn, false);
+                    if (submitBtn) {
+                        setLoadingState(submitBtn, false);
+                    }
                 }
             }
         });
