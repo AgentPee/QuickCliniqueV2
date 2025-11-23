@@ -141,6 +141,9 @@ namespace QuickClinique.Services
         {
             try
             {
+                Console.WriteLine($"[EMAIL] SendEmailAsync called for: {toEmail}");
+                Console.WriteLine($"[EMAIL] Subject: {subject}");
+                
                 // Read SendGrid API key from environment variable or configuration
                 // Support both SENDGRID_API_KEY (new) and SMTP_PASSWORD (legacy) for backward compatibility
                 var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY") 
@@ -151,6 +154,11 @@ namespace QuickClinique.Services
                 var fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _configuration["EmailSettings:FromEmail"];
                 var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? _configuration["EmailSettings:FromName"];
 
+                Console.WriteLine($"[EMAIL DEBUG] API Key found: {!string.IsNullOrEmpty(apiKey)}");
+                Console.WriteLine($"[EMAIL DEBUG] FromEmail found: {!string.IsNullOrEmpty(fromEmail)}");
+                Console.WriteLine($"[EMAIL DEBUG] FromEmail value: {fromEmail ?? "NULL"}");
+                Console.WriteLine($"[EMAIL DEBUG] FromName value: {fromName ?? "NULL"}");
+
                 // Validate configuration
                 if (string.IsNullOrEmpty(apiKey))
                 {
@@ -158,14 +166,19 @@ namespace QuickClinique.Services
                     Console.WriteLine("[EMAIL ERROR] For Railway: Set SENDGRID_API_KEY or SMTP_PASSWORD environment variable");
                     Console.WriteLine("[EMAIL ERROR] For Local: Set SENDGRID_API_KEY env var or use appsettings.Development.json");
                     Console.WriteLine("[EMAIL ERROR] Current environment: " + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not set"));
-                    return;
+                    Console.WriteLine("[EMAIL ERROR] Checking configuration keys:");
+                    Console.WriteLine($"[EMAIL ERROR]   SENDGRID_API_KEY: {Environment.GetEnvironmentVariable("SENDGRID_API_KEY") != null}");
+                    Console.WriteLine($"[EMAIL ERROR]   SMTP_PASSWORD: {Environment.GetEnvironmentVariable("SMTP_PASSWORD") != null}");
+                    Console.WriteLine($"[EMAIL ERROR]   EmailSettings:SmtpPassword: {_configuration["EmailSettings:SmtpPassword"] != null}");
+                    Console.WriteLine($"[EMAIL ERROR]   EmailSettings:SmtpPassword value length: {(_configuration["EmailSettings:SmtpPassword"]?.Length ?? 0)}");
+                    return; // Return instead of throwing to avoid breaking the application
                 }
 
                 if (string.IsNullOrEmpty(fromEmail))
                 {
                     Console.WriteLine("[EMAIL ERROR] FromEmail is not configured");
                     Console.WriteLine("[EMAIL ERROR] Check environment variable EMAIL_FROM or appsettings.json");
-                    return;
+                    return; // Return instead of throwing to avoid breaking the application
                 }
 
                 Console.WriteLine($"[EMAIL] Attempting to send email to: {toEmail}");
