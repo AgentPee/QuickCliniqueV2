@@ -60,6 +60,8 @@
         let currentEmergencyId = null;
         let emergencyCheckInterval = null;
         let lastCheckedEmergencyId = null;
+        let alertAudio = null;
+        let audioInterval = null;
 
         // Check for emergencies every 5 seconds
         function startEmergencyCheck() {
@@ -108,11 +110,21 @@
                         showEmergencyModal(latestEmergency);
                     }
                 } else {
-                    // No active emergencies - reset tracking
+                    // No active emergencies - stop beeping and reset tracking
                     if (lastCheckedEmergencyId !== null) {
                         console.log('No active emergencies, resetting tracking');
+                        stopEmergencyBeep();
                         lastCheckedEmergencyId = null;
                         currentEmergencyId = null;
+                        
+                        // Close modal if it's open
+                        const modalElement = document.getElementById('emergencyModal');
+                        if (modalElement) {
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -172,11 +184,8 @@
                 }
             }, 100);
 
-            // Play alert sound (if available)
-            try {
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQQ');
-                audio.play().catch(() => {}); // Ignore if autoplay is blocked
-            } catch (e) {}
+            // Play continuous beeping alert sound
+            startEmergencyBeep();
 
             // Flash the browser tab title
             let flashCount = 0;
@@ -189,6 +198,106 @@
                     document.title = originalTitle;
                 }
             }, 500);
+        }
+
+        // Start continuous beeping sound
+        function startEmergencyBeep() {
+            // Stop any existing beep
+            stopEmergencyBeep();
+
+            // Create a beep sound using Web Audio API for better control
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a beep function - louder and more urgent
+                function playBeep() {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Higher frequency for more urgent beep (800Hz)
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    // Louder beep
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                }
+
+                // Play beep every 0.4 seconds (continuous urgent beeping)
+                audioInterval = setInterval(() => {
+                    playBeep();
+                }, 400);
+
+                // Also try fallback audio if Web Audio API fails
+                try {
+                    // Create a simple beep tone using data URI
+                    const beepData = generateBeepTone();
+                    alertAudio = new Audio(beepData);
+                    alertAudio.loop = true;
+                    alertAudio.volume = 0.6;
+                    alertAudio.play().catch(() => {
+                        // If autoplay is blocked, user interaction will be needed
+                        console.log('Audio autoplay blocked - beep will start on user interaction');
+                    });
+                } catch (e) {
+                    console.log('Fallback audio not available');
+                }
+            } catch (e) {
+                console.error('Web Audio API not available, using fallback:', e);
+                // Fallback: Use simple audio with loop
+                try {
+                    const beepData = generateBeepTone();
+                    alertAudio = new Audio(beepData);
+                    alertAudio.loop = true;
+                    alertAudio.volume = 0.6;
+                    alertAudio.play().catch(() => {});
+                } catch (err) {
+                    console.error('Could not play alert sound:', err);
+                }
+            }
+        }
+
+        // Generate a beep tone using Web Audio API and convert to data URI
+        function generateBeepTone() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const sampleRate = audioContext.sampleRate;
+                const duration = 0.2; // 200ms beep
+                const frequency = 800; // 800Hz tone
+                const numSamples = Math.floor(sampleRate * duration);
+                const buffer = audioContext.createBuffer(1, numSamples, sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < numSamples; i++) {
+                    data[i] = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.5;
+                }
+                
+                // For simplicity, use a base64 encoded beep sound
+                // This is a simple 800Hz sine wave beep
+                return 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQQ';
+            } catch (e) {
+                // Fallback to simple beep data
+                return 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQQ';
+            }
+        }
+
+        // Stop the beeping sound
+        function stopEmergencyBeep() {
+            if (audioInterval) {
+                clearInterval(audioInterval);
+                audioInterval = null;
+            }
+            if (alertAudio) {
+                alertAudio.pause();
+                alertAudio.currentTime = 0;
+                alertAudio = null;
+            }
         }
 
         // Initialize when DOM is ready
@@ -223,6 +332,9 @@
                         const result = await response.json();
 
                         if (result.success) {
+                            // Stop the beeping sound
+                            stopEmergencyBeep();
+                            
                             const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyModal'));
                             if (modal) {
                                 modal.hide();
