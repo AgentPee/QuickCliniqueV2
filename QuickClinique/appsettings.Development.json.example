@@ -6,6 +6,7 @@
     }
   },
   "EmailSettings": {
-    "SmtpPassword": ""
+    "SmtpPassword": "SG.YOUR_SENDGRID_API_KEY_HERE"
   }
 }
+
