@@ -150,6 +150,8 @@ namespace QuickClinique.Services
                 Console.WriteLine($"[EMAIL] Attempting to send email to: {toEmail}");
                 Console.WriteLine($"[EMAIL] Using SMTP server: {smtpServer}:{smtpPort}");
                 Console.WriteLine($"[EMAIL] From: {fromEmail} ({fromName})");
+                Console.WriteLine($"[EMAIL] Username: {smtpUsername}");
+                Console.WriteLine($"[EMAIL] Password length: {(smtpPassword?.Length ?? 0)} characters");
 
                 var message = new MailMessage
                 {
@@ -164,11 +166,38 @@ namespace QuickClinique.Services
                 {
                     Credentials = new NetworkCredential(smtpUsername, smtpPassword),
                     EnableSsl = true,
-                    Timeout = 30000 // 30 seconds timeout
+                    Timeout = 60000, // 60 seconds timeout (increased for Railway)
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
                 };
 
-                await smtpClient.SendMailAsync(message);
-                Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail}");
+                Console.WriteLine($"[EMAIL] Connecting to SMTP server...");
+                var startTime = DateTime.Now;
+                
+                // Use Task with timeout to prevent hanging
+                var sendTask = smtpClient.SendMailAsync(message);
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(60));
+                var completedTask = await Task.WhenAny(sendTask, timeoutTask);
+                
+                if (completedTask == timeoutTask)
+                {
+                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                    Console.WriteLine($"[EMAIL ERROR] Email send timed out after {elapsed:F2} seconds");
+                    Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable or blocking the connection");
+                    Console.WriteLine($"[EMAIL ERROR] Check Railway network settings and firewall rules");
+                    throw new TimeoutException($"Email send operation timed out after {elapsed:F2} seconds. SMTP server may be unreachable.");
+                }
+                
+                // If sendTask completed, await it to get any exceptions
+                await sendTask;
+                var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail} in {elapsed:F2} seconds");
+            }
+            catch (TimeoutException timeoutEx)
+            {
+                Console.WriteLine($"[EMAIL ERROR] Timeout: {timeoutEx.Message}");
+                Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable or blocking the connection");
+                Console.WriteLine($"[EMAIL ERROR] Check Railway network settings and firewall rules");
             }
             catch (SmtpException smtpEx)
             {
@@ -177,7 +206,15 @@ namespace QuickClinique.Services
                 if (smtpEx.InnerException != null)
                 {
                     Console.WriteLine($"[EMAIL ERROR] Inner Exception: {smtpEx.InnerException.Message}");
+                    Console.WriteLine($"[EMAIL ERROR] Inner Exception Type: {smtpEx.InnerException.GetType().Name}");
                 }
+            }
+            catch (System.Net.Sockets.SocketException socketEx)
+            {
+                Console.WriteLine($"[EMAIL ERROR] Network Error: {socketEx.Message}");
+                Console.WriteLine($"[EMAIL ERROR] Socket Error Code: {socketEx.SocketErrorCode}");
+                Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable");
+                Console.WriteLine($"[EMAIL ERROR] Check if Railway allows outbound SMTP connections on port {smtpPort}");
             }
             catch (Exception ex)
             {
@@ -187,6 +224,7 @@ namespace QuickClinique.Services
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"[EMAIL ERROR] Inner Exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"[EMAIL ERROR] Inner Exception Type: {ex.InnerException.GetType().Name}");
                 }
             }
         }
