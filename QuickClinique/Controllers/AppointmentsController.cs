@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
+using QuickClinique.Services;
 
 namespace QuickClinique.Controllers
 {
     public class AppointmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public AppointmentsController(ApplicationDbContext context)
+        public AppointmentsController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Appointments/Details/5
@@ -428,12 +431,13 @@ namespace QuickClinique.Controllers
 
                 appointment.AppointmentStatus = request.Status;
 
+                // Load related data for email notifications and triage
+                await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
                 // If starting appointment (In Progress), create Precord with triage data
                 if (request.Status == "In Progress")
                 {
-                    // Load patient information
-                    await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
-                    
                     // Check if a Precord already exists for this appointment (in case of re-start)
                     // We'll create a new one for each appointment start
                     var medicalRecord = new Precord
@@ -479,6 +483,43 @@ namespace QuickClinique.Controllers
 
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"Successfully updated appointment {request.AppointmentId} to status {request.Status}");
+
+                // Send email notifications based on status
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    try
+                    {
+                        if (request.Status == "Confirmed")
+                        {
+                            var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                            var appointmentTime = appointment.Schedule != null 
+                                ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                                : "N/A";
+                            
+                            await _emailService.SendAppointmentConfirmationEmail(
+                                appointment.Patient.Email,
+                                appointment.Patient.FullName,
+                                appointmentDate,
+                                appointmentTime,
+                                appointment.QueueNumber
+                            );
+                        }
+                        else if (request.Status == "Completed")
+                        {
+                            var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                            await _emailService.SendAppointmentCompletedEmail(
+                                appointment.Patient.Email,
+                                appointment.Patient.FullName,
+                                appointmentDate
+                            );
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail the request
+                        Console.WriteLine($"Failed to send status update email: {emailEx.Message}");
+                    }
+                }
 
                 return Json(new { success = true, message = $"Appointment status updated to {request.Status}" });
             }
@@ -697,6 +738,40 @@ namespace QuickClinique.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Notify all waiting patients that their queue position has moved up
+                var waitingAppointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Where(a => a.Schedule.Date == today && 
+                               a.AppointmentStatus == "Confirmed" && 
+                               a.QueueStatus == "Waiting" &&
+                               a.AppointmentId != nextAppointment.AppointmentId)
+                    .OrderBy(a => a.QueueNumber)
+                    .ToListAsync();
+
+                // Calculate new positions and send emails
+                int position = 1;
+                foreach (var waitingAppointment in waitingAppointments)
+                {
+                    if (waitingAppointment.Patient != null && !string.IsNullOrEmpty(waitingAppointment.Patient.Email))
+                    {
+                        try
+                        {
+                            await _emailService.SendQueuePositionUpdateEmail(
+                                waitingAppointment.Patient.Email,
+                                waitingAppointment.Patient.FullName,
+                                position,
+                                waitingAppointment.QueueNumber
+                            );
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"Failed to send queue update email to {waitingAppointment.Patient.Email}: {emailEx.Message}");
+                        }
+                    }
+                    position++;
+                }
 
                 return Json(new { 
                     success = true, 
@@ -918,7 +993,10 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
                 
                 if (appointment == null)
                 {
@@ -934,6 +1012,31 @@ namespace QuickClinique.Controllers
                 appointment.QueueStatus = "Waiting";
                 
                 await _context.SaveChangesAsync();
+
+                // Send confirmation email
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    try
+                    {
+                        var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                        var appointmentTime = appointment.Schedule != null 
+                            ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                            : "N/A";
+                        
+                        await _emailService.SendAppointmentConfirmationEmail(
+                            appointment.Patient.Email,
+                            appointment.Patient.FullName,
+                            appointmentDate,
+                            appointmentTime,
+                            appointment.QueueNumber
+                        );
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail the request
+                        Console.WriteLine($"Failed to send confirmation email: {emailEx.Message}");
+                    }
+                }
 
                 return Json(new { success = true, message = "Appointment confirmed successfully" });
             }
@@ -1074,6 +1177,25 @@ namespace QuickClinique.Controllers
 
                 _context.Histories.Add(historyRecord);
                 await _context.SaveChangesAsync();
+
+                // Send completion email
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    try
+                    {
+                        var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                        await _emailService.SendAppointmentCompletedEmail(
+                            appointment.Patient.Email,
+                            appointment.Patient.FullName,
+                            appointmentDate
+                        );
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail the request
+                        Console.WriteLine($"Failed to send completion email: {emailEx.Message}");
+                    }
+                }
 
                 return Json(new 
                 { 
