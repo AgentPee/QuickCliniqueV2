@@ -165,18 +165,20 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="triageBPSystolic">
+                                    <label>
                                         <i class="fas fa-tachometer-alt"></i> Blood Pressure
                                     </label>
                                     <div class="row">
                                         <div class="col-6">
+                                            <label for="triageBPSystolic" class="visually-hidden">Systolic Blood Pressure</label>
                                             <input type="number" class="form-control" id="triageBPSystolic" 
-                                                   placeholder="120" min="70" max="250" oninput="updateBPIndicator()">
+                                                   placeholder="120" min="70" max="250" oninput="updateBPIndicator()" aria-label="Systolic Blood Pressure">
                                             <small class="form-text text-muted">Systolic</small>
                                         </div>
                                         <div class="col-6">
+                                            <label for="triageBPDiastolic" class="visually-hidden">Diastolic Blood Pressure</label>
                                             <input type="number" class="form-control" id="triageBPDiastolic" 
-                                                   placeholder="80" min="40" max="150" oninput="updateBPIndicator()">
+                                                   placeholder="80" min="40" max="150" oninput="updateBPIndicator()" aria-label="Diastolic Blood Pressure">
                                             <small class="form-text text-muted">Diastolic</small>
                                         </div>
                                     </div>
@@ -218,22 +220,24 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="triageBMI">
+                                    <label>
                                         <i class="fas fa-user"></i> BMI
                                     </label>
                                     <div class="row">
                                         <div class="col-6">
+                                            <label for="triageHeight" class="visually-hidden">Height in centimeters</label>
                                             <input type="number" class="form-control" id="triageHeight" 
-                                                   placeholder="170" min="100" max="250" oninput="updateBMIIndicator()">
+                                                   placeholder="170" min="100" max="250" oninput="updateBMIIndicator()" aria-label="Height in centimeters">
                                             <small class="form-text text-muted">Height (cm)</small>
                                         </div>
                                         <div class="col-6">
+                                            <label for="triageWeight" class="visually-hidden">Weight in kilograms</label>
                                             <input type="number" class="form-control" id="triageWeight" 
-                                                   placeholder="70" min="30" max="200" oninput="updateBMIIndicator()">
+                                                   placeholder="70" min="30" max="200" oninput="updateBMIIndicator()" aria-label="Weight in kilograms">
                                             <small class="form-text text-muted">Weight (kg)</small>
                                         </div>
                                     </div>
-                                    <input type="hidden" id="triageBMI" name="bmi">
+                                    <input type="hidden" id="triageBMI" name="bmi" aria-label="Calculated BMI">
                                     <div class="vital-result-modal vital-result-modal-hidden" id="bmiVitalResultModal">
                                         <div class="vital-result-value-modal" id="bmiVitalValueModal">-</div>
                                         <div class="vital-result-category-modal" id="bmiVitalCategoryModal">Enter height & weight</div>
