@@ -153,6 +153,7 @@ namespace QuickClinique.Services
                 // Read sender information
                 var fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _configuration["EmailSettings:FromEmail"];
                 var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? _configuration["EmailSettings:FromName"];
+                var replyToEmail = Environment.GetEnvironmentVariable("EMAIL_REPLY_TO") ?? fromEmail;
 
                 Console.WriteLine($"[EMAIL DEBUG] API Key found: {!string.IsNullOrEmpty(apiKey)}");
                 Console.WriteLine($"[EMAIL DEBUG] FromEmail found: {!string.IsNullOrEmpty(fromEmail)}");
@@ -189,14 +190,36 @@ namespace QuickClinique.Services
                 // Create SendGrid client
                 var client = new SendGridClient(apiKey);
 
-                // Create email message
+                // Convert HTML to plain text for better deliverability
+                var plainTextBody = ConvertHtmlToPlainText(body);
+
+                // Create email message with both HTML and plain text
                 var msg = new SendGridMessage
                 {
                     From = new EmailAddress(fromEmail, fromName),
                     Subject = subject,
-                    HtmlContent = body
+                    HtmlContent = body,
+                    PlainTextContent = plainTextBody
                 };
                 msg.AddTo(new EmailAddress(toEmail));
+
+                // Set Reply-To header
+                msg.SetReplyTo(new EmailAddress(replyToEmail, fromName));
+
+                // Add important headers to improve deliverability and reduce spam
+                msg.AddHeader("X-Entity-Ref-ID", Guid.NewGuid().ToString());
+                msg.SetClickTracking(false, false); // Disable click tracking to avoid spam filters
+                msg.SetOpenTracking(false); // Disable open tracking
+                
+                // Set email category for better tracking in SendGrid
+                msg.AddCategory("transactional");
+
+                // Add List-Unsubscribe header (best practice even for transactional emails)
+                var baseUrl = Environment.GetEnvironmentVariable("BASE_URL") 
+                    ?? _configuration["BaseUrl"] 
+                    ?? "https://your-app-name.up.railway.app";
+                msg.AddHeader("List-Unsubscribe", $"<{baseUrl}/unsubscribe?email={Uri.EscapeDataString(toEmail)}>");
+                msg.AddHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
 
                 // Send email
                 var startTime = DateTime.Now;
@@ -230,6 +253,32 @@ namespace QuickClinique.Services
                     Console.WriteLine($"[EMAIL ERROR] Inner Exception Type: {ex.InnerException.GetType().Name}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts HTML content to plain text for email deliverability
+        /// </summary>
+        private string ConvertHtmlToPlainText(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return string.Empty;
+
+            // Remove HTML tags and decode HTML entities
+            var plainText = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", "");
+            plainText = System.Net.WebUtility.HtmlDecode(plainText);
+            
+            // Clean up whitespace
+            plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\s+", " ");
+            plainText = plainText.Trim();
+            
+            // Replace common HTML entities
+            plainText = plainText.Replace("&nbsp;", " ");
+            plainText = plainText.Replace("&amp;", "&");
+            plainText = plainText.Replace("&lt;", "<");
+            plainText = plainText.Replace("&gt;", ">");
+            plainText = plainText.Replace("&quot;", "\"");
+            
+            return plainText;
         }
     }
 }
