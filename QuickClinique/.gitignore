@@ -18,4 +18,5 @@ _TestResults/
 # Sensitive configuration files
 appsettings.Production.json
 appsettings.Local.json
+appsettings.Development.json
 *.secrets.json
