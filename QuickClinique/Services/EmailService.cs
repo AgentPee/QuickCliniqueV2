@@ -42,7 +42,7 @@ namespace QuickClinique.Services
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Welcome to QuickClinique! Please verify your email address by clicking the button below:</p>
                         <div style='text-align: center; margin: 30px 0;'>
-                            <a href='{System.Net.WebUtility.HtmlAttributeEncode(verificationLink)}' style='display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);'>Verify Email</a>
+                            <a href='{System.Net.WebUtility.HtmlEncode(verificationLink)}' style='display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);'>Verify Email</a>
                         </div>
                         <p style='margin: 20px 0; color: #718096; font-size: 14px;'>Or copy this link to your browser:</p>
                         <p style='margin: 0 0 20px 0; color: #06B6D4; word-break: break-all; font-size: 14px;'>{System.Net.WebUtility.HtmlEncode(verificationLink)}</p>
@@ -90,7 +90,7 @@ namespace QuickClinique.Services
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>You requested to reset your password. Click the button below to reset it:</p>
                         <div style='text-align: center; margin: 30px 0;'>
-                            <a href='{System.Net.WebUtility.HtmlAttributeEncode(resetLink)}' style='display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);'>Reset Password</a>
+                            <a href='{System.Net.WebUtility.HtmlEncode(resetLink)}' style='display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);'>Reset Password</a>
                         </div>
                         <p style='margin: 20px 0; color: #718096; font-size: 14px;'>Or copy this link to your browser:</p>
                         <p style='margin: 0 0 20px 0; color: #06B6D4; word-break: break-all; font-size: 14px;'>{System.Net.WebUtility.HtmlEncode(resetLink)}</p>
