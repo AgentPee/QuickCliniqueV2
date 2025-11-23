@@ -257,8 +257,10 @@
     </section>
 </div>
 
-
-
+@if (Context.Session.GetInt32("ClinicStaffId") != null)
+{
+    @await Html.PartialAsync("_EmergencyPolling")
+}
 
 @section Scripts {
     <script src="~/js/health.js"></script>
