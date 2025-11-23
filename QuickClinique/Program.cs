@@ -162,7 +162,9 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Use SameAsRequest for Railway - will be secure if HTTPS, but won't fail on HTTP
+    // This allows cookies to work behind proxies that handle HTTPS termination
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     // Allow session to work even if old cookies can't be decrypted (after deployments)
     options.Cookie.Name = ".QuickClinique.Session";
 });
@@ -184,20 +186,29 @@ builder.Services.AddDataProtection()
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.Strict;
-    options.Secure = CookieSecurePolicy.Always;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax; // Changed from Strict to Lax for better compatibility
+    // Use SameAsRequest for Railway - will be secure if HTTPS, but won't fail on HTTP
+    // This allows cookies to work behind proxies that handle HTTPS termination
+    options.Secure = CookieSecurePolicy.SameAsRequest;
 });
 
 var app = builder.Build();
 
 // Configure forwarded headers for Railway (to get correct scheme and host from proxy)
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+// This must be called before UseHttpsRedirection and other middleware
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | 
                        ForwardedHeaders.XForwardedProto | 
                        ForwardedHeaders.XForwardedHost,
     RequireHeaderSymmetry = false
-});
+};
+
+// Clear known networks and proxies to allow all (Railway uses various IPs)
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // Configure port for Railway (Railway sets PORT environment variable)
 var port = Environment.GetEnvironmentVariable("PORT");
