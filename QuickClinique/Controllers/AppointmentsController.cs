@@ -516,6 +516,21 @@ namespace QuickClinique.Controllers
                                     appointmentDate
                                 );
                             }
+                            else if (request.Status == "Cancelled")
+                            {
+                                var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                                var appointmentTime = appointment.Schedule != null 
+                                    ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                                    : "N/A";
+                                
+                                await _emailService.SendAppointmentCancellationEmail(
+                                    appointment.Patient.Email,
+                                    appointment.Patient.FullName,
+                                    appointmentDate,
+                                    appointmentTime,
+                                    appointment.CancellationReason
+                                );
+                            }
                         }
                         catch (Exception emailEx)
                         {
@@ -891,6 +906,41 @@ namespace QuickClinique.Controllers
 
                 await _context.SaveChangesAsync();
 
+                // Load schedule for email notification
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
+                // Send cancellation email (fire-and-forget to avoid blocking response)
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                    var appointmentTime = appointment.Schedule != null 
+                        ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                        : "N/A";
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var cancellationReason = appointment.CancellationReason;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _emailService.SendAppointmentCancellationEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate,
+                                appointmentTime,
+                                cancellationReason
+                            );
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"Failed to send cancellation email: {emailEx.Message}");
+                        }
+                    });
+                }
+
                 return Json(new { success = true, message = "Appointment cancelled successfully" });
             }
             catch (Exception ex)
@@ -1095,6 +1145,42 @@ namespace QuickClinique.Controllers
                 appointment.CancellationReason = !string.IsNullOrEmpty(reason) ? reason : "Cancelled by clinic staff";
                 
                 await _context.SaveChangesAsync();
+
+                // Load related data for email notification
+                await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
+                // Send cancellation email (fire-and-forget to avoid blocking response)
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                    var appointmentTime = appointment.Schedule != null 
+                        ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                        : "N/A";
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var cancellationReason = appointment.CancellationReason;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _emailService.SendAppointmentCancellationEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate,
+                                appointmentTime,
+                                cancellationReason
+                            );
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"Failed to send cancellation email: {emailEx.Message}");
+                        }
+                    });
+                }
 
                 return Json(new { success = true, message = "Appointment cancelled successfully" });
             }
