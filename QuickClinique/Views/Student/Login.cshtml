@@ -43,7 +43,15 @@
                     </div>
                 }
 
-                <form asp-action="Login" method="post" class="auth-form">
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="error-message">
+                        @TempData["ErrorMessage"]
+                    </div>
+                }
+
+
+                <form asp-action="Login" method="post" class="auth-form" id="loginForm">
                     <div asp-validation-summary="ModelOnly" class="error-message"></div>
 
                     <div class="input-group">
@@ -82,8 +90,9 @@
         </div>
     </div>
 
-    <script src="~/js/studlogin.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/studlogin.js" asp-append-version="true"></script>
 </body>
 </html>
