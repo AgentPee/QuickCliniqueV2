@@ -737,16 +737,38 @@
     }
 
     .patients-table-container {
-        overflow-x: auto;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        display: block !important;
     }
 
     .patients-table {
-        min-width: 800px;
+        min-width: 1000px !important;
+        width: auto !important;
+        display: table !important;
     }
 
     .patients-table th,
     .patients-table td {
         padding: 1rem 0.75rem;
+        white-space: nowrap !important;
+    }
+    
+    /* Custom scrollbar */
+    .patients-table-container::-webkit-scrollbar {
+        height: 10px;
+    }
+    
+    .patients-table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .patients-table-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+        border-radius: 5px;
     }
 
     .action-buttons {
@@ -1279,6 +1301,23 @@
     
     .search-section {
         padding: 0.875rem;
+    }
+    
+    .patients-table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .patients-table {
+        min-width: 1000px !important;
+        font-size: 0.85rem;
+    }
+    
+    .patients-table th,
+    .patients-table td {
+        padding: 0.875rem 0.5rem;
+        white-space: nowrap !important;
+        font-size: 0.85rem;
     }
     
     .patient-card {

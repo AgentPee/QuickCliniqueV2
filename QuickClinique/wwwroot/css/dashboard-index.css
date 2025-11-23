@@ -91,6 +91,34 @@
     grid-column: 2 / 3;
 }
 
+/* Responsive grid adjustments */
+@media (max-width: 992px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-card:nth-child(7) {
+        grid-column: 1 / 2;
+    }
+    
+    /* Center last card if odd number on 2-column grid */
+    .stat-card:nth-child(odd):last-child {
+        grid-column: 1 / -1;
+        max-width: 50%;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card:nth-child(odd):last-child {
+        max-width: 100%;
+    }
+}
+
 .stat-card {
     background: var(--white);
     padding: 1.75rem;
@@ -1614,6 +1642,15 @@
     
     .stat-card {
         padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        margin: 0 auto 0.75rem;
     }
     
     .stat-number {
@@ -1634,6 +1671,8 @@
     
     .appointment-item {
         padding: 0.875rem;
+        flex-direction: column;
+        gap: 0.75rem;
     }
     
     .patient-name {
@@ -1642,6 +1681,19 @@
     
     .appointment-details {
         font-size: 0.85rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .appointment-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .status-btn {
+        width: 100%;
+        justify-content: center;
     }
     
     .quick-actions {
@@ -1651,6 +1703,7 @@
     .action-btn {
         padding: 0.75rem;
         font-size: 0.75rem;
+        width: 100%;
     }
     
     .notifications-panel {
@@ -1667,6 +1720,46 @@
     
     .chat-area {
         height: calc(100% - 150px);
+    }
+}
+
+/* Extra small devices (320px and below) */
+@media (max-width: 320px) {
+    .dashboard-container {
+        padding: 0.5rem;
+    }
+    
+    .dashboard-header {
+        padding: 1rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .stat-card {
+        padding: 0.875rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .appointments-section {
+        padding: 0.75rem;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+    }
+    
+    .appointment-item {
+        padding: 0.75rem;
+    }
+    
+    .status-btn {
+        font-size: 0.7rem;
+        padding: 0.6rem;
     }
 }
 

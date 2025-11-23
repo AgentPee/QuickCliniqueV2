@@ -154,6 +154,13 @@ html {
     margin-bottom: 2.5rem;
 }
 
+/* Stats overview responsive - tablet */
+@media (max-width: 992px) {
+    .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 .overview-card {
     background: var(--white);
     border-radius: var(--radius-lg);
@@ -240,6 +247,14 @@ html {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 2rem;
+}
+
+/* Analytics grid responsive - ensure single column on mobile */
+@media (max-width: 576px) {
+    .analytics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem;
+    }
 }
 
 .analytics-card {

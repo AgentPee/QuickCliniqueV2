@@ -44,6 +44,9 @@ body {
     margin: 2.5rem auto;
     padding: 0 2rem;
     animation: pageLoad 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    overflow-x: visible;
+    overflow-y: visible;
 }
 
 /* Staff Header - Enhanced with Frosted Glass Effect */
@@ -243,11 +246,46 @@ body {
     background: var(--white);
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     box-shadow: var(--shadow-md), 0 0 0 1px rgba(0, 0, 0, 0.02);
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
     position: relative;
     animation: floatUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateZ(0);
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: var(--primary-teal, #4ECDC4) var(--light-bg, #F0F4F8); /* Firefox */
+    width: 100%;
+    max-width: 100%;
+    display: block;
+}
+
+/* Force horizontal scroll on all screen sizes below 992px */
+@media (max-width: 991px) {
+    .staff-table-container {
+        overflow-x: scroll !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* Custom scrollbar for webkit browsers (Chrome, Safari, Edge) */
+.staff-table-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+.staff-table-container::-webkit-scrollbar-track {
+    background: var(--light-bg, #F0F4F8);
+    border-radius: 6px;
+}
+
+.staff-table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    border-radius: 6px;
+    border: 2px solid var(--light-bg, #F0F4F8);
+}
+
+.staff-table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, var(--secondary-teal, #44A08D) 0%, var(--dark-teal, #3BA89F) 100%);
 }
 
     .staff-table-container::before {
@@ -268,6 +306,17 @@ body {
     min-width: 1000px;
     border-collapse: collapse;
     table-layout: auto;
+    display: table;
+}
+
+/* Ensure table can exceed container width on mobile */
+@media (max-width: 768px) {
+    .staff-table {
+        display: table !important;
+        table-layout: fixed !important;
+        width: auto !important;
+        min-width: 1200px !important;
+    }
 }
 
     .staff-table thead {
@@ -497,6 +546,32 @@ body {
 @media (max-width: 1200px) {
     .staff-management {
         padding: 0 1.5rem;
+        width: 100%;
+        overflow-x: visible;
+    }
+}
+
+/* Ensure parent containers allow overflow */
+@media (max-width: 992px) {
+    /* Parent container should allow overflow */
+    .staff-management {
+        overflow-x: visible !important;
+        overflow-y: visible;
+    }
+    
+    /* Force table container to be scrollable */
+    .staff-table-container {
+        overflow-x: scroll !important;
+        overflow-y: visible !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .staff-table {
+        min-width: 1200px !important;
+        width: auto !important;
     }
 }
 
@@ -504,6 +579,10 @@ body {
     .staff-management {
         margin: 1.5rem auto;
         padding: 0 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: visible !important;
+        overflow-y: visible;
     }
 
     .staff-header {
@@ -528,29 +607,54 @@ body {
 
     .staff-table-container {
         border-radius: 0 0 var(--radius-md) var(--radius-md);
-        overflow-x: auto; /* Re-enable horizontal scroll only for mobile */
+        overflow-x: auto !important; /* Force horizontal scroll on mobile */
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important; /* Smooth scrolling on iOS */
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        position: relative;
     }
 
     .staff-table {
-        table-layout: auto; /* Switch back to auto layout for mobile */
-        min-width: 600px; /* Minimum width to prevent excessive shrinking */
+        table-layout: fixed;
+        min-width: 1200px !important; /* Wider minimum width to ensure scroll triggers */
+        width: auto !important;
+        display: table;
     }
 
     .staff-table th,
     .staff-table td {
         padding: 1rem 0.75rem;
+        white-space: nowrap !important; /* Prevent text wrapping */
+        min-width: 120px;
+    }
+
+    /* Allow specific columns to wrap if needed but maintain minimum width */
+    .staff-table td:nth-child(3) {
+        white-space: normal;
+        min-width: 180px;
+    }
+    
+    .staff-table td:nth-child(6),
+    .staff-table td:nth-child(7) {
+        white-space: normal;
+        min-width: 200px;
     }
 
     .action-buttons {
         flex-direction: row;
         gap: 0.3rem;
         flex-wrap: nowrap;
+        min-width: 200px;
+        width: auto;
     }
 
         .action-buttons .btn {
             width: auto;
             padding: 0.4rem 0.8rem;
             font-size: 0.7rem;
+            flex-shrink: 0;
         }
 }
 
@@ -558,6 +662,10 @@ body {
     .staff-management {
         margin: 1rem auto;
         padding: 0 0.5rem;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: visible !important;
+        overflow-y: visible;
     }
 
     .staff-header {
@@ -573,18 +681,40 @@ body {
         font-size: 0.8rem;
     }
 
+    .staff-table-container {
+        overflow-x: auto !important; /* Force horizontal scroll on small screens */
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+    }
+
     .staff-table {
         font-size: 0.85rem;
-        min-width: 500px;
+        min-width: 1200px !important; /* Keep wide enough to trigger scroll */
+        width: auto !important;
+        display: table;
+    }
+
+    .staff-table th,
+    .staff-table td {
+        padding: 0.875rem 0.625rem;
+        font-size: 0.85rem;
+        white-space: nowrap !important;
+        min-width: 100px;
     }
 
     .action-buttons {
         gap: 0.2rem;
+        min-width: 180px;
+        width: auto;
     }
 
         .action-buttons .btn {
             padding: 0.35rem 0.7rem;
             font-size: 0.65rem;
+            flex-shrink: 0;
         }
 }
 

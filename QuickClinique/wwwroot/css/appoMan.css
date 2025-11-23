@@ -821,12 +821,38 @@ textarea.form-control {
 
     .table-responsive {
         font-size: 0.85em;
-        overflow-x: auto;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        display: block !important;
+    }
+    
+    /* Custom scrollbar */
+    .table-responsive::-webkit-scrollbar {
+        height: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+        border-radius: 5px;
+    }
+
+    .table {
+        min-width: 1000px !important;
+        width: auto !important;
+        display: table !important;
     }
 
     .table th,
     .table td {
         padding: 0.75rem 0.5rem;
+        white-space: nowrap !important;
     }
 
     .action-buttons {
@@ -886,10 +912,21 @@ textarea.form-control {
         font-size: 1.6em;
     }
 
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .table {
+        min-width: 1200px !important;
+        font-size: 0.8em;
+    }
+    
     .table th,
     .table td {
         padding: 0.6rem 0.4rem;
         font-size: 0.8em;
+        white-space: nowrap !important;
     }
 
     .status-badge,

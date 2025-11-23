@@ -779,12 +779,65 @@ input:invalid {
         line-height: 1.6;
     }
 
+/* Section Header - Responsive */
+@media (max-width: 768px) {
+    .section-header {
+        margin-bottom: 30px;
+    }
+    
+    .section-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .section-header h2:after {
+        width: 60px;
+        height: 2px;
+    }
+    
+    .section-header p {
+        font-size: 0.95rem;
+        margin: 15px auto 0;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-header {
+        margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .section-header h2:after {
+        width: 50px;
+        height: 2px;
+        bottom: -8px;
+    }
+    
+    .section-header p {
+        font-size: 0.9rem;
+        margin: 12px auto 0;
+        padding: 0 10px;
+        line-height: 1.5;
+    }
+}
+
 /* Mission & Vision */
 .mission-vision {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin-bottom: 40px;
+}
+
+/* Mission-Vision responsive */
+@media (max-width: 768px) {
+    .mission-vision {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
 }
 
 .mission-card, .vision-card {
@@ -842,6 +895,18 @@ input:invalid {
     gap: 20px;
 }
 
+/* Staff grid responsive */
+@media (max-width: 768px) {
+    .staff-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .staff-card {
+        padding: 15px;
+    }
+}
+
 .staff-card {
     background: #f8f9fa;
     padding: 20px;
@@ -880,6 +945,21 @@ input:invalid {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
+/* Dental Schedule Section - Responsive */
+@media (max-width: 768px) {
+    .dental-schedule-section {
+        padding: 20px;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dental-schedule-section {
+        padding: 15px;
+        border-radius: 6px;
+    }
+}
+
 
 
 
@@ -889,6 +969,85 @@ input:invalid {
     gap: 1.5rem;
     margin-top: 30px;
     margin-bottom: 2rem;
+}
+
+/* Schedule grid responsive */
+@media (max-width: 992px) {
+    .schedule-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .schedule-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+        margin-top: 20px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .schedule-card {
+        padding: 1.25rem;
+        border-radius: 8px;
+        border-left-width: 4px;
+    }
+    
+    .schedule-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .schedule-day {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .schedule-service {
+        font-size: 1rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .schedule-desc {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+}
+
+@media (max-width: 375px) {
+    .schedule-grid {
+        gap: 0.75rem;
+        margin-top: 15px;
+    }
+    
+    .schedule-card {
+        padding: 1rem;
+        border-left-width: 3px;
+    }
+    
+    .schedule-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    .schedule-day {
+        font-size: 1rem;
+    }
+    
+    .schedule-service {
+        font-size: 0.95rem;
+    }
+    
+    .schedule-desc {
+        font-size: 0.8rem;
+    }
 }
 
 .schedule-card {
@@ -905,6 +1064,14 @@ input:invalid {
         transform: translateY(-5px);
         box-shadow: 0 8px 20px rgba(78, 205, 196, 0.2);
     }
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .schedule-card:hover {
+        transform: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+}
 
 .schedule-icon {
     font-size: 2.5rem;
@@ -3048,6 +3215,44 @@ input[type="date"] {
 .info-note-text {
     color: #555;
     margin: 0;
+}
+
+/* Info Note Box - Responsive */
+@media (max-width: 768px) {
+    .info-note-box {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 6px;
+        border-left-width: 3px;
+    }
+    
+    .info-note-title {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .info-note-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-note-box {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 5px;
+    }
+    
+    .info-note-title {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+    }
+    
+    .info-note-text {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
 }
 
 /* Clinic title and description */
