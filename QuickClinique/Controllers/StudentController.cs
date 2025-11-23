@@ -242,14 +242,95 @@ namespace QuickClinique.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var student = await _context.Students.FindAsync(id);
+            var student = await _context.Students
+                .Include(s => s.Appointments)
+                .Include(s => s.Histories)
+                .Include(s => s.Notifications)
+                .Include(s => s.Precords)
+                .FirstOrDefaultAsync(m => m.StudentId == id);
+
             if (student != null)
             {
-                _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    // Delete all related emergency records first
+                    var emergencies = await _context.Emergencies
+                        .Where(e => e.StudentId == id)
+                        .ToListAsync();
+                    
+                    if (emergencies.Any())
+                    {
+                        _context.Emergencies.RemoveRange(emergencies);
+                    }
 
-                if (IsAjaxRequest())
-                    return Json(new { success = true, message = "Student deleted successfully" });
+                    // Delete related appointments
+                    if (student.Appointments.Any())
+                    {
+                        _context.Appointments.RemoveRange(student.Appointments);
+                    }
+
+                    // Delete related histories
+                    if (student.Histories.Any())
+                    {
+                        _context.Histories.RemoveRange(student.Histories);
+                    }
+
+                    // Delete related notifications
+                    if (student.Notifications.Any())
+                    {
+                        _context.Notifications.RemoveRange(student.Notifications);
+                    }
+
+                    // Delete related precords (medical records)
+                    if (student.Precords.Any())
+                    {
+                        _context.Precords.RemoveRange(student.Precords);
+                    }
+
+                    // Delete insurance receipt file if exists
+                    if (!string.IsNullOrEmpty(student.InsuranceReceipt))
+                    {
+                        try
+                        {
+                            await _fileStorageService.DeleteFileAsync(student.InsuranceReceipt);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but don't fail deletion if file deletion fails
+                            Console.WriteLine($"Warning: Could not delete insurance receipt file: {ex.Message}");
+                        }
+                    }
+
+                    // Delete student image file if exists
+                    if (!string.IsNullOrEmpty(student.Image))
+                    {
+                        try
+                        {
+                            await _fileStorageService.DeleteFileAsync(student.Image);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but don't fail deletion if file deletion fails
+                            Console.WriteLine($"Warning: Could not delete student image file: {ex.Message}");
+                        }
+                    }
+
+                    // Finally, delete the student
+                    _context.Students.Remove(student);
+                    await _context.SaveChangesAsync();
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = true, message = "Student deleted successfully" });
+                }
+                catch (DbUpdateException ex)
+                {
+                    Console.WriteLine($"Error deleting student: {ex.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Failed to delete student. There may be related records that prevent deletion." });
+                    
+                    ModelState.AddModelError("", "Failed to delete student. There may be related records that prevent deletion.");
+                    return View(student);
+                }
             }
             else
             {
