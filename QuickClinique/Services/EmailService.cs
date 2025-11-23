@@ -108,6 +108,35 @@ namespace QuickClinique.Services
             await SendEmailAsync(toEmail, subject, body);
         }
 
+        public async Task SendAppointmentCancellationEmail(string toEmail, string patientName, string appointmentDate, string appointmentTime, string? reason = null)
+        {
+            var subject = "Appointment Cancelled - QuickClinique";
+            var reasonSection = !string.IsNullOrWhiteSpace(reason) 
+                ? $@"
+                    <div style='background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;'>
+                        <p style='margin: 0;'><strong>Reason:</strong> {reason}</p>
+                    </div>"
+                : "";
+            
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                    <h2 style='color: #dc3545;'>Appointment Cancelled</h2>
+                    <h3>Hello {patientName},</h3>
+                    <p>We regret to inform you that your appointment has been cancelled.</p>
+                    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;'>
+                        <p><strong>Date:</strong> {appointmentDate}</p>
+                        <p><strong>Time:</strong> {appointmentTime}</p>
+                    </div>
+                    {reasonSection}
+                    <p>If you need to reschedule your appointment, please log in to your account and book a new appointment, or contact us for assistance.</p>
+                    <p>We apologize for any inconvenience this may cause.</p>
+                    <br>
+                    <p>Best regards,<br>QuickClinique Team</p>
+                </div>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
         private async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             try
