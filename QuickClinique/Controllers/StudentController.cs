@@ -1174,31 +1174,19 @@ namespace QuickClinique.Controllers
         // POST: Student/ResendVerificationEmail
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendVerificationRequest? request)
+        public async Task<IActionResult> ResendVerificationEmail()
         {
             try
             {
                 string? email = null;
                 int? idNumber = null;
 
-                // Support both JSON body and form data
-                if (request != null && !string.IsNullOrEmpty(request.Email))
+                // Get from form data (FormData submissions)
+                email = Request.Form["Email"].FirstOrDefault();
+                var idNumberStr = Request.Form["IdNumber"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(idNumberStr) && int.TryParse(idNumberStr, out int parsedId))
                 {
-                    email = request.Email;
-                }
-                else if (request != null && request.IdNumber > 0)
-                {
-                    idNumber = request.IdNumber;
-                }
-                else
-                {
-                    // Try to get from form data
-                    email = Request.Form["Email"].FirstOrDefault();
-                    var idNumberStr = Request.Form["IdNumber"].FirstOrDefault();
-                    if (!string.IsNullOrEmpty(idNumberStr) && int.TryParse(idNumberStr, out int parsedId))
-                    {
-                        idNumber = parsedId;
-                    }
+                    idNumber = parsedId;
                 }
 
                 if (string.IsNullOrEmpty(email) && !idNumber.HasValue)
@@ -1283,6 +1271,101 @@ namespace QuickClinique.Controllers
             public int? IdNumber { get; set; }
         }
 
+        // GET: Student/resetPasswordE - Display password reset email page
+        public IActionResult resetPasswordE(string? email = null)
+        {
+            // Pass email to view if provided
+            if (!string.IsNullOrEmpty(email))
+            {
+                ViewBag.Email = email;
+            }
+            else if (TempData["StudentEmail"] != null)
+            {
+                ViewBag.Email = TempData["StudentEmail"].ToString();
+                TempData.Keep("StudentEmail");
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
+        }
+
+        // POST: Student/ResendPasswordResetEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendPasswordResetEmail()
+        {
+            try
+            {
+                string? email = null;
+
+                // Get from form data (FormData submissions)
+                email = Request.Form["Email"].FirstOrDefault();
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return Json(new { success = false, error = "Email is required." });
+                }
+
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower() && s.IsEmailVerified);
+
+                if (student == null)
+                {
+                    // Don't reveal that the user doesn't exist (security best practice)
+                    return Json(new { 
+                        success = true, 
+                        message = "If your email is registered and verified, a password reset email will be sent." 
+                    });
+                }
+
+                // Generate new token and extend expiry
+                var resetToken = GenerateToken();
+                student.PasswordResetToken = resetToken;
+                student.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+
+                await _context.SaveChangesAsync();
+
+                // Send password reset email (fire-and-forget)
+                var baseUrl = GetBaseUrl();
+                var resetLink = $"{baseUrl}{Url.Action("ResetPassword", "Student", new { token = resetToken, email = student.Email })}";
+
+                // Fire-and-forget: don't await, let it run in background
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendPasswordResetEmail(student.Email, student.FirstName, resetLink);
+                        Console.WriteLine($"[EMAIL] Password reset email sent successfully to {student.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"[EMAIL ERROR] Failed to send password reset email to {student.Email}: {emailEx.Message}");
+                    }
+                });
+
+                return Json(new { 
+                    success = true, 
+                    message = "Password reset email has been sent. Please check your inbox (and spam folder)." 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error resending password reset email: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while sending the password reset email. Please try again later." 
+                });
+            }
+        }
+
+        // Helper class for resend password reset request
+        public class ResendPasswordResetRequest
+        {
+            public string? Email { get; set; }
+        }
+
         // GET: Student/ForgotPassword
         public IActionResult ForgotPassword()
         {
@@ -1316,18 +1399,18 @@ namespace QuickClinique.Controllers
                     await _emailService.SendPasswordResetEmail(student.Email, student.FirstName, resetLink);
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Password reset link has been sent to your email.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { success = true, message = "Password reset link has been sent to your email.", redirectUrl = Url.Action("resetPasswordE", "Student", new { email = student.Email }) });
 
                     TempData["SuccessMessage"] = "Password reset link has been sent to your email.";
-                    return RedirectToAction(nameof(Login));
+                    return RedirectToAction("resetPasswordE", "Student", new { email = student.Email });
                 }
 
                 // Don't reveal that the user doesn't exist or isn't verified
                 if (IsAjaxRequest())
-                    return Json(new { success = true, message = "If your email is registered and verified, you will receive a password reset link.", redirectUrl = Url.Action(nameof(Login)) });
+                    return Json(new { success = true, message = "If your email is registered and verified, you will receive a password reset link.", redirectUrl = Url.Action("resetPasswordE", "Student", new { email = model.Email }) });
 
                 TempData["SuccessMessage"] = "If your email is registered and verified, you will receive a password reset link.";
-                return RedirectToAction(nameof(Login));
+                return RedirectToAction("resetPasswordE", "Student", new { email = model.Email });
             }
 
             if (IsAjaxRequest())
