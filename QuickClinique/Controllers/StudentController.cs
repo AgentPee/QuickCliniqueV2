@@ -621,7 +621,7 @@ namespace QuickClinique.Controllers
                         return Json(new { 
                             success = true, 
                             message = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.",
-                            redirectUrl = Url.Action(nameof(Login)),
+                            redirectUrl = Url.Action("verificationE", "Student", new { email = student.Email }),
                             studentEmail = student.Email,
                             studentIdNumber = student.Idnumber
                         });
@@ -629,7 +629,7 @@ namespace QuickClinique.Controllers
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.";
                     TempData["StudentEmail"] = student.Email;
                     TempData["StudentIdNumber"] = student.Idnumber;
-                    return RedirectToAction(nameof(Login));
+                    return RedirectToAction("verificationE", "Student", new { email = student.Email });
                 }
                 catch (DbUpdateException dbEx)
                 {
@@ -736,15 +736,13 @@ namespace QuickClinique.Controllers
                                 success = false, 
                                 error = "Please verify your email before logging in.",
                                 requiresVerification = true,
+                                redirectUrl = Url.Action("verificationE", "Student", new { email = student.Email }),
                                 email = student.Email,
                                 idNumber = student.Idnumber
                             });
 
-                        ModelState.AddModelError("", "Please verify your email before logging in.");
-                        ViewBag.RequiresVerification = true;
-                        ViewBag.StudentEmail = student.Email;
-                        ViewBag.StudentIdNumber = student.Idnumber;
-                        return View(model);
+                        TempData["ErrorMessage"] = "Please verify your email before logging in.";
+                        return RedirectToAction("verificationE", "Student", new { email = student.Email });
                     }
 
                     if (!student.IsActive)
@@ -1040,6 +1038,26 @@ namespace QuickClinique.Controllers
 
             TempData["SuccessMessage"] = "You have been logged out successfully.";
             return RedirectToAction(nameof(Login));
+        }
+
+        // GET: Student/verificationE - Display email verification page
+        public IActionResult verificationE(string? email = null)
+        {
+            // Pass email to view if provided
+            if (!string.IsNullOrEmpty(email))
+            {
+                ViewBag.Email = email;
+            }
+            else if (TempData["StudentEmail"] != null)
+            {
+                ViewBag.Email = TempData["StudentEmail"].ToString();
+                TempData.Keep("StudentEmail");
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
         }
 
         // GET: Student/VerifyEmail
