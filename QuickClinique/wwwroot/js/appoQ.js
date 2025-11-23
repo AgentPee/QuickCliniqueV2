@@ -142,9 +142,62 @@ function escapeHtml(text) {
 }
 
 // Show the next patient triage modal
-function showNextPatientModal() {
+async function showNextPatientModal() {
+    try {
+        // Fetch next patient information
+        const response = await fetch('/Appointments/GetQueueData');
+        const result = await response.json();
+        
+        if (result.success && result.data && result.data.waitingPatients && result.data.waitingPatients.length > 0) {
+            const nextPatient = result.data.waitingPatients[0];
+            
+            // Display patient information
+            document.getElementById('nextPatientName').textContent = nextPatient.patientName || 'Unknown';
+            document.getElementById('nextPatientQueueNumber').textContent = nextPatient.queueNumber || '-';
+            document.getElementById('nextPatientReason').textContent = nextPatient.reasonForVisit || 'Not specified';
+            document.getElementById('nextPatientTime').textContent = 
+                (nextPatient.startTime && nextPatient.endTime) 
+                    ? `${nextPatient.startTime} - ${nextPatient.endTime}` 
+                    : '-';
+        } else {
+            // No patient waiting
+            document.getElementById('nextPatientName').textContent = 'No patient waiting';
+            document.getElementById('nextPatientQueueNumber').textContent = '-';
+            document.getElementById('nextPatientReason').textContent = '-';
+            document.getElementById('nextPatientTime').textContent = '-';
+        }
+    } catch (error) {
+        console.error('Error fetching next patient info:', error);
+        document.getElementById('nextPatientName').textContent = 'Error loading patient info';
+    }
+
     // Reset form
-    document.getElementById('nextPatientForm').reset();
+    const form = document.getElementById('nextPatientForm');
+    if (form) {
+        form.reset();
+    }
+
+    // Reset all input fields explicitly
+    const inputs = [
+        'triagePulseRate', 'triageBPSystolic', 'triageBPDiastolic', 
+        'triageTemperature', 'triageOxygenSaturation', 
+        'triageHeight', 'triageWeight', 'triageAllergies', 'triageNotes'
+    ];
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+        }
+    });
+
+    // Reset hidden fields
+    const hiddenInputs = ['triageBloodPressure', 'triageBMI'];
+    hiddenInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+        }
+    });
 
     // Reset all vital result displays
     const vitalResults = document.querySelectorAll('.vital-result-modal');
@@ -158,25 +211,66 @@ function showNextPatientModal() {
         bmiVitalResult.classList.add('vital-result-modal-hidden');
     }
 
+    // Reset all vital result value and category displays
+    const valueModals = document.querySelectorAll('.vital-result-value-modal');
+    valueModals.forEach(el => el.textContent = '-');
+    
+    const categoryModals = document.querySelectorAll('.vital-result-category-modal');
+    categoryModals.forEach(el => {
+        el.textContent = 'Enter value';
+        el.className = 'vital-result-category-modal';
+    });
+
     // Show the modal using Bootstrap 5
     const modalElement = document.getElementById('nextPatientModal');
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
 }
 
 // Submit next patient triage and complete current patient
 async function submitNextPatient() {
     try {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        // Disable submit button to prevent double submission
+        const submitBtn = document.querySelector('#nextPatientModal .btn-primary[onclick="submitNextPatient()"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        }
 
-        // Collect triage data from form
-        const pulseRate = document.getElementById('triagePulseRate').value ? parseInt(document.getElementById('triagePulseRate').value) : null;
-        const bloodPressure = document.getElementById('triageBloodPressure').value.trim() || null;
-        const temperature = document.getElementById('triageTemperature').value ? parseFloat(document.getElementById('triageTemperature').value) : null;
-        const oxygenSaturation = document.getElementById('triageOxygenSaturation').value ? parseInt(document.getElementById('triageOxygenSaturation').value) : null;
-        const bmi = document.getElementById('triageBMI').value ? parseFloat(document.getElementById('triageBMI').value) : null;
-        const allergies = document.getElementById('triageAllergies').value.trim() || null;
-        const triageNotes = document.getElementById('triageNotes').value.trim() || null;
+        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (!tokenElement) {
+            alert('Security token not found. Please refresh the page and try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-forward"></i> Start Next Patient';
+            }
+            return;
+        }
+        const token = tokenElement.value;
+
+        // Collect triage data from form with null safety
+        const pulseRateInput = document.getElementById('triagePulseRate');
+        const pulseRate = pulseRateInput && pulseRateInput.value ? parseInt(pulseRateInput.value) : null;
+        
+        const bloodPressureInput = document.getElementById('triageBloodPressure');
+        const bloodPressure = bloodPressureInput && bloodPressureInput.value ? bloodPressureInput.value.trim() : null;
+        
+        const temperatureInput = document.getElementById('triageTemperature');
+        const temperature = temperatureInput && temperatureInput.value ? parseFloat(temperatureInput.value) : null;
+        
+        const oxygenSaturationInput = document.getElementById('triageOxygenSaturation');
+        const oxygenSaturation = oxygenSaturationInput && oxygenSaturationInput.value ? parseInt(oxygenSaturationInput.value) : null;
+        
+        const bmiInput = document.getElementById('triageBMI');
+        const bmi = bmiInput && bmiInput.value ? parseFloat(bmiInput.value) : null;
+        
+        const allergiesInput = document.getElementById('triageAllergies');
+        const allergies = allergiesInput && allergiesInput.value ? allergiesInput.value.trim() : null;
+        
+        const triageNotesInput = document.getElementById('triageNotes');
+        const triageNotes = triageNotesInput && triageNotesInput.value ? triageNotesInput.value.trim() : null;
 
         const response = await fetch('/Appointments/NextInQueue', {
             method: 'POST',
@@ -196,6 +290,10 @@ async function submitNextPatient() {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
@@ -206,15 +304,26 @@ async function submitNextPatient() {
                 modal.hide();
             }
             
-            alert(result.message);
+            alert(result.message || 'Next patient started successfully!');
             // Refresh queue data in background
             setTimeout(() => refreshQueue(), 500);
         } else {
-            alert('Error: ' + result.message);
+            alert('Error: ' + (result.message || 'Failed to start next patient'));
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-forward"></i> Start Next Patient';
+            }
         }
     } catch (error) {
         console.error('Error moving to next patient:', error);
-        alert('An error occurred while moving to the next patient.');
+        alert('An error occurred while moving to the next patient. Please try again.');
+        
+        // Re-enable submit button
+        const submitBtn = document.querySelector('#nextPatientModal .btn-primary[onclick="submitNextPatient()"]');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-forward"></i> Start Next Patient';
+        }
     }
 }
 
@@ -375,7 +484,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const nextPatientModalElement = document.getElementById('nextPatientModal');
     if (nextPatientModalElement) {
         nextPatientModalElement.addEventListener('hidden.bs.modal', function () {
-            document.getElementById('nextPatientForm').reset();
+            const form = document.getElementById('nextPatientForm');
+            if (form) {
+                form.reset();
+            }
+            
+            // Reset all input fields
+            const inputs = [
+                'triagePulseRate', 'triageBPSystolic', 'triageBPDiastolic', 
+                'triageTemperature', 'triageOxygenSaturation', 
+                'triageHeight', 'triageWeight', 'triageAllergies', 'triageNotes'
+            ];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = '';
+            });
+
+            // Reset hidden fields
+            ['triageBloodPressure', 'triageBMI'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = '';
+            });
+
+            // Reset all vital result displays
+            document.querySelectorAll('.vital-result-modal').forEach(result => {
+                result.classList.add('vital-result-modal-hidden');
+            });
+            
+            // Reset vital result values
+            document.querySelectorAll('.vital-result-value-modal').forEach(el => el.textContent = '-');
+            document.querySelectorAll('.vital-result-category-modal').forEach(el => {
+                el.textContent = 'Enter value';
+                el.className = 'vital-result-category-modal';
+            });
         });
     }
 });

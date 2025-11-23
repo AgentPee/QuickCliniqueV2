@@ -140,6 +140,22 @@
             </div>
             <div class="modal-body">
                 <form id="nextPatientForm">
+                    <!-- Patient Information Display -->
+                    <div class="patient-info-section mb-3 p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-2"><i class="fas fa-user"></i> Patient Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> <span id="nextPatientName">Loading...</span></p>
+                                <p class="mb-1"><strong>Queue #:</strong> <span id="nextPatientQueueNumber">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-2"><i class="fas fa-calendar-check"></i> Appointment Details</h6>
+                                <p class="mb-1"><strong>Reason:</strong> <span id="nextPatientReason">-</span></p>
+                                <p class="mb-1"><strong>Time:</strong> <span id="nextPatientTime">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
                         <strong>Clinical Triage:</strong> Record initial patient information before consultation.
