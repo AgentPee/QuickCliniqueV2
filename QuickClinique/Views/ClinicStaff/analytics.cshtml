@@ -18,7 +18,7 @@
 
     <!-- Statistics Overview Cards -->
     <div class="stats-overview">
-        <div class="overview-card">
+        <a href="#appointmentVolumeSection" class="overview-card clickable-card">
             <div class="overview-icon">
                 <i class="fas fa-calendar-check"></i>
             </div>
@@ -26,8 +26,8 @@
                 <div class="overview-value" id="totalAppointments">0</div>
                 <div class="overview-label">Total Appointments</div>
             </div>
-        </div>
-        <div class="overview-card">
+        </a>
+        <a href="#patientDemographicsSection" class="overview-card clickable-card">
             <div class="overview-icon">
                 <i class="fas fa-users"></i>
             </div>
@@ -35,8 +35,8 @@
                 <div class="overview-value" id="totalPatients">0</div>
                 <div class="overview-label">Total Patients</div>
             </div>
-        </div>
-        <div class="overview-card">
+        </a>
+        <a href="#noShowCancellationSection" class="overview-card clickable-card">
             <div class="overview-icon">
                 <i class="fas fa-times-circle"></i>
             </div>
@@ -44,8 +44,8 @@
                 <div class="overview-value" id="noShowRate">0%</div>
                 <div class="overview-label">No-Show Rate</div>
             </div>
-        </div>
-        <div class="overview-card">
+        </a>
+        <a href="#emergencyStatisticsSection" class="overview-card clickable-card">
             <div class="overview-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
@@ -53,13 +53,31 @@
                 <div class="overview-value" id="totalEmergencies">0</div>
                 <div class="overview-label">Total Emergencies</div>
             </div>
-        </div>
+        </a>
+        <a href="#visitFrequencySection" class="overview-card clickable-card">
+            <div class="overview-icon">
+                <i class="fas fa-redo"></i>
+            </div>
+            <div class="overview-content">
+                <div class="overview-value" id="avgVisitsPerPatient">0</div>
+                <div class="overview-label">Avg Visits per Patient</div>
+            </div>
+        </a>
+        <a href="#reasonsForVisitSection" class="overview-card clickable-card">
+            <div class="overview-icon">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <div class="overview-content">
+                <div class="overview-value" id="totalUniqueReasonsCard">0</div>
+                <div class="overview-label">Unique Visit Reasons</div>
+            </div>
+        </a>
     </div>
 
     <!-- Analytics Sections -->
     <div class="analytics-grid">
         <!-- Appointment Volume Trends -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="appointmentVolumeSection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-chart-line"></i> Appointment Volume Trends
@@ -77,11 +95,17 @@
         </div>
 
         <!-- Patient Demographics -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="patientDemographicsSection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-user-friends"></i> Patient Demographics
                 </h2>
+                <select id="demographicsTimeRange" class="time-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
             </div>
             <div class="card-body">
                 <div class="demographics-content">
@@ -103,18 +127,28 @@
         </div>
 
         <!-- Visit Frequency -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="visitFrequencySection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-redo"></i> Visit Frequency
                 </h2>
+                <select id="visitFrequencyTimeRange" class="time-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
             </div>
             <div class="card-body">
                 <canvas id="visitFrequencyChart"></canvas>
                 <div class="frequency-stats">
                     <div class="frequency-stat">
-                        <span class="stat-label">Avg Visits per Patient</span>
-                        <span class="stat-value" id="avgVisits">-</span>
+                        <span class="stat-label">Total Patients</span>
+                        <span class="stat-value" id="totalPatientsVisited">-</span>
+                    </div>
+                    <div class="frequency-stat">
+                        <span class="stat-label">New Patients</span>
+                        <span class="stat-value" id="newPatients">-</span>
                     </div>
                     <div class="frequency-stat">
                         <span class="stat-label">Return Patients</span>
@@ -125,11 +159,17 @@
         </div>
 
         <!-- No-Show and Cancellation Statistics -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="noShowCancellationSection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-exclamation-triangle"></i> No-Show & Cancellation Statistics
                 </h2>
+                <select id="noShowCancellationTimeRange" class="time-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
             </div>
             <div class="card-body">
                 <canvas id="noShowCancellationChart"></canvas>
@@ -154,44 +194,35 @@
         </div>
 
         <!-- Emergency Statistics -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="emergencyStatisticsSection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-ambulance"></i> Emergency Statistics
                 </h2>
+                <select id="emergencyTimeRange" class="time-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
             </div>
             <div class="card-body">
-                <canvas id="emergencyPeriodChart"></canvas>
-                <div class="emergency-stats">
-                    <div class="emergency-stat day">
-                        <span class="stat-label">Today</span>
-                        <span class="stat-value" id="emergenciesToday">0</span>
-                    </div>
-                    <div class="emergency-stat week">
-                        <span class="stat-label">This Week</span>
-                        <span class="stat-value" id="emergenciesThisWeek">0</span>
-                    </div>
-                    <div class="emergency-stat month">
-                        <span class="stat-label">This Month</span>
-                        <span class="stat-value" id="emergenciesThisMonth">0</span>
-                    </div>
-                    <div class="emergency-stat year">
-                        <span class="stat-label">This Year</span>
-                        <span class="stat-value" id="emergenciesThisYear">0</span>
-                    </div>
-                </div>
-                <div class="emergency-trends">
-                    <canvas id="emergencyTrendChart"></canvas>
-                </div>
+                <canvas id="emergencyTrendChart"></canvas>
             </div>
         </div>
 
         <!-- Most Common Reasons for Visit -->
-        <div class="analytics-card">
+        <div class="analytics-card" id="reasonsForVisitSection">
             <div class="card-header">
                 <h2>
                     <i class="fas fa-stethoscope"></i> Most Common Reasons for Visit
                 </h2>
+                <select id="reasonsForVisitTimeRange" class="time-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
             </div>
             <div class="card-body">
                 <canvas id="reasonsForVisitChart"></canvas>
@@ -211,8 +242,6 @@
     </div>
 </div>
 
-@await Html.PartialAsync("_EmergencyPolling")
-
 @section Styles {
     <link rel="stylesheet" href="~/css/analytics.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-index.css" asp-append-version="true" />
@@ -224,4 +253,6 @@
     <script>
     </script>
 }
+
+@await Html.PartialAsync("_EmergencyPolling")
 
