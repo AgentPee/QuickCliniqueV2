@@ -43,7 +43,32 @@
                     </div>
                 }
 
-                <form asp-action="Login" method="post" class="auth-form">
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="error-message">
+                        @TempData["ErrorMessage"]
+                    </div>
+                }
+
+                @if (ViewBag.RequiresVerification == true || TempData["StudentEmail"] != null)
+                {
+                    <div class="verification-notice" id="verificationNotice" style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 20px;">⚠️</span>
+                            <strong style="color: #856404;">Email Verification Required</strong>
+                        </div>
+                        <p style="margin: 0 0 10px 0; color: #856404;">
+                            Please verify your email address before logging in. Check your inbox for the verification link.
+                        </p>
+                        <button type="button" id="resendVerificationBtn" class="resend-btn" style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                            <span class="resend-text">Resend Verification Email</span>
+                            <span class="resend-loader" style="display: none;">Sending...</span>
+                        </button>
+                        <div id="resendMessage" style="margin-top: 10px; font-size: 14px; display: none;"></div>
+                    </div>
+                }
+
+                <form asp-action="Login" method="post" class="auth-form" id="loginForm">
                     <div asp-validation-summary="ModelOnly" class="error-message"></div>
 
                     <div class="input-group">
@@ -85,5 +110,82 @@
     <script src="~/js/studlogin.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        // Resend verification email functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const resendBtn = document.getElementById('resendVerificationBtn');
+            const resendMessage = document.getElementById('resendMessage');
+            const resendText = resendBtn?.querySelector('.resend-text');
+            const resendLoader = resendBtn?.querySelector('.resend-loader');
+
+            if (resendBtn) {
+                resendBtn.addEventListener('click', async function() {
+                    const studentEmail = '@(ViewBag.StudentEmail ?? TempData["StudentEmail"])';
+                    const studentIdNumber = '@(ViewBag.StudentIdNumber ?? TempData["StudentIdNumber"])';
+
+                    // Disable button and show loading
+                    resendBtn.disabled = true;
+                    if (resendText) resendText.style.display = 'none';
+                    if (resendLoader) resendLoader.style.display = 'inline';
+                    resendMessage.style.display = 'none';
+
+                    try {
+                        const response = await fetch('@Url.Action("ResendVerificationEmail", "Student")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                            },
+                            body: JSON.stringify({
+                                email: studentEmail || null,
+                                idNumber: studentIdNumber ? parseInt(studentIdNumber) : null
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            resendMessage.style.display = 'block';
+                            resendMessage.style.color = '#28a745';
+                            resendMessage.textContent = '✓ ' + data.message;
+                            
+                            // Hide button after success
+                            setTimeout(() => {
+                                resendBtn.style.display = 'none';
+                            }, 3000);
+                        } else {
+                            resendMessage.style.display = 'block';
+                            resendMessage.style.color = '#dc3545';
+                            resendMessage.textContent = '✗ ' + (data.error || 'Failed to send verification email');
+                            
+                            // Re-enable button
+                            resendBtn.disabled = false;
+                            if (resendText) resendText.style.display = 'inline';
+                            if (resendLoader) resendLoader.style.display = 'none';
+                        }
+                    } catch (error) {
+                        console.error('Error resending verification email:', error);
+                        resendMessage.style.display = 'block';
+                        resendMessage.style.color = '#dc3545';
+                        resendMessage.textContent = '✗ An error occurred. Please try again later.';
+                        
+                        // Re-enable button
+                        resendBtn.disabled = false;
+                        if (resendText) resendText.style.display = 'inline';
+                        if (resendLoader) resendLoader.style.display = 'none';
+                    }
+                });
+            }
+
+            // Handle login form submission to show resend option if email not verified
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async function(e) {
+                    // This will be handled by the existing AJAX in studlogin.js
+                    // We'll update the response handler there
+                });
+            }
+        });
+    </script>
 </body>
 </html>
