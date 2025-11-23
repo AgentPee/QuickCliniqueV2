@@ -173,6 +173,7 @@ namespace QuickClinique.Services
 
                 Console.WriteLine($"[EMAIL] Connecting to SMTP server...");
                 var startTime = DateTime.Now;
+                double elapsed = 0;
                 
                 // Use Task with timeout to prevent hanging
                 var sendTask = smtpClient.SendMailAsync(message);
@@ -181,7 +182,7 @@ namespace QuickClinique.Services
                 
                 if (completedTask == timeoutTask)
                 {
-                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                    elapsed = (DateTime.Now - startTime).TotalSeconds;
                     Console.WriteLine($"[EMAIL ERROR] Email send timed out after {elapsed:F2} seconds");
                     Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable or blocking the connection");
                     Console.WriteLine($"[EMAIL ERROR] Check Railway network settings and firewall rules");
@@ -190,7 +191,7 @@ namespace QuickClinique.Services
                 
                 // If sendTask completed, await it to get any exceptions
                 await sendTask;
-                var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                elapsed = (DateTime.Now - startTime).TotalSeconds;
                 Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail} in {elapsed:F2} seconds");
             }
             catch (TimeoutException timeoutEx)
@@ -211,10 +212,11 @@ namespace QuickClinique.Services
             }
             catch (System.Net.Sockets.SocketException socketEx)
             {
+                var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _configuration["EmailSettings:SmtpPort"] ?? "587";
                 Console.WriteLine($"[EMAIL ERROR] Network Error: {socketEx.Message}");
                 Console.WriteLine($"[EMAIL ERROR] Socket Error Code: {socketEx.SocketErrorCode}");
                 Console.WriteLine($"[EMAIL ERROR] This usually means the SMTP server is unreachable");
-                Console.WriteLine($"[EMAIL ERROR] Check if Railway allows outbound SMTP connections on port {smtpPort}");
+                Console.WriteLine($"[EMAIL ERROR] Check if Railway allows outbound SMTP connections on port {smtpPortStr}");
             }
             catch (Exception ex)
             {
