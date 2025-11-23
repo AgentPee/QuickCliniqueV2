@@ -26,6 +26,22 @@ namespace QuickClinique.Controllers
             _fileStorageService = fileStorageService;
         }
 
+        // Helper method to get the base URL for absolute links (for email verification, etc.)
+        private string GetBaseUrl()
+        {
+            // Check for BASE_URL environment variable first (for Railway/production)
+            var baseUrl = Environment.GetEnvironmentVariable("BASE_URL");
+            if (!string.IsNullOrEmpty(baseUrl))
+            {
+                return baseUrl.TrimEnd('/');
+            }
+
+            // Fall back to using the request's scheme and host
+            var scheme = Request.Scheme;
+            var host = Request.Host.Value;
+            return $"{scheme}://{host}";
+        }
+
         // GET: Student
         public async Task<IActionResult> Index()
         {
@@ -577,8 +593,8 @@ namespace QuickClinique.Controllers
                     // Send verification email (fire-and-forget)
                     try
                     {
-                        var verificationLink = Url.Action("VerifyEmail", "Student",
-                            new { token = emailToken, email = student.Email }, Request.Scheme);
+                        var baseUrl = GetBaseUrl();
+                        var verificationLink = $"{baseUrl}{Url.Action("VerifyEmail", "Student", new { token = emailToken, email = student.Email })}";
 
                         // Fire-and-forget: don't await, let it run in background
                         _ = Task.Run(async () =>
@@ -1129,8 +1145,8 @@ namespace QuickClinique.Controllers
                 await _context.SaveChangesAsync();
 
                 // Send verification email (fire-and-forget)
-                var verificationLink = Url.Action("VerifyEmail", "Student",
-                    new { token = newToken, email = student.Email }, Request.Scheme);
+                var baseUrl = GetBaseUrl();
+                var verificationLink = $"{baseUrl}{Url.Action("VerifyEmail", "Student", new { token = newToken, email = student.Email })}";
 
                 // Fire-and-forget: don't await, let it run in background
                 _ = Task.Run(async () =>
@@ -1195,8 +1211,8 @@ namespace QuickClinique.Controllers
 
                     await _context.SaveChangesAsync();
 
-                    var resetLink = Url.Action("ResetPassword", "Student",
-                        new { token = resetToken, email = student.Email }, Request.Scheme);
+                    var baseUrl = GetBaseUrl();
+                    var resetLink = $"{baseUrl}{Url.Action("ResetPassword", "Student", new { token = resetToken, email = student.Email })}";
 
                     await _emailService.SendPasswordResetEmail(student.Email, student.FirstName, resetLink);
 
