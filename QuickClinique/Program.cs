@@ -9,6 +9,7 @@ using System.Linq;
 using MySqlConnector;
 using Amazon.S3;
 using Amazon;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -188,6 +189,15 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Configure forwarded headers for Railway (to get correct scheme and host from proxy)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | 
+                       ForwardedHeaders.XForwardedProto | 
+                       ForwardedHeaders.XForwardedHost,
+    RequireHeaderSymmetry = false
+});
 
 // Configure port for Railway (Railway sets PORT environment variable)
 var port = Environment.GetEnvironmentVariable("PORT");
