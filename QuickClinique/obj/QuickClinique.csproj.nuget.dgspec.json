@@ -12,6 +12,17 @@
         "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qzq\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qzq\\QuickCliniqueV2\\quickclinique\\obj\\",
+    "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj",
+        "projectName": "QuickClinique",
+        "projectPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj",
+        "packagesPath": "C:\\Users\\Ayan\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\QuickCliniqueV2\\quickclinique\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -67,6 +78,10 @@
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "SendGrid": {
+              "target": "Package",
+              "version": "[9.29.3, )"
             }
           },
           "imports": [

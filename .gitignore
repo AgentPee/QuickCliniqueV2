@@ -18,3 +18,9 @@ Thumbs.db
 
 # Others
 *.log
+
+# Sensitive configuration files (never commit these!)
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Local.json
+**/*.secrets.json

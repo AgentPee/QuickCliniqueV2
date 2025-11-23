@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
+using QuickClinique.Services;
 
 namespace QuickClinique.Controllers
 {
     public class AppointmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public AppointmentsController(ApplicationDbContext context)
+        public AppointmentsController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Appointments/Details/5
@@ -428,12 +431,13 @@ namespace QuickClinique.Controllers
 
                 appointment.AppointmentStatus = request.Status;
 
+                // Load related data for email notifications and triage
+                await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
                 // If starting appointment (In Progress), create Precord with triage data
                 if (request.Status == "In Progress")
                 {
-                    // Load patient information
-                    await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
-                    
                     // Check if a Precord already exists for this appointment (in case of re-start)
                     // We'll create a new one for each appointment start
                     var medicalRecord = new Precord
@@ -479,6 +483,97 @@ namespace QuickClinique.Controllers
 
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"Successfully updated appointment {request.AppointmentId} to status {request.Status}");
+
+                // Send email notifications based on status (fire-and-forget to avoid blocking response)
+                Console.WriteLine($"[EMAIL DEBUG] Checking if email should be sent for appointment {appointment.AppointmentId}");
+                Console.WriteLine($"[EMAIL DEBUG] Patient is null: {appointment.Patient == null}");
+                if (appointment.Patient != null)
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] Patient email: '{appointment.Patient.Email}'");
+                    Console.WriteLine($"[EMAIL DEBUG] Patient email is empty: {string.IsNullOrEmpty(appointment.Patient.Email)}");
+                }
+                
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] Preparing to send {request.Status} email to {appointment.Patient.Email}");
+                    
+                    // Capture values for closure
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var status = request.Status;
+                    var schedule = appointment.Schedule;
+                    var queueNumber = appointment.QueueNumber;
+                    var cancellationReason = appointment.CancellationReason;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[EMAIL DEBUG] Task.Run started for {status} email to {patientEmail}");
+                            
+                            if (status == "Confirmed")
+                            {
+                                var appointmentDate = schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                                var appointmentTime = schedule != null 
+                                    ? $"{schedule.StartTime:h:mm tt} - {schedule.EndTime:h:mm tt}"
+                                    : "N/A";
+                                
+                                Console.WriteLine($"[EMAIL DEBUG] Sending confirmation email to {patientEmail}");
+                                await _emailService.SendAppointmentConfirmationEmail(
+                                    patientEmail,
+                                    patientName,
+                                    appointmentDate,
+                                    appointmentTime,
+                                    queueNumber
+                                );
+                                Console.WriteLine($"[EMAIL DEBUG] Confirmation email sent successfully to {patientEmail}");
+                            }
+                            else if (status == "Completed")
+                            {
+                                var appointmentDate = schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                                Console.WriteLine($"[EMAIL DEBUG] Sending completion email to {patientEmail}");
+                                await _emailService.SendAppointmentCompletedEmail(
+                                    patientEmail,
+                                    patientName,
+                                    appointmentDate
+                                );
+                                Console.WriteLine($"[EMAIL DEBUG] Completion email sent successfully to {patientEmail}");
+                            }
+                            else if (status == "Cancelled")
+                            {
+                                var appointmentDate = schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                                var appointmentTime = schedule != null 
+                                    ? $"{schedule.StartTime:h:mm tt} - {schedule.EndTime:h:mm tt}"
+                                    : "N/A";
+                                
+                                Console.WriteLine($"[EMAIL DEBUG] Sending cancellation email to {patientEmail}");
+                                await _emailService.SendAppointmentCancellationEmail(
+                                    patientEmail,
+                                    patientName,
+                                    appointmentDate,
+                                    appointmentTime,
+                                    cancellationReason
+                                );
+                                Console.WriteLine($"[EMAIL DEBUG] Cancellation email sent successfully to {patientEmail}");
+                            }
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"[EMAIL ERROR] Failed to send {status} email to {patientEmail}: {emailEx.Message}");
+                            Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                            if (emailEx.InnerException != null)
+                            {
+                                Console.WriteLine($"[EMAIL ERROR] Inner exception: {emailEx.InnerException.Message}");
+                            }
+                        }
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] Email NOT sent - Patient is null or email is empty");
+                }
 
                 return Json(new { success = true, message = $"Appointment status updated to {request.Status}" });
             }
@@ -698,6 +793,49 @@ namespace QuickClinique.Controllers
 
                 await _context.SaveChangesAsync();
 
+                // Notify all waiting patients that their queue position has moved up
+                var waitingAppointments = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Where(a => a.Schedule.Date == today && 
+                               a.AppointmentStatus == "Confirmed" && 
+                               a.QueueStatus == "Waiting" &&
+                               a.AppointmentId != nextAppointment.AppointmentId)
+                    .OrderBy(a => a.QueueNumber)
+                    .ToListAsync();
+
+                // Calculate new positions and send emails (fire-and-forget to avoid blocking response)
+                int position = 1;
+                foreach (var waitingAppointment in waitingAppointments)
+                {
+                    if (waitingAppointment.Patient != null && !string.IsNullOrEmpty(waitingAppointment.Patient.Email))
+                    {
+                        var currentPosition = position; // Capture for closure
+                        var currentQueueNumber = waitingAppointment.QueueNumber;
+                        var patientEmail = waitingAppointment.Patient.Email;
+                        var patientName = waitingAppointment.Patient.FullName;
+                        
+                        // Fire-and-forget: don't await, let it run in background
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _emailService.SendQueuePositionUpdateEmail(
+                                    patientEmail,
+                                    patientName,
+                                    currentPosition,
+                                    currentQueueNumber
+                                );
+                            }
+                            catch (Exception emailEx)
+                            {
+                                // Log email error but don't fail the request
+                                Console.WriteLine($"Failed to send queue update email to {patientEmail}: {emailEx.Message}");
+                            }
+                        });
+                    }
+                    position++;
+                }
+
                 return Json(new { 
                     success = true, 
                     message = $"Now serving: {nextAppointment.Patient.FullName}",
@@ -802,6 +940,50 @@ namespace QuickClinique.Controllers
                 appointment.CancellationReason = "Cancelled by patient";
 
                 await _context.SaveChangesAsync();
+
+                // Load schedule for email notification
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
+                // Send cancellation email (fire-and-forget to avoid blocking response)
+                Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Checking if email should be sent for appointment {request.AppointmentId}");
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Preparing to send cancellation email to {appointment.Patient.Email}");
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                    var appointmentTime = appointment.Schedule != null 
+                        ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                        : "N/A";
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var cancellationReason = appointment.CancellationReason;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Task.Run started, sending email to {patientEmail}");
+                            await _emailService.SendAppointmentCancellationEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate,
+                                appointmentTime,
+                                cancellationReason
+                            );
+                            Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Email sent successfully to {patientEmail}");
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"[EMAIL ERROR] PatientCancelAppointment - Failed to send cancellation email to {patientEmail}: {emailEx.Message}");
+                            Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                        }
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Email NOT sent - Patient is null or email is empty");
+                }
 
                 return Json(new { success = true, message = "Appointment cancelled successfully" });
             }
@@ -918,7 +1100,10 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var appointment = await _context.Appointments.FindAsync(appointmentId);
+                var appointment = await _context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
                 
                 if (appointment == null)
                 {
@@ -934,6 +1119,48 @@ namespace QuickClinique.Controllers
                 appointment.QueueStatus = "Waiting";
                 
                 await _context.SaveChangesAsync();
+
+                // Send confirmation email (fire-and-forget to avoid blocking response)
+                Console.WriteLine($"[EMAIL DEBUG] ConfirmAppointment - Checking if email should be sent for appointment {appointmentId}");
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] ConfirmAppointment - Preparing to send confirmation email to {appointment.Patient.Email}");
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                    var appointmentTime = appointment.Schedule != null 
+                        ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                        : "N/A";
+                    
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var queueNumber = appointment.QueueNumber;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[EMAIL DEBUG] ConfirmAppointment - Task.Run started, sending email to {patientEmail}");
+                            await _emailService.SendAppointmentConfirmationEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate,
+                                appointmentTime,
+                                queueNumber
+                            );
+                            Console.WriteLine($"[EMAIL DEBUG] ConfirmAppointment - Email sent successfully to {patientEmail}");
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"[EMAIL ERROR] ConfirmAppointment - Failed to send confirmation email to {patientEmail}: {emailEx.Message}");
+                            Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                        }
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] ConfirmAppointment - Email NOT sent - Patient is null or email is empty");
+                }
 
                 return Json(new { success = true, message = "Appointment confirmed successfully" });
             }
@@ -975,6 +1202,42 @@ namespace QuickClinique.Controllers
                 appointment.CancellationReason = !string.IsNullOrEmpty(reason) ? reason : "Cancelled by clinic staff";
                 
                 await _context.SaveChangesAsync();
+
+                // Load related data for email notification
+                await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+
+                // Send cancellation email (fire-and-forget to avoid blocking response)
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? "N/A";
+                    var appointmentTime = appointment.Schedule != null 
+                        ? $"{appointment.Schedule.StartTime:h:mm tt} - {appointment.Schedule.EndTime:h:mm tt}"
+                        : "N/A";
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    var cancellationReason = appointment.CancellationReason;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _emailService.SendAppointmentCancellationEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate,
+                                appointmentTime,
+                                cancellationReason
+                            );
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"Failed to send cancellation email: {emailEx.Message}");
+                        }
+                    });
+                }
 
                 return Json(new { success = true, message = "Appointment cancelled successfully" });
             }
@@ -1074,6 +1337,41 @@ namespace QuickClinique.Controllers
 
                 _context.Histories.Add(historyRecord);
                 await _context.SaveChangesAsync();
+
+                // Send completion email (fire-and-forget to avoid blocking response)
+                Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Checking if email should be sent for appointment {model.AppointmentId}");
+                if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Preparing to send completion email to {appointment.Patient.Email}");
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                    var patientEmail = appointment.Patient.Email;
+                    var patientName = appointment.Patient.FullName;
+                    
+                    // Fire-and-forget: don't await, let it run in background
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Task.Run started, sending email to {patientEmail}");
+                            await _emailService.SendAppointmentCompletedEmail(
+                                patientEmail,
+                                patientName,
+                                appointmentDate
+                            );
+                            Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Email sent successfully to {patientEmail}");
+                        }
+                        catch (Exception emailEx)
+                        {
+                            // Log email error but don't fail the request
+                            Console.WriteLine($"[EMAIL ERROR] CompleteAppointment - Failed to send completion email to {patientEmail}: {emailEx.Message}");
+                            Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                        }
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Email NOT sent - Patient is null or email is empty");
+                }
 
                 return Json(new 
                 { 

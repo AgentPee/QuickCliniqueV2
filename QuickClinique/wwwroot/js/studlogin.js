@@ -1,4 +1,7 @@
-﻿// Toggle between login and registration forms
+﻿// studlogin.js - Updated to fix null reference errors
+// Version: 2.0 - Added defensive null checks and optional chaining
+
+// Toggle between login and registration forms
 function showLogin() {
     document.getElementById('loginFormWrapper').classList.add('active');
     document.getElementById('registerFormWrapper').classList.remove('active');
@@ -6,9 +9,12 @@ function showLogin() {
     document.getElementById('registerToggle').classList.remove('active');
     document.getElementById('tagline').textContent = 'Your Health, Our Priority';
 
-    // Focus on first input
+    // Focus on first input - try to find ID number input by name attribute
     setTimeout(() => {
-        document.getElementById('loginIdNumber').focus();
+        const idNumberInput = document.querySelector('input[name="Idnumber"], input[name="idNumber"]');
+        if (idNumberInput) {
+            idNumberInput.focus();
+        }
     }, 300);
 }
 
@@ -121,8 +127,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
 
-    // ID Number input validation
-    const idNumberInputs = document.querySelectorAll('input[name="idNumber"]');
+    // ID Number input validation - handle both "Idnumber" (ASP.NET Core) and "idNumber" (custom forms)
+    const idNumberInputs = document.querySelectorAll('input[name="Idnumber"], input[name="idNumber"]');
     idNumberInputs.forEach(input => {
         input.addEventListener('input', function (e) {
             // Only allow numbers
@@ -149,42 +155,94 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Login form submission
     if (loginForm) {
+        // Prevent duplicate event listeners
+        if (loginForm.dataset.listenerAttached === 'true') {
+            return;
+        }
+        loginForm.dataset.listenerAttached = 'true';
+
         loginForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const submitBtn = this.querySelector('.submit-btn');
-            const idNumber = document.getElementById('loginIdNumber').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            // Validation
-            if (!validateIdNumber(idNumber)) {
-                showMessage('Please enter a valid 8-digit ID number', 'error');
-                return;
-            }
-
-            if (!validatePassword(password)) {
-                showMessage('Password must be at least 6 characters long', 'error');
-                return;
-            }
-
-            setLoadingState(submitBtn, true);
-
             try {
-                const response = await simulateAPICall('/api/login', { idNumber, password });
-                showMessage('Login successful! Redirecting...', 'success');
+                const submitBtn = this.querySelector('.submit-btn');
+                
+                // Get inputs by name attribute (ASP.NET Core generates these)
+                // Try multiple possible selectors to be safe
+                const idNumberInput = this.querySelector('input[name="Idnumber"]') || 
+                                     this.querySelector('input[name="idNumber"]') ||
+                                     this.querySelector('#Idnumber');
+                const passwordInput = this.querySelector('input[name="Password"]') || 
+                                    this.querySelector('input[name="password"]') ||
+                                    this.querySelector('#Password');
+                
+                // Only proceed with validation if inputs exist
+                if (!idNumberInput || !passwordInput) {
+                    // If inputs don't exist, let the form submit normally
+                    // This might be a different form structure
+                    return;
+                }
+                
+                // Use optional chaining and nullish coalescing for extra safety
+                const idNumber = (idNumberInput?.value ?? '').toString().trim();
+                const password = (passwordInput?.value ?? '').toString();
 
-                // Simulate redirect
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                // Client-side validation - only validate if values are provided
+                if (idNumber && !validateIdNumber(idNumber)) {
+                    e.preventDefault();
+                    showMessage('Please enter a valid 8-digit ID number', 'error');
+                    return;
+                }
 
+                if (password && !validatePassword(password)) {
+                    e.preventDefault();
+                    showMessage('Password must be at least 6 characters long', 'error');
+                    return;
+                }
+
+                // If form has data-ajax="true", handle via AJAX
+                if (this.dataset.ajax === 'true') {
+                    e.preventDefault();
+                    if (submitBtn) {
+                        setLoadingState(submitBtn, true);
+                    }
+
+                    try {
+                        const formData = new FormData(this);
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showMessage('Login successful! Redirecting...', 'success');
+                            setTimeout(() => {
+                                window.location.href = data.redirectUrl || '/Student/Dashboard';
+                            }, 1500);
+                        } else {
+                            showMessage(data.error || 'Login failed', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        showMessage('An error occurred. Please try again.', 'error');
+                    } finally {
+                        if (submitBtn) {
+                            setLoadingState(submitBtn, false);
+                        }
+                    }
+                }
+                // If not AJAX, let the form submit normally (default behavior)
             } catch (error) {
-                showMessage(error.message, 'error');
-            } finally {
-                setLoadingState(submitBtn, false);
+                console.error('Form submission handler error:', error);
+                // Don't prevent default if there's an error - let the form submit normally
             }
         });
     }
+
 
     // Registration form submission
     if (registerForm) {
@@ -192,15 +250,34 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
 
             const submitBtn = this.querySelector('.submit-btn');
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const idNumber = document.getElementById('idNumber').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const dateOfBirth = document.getElementById('dateOfBirth').value;
-            const gender = document.getElementById('gender').value;
-            const terms = document.getElementById('terms').checked;
+            
+            // Safely get form values with null checks
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const idNumberInput = document.getElementById('idNumber');
+            const phoneInput = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const dateOfBirthInput = document.getElementById('dateOfBirth');
+            const genderInput = document.getElementById('gender');
+            const termsInput = document.getElementById('terms');
+            
+            // If any required input is missing, let the form submit normally
+            if (!nameInput || !emailInput || !idNumberInput || !phoneInput || 
+                !passwordInput || !confirmPasswordInput || !dateOfBirthInput || 
+                !genderInput || !termsInput) {
+                return; // Let the form submit normally - server-side validation will handle it
+            }
+            
+            const name = (nameInput.value || '').trim();
+            const email = (emailInput.value || '').trim();
+            const idNumber = (idNumberInput.value || '').trim();
+            const phone = (phoneInput.value || '').trim();
+            const password = passwordInput.value || '';
+            const confirmPassword = confirmPasswordInput.value || '';
+            const dateOfBirth = dateOfBirthInput.value || '';
+            const gender = genderInput.value || '';
+            const terms = termsInput.checked || false;
 
             // Validation
             if (name.length < 2) {
