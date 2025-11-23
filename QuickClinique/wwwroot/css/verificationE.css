@@ -1,0 +1,103 @@
+/* QuickClinic Email Verification Styles */
+
+/* Verification Info Section */
+.verification-info {
+    text-align: center;
+    padding: 30px 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.info-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.info-text {
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.info-text strong {
+    color: #4ECDC4;
+    font-weight: 600;
+}
+
+.info-hint {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Resend Section */
+.resend-section {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.resend-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+/* Resend Button */
+.resend-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.resend-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(78, 205, 196, 0.3);
+}
+
+.resend-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.resend-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.resend-btn-text {
+    transition: opacity 0.3s ease;
+}
+
+.resend-btn-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.resend-btn.loading .resend-btn-text {
+    opacity: 0;
+}
+
+.resend-btn.loading .resend-btn-loader {
+    opacity: 1;
+}
+

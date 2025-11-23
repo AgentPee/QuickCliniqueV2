@@ -1,0 +1,74 @@
+@model QuickClinique.Models.EmailVerificationViewModel
+@{
+    ViewData["Title"] = "Email Verification";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickClinic - Email Verification</title>
+    <link rel="stylesheet" href="~/css/studForPas.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/verificationE.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="container">
+        <div class="side-panel">
+            <div class="logo">
+                <img src="~/img/logo.png" alt="QuickClinic Logo" class="logo-img">
+            </div>
+            <h1 class="clinic-name">QuickClinique</h1>
+            <p class="tagline">Your Health, Our Priority</p>
+            <div class="medical-icons">
+                <div class="floating-icon">💊</div>
+                <div class="floating-icon">🩺</div>
+                <div class="floating-icon">❤️</div>
+                <div class="floating-icon">🏥</div>
+                <div class="floating-icon">🔬</div>
+                <div class="floating-icon">🩹</div>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div class="form-container" data-email="@Model.Email">
+                <div class="form-wrapper active">
+                    <h2 class="form-title">Email Verification</h2>
+                    <p class="form-subtitle">We've sent a verification link to your email</p>
+
+                    <div class="verification-info">
+                        <div class="info-icon">📧</div>
+                        <p class="info-text">
+                            @if (!string.IsNullOrEmpty(Model.Email))
+                            {
+                                <text>Please check your email <strong>@Model.Email</strong> and click on the verification link to activate your account.</text>
+                            }
+                            else
+                            {
+                                <text>Please check your email and click on the verification link to activate your account.</text>
+                            }
+                        </p>
+                        <p class="info-hint">The verification link will expire in an hour.</p>
+                    </div>
+
+                    <div class="resend-section">
+                        <p class="resend-text">Didn't receive the verification link?</p>
+                        <button type="button" class="resend-btn" onclick="resendVerificationLink()">
+                            <span class="resend-btn-text">Resend Verification Link</span>
+                            <span class="resend-btn-loader"></span>
+                        </button>
+                    </div>
+
+                    <div class="form-options">
+                        <a asp-action="Login" class="forgot-password">Back to Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/js/verificationE.js"></script>
+</body>
+</html>
+

@@ -574,12 +574,11 @@ namespace QuickClinique.Controllers
                         return View(model);
                     }
 
-                    // Send verification email
+                    // Send verification link email
                     try
                     {
                         var verificationLink = Url.Action("VerifyEmail", "Student",
                             new { token = emailToken, email = student.Email }, Request.Scheme);
-
                         await _emailService.SendVerificationEmail(student.Email, student.FirstName, verificationLink);
                     }
                     catch (Exception emailEx)
@@ -590,10 +589,10 @@ namespace QuickClinique.Controllers
                     }
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { success = true, message = "Registration successful! Please check your email for the verification link.", redirectUrl = Url.Action("VerificationE", "Student", new { email = student.Email }) });
 
-                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
-                    return RedirectToAction(nameof(Login));
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email for the verification link.";
+                    return RedirectToAction("VerificationE", "Student", new { email = student.Email });
                 }
                 catch (DbUpdateException dbEx)
                 {
@@ -696,10 +695,10 @@ namespace QuickClinique.Controllers
                     if (!student.IsEmailVerified)
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Please verify your email before logging in." });
+                            return Json(new { success = false, error = "Please verify your email before logging in.", redirectUrl = Url.Action("VerificationE", "Student", new { email = student.Email }) });
 
-                        ModelState.AddModelError("", "Please verify your email before logging in.");
-                        return View(model);
+                        TempData["InfoMessage"] = "Please verify your email before logging in.";
+                        return RedirectToAction("VerificationE", "Student", new { email = student.Email });
                     }
 
                     if (!student.IsActive)
@@ -1027,6 +1026,169 @@ namespace QuickClinique.Controllers
             return RedirectToAction(nameof(Login));
         }
 
+        // GET: Student/VerificationE
+        public async Task<IActionResult> VerificationE(string email)
+        {
+            EmailVerificationViewModel viewModel;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                // Allow access without email for testing - show empty form
+                viewModel = new EmailVerificationViewModel
+                {
+                    Email = string.Empty
+                };
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, data = viewModel });
+
+                return View(viewModel);
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Email == email);
+
+            if (student == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Student not found." });
+
+                TempData["ErrorMessage"] = "Student not found.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (student.IsEmailVerified)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Email is already verified.", redirectUrl = Url.Action(nameof(Login)) });
+
+                TempData["SuccessMessage"] = "Email is already verified.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Generate verification token if not exists or expired
+            if (string.IsNullOrEmpty(student.EmailVerificationToken) || 
+                student.EmailVerificationTokenExpiry == null || 
+                student.EmailVerificationTokenExpiry < DateTime.Now)
+            {
+                student.EmailVerificationToken = GenerateToken();
+                student.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+                await _context.SaveChangesAsync();
+
+                // Send verification link email
+                try
+                {
+                    var verificationLink = Url.Action("VerifyEmail", "Student",
+                        new { token = student.EmailVerificationToken, email = student.Email }, Request.Scheme);
+                    await _emailService.SendVerificationEmail(student.Email, student.FirstName, verificationLink);
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"Error sending verification email: {emailEx.Message}");
+                }
+            }
+
+            viewModel = new EmailVerificationViewModel
+            {
+                Email = email
+            };
+
+            if (IsAjaxRequest())
+                return Json(new { success = true, data = viewModel });
+
+            return View(viewModel);
+        }
+
+        // POST: Student/VerifyEmail (Code-based verification)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyEmail(EmailVerificationViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.Email == model.Email &&
+                             s.EmailVerificationToken == model.VerificationCode &&
+                             s.EmailVerificationTokenExpiry > DateTime.Now);
+
+                if (student == null)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Invalid or expired verification code." });
+
+                    ModelState.AddModelError("", "Invalid or expired verification code.");
+                    return View("VerificationE", model);
+                }
+
+                student.IsEmailVerified = true;
+                student.EmailVerificationToken = null;
+                student.EmailVerificationTokenExpiry = null;
+
+                await _context.SaveChangesAsync();
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = "Email verified successfully! You can now login.", redirectUrl = Url.Action(nameof(Login)) });
+
+                TempData["SuccessMessage"] = "Email verified successfully! You can now login.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (IsAjaxRequest())
+                return Json(new
+                {
+                    success = false,
+                    error = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        k => k.Key,
+                        v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+
+            return View("VerificationE", model);
+        }
+
+        // POST: Student/ResendVerificationLink
+        [HttpPost]
+        public async Task<IActionResult> ResendVerificationLink([FromBody] ResendCodeRequest request)
+        {
+            if (string.IsNullOrEmpty(request?.Email))
+            {
+                return Json(new { success = false, error = "Email is required." });
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Email == request.Email);
+
+            if (student == null)
+            {
+                return Json(new { success = false, error = "Student not found." });
+            }
+
+            if (student.IsEmailVerified)
+            {
+                return Json(new { success = false, error = "Email is already verified." });
+            }
+
+            // Generate new verification token
+            student.EmailVerificationToken = GenerateToken();
+            student.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+            await _context.SaveChangesAsync();
+
+            // Send verification link email
+            try
+            {
+                var verificationLink = Url.Action("VerifyEmail", "Student",
+                    new { token = student.EmailVerificationToken, email = student.Email }, Request.Scheme);
+                await _emailService.SendVerificationEmail(student.Email, student.FirstName, verificationLink);
+                return Json(new { success = true, message = "Verification link has been resent to your email." });
+            }
+            catch (Exception emailEx)
+            {
+                Console.WriteLine($"Error sending verification email: {emailEx.Message}");
+                return Json(new { success = false, error = "Failed to send verification link. Please try again later." });
+            }
+        }
+
         // GET: Student/ForgotPassword
         public IActionResult ForgotPassword()
         {
@@ -1224,6 +1386,15 @@ namespace QuickClinique.Controllers
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
 
+        // Helper method to generate 6-character verification code
+        private string GenerateVerificationCode()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 6)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
         private bool IsAjaxRequest()
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
@@ -1235,5 +1406,10 @@ namespace QuickClinique.Controllers
     {
         public string Location { get; set; } = string.Empty;
         public string Needs { get; set; } = string.Empty;
+    }
+
+    public class ResendCodeRequest
+    {
+        public string Email { get; set; } = string.Empty;
     }
 }

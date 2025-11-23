@@ -28,6 +28,23 @@ namespace QuickClinique.Services
             await SendEmailAsync(toEmail, subject, body);
         }
 
+        public async Task SendVerificationCodeEmail(string toEmail, string name, string verificationCode)
+        {
+            var subject = "Your Email Verification Code - QuickClinique";
+            var body = $@"
+                <h3>Hello {name},</h3>
+                <p>Welcome to QuickClinique! Please use the verification code below to verify your email address:</p>
+                <div style='background-color: #f0f0f0; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0;'>
+                    <h2 style='color: #4ECDC4; font-size: 32px; letter-spacing: 5px; margin: 0;'>{verificationCode}</h2>
+                </div>
+                <p>Enter this code on the verification page to complete your registration.</p>
+                <p>This code will expire in 24 hours.</p>
+                <br>
+                <p>Best regards,<br>QuickClinique Team</p>";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
         public async Task SendPasswordResetEmail(string toEmail, string name, string resetLink)
         {
             var subject = "Reset Your Password - QuickClinique";
