@@ -152,68 +152,94 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Login form submission
     if (loginForm) {
+        // Prevent duplicate event listeners
+        if (loginForm.dataset.listenerAttached === 'true') {
+            return;
+        }
+        loginForm.dataset.listenerAttached = 'true';
+
         loginForm.addEventListener('submit', async function (e) {
-            // Don't prevent default - let the form submit normally
-            // But we can intercept AJAX submissions if needed
-            
-            const submitBtn = this.querySelector('.submit-btn');
-            // Get inputs by name attribute (ASP.NET Core generates these)
-            const idNumberInput = this.querySelector('input[name="Idnumber"]');
-            const passwordInput = this.querySelector('input[name="Password"]');
-            
-            const idNumber = idNumberInput?.value?.trim() || '';
-            const password = passwordInput?.value || '';
+            try {
+                const submitBtn = this.querySelector('.submit-btn');
+                
+                // Get inputs by name attribute (ASP.NET Core generates these)
+                // Try multiple possible selectors to be safe
+                const idNumberInput = this.querySelector('input[name="Idnumber"]') || 
+                                     this.querySelector('input[name="idNumber"]') ||
+                                     this.querySelector('#Idnumber');
+                const passwordInput = this.querySelector('input[name="Password"]') || 
+                                    this.querySelector('input[name="password"]') ||
+                                    this.querySelector('#Password');
+                
+                // Only proceed with validation if inputs exist
+                if (!idNumberInput || !passwordInput) {
+                    // If inputs don't exist, let the form submit normally
+                    // This might be a different form structure
+                    return;
+                }
+                
+                const idNumber = (idNumberInput.value || '').trim();
+                const password = passwordInput.value || '';
 
-            // Validation - only validate if values are provided
-            if (idNumber && !validateIdNumber(idNumber)) {
-                e.preventDefault();
-                showMessage('Please enter a valid 8-digit ID number', 'error');
-                return;
-            }
-
-            if (password && !validatePassword(password)) {
-                e.preventDefault();
-                showMessage('Password must be at least 6 characters long', 'error');
-                return;
-            }
-
-            // If form has data-ajax="true", handle via AJAX
-            if (this.dataset.ajax === 'true') {
-                e.preventDefault();
-                if (submitBtn) {
-                    setLoadingState(submitBtn, true);
+                // Client-side validation - only validate if values are provided
+                if (idNumber && !validateIdNumber(idNumber)) {
+                    e.preventDefault();
+                    showMessage('Please enter a valid 8-digit ID number', 'error');
+                    return;
                 }
 
-                try {
-                    const formData = new FormData(this);
-                    const response = await fetch(this.action, {
-                        method: 'POST',
-                        body: formData
-                    });
+                if (password && !validatePassword(password)) {
+                    e.preventDefault();
+                    showMessage('Password must be at least 6 characters long', 'error');
+                    return;
+                }
 
-                    const data = await response.json();
+                // If form has data-ajax="true", handle via AJAX
+                if (this.dataset.ajax === 'true') {
+                    e.preventDefault();
+                    if (submitBtn) {
+                        setLoadingState(submitBtn, true);
+                    }
 
-                    if (data.success) {
-                        showMessage('Login successful! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = data.redirectUrl || '/Student/Dashboard';
-                        }, 1500);
-                    } else {
-                        showMessage(data.error || 'Login failed', 'error');
-                        
-                        // Show resend verification option if email not verified
-                        if (data.requiresVerification) {
-                            showResendVerificationOption(data.email, data.idNumber);
+                    try {
+                        const formData = new FormData(this);
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showMessage('Login successful! Redirecting...', 'success');
+                            setTimeout(() => {
+                                window.location.href = data.redirectUrl || '/Student/Dashboard';
+                            }, 1500);
+                        } else {
+                            showMessage(data.error || 'Login failed', 'error');
+                            
+                            // Show resend verification option if email not verified
+                            if (data.requiresVerification) {
+                                showResendVerificationOption(data.email, data.idNumber);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        showMessage('An error occurred. Please try again.', 'error');
+                    } finally {
+                        if (submitBtn) {
+                            setLoadingState(submitBtn, false);
                         }
                     }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    showMessage('An error occurred. Please try again.', 'error');
-                } finally {
-                    if (submitBtn) {
-                        setLoadingState(submitBtn, false);
-                    }
                 }
+                // If not AJAX, let the form submit normally (default behavior)
+            } catch (error) {
+                console.error('Form submission handler error:', error);
+                // Don't prevent default if there's an error - let the form submit normally
             }
         });
     }
