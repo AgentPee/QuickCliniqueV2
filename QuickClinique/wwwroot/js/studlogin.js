@@ -1,4 +1,7 @@
-﻿// Toggle between login and registration forms
+﻿// studlogin.js - Updated to fix null reference errors
+// Version: 2.0 - Added defensive null checks and optional chaining
+
+// Toggle between login and registration forms
 function showLogin() {
     document.getElementById('loginFormWrapper').classList.add('active');
     document.getElementById('registerFormWrapper').classList.remove('active');
@@ -178,8 +181,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 
-                const idNumber = (idNumberInput.value || '').trim();
-                const password = passwordInput.value || '';
+                // Use optional chaining and nullish coalescing for extra safety
+                const idNumber = (idNumberInput?.value ?? '').toString().trim();
+                const password = (passwordInput?.value ?? '').toString();
 
                 // Client-side validation - only validate if values are provided
                 if (idNumber && !validateIdNumber(idNumber)) {
@@ -246,15 +250,34 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
 
             const submitBtn = this.querySelector('.submit-btn');
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const idNumber = document.getElementById('idNumber').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const dateOfBirth = document.getElementById('dateOfBirth').value;
-            const gender = document.getElementById('gender').value;
-            const terms = document.getElementById('terms').checked;
+            
+            // Safely get form values with null checks
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const idNumberInput = document.getElementById('idNumber');
+            const phoneInput = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const dateOfBirthInput = document.getElementById('dateOfBirth');
+            const genderInput = document.getElementById('gender');
+            const termsInput = document.getElementById('terms');
+            
+            // If any required input is missing, let the form submit normally
+            if (!nameInput || !emailInput || !idNumberInput || !phoneInput || 
+                !passwordInput || !confirmPasswordInput || !dateOfBirthInput || 
+                !genderInput || !termsInput) {
+                return; // Let the form submit normally - server-side validation will handle it
+            }
+            
+            const name = (nameInput.value || '').trim();
+            const email = (emailInput.value || '').trim();
+            const idNumber = (idNumberInput.value || '').trim();
+            const phone = (phoneInput.value || '').trim();
+            const password = passwordInput.value || '';
+            const confirmPassword = confirmPasswordInput.value || '';
+            const dateOfBirth = dateOfBirthInput.value || '';
+            const gender = genderInput.value || '';
+            const terms = termsInput.checked || false;
 
             // Validation
             if (name.length < 2) {
