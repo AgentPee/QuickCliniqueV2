@@ -449,6 +449,25 @@
     }
 
 /* Responsive Design */
+/* Enhanced grid responsiveness for health items */
+@media (max-width: 992px) {
+    .health-container {
+        padding: 1rem;
+    }
+    
+    .health-hero {
+        padding: 40px 30px;
+    }
+    
+    .health-hero h1 {
+        font-size: 2rem;
+    }
+    
+    .health-hero p {
+        font-size: 1.1rem;
+    }
+}
+
 @media (max-width: 768px) {
     .health-container {
         padding: 15px;

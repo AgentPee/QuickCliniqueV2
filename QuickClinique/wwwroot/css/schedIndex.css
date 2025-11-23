@@ -559,6 +559,57 @@ select.form-control {
         }
 }
 
+/* Table Container and Schedules Table Styles */
+.table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedules-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.schedules-table thead {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+}
+
+.schedules-table th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.schedules-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+/* Custom scrollbar for table container */
+.table-container::-webkit-scrollbar {
+    height: 10px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 5px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    border-radius: 5px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, var(--secondary-teal) 0%, var(--dark-teal) 100%);
+}
+
 @media (max-width: 768px) {
     .schedules-container {
         padding: 1rem 0.75rem;
@@ -595,6 +646,42 @@ select.form-control {
         .days-selection-buttons .btn {
             width: 100%;
         }
+    
+    /* Table responsive on mobile */
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+    }
+    
+    .schedules-table {
+        min-width: 900px !important;
+        font-size: 0.9rem;
+    }
+    
+    .schedules-table th,
+    .schedules-table td {
+        padding: 0.875rem 0.75rem;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .schedules-table {
+        min-width: 1000px !important;
+        font-size: 0.85rem;
+    }
+    
+    .schedules-table th,
+    .schedules-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
 }
 
 @media (max-width: 576px) {

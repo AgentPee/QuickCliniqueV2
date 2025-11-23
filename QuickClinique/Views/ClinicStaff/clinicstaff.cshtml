@@ -40,7 +40,8 @@
             <input type="text" id="booking-search" placeholder="Search appointments...">
             <button><i class="fas fa-search"></i></button>
         </div>
-        <table class="data-table">
+        <div class="data-table-wrapper">
+            <table class="data-table">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -55,6 +56,7 @@
                 <!-- Bookings will be populated by JavaScript -->
             </tbody>
         </table>
+        </div>
     </div>
 
     <!-- Patient Records Section -->
@@ -67,20 +69,22 @@
             <input type="text" id="patient-search" placeholder="Search patients...">
             <button><i class="fas fa-search"></i></button>
         </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Last Visit</th>
-                    <th>BMI</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="patients-table">
-                <!-- Patients will be populated by JavaScript -->
-            </tbody>
-        </table>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Last Visit</th>
+                        <th>BMI</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patients-table">
+                    <!-- Patients will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- BMI Calculator Section -->

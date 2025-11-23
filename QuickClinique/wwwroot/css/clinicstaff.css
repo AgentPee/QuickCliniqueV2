@@ -313,13 +313,28 @@ body {
         font-size: 1.5rem;
     }
     
+    /* Table container for horizontal scroll */
+    .section-card {
+        overflow-x: visible !important;
+    }
+    
+    .data-table-wrapper,
+    .section-card {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
     .data-table {
         font-size: 0.875rem;
+        min-width: 1000px !important;
+        width: auto !important;
+        display: table !important;
     }
     
     .data-table th,
     .data-table td {
         padding: 1rem 0.75rem;
+        white-space: nowrap !important;
     }
     
     .search-box {
@@ -379,10 +394,23 @@ body {
         font-size: 1.25rem;
     }
     
+    .data-table-wrapper,
+    .section-card {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .data-table {
+        min-width: 1200px !important;
+        width: auto !important;
+        display: table !important;
+    }
+    
     .data-table th,
     .data-table td {
         padding: 0.75rem 0.5rem;
         font-size: 0.8rem;
+        white-space: nowrap !important;
     }
     
     .stat-value {
@@ -455,10 +483,44 @@ body {
     }
 
 /* Table Styles */
+/* Table wrapper for horizontal scrolling */
+.section-card {
+    overflow-x: visible;
+    overflow-y: visible;
+}
+
+.data-table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 1rem;
+}
+
+/* Custom scrollbar for data-table wrapper */
+.data-table-wrapper::-webkit-scrollbar {
+    height: 10px;
+}
+
+.data-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.data-table-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+    border-radius: 5px;
+}
+
+.data-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #44A08D 0%, #3BA89F 100%);
+}
+
 .data-table {
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
+    min-width: 800px;
 }
 
     .data-table th {
@@ -1168,10 +1230,35 @@ body {
     color: #06B6D4;
 }
 
+/* History table wrapper for horizontal scroll */
+.history-table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 1rem;
+}
+
+/* Custom scrollbar for history table */
+.history-table-wrapper::-webkit-scrollbar {
+    height: 10px;
+}
+
+.history-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.history-table-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+    border-radius: 5px;
+}
+
 .history-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
+    margin-top: 0;
+    min-width: 800px;
 }
 
     .history-table th,
@@ -1179,6 +1266,7 @@ body {
         padding: 1rem;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
     }
 
     .history-table th {
@@ -1205,6 +1293,45 @@ body {
         font-size: 0.9rem;
         color: var(--text-dark);
     }
+
+/* History table responsive */
+@media (max-width: 768px) {
+    .history-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .history-table {
+        min-width: 1000px !important;
+        width: auto !important;
+        font-size: 0.875rem;
+    }
+    
+    .history-table th,
+    .history-table td {
+        padding: 0.875rem 0.75rem;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .history-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .history-table {
+        min-width: 1200px !important;
+        font-size: 0.8rem;
+    }
+    
+    .history-table th,
+    .history-table td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap !important;
+        font-size: 0.8rem;
+    }
+}
 
 /* Prescription Form - Better Spacing */
 .prescription-form {

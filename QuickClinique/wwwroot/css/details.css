@@ -86,6 +86,14 @@
     margin-bottom: 2rem;
 }
 
+/* Info grid responsive - ensure single column on small screens */
+@media (max-width: 576px) {
+    .info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem;
+    }
+}
+
 .info-section {
     background: #ffffff;
     padding: 1.5rem;
