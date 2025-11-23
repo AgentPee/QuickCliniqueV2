@@ -14,3 +14,8 @@ obj/
 _TestResults/
 *.nupkg
 *.snupkg
+
+# Sensitive configuration files
+appsettings.Production.json
+appsettings.Local.json
+*.secrets.json
