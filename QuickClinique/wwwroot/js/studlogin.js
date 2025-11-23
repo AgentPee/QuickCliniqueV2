@@ -150,40 +150,160 @@ document.addEventListener('DOMContentLoaded', function () {
     // Login form submission
     if (loginForm) {
         loginForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
+            // Don't prevent default - let the form submit normally
+            // But we can intercept AJAX submissions if needed
+            
             const submitBtn = this.querySelector('.submit-btn');
-            const idNumber = document.getElementById('loginIdNumber').value.trim();
-            const password = document.getElementById('loginPassword').value;
+            const idNumber = document.getElementById('loginIdNumber')?.value.trim() || 
+                           document.querySelector('input[name="Idnumber"]')?.value.trim();
+            const password = document.getElementById('loginPassword')?.value || 
+                           document.querySelector('input[name="Password"]')?.value;
 
             // Validation
-            if (!validateIdNumber(idNumber)) {
+            if (idNumber && !validateIdNumber(idNumber)) {
+                e.preventDefault();
                 showMessage('Please enter a valid 8-digit ID number', 'error');
                 return;
             }
 
-            if (!validatePassword(password)) {
+            if (password && !validatePassword(password)) {
+                e.preventDefault();
                 showMessage('Password must be at least 6 characters long', 'error');
                 return;
             }
 
-            setLoadingState(submitBtn, true);
+            // If form has data-ajax="true", handle via AJAX
+            if (this.dataset.ajax === 'true') {
+                e.preventDefault();
+                setLoadingState(submitBtn, true);
 
-            try {
-                const response = await simulateAPICall('/api/login', { idNumber, password });
-                showMessage('Login successful! Redirecting...', 'success');
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                // Simulate redirect
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                    const data = await response.json();
 
-            } catch (error) {
-                showMessage(error.message, 'error');
-            } finally {
-                setLoadingState(submitBtn, false);
+                    if (data.success) {
+                        showMessage('Login successful! Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl || '/Student/Index';
+                        }, 1500);
+                    } else {
+                        showMessage(data.error || 'Login failed', 'error');
+                        
+                        // Show resend verification option if email not verified
+                        if (data.requiresVerification) {
+                            showResendVerificationOption(data.email, data.idNumber);
+                        }
+                    }
+                } catch (error) {
+                    showMessage('An error occurred. Please try again.', 'error');
+                } finally {
+                    setLoadingState(submitBtn, false);
+                }
             }
         });
+    }
+
+    // Function to show resend verification option
+    function showResendVerificationOption(email, idNumber) {
+        // Check if verification notice already exists
+        let verificationNotice = document.getElementById('verificationNotice');
+        
+        if (!verificationNotice) {
+            // Create verification notice
+            const formContainer = document.querySelector('.form-container');
+            verificationNotice = document.createElement('div');
+            verificationNotice.id = 'verificationNotice';
+            verificationNotice.className = 'verification-notice';
+            verificationNotice.style.cssText = 'background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;';
+            
+            verificationNotice.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 20px;">⚠️</span>
+                    <strong style="color: #856404;">Email Verification Required</strong>
+                </div>
+                <p style="margin: 0 0 10px 0; color: #856404;">
+                    Please verify your email address before logging in. Check your inbox for the verification link.
+                </p>
+                <button type="button" id="resendVerificationBtn" class="resend-btn" style="background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                    <span class="resend-text">Resend Verification Email</span>
+                    <span class="resend-loader" style="display: none;">Sending...</span>
+                </button>
+                <div id="resendMessage" style="margin-top: 10px; font-size: 14px; display: none;"></div>
+            `;
+            
+            const form = document.querySelector('.auth-form');
+            form.parentNode.insertBefore(verificationNotice, form);
+            
+            // Attach event listener to resend button
+            const resendBtn = verificationNotice.querySelector('#resendVerificationBtn');
+            if (resendBtn) {
+                resendBtn.addEventListener('click', async function() {
+                    await handleResendVerification(email, idNumber, resendBtn, document.getElementById('resendMessage'));
+                });
+            }
+        }
+        
+        verificationNotice.style.display = 'block';
+    }
+
+    // Function to handle resend verification
+    async function handleResendVerification(email, idNumber, button, messageDiv) {
+        const resendText = button.querySelector('.resend-text');
+        const resendLoader = button.querySelector('.resend-loader');
+        
+        button.disabled = true;
+        if (resendText) resendText.style.display = 'none';
+        if (resendLoader) resendLoader.style.display = 'inline';
+        messageDiv.style.display = 'none';
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('/Student/ResendVerificationEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({
+                    email: email || null,
+                    idNumber: idNumber ? parseInt(idNumber) : null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.color = '#28a745';
+                messageDiv.textContent = '✓ ' + data.message;
+                
+                setTimeout(() => {
+                    button.style.display = 'none';
+                }, 3000);
+            } else {
+                messageDiv.style.display = 'block';
+                messageDiv.style.color = '#dc3545';
+                messageDiv.textContent = '✗ ' + (data.error || 'Failed to send verification email');
+                
+                button.disabled = false;
+                if (resendText) resendText.style.display = 'inline';
+                if (resendLoader) resendLoader.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error resending verification email:', error);
+            messageDiv.style.display = 'block';
+            messageDiv.style.color = '#dc3545';
+            messageDiv.textContent = '✗ An error occurred. Please try again later.';
+            
+            button.disabled = false;
+            if (resendText) resendText.style.display = 'inline';
+            if (resendLoader) resendLoader.style.display = 'none';
+        }
     }
 
     // Registration form submission
