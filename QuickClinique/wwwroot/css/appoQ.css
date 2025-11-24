@@ -554,12 +554,24 @@ input:checked + .slider {
 
 /* ===== TRIAGE MODAL ENHANCED STYLES ===== */
 
+/* Modal styling - backdrop disabled to prevent blocking clicks */
+#nextPatientModal.modal.show {
+    display: block !important;
+}
+
+#nextPatientModal .modal-dialog {
+    position: relative;
+    margin: 1.75rem auto;
+    max-width: 800px;
+}
+
 /* Modal Content Improvements */
 #nextPatientModal .modal-content {
     border: none;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     overflow: hidden;
+    position: relative;
 }
 
 #nextPatientModal .modal-header {

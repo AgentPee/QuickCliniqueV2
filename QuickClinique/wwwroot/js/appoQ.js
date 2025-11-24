@@ -224,7 +224,18 @@ async function showNextPatientModal() {
     // Show the modal using Bootstrap 5
     const modalElement = document.getElementById('nextPatientModal');
     if (modalElement) {
-        const modal = new bootstrap.Modal(modalElement);
+        // Get existing modal instance or create new one
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement, {
+                backdrop: false,  // Disable backdrop to prevent blocking clicks
+                keyboard: true,
+                focus: true
+            });
+        } else {
+            // Update existing modal to disable backdrop
+            modal._config.backdrop = false;
+        }
         modal.show();
     }
 }
@@ -340,7 +351,16 @@ function completeCurrentAppointment(appointmentId, patientId) {
 
     // Show the modal using Bootstrap 5
     const modalElement = document.getElementById('completeAppointmentModal');
-    const modal = new bootstrap.Modal(modalElement);
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement, {
+            backdrop: false,  // Disable backdrop to prevent blocking clicks
+            keyboard: true,
+            focus: true
+        });
+    } else {
+        modal._config.backdrop = false;
+    }
     modal.show();
 }
 
@@ -483,6 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Reset next patient modal when hidden
     const nextPatientModalElement = document.getElementById('nextPatientModal');
     if (nextPatientModalElement) {
+        
         nextPatientModalElement.addEventListener('hidden.bs.modal', function () {
             const form = document.getElementById('nextPatientForm');
             if (form) {
