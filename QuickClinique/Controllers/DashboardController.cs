@@ -345,6 +345,31 @@ namespace QuickClinique.Controllers
             });
         }
 
+        // GET: Dashboard/GetPatientDirectory - list of patients for ID search
+        [HttpGet]
+        public async Task<IActionResult> GetPatientDirectory()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            var patients = await _context.Students
+                .Include(s => s.User)
+                .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
+                .Select(s => new
+                {
+                    userId = s.UserId,
+                    idNumber = s.Idnumber,
+                    fullName = $"{s.FirstName} {s.LastName}"
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = patients });
+        }
+
         // GET: Dashboard/GetPatientMessages - Get ALL messages grouped by student (shared inbox)
         [HttpGet]
         public async Task<IActionResult> GetPatientMessages()

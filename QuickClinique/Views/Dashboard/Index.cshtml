@@ -201,10 +201,32 @@
 
         <div class="messages-content">
             <!-- Patient List -->
-            <div class="patient-list" id="patientList">
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <p>No messages yet</p>
+            <div class="patient-list">
+                <div class="patient-search-panel">
+                    <label for="patientSearchInput">Search by patient ID number</label>
+                    <div class="patient-search-bar">
+                        <input type="text"
+                               id="patientSearchInput"
+                               placeholder="Enter ID number"
+                               inputmode="numeric"
+                               maxlength="12"
+                               autocomplete="off">
+                        <button type="button" id="patientSearchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <small class="patient-search-feedback" id="patientSearchFeedback">
+                        Type a patient ID number to quickly open a chat
+                    </small>
+                </div>
+
+                <div id="patientSearchResults" class="patient-search-results"></div>
+
+                <div class="patient-list-items" id="patientList">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No messages yet</p>
+                    </div>
                 </div>
             </div>
 
@@ -529,14 +551,21 @@
         // ===== MESSAGING FUNCTIONALITY =====
         let selectedPatientUserId = null;
         let messagesInterval = null;
+        let patientDirectory = [];
+        let patientDirectoryLoaded = false;
+        let patientDirectoryLoading = false;
 
         // Initialize messaging when page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Load patient messages on page load
             loadPatientMessages();
+            loadPatientDirectory();
 
             // Auto-refresh messages every 10 seconds
             startMessagingAutoRefresh();
+
+            // Initialize patient search interactions
+            setupPatientSearchHandlers();
 
             // Send reply button click
             document.getElementById('sendReply').addEventListener('click', sendReplyToPatient);
@@ -579,40 +608,263 @@
                 return;
             }
 
-            patientList.innerHTML = patients.map(patient => `
-                <div class="patient-item ${selectedPatientUserId === patient.patientUserId ? 'active' : ''}" 
-                     onclick="selectPatient(${patient.patientUserId}, '${escapeHtml(patient.patientName)}')">
-                    <div class="patient-info">
-                        <div class="patient-avatar">
-                            <i class="fas fa-user"></i>
+            patientList.innerHTML = patients.map(patient => {
+                const safeName = escapeHtml(patient.patientName);
+                const lastMessageText = patient.lastMessage ? patient.lastMessage : '';
+                const preview = escapeHtml(lastMessageText.substring(0, 30));
+                const needsEllipsis = lastMessageText.length > 30 ? '...' : '';
+                const isActive = selectedPatientUserId === patient.patientUserId ? 'active' : '';
+
+                return `
+                    <div class="patient-item ${isActive}" 
+                         data-user-id="${patient.patientUserId}"
+                         role="button"
+                         onclick="selectPatientFromList(event, ${patient.patientUserId}, '${safeName}')">
+                        <div class="patient-info">
+                            <div class="patient-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="patient-details">
+                                <div class="patient-name">${safeName}</div>
+                                <div class="last-message">${preview}${needsEllipsis}</div>
+                            </div>
                         </div>
-                        <div class="patient-details">
-                            <div class="patient-name">${escapeHtml(patient.patientName)}</div>
-                            <div class="last-message">${escapeHtml(patient.lastMessage.substring(0, 30))}${patient.lastMessage.length > 30 ? '...' : ''}</div>
-                        </div>
+                        <div class="message-time">${formatMessageTime(patient.lastMessageTime)}</div>
                     </div>
-                    <div class="message-time">${formatMessageTime(patient.lastMessageTime)}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        function selectPatientFromList(event, patientUserId, patientName) {
+            const sourceElement = event.currentTarget || event.target.closest('.patient-item');
+            selectPatient(patientUserId, patientName, null, sourceElement);
         }
 
         // Select a patient and load their messages
-        async function selectPatient(patientUserId, patientName) {
+        async function selectPatient(patientUserId, patientName, idNumber = null, sourceElement = null) {
             selectedPatientUserId = patientUserId;
 
-            // Update UI
-            document.getElementById('selectedPatientName').textContent = patientName;
-            document.querySelector('.chat-empty').style.display = 'none';
-            document.querySelector('.chat-content').style.display = 'flex';
+            const patientDisplayName = idNumber ? `ID ${idNumber} • ${patientName}` : patientName;
 
-            // Update active state in patient list
+            // Update UI
+            document.getElementById('selectedPatientName').textContent = patientDisplayName;
+            const chatEmptyState = document.querySelector('.chat-empty');
+            if (chatEmptyState) {
+                chatEmptyState.style.display = 'none';
+            }
+            const chatContent = document.querySelector('.chat-content');
+            if (chatContent) {
+                chatContent.style.display = 'flex';
+            }
+
+            // Update active state in patient list and search results
             document.querySelectorAll('.patient-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.closest('.patient-item').classList.add('active');
+            if (sourceElement) {
+                sourceElement.classList.add('active');
+            } else {
+                const matchingItem = document.querySelector(`.patient-item[data-user-id="${patientUserId}"]`);
+                if (matchingItem) {
+                    matchingItem.classList.add('active');
+                }
+            }
 
             // Load messages for this patient
             await loadMessagesForPatient(patientUserId);
+        }
+
+        async function loadPatientDirectory() {
+            const feedback = document.getElementById('patientSearchFeedback');
+            patientDirectoryLoaded = false;
+            patientDirectoryLoading = true;
+
+            try {
+                const response = await fetch('/Dashboard/GetPatientDirectory');
+
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && Array.isArray(result.data)) {
+                    patientDirectory = result.data.map(student => {
+                        const userId = student.UserId ?? student.userId ?? 0;
+                        const idNumberValue = (student.idNumber ?? student.Idnumber ?? '').toString();
+                        const fullName = (student.fullName ?? `${student.FirstName ?? ''} ${student.LastName ?? ''}` ?? '').trim();
+
+                        return {
+                            userId,
+                            idNumber: idNumberValue.trim(),
+                            fullName: fullName || 'Unnamed patient'
+                        };
+                    }).filter(entry => entry.userId && entry.idNumber);
+
+                    patientDirectoryLoaded = true;
+
+                    if (feedback) {
+                        feedback.textContent = patientDirectory.length
+                            ? 'Type a patient ID number to quickly open a chat'
+                            : 'No patient IDs found yet. Add a patient first.';
+                    }
+                } else {
+                    throw new Error(result.error || 'Unexpected response');
+                }
+            } catch (error) {
+                console.error('Error loading patient directory:', error);
+                if (feedback) {
+                    feedback.textContent = 'Unable to load patient directory. Refresh and try again.';
+                }
+            } finally {
+                patientDirectoryLoading = false;
+            }
+        }
+
+        function setupPatientSearchHandlers() {
+            const searchInput = document.getElementById('patientSearchInput');
+            const searchButton = document.getElementById('patientSearchButton');
+
+            if (!searchInput || !searchButton) {
+                return;
+            }
+
+            searchButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                handlePatientSearch();
+            });
+
+            searchInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handlePatientSearch();
+                }
+            });
+
+            searchInput.addEventListener('input', () => {
+                if (!searchInput.value.trim()) {
+                    clearPatientSearchResults(true);
+                }
+            });
+        }
+
+        function handlePatientSearch() {
+            const searchInput = document.getElementById('patientSearchInput');
+            const feedback = document.getElementById('patientSearchFeedback');
+            const query = searchInput ? searchInput.value.trim() : '';
+
+            if (!searchInput || !feedback) {
+                return;
+            }
+
+            if (!patientDirectoryLoaded) {
+                if (!patientDirectoryLoading) {
+                    loadPatientDirectory();
+                }
+                feedback.textContent = 'Loading patient directory. Please try again in a moment.';
+                return;
+            }
+
+            if (!query) {
+                feedback.textContent = 'Enter a patient ID number to search.';
+                clearPatientSearchResults(true);
+                return;
+            }
+
+            const digitsOnly = query.replace(/\D/g, '');
+
+            if (!digitsOnly) {
+                feedback.textContent = 'Patient ID numbers are numeric. Please remove any letters.';
+                clearPatientSearchResults(true);
+                return;
+            }
+
+            const matches = patientDirectory.filter(patient => patient.idNumber.includes(digitsOnly));
+
+            if (matches.length === 0) {
+                feedback.textContent = `No patient found with ID containing ${digitsOnly}.`;
+                renderPatientSearchResults([]);
+                return;
+            }
+
+            feedback.textContent = matches.length === 1
+                ? 'Found 1 patient. Select them to start chatting.'
+                : `Found ${matches.length} patients. Select one to start chatting.`;
+
+            renderPatientSearchResults(matches.slice(0, 5));
+        }
+
+        function renderPatientSearchResults(matches) {
+            const resultsContainer = document.getElementById('patientSearchResults');
+
+            if (!resultsContainer) {
+                return;
+            }
+
+            if (!matches.length) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-search mb-2"></i>
+                        <p>No patient found for that ID number.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsContainer.innerHTML = matches.map((patient, index) => {
+                const safeName = escapeHtml(patient.fullName);
+                const safeId = escapeHtml(patient.idNumber || 'N/A');
+
+                return `
+                    <div class="patient-item search-result" data-result-index="${index}">
+                        <div class="patient-info">
+                            <div class="patient-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="patient-details">
+                                <div class="patient-name">ID: ${safeId}</div>
+                                <div class="last-message">${safeName}</div>
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="start-chat-btn"
+                                data-result-index="${index}">
+                            Start chat
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            resultsContainer.querySelectorAll('.start-chat-btn').forEach(button => {
+                const index = parseInt(button.dataset.resultIndex, 10);
+                const patient = matches[index];
+
+                if (!patient) {
+                    return;
+                }
+
+                button.addEventListener('click', () => {
+                    selectPatient(
+                        patient.userId,
+                        patient.fullName,
+                        patient.idNumber,
+                        button.closest('.patient-item')
+                    );
+                });
+            });
+        }
+
+        function clearPatientSearchResults(resetFeedback = false) {
+            const resultsContainer = document.getElementById('patientSearchResults');
+            const feedback = document.getElementById('patientSearchFeedback');
+
+            if (resultsContainer) {
+                resultsContainer.innerHTML = '';
+            }
+
+            if (resetFeedback && feedback) {
+                feedback.textContent = 'Type a patient ID number to quickly open a chat';
+            }
         }
 
         // Load messages for a specific patient
