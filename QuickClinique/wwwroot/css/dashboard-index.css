@@ -1174,6 +1174,95 @@
         border-left: 4px solid var(--primary-teal);
     }
 
+.patient-search-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.85rem;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 10px 15px -10px rgba(15, 23, 42, 0.1);
+}
+
+.patient-search-panel label {
+    font-weight: 600;
+    color: #1f2933;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.patient-search-bar {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.patient-search-bar input {
+    flex: 1;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+}
+
+.patient-search-bar button {
+    background: var(--primary-teal);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    padding: 0 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.patient-search-bar button:hover {
+    background: var(--secondary-teal);
+}
+
+.patient-search-feedback {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.patient-search-results {
+    margin-bottom: 0.75rem;
+}
+
+.patient-search-results .patient-item {
+    border: 1px dashed rgba(37, 99, 235, 0.4);
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    background: #f8fbff;
+}
+
+.patient-search-results .patient-item:last-child {
+    margin-bottom: 0;
+}
+
+.start-chat-btn {
+    border: 1px solid var(--primary-teal);
+    background: transparent;
+    color: var(--primary-teal);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.start-chat-btn:hover {
+    background: var(--primary-teal);
+    color: var(--white);
+}
+
+.patient-list-items {
+    display: flex;
+    flex-direction: column;
+}
+
 .patient-info {
     display: flex;
     align-items: center;
