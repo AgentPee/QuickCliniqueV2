@@ -120,6 +120,51 @@
                 </div>
             </div>
 
+            <!-- Emergency Contact Information -->
+            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+            {
+                <div class="form-section">
+                    <h3><i class="fas fa-phone-alt"></i> Emergency Contact Information</h3>
+                    <p class="text-muted-custom">
+                        Your emergency contact details are stored for safety purposes. Contact clinic staff to update this information.
+                    </p>
+
+                    <div class="emergency-contact-display">
+                        <div class="emergency-contact-item-display">
+                            <div class="emergency-contact-label-display">
+                                <i class="fas fa-user"></i> Contact Name
+                            </div>
+                            <div class="emergency-contact-value-display">@Model.EmergencyContactName</div>
+                        </div>
+
+                        <div class="emergency-contact-item-display">
+                            <div class="emergency-contact-label-display">
+                                <i class="fas fa-users"></i> Relationship
+                            </div>
+                            <div class="emergency-contact-value-display">@(Model.EmergencyContactRelationship ?? "N/A")</div>
+                        </div>
+
+                        <div class="emergency-contact-item-display">
+                            <div class="emergency-contact-label-display">
+                                <i class="fas fa-phone"></i> Phone Number
+                            </div>
+                            <div class="emergency-contact-value-display">
+                                @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactPhoneNumber))
+                                {
+                                    <a href="tel:@Model.EmergencyContactPhoneNumber" class="phone-link-display">
+                                        @Model.EmergencyContactPhoneNumber
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span>N/A</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <!-- Insurance Receipt Upload -->
             <div class="form-section">
                 <h3><i class="fas fa-file-invoice"></i> Insurance Receipt</h3>

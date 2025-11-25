@@ -915,6 +915,67 @@ body {
     margin-bottom: 1.5rem;
 }
 
+/* Emergency Contact Display */
+.emergency-contact-display {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.emergency-contact-item-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--danger);
+    transition: var(--transition-base);
+}
+
+.emergency-contact-item-display:hover {
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
+}
+
+.emergency-contact-label-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.emergency-contact-label-display i {
+    color: var(--danger);
+    font-size: 1.1rem;
+}
+
+.emergency-contact-value-display {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    text-align: right;
+}
+
+.emergency-contact-value-display .phone-link-display {
+    color: var(--danger);
+    text-decoration: none;
+    transition: var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.emergency-contact-value-display .phone-link-display:hover {
+    color: #c82333;
+    text-decoration: underline;
+}
+
 /* Spacing utilities */
 .mt-1-5 {
     margin-top: 1.5rem;

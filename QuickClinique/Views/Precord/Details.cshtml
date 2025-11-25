@@ -104,6 +104,62 @@
         </div>
     </div>
 
+    <!-- Emergency Contact Information Section -->
+    @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+    {
+        <div class="emergency-contact-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-phone-alt"></i>
+                    Emergency Contact Information
+                </h3>
+            </div>
+
+            <div class="emergency-contact-grid">
+                <div class="emergency-contact-item">
+                    <div class="emergency-contact-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="emergency-contact-content">
+                        <div class="emergency-contact-label">Contact Name</div>
+                        <div class="emergency-contact-value">@Model.EmergencyContactName</div>
+                    </div>
+                </div>
+
+                <div class="emergency-contact-item">
+                    <div class="emergency-contact-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="emergency-contact-content">
+                        <div class="emergency-contact-label">Relationship</div>
+                        <div class="emergency-contact-value">@Model.EmergencyContactRelationship</div>
+                    </div>
+                </div>
+
+                <div class="emergency-contact-item">
+                    <div class="emergency-contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="emergency-contact-content">
+                        <div class="emergency-contact-label">Phone Number</div>
+                        <div class="emergency-contact-value">
+                            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactPhoneNumber))
+                            {
+                                <a href="tel:@Model.EmergencyContactPhoneNumber" class="phone-link">
+                                    @Model.EmergencyContactPhoneNumber
+                                </a>
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     @{
         // Parse ID images (comma-separated: front, back)
         string? idFrontImage = null;

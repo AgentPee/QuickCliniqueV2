@@ -171,6 +171,49 @@
                         <span class="toggle-password" onclick="togglePassword('ConfirmPassword')">👁️</span>
                     </div>
 
+                    <!-- Emergency Contact Information Section -->
+                    <div class="form-section-divider">
+                        <h3 class="section-title-emergency">
+                            <i class="fas fa-phone-alt"></i> Emergency Contact Information
+                        </h3>
+                        <p class="section-subtitle">Please provide contact details of someone we can reach in case of emergency</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label asp-for="EmergencyContactName" class="control-label">Emergency Contact Name <span class="required-asterisk">*</span></label>
+                        <input asp-for="EmergencyContactName" class="form-control" required placeholder="Enter full name" />
+                        <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
+                        <span class="input-icon">👤</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label asp-for="EmergencyContactRelationship" class="control-label">Relationship <span class="required-asterisk">*</span></label>
+                        <select asp-for="EmergencyContactRelationship" class="form-control" required>
+                            <option value="">Select Relationship</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Guardian">Guardian</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Relative">Relative</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span asp-validation-for="EmergencyContactRelationship" class="text-danger"></span>
+                        <span class="input-icon">👨‍👩‍👧‍👦</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label asp-for="EmergencyContactPhoneNumber" class="control-label">Emergency Contact Phone Number <span class="required-asterisk">*</span></label>
+                        <input asp-for="EmergencyContactPhoneNumber" class="form-control"
+                               placeholder="e.g., 09345672824"
+                               pattern="09[0-9]{9}"
+                               title="Phone number must start with 09 and be 11 digits"
+                               required />
+                        <span asp-validation-for="EmergencyContactPhoneNumber" class="text-danger"></span>
+                        <span class="input-icon">📱</span>
+                        <small class="input-hint">Must start with 09 and be 11 digits total</small>
+                    </div>
+
                     <button type="submit" class="submit-btn">
                         <span class="btn-text">Create Account</span>
                         <span class="btn-loader"></span>

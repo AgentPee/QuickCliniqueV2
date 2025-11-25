@@ -432,6 +432,26 @@ namespace QuickClinique.Controllers
                 ModelState.AddModelError("ConfirmPassword", "Passwords do not match. Please make sure both passwords are the same.");
             }
 
+            // Validate Emergency Contact fields
+            if (string.IsNullOrWhiteSpace(model.EmergencyContactName))
+            {
+                ModelState.AddModelError("EmergencyContactName", "Emergency Contact Name is required. Please enter the name of your emergency contact.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.EmergencyContactRelationship))
+            {
+                ModelState.AddModelError("EmergencyContactRelationship", "Emergency Contact Relationship is required. Please specify your relationship with the emergency contact.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.EmergencyContactPhoneNumber))
+            {
+                ModelState.AddModelError("EmergencyContactPhoneNumber", "Emergency Contact Phone Number is required. Please enter the phone number of your emergency contact.");
+            }
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(model.EmergencyContactPhoneNumber, @"^09[0-9]{9}$"))
+            {
+                ModelState.AddModelError("EmergencyContactPhoneNumber", "Emergency contact phone number must start with 09 and be 11 digits total (e.g., 09345672824).");
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -617,7 +637,10 @@ namespace QuickClinique.Controllers
                         Password = _passwordService.HashPassword(model.Password), // Hash the password
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
-                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
+                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        EmergencyContactName = model.EmergencyContactName,
+                        EmergencyContactRelationship = model.EmergencyContactRelationship,
+                        EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
                     };
 
                     try

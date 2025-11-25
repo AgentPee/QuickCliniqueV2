@@ -403,6 +403,20 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("varchar(500)")
                 .HasColumnName("InsuranceReceipt");
 
+            // Emergency Contact Information
+            entity.Property(e => e.EmergencyContactName)
+                .HasColumnType("varchar(255)")
+                .HasColumnName("EmergencyContactName")
+                .IsRequired(false);
+            entity.Property(e => e.EmergencyContactRelationship)
+                .HasColumnType("varchar(100)")
+                .HasColumnName("EmergencyContactRelationship")
+                .IsRequired(false);
+            entity.Property(e => e.EmergencyContactPhoneNumber)
+                .HasColumnType("varchar(20)")
+                .HasColumnName("EmergencyContactPhoneNumber")
+                .IsRequired(false);
+
             entity.HasOne(d => d.User).WithMany(p => p.Students)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("students_ibfk_1");
