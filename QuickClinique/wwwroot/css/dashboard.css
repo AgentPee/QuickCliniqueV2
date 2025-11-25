@@ -3458,3 +3458,311 @@ input[type="date"] {
     background-color: #dc3545;
     border-color: #dc3545;
 }
+
+/* Reschedule Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.reschedule-modal {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reschedule-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+    border-radius: 15px 15px 0 0;
+}
+
+.reschedule-modal .modal-header {
+    padding: 2rem;
+    border-bottom: 2px solid #e1e5e9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.reschedule-modal .modal-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.reschedule-modal .modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reschedule-modal .modal-header h3 i {
+    font-size: 1.75rem;
+}
+
+.reschedule-modal .modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.reschedule-modal .modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.reschedule-modal .modal-body {
+    padding: 2rem;
+    flex: 1;
+    background: white;
+}
+
+.reschedule-modal .modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 2px solid #e1e5e9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Form Styles in Modal */
+.reschedule-modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.reschedule-modal .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.reschedule-modal .form-group .form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    color: #333;
+    font-family: inherit;
+}
+
+.reschedule-modal .form-group .form-control:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    background: white;
+}
+
+.reschedule-modal .form-group .form-control.is-invalid {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+}
+
+.reschedule-modal .form-group .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    padding-left: 0.5rem;
+}
+
+.reschedule-modal .text-danger {
+    color: #dc3545;
+}
+
+/* Button Styles in Modal */
+.reschedule-modal .btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.reschedule-modal .btn-primary {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(78, 205, 196, 0.4);
+}
+
+.reschedule-modal .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(78, 205, 196, 0.5);
+}
+
+.reschedule-modal .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.reschedule-modal .btn-secondary {
+    background: linear-gradient(135deg, #6C757D 0%, #495057 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(108, 117, 125, 0.3);
+}
+
+.reschedule-modal .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(108, 117, 125, 0.4);
+}
+
+/* Alert Styles in Modal */
+.reschedule-modal .alert {
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reschedule-modal .alert-danger {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+    color: #991B1B;
+    border-left: 4px solid #dc3545;
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+    .reschedule-modal {
+        width: 95%;
+        max-height: 95vh;
+        margin: 1rem;
+    }
+
+    .reschedule-modal .modal-header {
+        padding: 1.5rem;
+    }
+
+    .reschedule-modal .modal-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .reschedule-modal .modal-body {
+        padding: 1.5rem;
+    }
+
+    .reschedule-modal .modal-footer {
+        padding: 1.25rem 1.5rem;
+        flex-direction: column-reverse;
+    }
+
+    .reschedule-modal .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .reschedule-modal {
+        width: 98%;
+        max-height: 98vh;
+    }
+
+    .reschedule-modal .modal-header {
+        padding: 1.25rem;
+    }
+
+    .reschedule-modal .modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .reschedule-modal .modal-body {
+        padding: 1.25rem;
+    }
+
+    .reschedule-modal .modal-footer {
+        padding: 1rem 1.25rem;
+    }
+}
