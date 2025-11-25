@@ -1056,6 +1056,66 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] InsuranceReceipt column already exists in students table.");
             }
 
+            // Check EmergencyContactName
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'EMERGENCYCONTACTNAME'";
+            var emergencyContactNameExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!emergencyContactNameExists)
+            {
+                Console.WriteLine("[INIT] Adding EmergencyContactName column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `EmergencyContactName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] EmergencyContactName column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] EmergencyContactName column already exists in students table.");
+            }
+
+            // Check EmergencyContactRelationship
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'EMERGENCYCONTACTRELATIONSHIP'";
+            var emergencyContactRelationshipExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!emergencyContactRelationshipExists)
+            {
+                Console.WriteLine("[INIT] Adding EmergencyContactRelationship column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `EmergencyContactRelationship` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] EmergencyContactRelationship column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] EmergencyContactRelationship column already exists in students table.");
+            }
+
+            // Check EmergencyContactPhoneNumber
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'students' 
+                AND UPPER(COLUMN_NAME) = 'EMERGENCYCONTACTPHONENUMBER'";
+            var emergencyContactPhoneNumberExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            if (!emergencyContactPhoneNumberExists)
+            {
+                Console.WriteLine("[INIT] Adding EmergencyContactPhoneNumber column to students table...");
+                command.CommandText = "ALTER TABLE `students` ADD COLUMN `EmergencyContactPhoneNumber` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL";
+                await command.ExecuteNonQueryAsync();
+                Console.WriteLine("[SUCCESS] EmergencyContactPhoneNumber column added to students table!");
+            }
+            else
+            {
+                Console.WriteLine("[OK] EmergencyContactPhoneNumber column already exists in students table.");
+            }
+
             // Check and create DataProtectionKeys table if it doesn't exist
             Console.WriteLine("[INIT] Checking for DataProtectionKeys table...");
             command.CommandText = @"
