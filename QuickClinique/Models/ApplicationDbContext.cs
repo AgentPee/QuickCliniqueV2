@@ -386,6 +386,23 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("int(100)")
                 .HasColumnName("UserID");
 
+            // Email verification and password reset properties
+            entity.Property(e => e.IsEmailVerified)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false);
+            entity.Property(e => e.EmailVerificationToken)
+                .HasColumnType("text")
+                .IsRequired(false);
+            entity.Property(e => e.EmailVerificationTokenExpiry)
+                .HasColumnType("datetime")
+                .IsRequired(false);
+            entity.Property(e => e.PasswordResetToken)
+                .HasColumnType("text")
+                .IsRequired(false);
+            entity.Property(e => e.PasswordResetTokenExpiry)
+                .HasColumnType("datetime")
+                .IsRequired(false);
+
             // Add IsActive property configuration
             entity.Property(e => e.IsActive)
                 .HasColumnType("tinyint(1)")
