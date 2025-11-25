@@ -66,8 +66,8 @@ function updateCurrentPatient(currentPatient) {
     if (currentPatient) {
         currentPatientSection.innerHTML = `
             <h3><i class="fas fa-user-md"></i> Currently Serving</h3>
-            <div class="patient-name">${escapeHtml(currentPatient.patientName)}</div>
-            <div class="queue-number">Queue #${currentPatient.queueNumber}</div>
+            <div class="patient-name"><i class="fas fa-user"></i> ${escapeHtml(currentPatient.patientName)}</div>
+            <div class="queue-number">🎫 Queue #${currentPatient.queueNumber}</div>
             <div class="queue-controls">
                 ${currentPatient.hasWaitingPatients ? 
                     `<button class="btn btn-primary btn-large" onclick="showNextPatientModal()">
@@ -119,14 +119,8 @@ function updateWaitingQueue(waitingPatients) {
                     <div class="queue-number-badge">#${patient.queueNumber}</div>
                     <div class="patient-details">
                         <h5>${escapeHtml(patient.patientName)}</h5>
-                        <p>${escapeHtml(patient.reasonForVisit)}</p>
                         <p><i class="fas fa-clock"></i> ${patient.startTime} - ${patient.endTime}</p>
                     </div>
-                </div>
-                <div>
-                    <button class="btn btn-primary btn-sm" onclick="startAppointment(${patient.appointmentId})">
-                        <i class="fas fa-play"></i> Start
-                    </button>
                 </div>
             </div>
         `;

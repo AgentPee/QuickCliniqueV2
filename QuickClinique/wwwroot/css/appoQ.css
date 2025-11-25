@@ -125,12 +125,27 @@
 .current-patient {
     background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
     color: white;
-    padding: 2.5rem;
+    padding: 3.5rem 2.5rem;
     border-radius: 15px;
     text-align: center;
     margin: 2rem;
     box-shadow: 0 10px 30px rgba(78, 205, 196, 0.3);
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.current-patient > * {
+    text-align: center !important;
+    width: 100% !important;
+}
+
+.current-patient .patient-name,
+.current-patient .queue-number {
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
     .current-patient:hover {
@@ -139,25 +154,61 @@
     }
 
     .current-patient h3 {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         font-size: 1.5rem;
         font-weight: 600;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
-.patient-name {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+/* More specific selector to override dashboard-index.css */
+.current-patient .patient-name {
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 1rem !important;
+    letter-spacing: -0.5px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    text-align: center !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    line-height: 1.3 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    color: white !important;
 }
 
-.queue-number {
-    font-size: 1.3rem;
-    opacity: 0.9;
-    margin-bottom: 1.5rem;
+.current-patient .patient-name i {
+    font-size: 2rem !important;
+    color: white !important;
+    opacity: 1 !important;
+}
+
+.current-patient .queue-number {
+    font-size: 1.5rem !important;
+    opacity: 0.95 !important;
+    margin-bottom: 1.5rem !important;
+    font-weight: 600 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    text-align: center !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    letter-spacing: 0.3px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    color: white !important;
+}
+
+.current-patient .queue-number i {
+    font-size: 1.2rem !important;
+    color: white !important;
+    opacity: 1 !important;
 }
 
 .queue-controls {
@@ -231,7 +282,7 @@
 
 .queue-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding: 1.5rem;
     margin-bottom: 1rem;
@@ -286,13 +337,15 @@
     margin: 0;
     color: #333;
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .patient-details p {
-    margin: 0.3rem 0 0 0;
+    margin: 0.5rem 0 0 0;
     color: #718096;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .patient-details i {
@@ -507,8 +560,12 @@ input:checked + .slider {
         padding: 1.5rem;
     }
 
-    .patient-name {
-        font-size: 1.75rem;
+    .current-patient .patient-name {
+        font-size: 2rem !important;
+    }
+    
+    .current-patient .queue-number {
+        font-size: 1.3rem !important;
     }
 
     .stat-card {
@@ -547,8 +604,12 @@ input:checked + .slider {
         font-size: 1.75rem;
     }
 
-    .patient-name {
-        font-size: 1.75rem;
+    .current-patient .patient-name {
+        font-size: 1.75rem !important;
+    }
+    
+    .current-patient .queue-number {
+        font-size: 1.2rem !important;
     }
 }
 
