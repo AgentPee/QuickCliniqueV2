@@ -273,20 +273,26 @@ namespace QuickClinique.Controllers
         /// Calculates age from a birthdate
         /// </summary>
         /// <param name="birthdate">The birthdate to calculate age from</param>
-        /// <returns>The age in years, or 0 if birthdate is null</returns>
+        /// <returns>The age in years, or 0 if birthdate is null or invalid</returns>
         private static int CalculateAge(DateOnly? birthdate)
         {
             if (!birthdate.HasValue)
                 return 0;
 
             var today = DateOnly.FromDateTime(DateTime.Today);
+            
+            // If birthdate is in the future, return 0
+            if (birthdate.Value > today)
+                return 0;
+
             var age = today.Year - birthdate.Value.Year;
             
             // If birthday hasn't occurred this year yet, subtract 1
             if (birthdate.Value > today.AddYears(-age))
                 age--;
 
-            return age;
+            // Ensure age is never negative
+            return Math.Max(0, age);
         }
 
         private bool IsAjaxRequest()
