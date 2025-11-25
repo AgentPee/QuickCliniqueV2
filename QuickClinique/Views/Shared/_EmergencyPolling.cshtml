@@ -9,44 +9,69 @@
             </div>
             <div class="modal-body emergency-body">
                 <div class="alert alert-danger emergency-alert">
-                    <i class="fas fa-bell"></i> <strong>URGENT:</strong> A student has sent an emergency SOS request!
+                    <div class="emergency-alert-content">
+                        <div class="emergency-alert-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="emergency-alert-text">
+                            <strong>URGENT:</strong> A student has sent an emergency SOS request!
+                        </div>
+                    </div>
                 </div>
 
                 <div class="emergency-info">
                     <div class="info-row">
                         <div class="info-label">
-                            <i class="fas fa-user"></i> Student Name:
+                            <div class="info-icon-wrapper">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span>Student Name</span>
                         </div>
                         <div class="info-value" id="emergencyStudentName"></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">
-                            <i class="fas fa-id-card"></i> Student ID:
+                            <div class="info-icon-wrapper">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <span>Student ID</span>
                         </div>
                         <div class="info-value" id="emergencyStudentId"></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">
-                            <i class="fas fa-map-marker-alt"></i> Location:
+                            <div class="info-icon-wrapper">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <span>Location</span>
                         </div>
                         <div class="info-value" id="emergencyLocation"></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">
-                            <i class="fas fa-tools"></i> Needs:
+                            <div class="info-icon-wrapper">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <span>Needs</span>
                         </div>
                         <div class="info-value" id="emergencyNeeds"></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">
-                            <i class="fas fa-clock"></i> Time:
+                            <div class="info-icon-wrapper">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span>Time</span>
                         </div>
                         <div class="info-value" id="emergencyTime"></div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer emergency-footer">
-                <button type="button" class="btn btn-success" id="resolveEmergencyBtn">
+                <button type="button" class="btn btn-secondary emergency-cancel-btn" id="cancelEmergencyBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success emergency-resolve-btn" id="resolveEmergencyBtn">
                     <i class="fas fa-check"></i> Mark as Resolved
                 </button>
             </div>
@@ -308,6 +333,21 @@
         }
 
         function initializeEmergencyPolling() {
+            // Cancel button handler
+            const cancelBtn = document.getElementById('cancelEmergencyBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    stopEmergencyBeep();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    // Do NOT reset currentEmergencyId or lastCheckedEmergencyId here,
+                    // so the modal can reappear if the emergency is still active.
+                });
+            }
+
+            // Resolve button handler
             const resolveBtn = document.getElementById('resolveEmergencyBtn');
             if (resolveBtn) {
                 resolveBtn.addEventListener('click', async function() {
@@ -392,6 +432,8 @@
 
     #emergencyModal .modal-backdrop {
         z-index: 9999 !important;
+        background-color: rgba(0, 0, 0, 0.85) !important;
+        backdrop-filter: blur(4px);
     }
 
     .modal-backdrop.show {
@@ -399,11 +441,45 @@
     }
 
     .emergency-modal-content {
-        border: 3px solid #dc3545;
-        box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+        border: 4px solid #dc3545;
+        border-radius: 20px;
+        box-shadow: 0 0 40px rgba(220, 53, 69, 0.6), 0 0 80px rgba(220, 53, 69, 0.4), inset 0 0 20px rgba(220, 53, 69, 0.1);
         z-index: 10000 !important;
         position: relative;
         pointer-events: auto !important;
+        overflow: hidden;
+        animation: emergencyModalEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @@keyframes emergencyModalEntrance {
+        0% {
+            opacity: 0;
+            transform: scale(0.7) translateY(-50px);
+        }
+        50% {
+            transform: scale(1.05) translateY(0);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .emergency-modal-content::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(220, 53, 69, 0.15) 0%, transparent 70%);
+        animation: emergencyRotate 20s linear infinite;
+        pointer-events: none;
+    }
+
+    @@keyframes emergencyRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
     #emergencyModal .modal-dialog {
@@ -431,65 +507,342 @@
     .emergency-header {
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         color: white;
-        border-bottom: 2px solid #c82333;
+        border-bottom: none;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .emergency-header::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        pointer-events: none;
+        animation: emergencyPulse 3s ease-in-out infinite;
+    }
+
+    @@keyframes emergencyPulse {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
     }
 
     .emergency-header .modal-title {
-        font-weight: bold;
-        font-size: 1.25rem;
+        font-weight: 900;
+        font-size: 1.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .emergency-header .modal-title i {
+        font-size: 2rem;
+        animation: emergencyIconFlash 1s ease-in-out infinite;
+    }
+
+    @@keyframes emergencyIconFlash {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.2); }
     }
 
     .emergency-body {
-        padding: 1.5rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     }
 
     .emergency-alert {
-        border-left: 4px solid #dc3545;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: none;
+        border-left: 6px solid #dc3545;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        animation: emergencyAlertSlide 0.6s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    @@keyframes emergencyAlertSlide {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .emergency-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: emergencyShimmer 2s infinite;
+    }
+
+    @@keyframes emergencyShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .emergency-alert-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .emergency-alert-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        animation: emergencyBellRing 1s ease-in-out infinite;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    @@keyframes emergencyBellRing {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-15deg); }
+        75% { transform: rotate(15deg); }
+    }
+
+    .emergency-alert-icon i {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .emergency-alert-text {
+        flex: 1;
+    }
+
+    .emergency-alert-text strong {
+        color: #991b1b;
+        font-size: 1.15rem;
     }
 
     .emergency-info {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
     .info-row {
         display: flex;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #dee2e6;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-row::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #dc3545 0%, #c82333 100%);
+        transition: width 0.3s ease;
+    }
+
+    .info-row:hover {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+    }
+
+    .info-row:hover::before {
+        width: 6px;
     }
 
     .info-row:last-child {
         border-bottom: none;
+        margin-bottom: 0;
     }
 
     .info-label {
-        font-weight: bold;
-        min-width: 150px;
-        color: #495057;
+        font-weight: 700;
+        min-width: 180px;
+        color: #2D3748;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
 
-    .info-label i {
-        margin-right: 0.5rem;
+    .info-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    }
+
+    .info-icon-wrapper i {
         color: #dc3545;
+        font-size: 1.25rem;
     }
 
     .info-value {
         color: #212529;
         flex: 1;
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
     }
 
     .emergency-footer {
-        border-top: 2px solid #dee2e6;
-        padding: 1rem;
+        border-top: 3px solid #e2e8f0;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
     }
 
-    .emergency-footer .btn-success {
-        width: 100%;
-        padding: 0.75rem;
-        font-weight: bold;
+    .emergency-cancel-btn {
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 14px rgba(108, 117, 125, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .emergency-cancel-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    }
+
+    .emergency-resolve-btn {
+        padding: 1rem 2.5rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .emergency-resolve-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .emergency-resolve-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .emergency-resolve-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+    }
+
+    .emergency-resolve-btn:active {
+        transform: translateY(-1px);
+    }
+
+    .emergency-resolve-btn i {
+        position: relative;
+        z-index: 1;
+    }
+
+    @@media (max-width: 768px) {
+        .emergency-header {
+            padding: 1.5rem;
+        }
+
+        .emergency-header .modal-title {
+            font-size: 1.25rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .emergency-body {
+            padding: 1.5rem;
+        }
+
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .info-label {
+            min-width: auto;
+            width: 100%;
+        }
+
+        .info-value {
+            width: 100%;
+        }
+
+        .emergency-footer {
+            flex-direction: column-reverse;
+            padding: 1.25rem;
+        }
+
+        .emergency-cancel-btn,
+        .emergency-resolve-btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 

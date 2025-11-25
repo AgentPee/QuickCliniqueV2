@@ -58,6 +58,11 @@ async function refreshAppointments() {
             
             // Update appointments table
             updateAppointmentsTable(result.data.appointments);
+            
+            // Update emergencies table
+            if (result.data.emergencies) {
+                updateEmergenciesTable(result.data.emergencies);
+            }
         }
     } catch (error) {
         console.error('Error refreshing appointments:', error);
@@ -573,4 +578,111 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('cancelAppointmentForm').reset();
         });
     }
+
+    // Load emergencies on page load
+    loadEmergencies();
 });
+
+// Load emergencies table
+async function loadEmergencies() {
+    try {
+        const response = await fetch('/Appointments/GetManageData');
+        const result = await response.json();
+        
+        if (result.success && result.data && result.data.emergencies) {
+            updateEmergenciesTable(result.data.emergencies);
+        }
+    } catch (error) {
+        console.error('Error loading emergencies:', error);
+    }
+}
+
+// Update emergencies table
+function updateEmergenciesTable(emergencies) {
+    const tbody = document.getElementById('emergenciesTableBody');
+    const countEl = document.getElementById('emergencyTableCount');
+    
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (emergencies.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">
+                    <div class="no-appointments">
+                        <i class="fas fa-shield-alt"></i>
+                        <h5>No Emergency Schedules</h5>
+                        <p>There are no emergency requests at this time.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        if (countEl) countEl.textContent = 'No emergencies';
+        return;
+    }
+    
+    if (countEl) {
+        countEl.textContent = `Showing ${emergencies.length} emergency${emergencies.length !== 1 ? 's' : ''}`;
+    }
+    
+    // Sort emergencies by created date descending (most recent first)
+    const sortedEmergencies = emergencies.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB.getTime() - dateA.getTime();
+    });
+    
+    // Add rows
+    sortedEmergencies.forEach(emergency => {
+        const statusClass = emergency.isResolved ? 'resolved' : 'active';
+        const statusText = emergency.isResolved ? 'Resolved' : 'Active';
+        const statusBadgeClass = emergency.isResolved ? 'status-completed' : 'status-pending';
+        
+        const createdAt = emergency.createdAt 
+            ? new Date(emergency.createdAt).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : 'Unknown';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <div class="patient-info">
+                    <i class="fas fa-user-circle patient-icon"></i>
+                    <span>${escapeHtml(emergency.studentName || 'Unknown')}</span>
+                </div>
+            </td>
+            <td>
+                <span class="queue-badge">${emergency.studentIdNumber || 'N/A'}</span>
+            </td>
+            <td>
+                <div class="symptoms-text" title="${escapeHtml(emergency.location || '')}">
+                    <i class="fas fa-map-marker-alt"></i> ${escapeHtml(emergency.location || 'Not specified')}
+                </div>
+            </td>
+            <td>
+                <div class="symptoms-text" title="${escapeHtml(emergency.needs || '')}">
+                    <i class="fas fa-tools"></i> ${escapeHtml(emergency.needs || 'Not specified')}
+                </div>
+            </td>
+            <td>
+                <div class="date-booked">
+                    <i class="fas fa-clock"></i> ${createdAt}
+                </div>
+            </td>
+            <td>
+                <span class="status-badge ${statusBadgeClass}">
+                    ${emergency.isResolved ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>'}
+                    ${statusText}
+                </span>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}

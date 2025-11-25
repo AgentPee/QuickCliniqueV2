@@ -420,11 +420,17 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.Schedule.Date)
-                .ThenByDescending(a => a.Schedule.StartTime)
+                .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
                 .ThenByDescending(a => a.QueueNumber)
                 .ThenByDescending(a => a.DateBooked)
                 .ToListAsync();
+
+            var emergencies = await _context.Emergencies
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.Emergencies = emergencies;
 
             if (IsAjaxRequest())
                 return Json(new { success = true, data = appointments });
@@ -734,8 +740,8 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.Schedule.Date)
-                .ThenByDescending(a => a.Schedule.StartTime)
+                .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
                 .ThenByDescending(a => a.QueueNumber)
                 .ThenByDescending(a => a.DateBooked)
                 .ToListAsync();
@@ -764,6 +770,21 @@ namespace QuickClinique.Controllers
                 })
                 .ToListAsync();
 
+            // Get all emergencies
+            var emergencies = await _context.Emergencies
+                .OrderByDescending(e => e.CreatedAt)
+                .Select(e => new {
+                    emergencyId = e.EmergencyId,
+                    studentId = e.StudentId,
+                    studentName = e.StudentName,
+                    studentIdNumber = e.StudentIdNumber,
+                    location = e.Location,
+                    needs = e.Needs,
+                    isResolved = e.IsResolved,
+                    createdAt = e.CreatedAt
+                })
+                .ToListAsync();
+
             return Json(new { 
                 success = true, 
                 data = new {
@@ -787,7 +808,8 @@ namespace QuickClinique.Controllers
                         symptoms = a.Symptoms,
                         dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
                     }).ToList(),
-                    todaysAppointments = todaysAppointments
+                    todaysAppointments = todaysAppointments,
+                    emergencies = emergencies
                 }
             });
         }

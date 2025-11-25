@@ -1083,6 +1083,13 @@ namespace QuickClinique.Controllers
                 .OrderByDescending(a => a.DateBooked)
                 .ToListAsync();
 
+            var emergencies = await _context.Emergencies
+                .Where(e => e.StudentId == studentId.Value)
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.Emergencies = emergencies;
+
             return View(appointments);
         }
 
