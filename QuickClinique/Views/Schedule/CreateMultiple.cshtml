@@ -3,11 +3,23 @@
 @{
     ViewData["Title"] = "Create Multiple Schedules";
     Layout = "_Layout";
+}
 
-
+@section Styles {
+    <link rel="stylesheet" href="~/css/createM.css" asp-append-version="true" />
+    <style>
+        .header {
+            display: none !important;
+        }
+    </style>
 }
 
 <div class="container-fluid">
+    <div class="back-button-container mb-3">
+        <a href="@Url.Action("Availability", "Schedule")" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Availability
+        </a>
+    </div>
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -66,11 +78,11 @@
                             <label class="control-label">Days of Week (Optional - select none for all days)</label>
                             <div class="row mt-2">
                                 @{
-                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
                                 }
                                 @foreach (var day in daysOfWeek)
                                 {
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="SelectedDays" value="@day"
                                                    id="day-@day" @(Model.SelectedDays?.Contains(day) == true ? "checked" : "")>
@@ -87,9 +99,6 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-plus-circle"></i> Create Schedules
                             </button>
-                            <a asp-action="CreateQuick" class="btn btn-outline-primary">
-                                <i class="fas fa-bolt"></i> Quick Create
-                            </a>
                             <a asp-action="Availability" class="btn btn-secondary">Back to List</a>
                         </div>
                     </form>
@@ -152,13 +161,16 @@
             const currentDate = new Date(startDate);
             while (currentDate <= endDate) {
                 const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-                if (selectedDays.length === 0 || selectedDays.includes(dayName)) {
-                    schedules.push({
-                        date: currentDate.toISOString().split('T')[0],
-                        day: dayName,
-                        startTime: startTime,
-                        endTime: endTime
-                    });
+                // Always exclude Sunday
+                if (dayName !== 'Sunday') {
+                    if (selectedDays.length === 0 || selectedDays.includes(dayName)) {
+                        schedules.push({
+                            date: currentDate.toISOString().split('T')[0],
+                            day: dayName,
+                            startTime: startTime,
+                            endTime: endTime
+                        });
+                    }
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
