@@ -795,7 +795,6 @@ namespace QuickClinique.Controllers
                     int age = 0;
                     if (nextAppointment.Patient?.Birthdate.HasValue == true)
                     {
-                        var today = DateOnly.FromDateTime(DateTime.Today);
                         age = today.Year - nextAppointment.Patient.Birthdate.Value.Year;
                         if (nextAppointment.Patient.Birthdate.Value > today.AddYears(-age))
                             age--;
