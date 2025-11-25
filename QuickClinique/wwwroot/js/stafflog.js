@@ -56,6 +56,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Toggle password visibility
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId) || document.querySelector(`input[name="${inputId}"]`);
+    if (!passwordInput) return;
+    
+    const toggleIcon = passwordInput.parentElement.querySelector('.toggle-password');
+    if (!toggleIcon) return;
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = '🙈';
+        toggleIcon.setAttribute('aria-label', 'Hide password');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = '👁️';
+        toggleIcon.setAttribute('aria-label', 'Show password');
+    }
+
+    // Focus back on the input for better UX
+    passwordInput.focus();
+}
+
 // Keyboard navigation support
 document.addEventListener('keydown', function (e) {
     // Enter key to submit forms

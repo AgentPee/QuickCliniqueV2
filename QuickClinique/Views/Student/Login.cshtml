@@ -63,9 +63,9 @@
 
                     <div class="input-group">
                         <label asp-for="Password" class="control-label">Password</label>
-                        <input asp-for="Password" class="form-control" type="password" required />
-                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <input asp-for="Password" id="Password" class="form-control" type="password" required />
                         <span class="toggle-password" onclick="togglePassword('Password')">👁️</span>
+                        <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
                     <div class="form-options">
