@@ -24,6 +24,10 @@
                         {
                             logoLink = Url.Action("Index", "Dashboard");
                         }
+                        else if (Context.Session.GetInt32("StudentId") != null)
+                        {
+                            logoLink = Url.Action("Dashboard", "Student");
+                        }
                     }
 
                     <a class="navbar-brand" href="@logoLink">

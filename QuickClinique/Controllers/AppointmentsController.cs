@@ -338,12 +338,21 @@ namespace QuickClinique.Controllers
         {
             try
             {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+                
                 var query = _context.Schedules
-                    .Where(s => s.IsAvailable == "Yes" && s.Date >= DateOnly.FromDateTime(DateTime.Now));
+                    .Where(s => s.IsAvailable == "Yes" && s.Date >= today);
 
                 if (date.HasValue)
                 {
                     query = query.Where(s => s.Date == date.Value);
+                    
+                    // If the selected date is today, filter out past time slots
+                    if (date.Value == today)
+                    {
+                        query = query.Where(s => s.StartTime > currentTime);
+                    }
                 }
 
                 var availableSlots = await query

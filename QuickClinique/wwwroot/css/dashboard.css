@@ -1,4 +1,7 @@
-﻿/* Base Styles */
+﻿/* Flatpickr CSS */
+@import url('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
+
+/* Base Styles */
 * {
     margin: 0;
     padding: 0;
