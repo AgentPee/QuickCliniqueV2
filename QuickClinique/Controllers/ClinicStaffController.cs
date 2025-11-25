@@ -158,7 +158,7 @@ namespace QuickClinique.Controllers
         // POST: Clinicstaff/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber")] Clinicstaff clinicstaff, string? newPassword)
+        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
         {
             Console.WriteLine($"=== EDIT POST STARTED ===");
             Console.WriteLine($"ID: {id}, ClinicStaffId: {clinicstaff.ClinicStaffId}");
@@ -175,6 +175,36 @@ namespace QuickClinique.Controllers
             ModelState.Remove("Password");
             ModelState.Remove("Notifications");
             ModelState.Remove("newPassword");
+            ModelState.Remove("confirmPassword");
+
+            // Validate password confirmation if new password is provided
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                if (string.IsNullOrWhiteSpace(confirmPassword))
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Please confirm your password." });
+                    ModelState.AddModelError("confirmPassword", "Please confirm your password.");
+                }
+                else if (newPassword != confirmPassword)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Passwords do not match." });
+                    ModelState.AddModelError("confirmPassword", "Passwords do not match.");
+                }
+                else if (newPassword.Length < 6)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Password must be at least 6 characters long." });
+                    ModelState.AddModelError("newPassword", "Password must be at least 6 characters long.");
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Please enter a new password first." });
+                ModelState.AddModelError("confirmPassword", "Please enter a new password first.");
+            }
 
             Console.WriteLine($"ModelState IsValid after removals: {ModelState.IsValid}");
 
