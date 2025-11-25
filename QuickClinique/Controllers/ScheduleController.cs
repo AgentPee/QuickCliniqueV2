@@ -387,6 +387,10 @@ namespace QuickClinique.Controllers
         // Helper method to check if schedule should be created for specific day
         private bool ShouldCreateForDay(DateOnly date, List<string>? selectedDays)
         {
+            // Always exclude Sunday
+            if (date.DayOfWeek == DayOfWeek.Sunday)
+                return false;
+
             if (selectedDays == null || !selectedDays.Any())
                 return true;
 

@@ -202,6 +202,47 @@
             </div>
         </div>
     </section>
+
+<!-- Reschedule Appointment Modal -->
+<div id="rescheduleModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content reschedule-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-alt"></i> Reschedule Appointment</h3>
+            <button type="button" class="modal-close" onclick="closeRescheduleModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="rescheduleForm" onsubmit="submitRescheduleForm(event)">
+            <div class="modal-body">
+                <div id="rescheduleErrorAlert" class="alert alert-danger" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="rescheduleDate">New Date <span class="text-danger">*</span></label>
+                    <input type="date" id="rescheduleDate" name="rescheduleDate" class="form-control" required>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rescheduleTime">New Time <span class="text-danger">*</span></label>
+                    <input type="time" id="rescheduleTime" name="rescheduleTime" class="form-control" required>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rescheduleReason">Reason for Rescheduling <span class="text-danger">*</span></label>
+                    <textarea id="rescheduleReason" name="rescheduleReason" class="form-control" rows="4" required placeholder="Please provide a reason for rescheduling..."></textarea>
+                    <div class="invalid-feedback"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitRescheduleBtn">
+                    <i class="fas fa-calendar-check"></i> Reschedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
     
 @section Scripts {
     <script>
@@ -1119,7 +1160,7 @@
             // Update "Waiting Count"
             const waitingCountElement = document.getElementById('waitingCount');
             waitingCountElement.textContent = data.waitingCount + ' patient(s)';
-            waitingCountElement.style.color = data.waitingCount > 0 ? '#007bff' : '#6c757d';
+            waitingCountElement.style.color = data.waitingCount > 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.8)';
 
             // Update user's queue information
             const queueMessageElement = document.getElementById('queueMessage');
@@ -1127,7 +1168,7 @@
 
             if (data.userQueueNumber) {
                 // User has an appointment today
-                userQueueNumberElement.innerHTML = '<span style="font-size: 2rem; font-weight: bold; color: #007bff;">' +
+                userQueueNumberElement.innerHTML = '<span style="font-size: 2rem; font-weight: bold; color: #FFFFFF;">' +
                     '#' + data.userQueueNumber + '</span>';
 
                 // Show status message based on queue status
@@ -1138,7 +1179,7 @@
                 switch (data.userQueueStatus) {
                     case 'Waiting':
                         statusIcon = '<i class="fas fa-clock"></i>';
-                        statusColor = '#ffc107';
+                        statusColor = '#FFFFFF';
                         if (data.userPosition) {
                             statusMessage = 'You are #' + data.userPosition + ' in line. Please wait for your turn.';
                         } else {
@@ -1150,7 +1191,7 @@
                         const estimatedWaitTimeElement = document.getElementById('estimatedWaitTime');
                         if (data.estimatedWaitTime && estimatedWaitTimeContainer && estimatedWaitTimeElement) {
                             estimatedWaitTimeContainer.style.display = 'block';
-                            estimatedWaitTimeElement.innerHTML = '<span style="font-size: 1.5rem; font-weight: bold; color: #ffc107;">' +
+                            estimatedWaitTimeElement.innerHTML = '<span style="font-size: 1.5rem; font-weight: bold; color: #FFFFFF;">' +
                                 data.estimatedWaitTime + ' <small style="font-size: 1rem;">minutes</small></span>';
                         }
                         break;
@@ -1172,7 +1213,7 @@
                         break;
                     default:
                         statusIcon = '<i class="fas fa-info-circle"></i>';
-                        statusColor = '#007bff';
+                        statusColor = '#FFFFFF';
                         statusMessage = 'You have an appointment today.';
                         // Hide wait time for other statuses
                         const waitTimeContainerDefault = document.getElementById('estimatedWaitTimeContainer');
@@ -1202,7 +1243,7 @@
             
             // Pulse the status indicator to show it's updating
             if (statusIndicator) {
-                statusIndicator.style.color = '#ffc107'; // Yellow during update
+                statusIndicator.style.color = '#FFFFFF'; // White during update
                 setTimeout(() => {
                     statusIndicator.style.color = '#28a745'; // Green when done
                 }, 500);    
@@ -1288,7 +1329,23 @@
                 return;
             }
 
-            appointments.sort((a, b) => new Date(b.dateBooked) - new Date(a.dateBooked));
+            // Sort by schedule date descending (latest first), then by start time descending, then by date booked descending
+            appointments.sort((a, b) => {
+                // First, sort by schedule date (descending - latest first)
+                const dateA = a.schedule?.date ? new Date(a.schedule.date) : new Date(0);
+                const dateB = b.schedule?.date ? new Date(b.schedule.date) : new Date(0);
+                if (dateB.getTime() !== dateA.getTime()) {
+                    return dateB.getTime() - dateA.getTime();
+                }
+                // If dates are equal, sort by start time (descending - latest first)
+                const timeA = a.schedule?.startTime || '';
+                const timeB = b.schedule?.startTime || '';
+                if (timeB !== timeA) {
+                    return timeB.localeCompare(timeA);
+                }
+                // If times are equal, sort by date booked (descending - latest first)
+                return new Date(b.dateBooked) - new Date(a.dateBooked);
+            });
 
             const recentAppointments = appointments.slice(0, 10);
 
@@ -1403,31 +1460,125 @@
             }
         }
 
-        // Reschedule Patient Appointment
-        async function reschedulePatientAppointment(appointmentId) {
-            // Prompt for new date
-            const newDate = prompt('Please enter the new date for your appointment (YYYY-MM-DD):');
+        // Reschedule Patient Appointment - Opens Modal
+        let currentRescheduleAppointmentId = null;
+
+        function reschedulePatientAppointment(appointmentId) {
+            currentRescheduleAppointmentId = appointmentId;
+            openRescheduleModal();
+        }
+
+        function openRescheduleModal() {
+            const modal = document.getElementById('rescheduleModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Set today's date as minimum
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('rescheduleDate').min = today;
+                // Set tomorrow's date as default
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('rescheduleDate').value = tomorrow.toISOString().split('T')[0];
+                // Set default time (9:00 AM)
+                document.getElementById('rescheduleTime').value = '09:00';
+                // Clear form
+                document.getElementById('rescheduleForm').reset();
+                document.getElementById('rescheduleDate').min = today;
+                document.getElementById('rescheduleDate').value = tomorrow.toISOString().split('T')[0];
+                document.getElementById('rescheduleTime').value = '09:00';
+                // Hide error alert
+                document.getElementById('rescheduleErrorAlert').style.display = 'none';
+                // Clear validation errors
+                document.querySelectorAll('#rescheduleModal .invalid-feedback').forEach(el => {
+                    el.textContent = '';
+                });
+                document.querySelectorAll('#rescheduleModal .form-control.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+            }
+        }
+
+        function closeRescheduleModal() {
+            const modal = document.getElementById('rescheduleModal');
+            if (modal) {
+                modal.style.display = 'none';
+                currentRescheduleAppointmentId = null;
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('rescheduleModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeRescheduleModal();
+                    }
+                });
+            }
+        });
+
+        async function submitRescheduleForm(event) {
+            event.preventDefault();
             
-            if (!newDate) {
+            if (!currentRescheduleAppointmentId) {
+                alert('Error: No appointment selected.');
                 return;
             }
 
-            // Validate date format
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(newDate)) {
-                alert('Invalid date format. Please use YYYY-MM-DD format.');
+            const form = document.getElementById('rescheduleForm');
+            const submitBtn = document.getElementById('submitRescheduleBtn');
+            const errorAlert = document.getElementById('rescheduleErrorAlert');
+            
+            // Clear previous errors
+            errorAlert.style.display = 'none';
+            errorAlert.textContent = '';
+            document.querySelectorAll('#rescheduleModal .invalid-feedback').forEach(el => {
+                el.textContent = '';
+            });
+            document.querySelectorAll('#rescheduleModal .form-control.is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+
+            // Validate required fields
+            const rescheduleDate = document.getElementById('rescheduleDate').value;
+            const rescheduleTime = document.getElementById('rescheduleTime').value;
+            const rescheduleReason = document.getElementById('rescheduleReason').value.trim();
+
+            let hasErrors = false;
+
+            if (!rescheduleDate) {
+                showRescheduleFieldError('rescheduleDate', 'New Date is required');
+                hasErrors = true;
+            } else {
+                // Check if date is in the future
+                const selectedDate = new Date(rescheduleDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (selectedDate < today) {
+                    showRescheduleFieldError('rescheduleDate', 'Please select a future date');
+                    hasErrors = true;
+                }
+            }
+
+            if (!rescheduleTime) {
+                showRescheduleFieldError('rescheduleTime', 'New Time is required');
+                hasErrors = true;
+            }
+
+            if (!rescheduleReason) {
+                showRescheduleFieldError('rescheduleReason', 'Reason for Rescheduling is required');
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
                 return;
             }
 
-            // Check if date is in the future
-            const selectedDate = new Date(newDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (selectedDate < today) {
-                alert('Please select a future date.');
-                return;
-            }
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
             try {
                 const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -1438,23 +1589,61 @@
                         'RequestVerificationToken': token,
                         'X-CSRF-TOKEN': token
                     },
-                    body: JSON.stringify({ 
-                        appointmentId: appointmentId,
-                        newDate: newDate
+                    body: JSON.stringify({
+                        appointmentId: currentRescheduleAppointmentId,
+                        newDate: rescheduleDate,
+                        newTime: rescheduleTime,
+                        reason: rescheduleReason
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
+                    // Show success message
                     alert('Appointment rescheduled successfully. Please wait for confirmation.');
-                    loadDashboardData(); // Reload appointments
+                    
+                    // Close modal
+                    closeRescheduleModal();
+                    
+                    // Reload appointments
+                    loadDashboardData();
                 } else {
-                    alert('Failed to reschedule appointment: ' + (result.error || 'Unknown error'));
+                    // Show error message
+                    if (result.error) {
+                        errorAlert.textContent = result.error;
+                        errorAlert.style.display = 'block';
+                    } else if (result.errors) {
+                        // Show field-specific errors
+                        Object.keys(result.errors).forEach(field => {
+                            const errorMessages = result.errors[field];
+                            if (errorMessages && errorMessages.length > 0) {
+                                showRescheduleFieldError(field, errorMessages[0]);
+                            }
+                        });
+                    } else {
+                        errorAlert.textContent = result.message || 'Failed to reschedule appointment. Please try again.';
+                        errorAlert.style.display = 'block';
+                    }
                 }
             } catch (error) {
-                console.error('Error rescheduling appointment:', error);
-                alert('An error occurred while rescheduling the appointment. Please try again.');
+                console.error('Error submitting reschedule form:', error);
+                errorAlert.textContent = 'An error occurred while rescheduling the appointment. Please try again.';
+                errorAlert.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Reschedule';
+            }
+        }
+
+        function showRescheduleFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.classList.add('is-invalid');
+                const feedback = field.parentElement.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                }
             }
         }
 

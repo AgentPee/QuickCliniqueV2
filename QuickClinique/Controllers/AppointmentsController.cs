@@ -419,8 +419,10 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.DateBooked)
-                .ThenBy(a => a.QueueNumber)
+                .OrderByDescending(a => a.Schedule.Date)
+                .ThenByDescending(a => a.Schedule.StartTime)
+                .ThenByDescending(a => a.QueueNumber)
+                .ThenByDescending(a => a.DateBooked)
                 .ToListAsync();
 
             if (IsAjaxRequest())
@@ -731,8 +733,34 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.DateBooked)
-                .ThenBy(a => a.QueueNumber)
+                .OrderByDescending(a => a.Schedule.Date)
+                .ThenByDescending(a => a.Schedule.StartTime)
+                .ThenByDescending(a => a.QueueNumber)
+                .ThenByDescending(a => a.DateBooked)
+                .ToListAsync();
+
+            // Get today's appointments sorted by queue number descending, then by time descending
+            var todaysAppointments = await _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Schedule)
+                .Where(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Today))
+                .OrderByDescending(a => a.QueueNumber)
+                .ThenByDescending(a => a.Schedule.StartTime)
+                .Select(a => new {
+                    appointmentId = a.AppointmentId,
+                    patientId = a.PatientId,
+                    patientName = a.Patient != null ? $"{a.Patient.FirstName} {a.Patient.LastName}" : "Unknown Patient",
+                    scheduleDate = a.Schedule.Date.ToString("MMM dd, yyyy"),
+                    startTime = a.Schedule.StartTime.ToString("h:mm tt"),
+                    endTime = a.Schedule.EndTime.ToString("h:mm tt"),
+                    timeSlot = $"{a.Schedule.StartTime.ToString("h:mm tt")} - {a.Schedule.EndTime.ToString("h:mm tt")}",
+                    appointmentStatus = a.AppointmentStatus,
+                    queueNumber = a.QueueNumber,
+                    queueStatus = a.QueueStatus,
+                    reasonForVisit = a.ReasonForVisit,
+                    symptoms = a.Symptoms,
+                    dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
+                })
                 .ToListAsync();
 
             return Json(new { 
@@ -757,7 +785,8 @@ namespace QuickClinique.Controllers
                         reasonForVisit = a.ReasonForVisit,
                         symptoms = a.Symptoms,
                         dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
-                    }).ToList()
+                    }).ToList(),
+                    todaysAppointments = todaysAppointments
                 }
             });
         }
@@ -925,7 +954,9 @@ namespace QuickClinique.Controllers
                 var appointments = await _context.Appointments
                     .Include(a => a.Schedule)
                     .Where(a => a.PatientId == studentId)
-                    .OrderByDescending(a => a.DateBooked)
+                    .OrderByDescending(a => a.Schedule.Date)
+                    .ThenByDescending(a => a.Schedule.StartTime)
+                    .ThenByDescending(a => a.DateBooked)
                     .Select(a => new
                     {
                         appointmentId = a.AppointmentId,
