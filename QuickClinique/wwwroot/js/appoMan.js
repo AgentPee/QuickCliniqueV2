@@ -101,14 +101,40 @@ function updateAppointmentsTable(appointments) {
         return;
     }
     
+    // Sort appointments by schedule date descending, then start time descending, then queue number descending
+    const sortedAppointments = appointments.sort((a, b) => {
+        // First, sort by schedule date (descending - latest first)
+        const dateA = a.scheduleDate ? new Date(a.scheduleDate) : new Date(0);
+        const dateB = b.scheduleDate ? new Date(b.scheduleDate) : new Date(0);
+        if (dateB.getTime() !== dateA.getTime()) {
+            return dateB.getTime() - dateA.getTime();
+        }
+        // If dates are equal, sort by start time (descending - latest first)
+        const timeA = a.startTime || '';
+        const timeB = b.startTime || '';
+        if (timeB !== timeA) {
+            return timeB.localeCompare(timeA);
+        }
+        // If times are equal, sort by queue number (descending - highest first)
+        const queueA = a.queueNumber || 0;
+        const queueB = b.queueNumber || 0;
+        if (queueB !== queueA) {
+            return queueB - queueA;
+        }
+        // If queue numbers are equal, sort by date booked (descending - latest first)
+        const bookedA = a.dateBooked ? new Date(a.dateBooked) : new Date(0);
+        const bookedB = b.dateBooked ? new Date(b.dateBooked) : new Date(0);
+        return bookedB.getTime() - bookedA.getTime();
+    });
+    
     // Update table count
     const tableCountEl = document.getElementById('tableCount');
     if (tableCountEl) {
-        tableCountEl.textContent = `Showing ${appointments.length} appointments`;
+        tableCountEl.textContent = `Showing ${sortedAppointments.length} appointments`;
     }
     
     // Add new rows
-    appointments.forEach(appointment => {
+    sortedAppointments.forEach(appointment => {
         const statusClass = appointment.appointmentStatus.toLowerCase().replace(' ', '-');
         const statusIcon = getStatusIcon(appointment.appointmentStatus);
         

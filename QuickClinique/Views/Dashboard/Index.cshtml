@@ -385,8 +385,21 @@
                 return;
             }
 
+            // Sort appointments by queue number descending, then by time descending
+            const sortedAppointments = appointments.sort((a, b) => {
+                // First sort by queue number (descending)
+                if (b.queueNumber !== a.queueNumber) {
+                    return (b.queueNumber || 0) - (a.queueNumber || 0);
+                }
+                // If queue numbers are equal, sort by time (descending - latest first)
+                // Extract time from timeSlot string (format: "HH:mm - HH:mm")
+                const timeA = a.timeSlot ? a.timeSlot.split(' - ')[0] : '';
+                const timeB = b.timeSlot ? b.timeSlot.split(' - ')[0] : '';
+                return timeB.localeCompare(timeA);
+            });
+
             // Add new appointments
-            appointments.forEach(appointment => {
+            sortedAppointments.forEach(appointment => {
                 const statusClass = getStatusClass(appointment.status);
                 const appointmentHtml = `
                     <div class="appointment-item">

@@ -1329,7 +1329,23 @@
                 return;
             }
 
-            appointments.sort((a, b) => new Date(b.dateBooked) - new Date(a.dateBooked));
+            // Sort by schedule date descending (latest first), then by start time descending, then by date booked descending
+            appointments.sort((a, b) => {
+                // First, sort by schedule date (descending - latest first)
+                const dateA = a.schedule?.date ? new Date(a.schedule.date) : new Date(0);
+                const dateB = b.schedule?.date ? new Date(b.schedule.date) : new Date(0);
+                if (dateB.getTime() !== dateA.getTime()) {
+                    return dateB.getTime() - dateA.getTime();
+                }
+                // If dates are equal, sort by start time (descending - latest first)
+                const timeA = a.schedule?.startTime || '';
+                const timeB = b.schedule?.startTime || '';
+                if (timeB !== timeA) {
+                    return timeB.localeCompare(timeA);
+                }
+                // If times are equal, sort by date booked (descending - latest first)
+                return new Date(b.dateBooked) - new Date(a.dateBooked);
+            });
 
             const recentAppointments = appointments.slice(0, 10);
 

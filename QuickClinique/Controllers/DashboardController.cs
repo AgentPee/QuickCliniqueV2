@@ -25,12 +25,13 @@ namespace QuickClinique.Controllers
 
             var dashboardData = new DashboardViewModel
             {
-                // Get today's appointments
+                // Get today's appointments - sorted by queue number descending, then by time descending
                 TodaysAppointments = await _context.Appointments
                     .Include(a => a.Patient)
                     .Include(a => a.Schedule)
                     .Where(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Today))
-                    .OrderBy(a => a.QueueNumber)
+                    .OrderByDescending(a => a.QueueNumber)
+                    .ThenByDescending(a => a.Schedule.StartTime)
                     .ToListAsync(),
 
                 // Get pending appointments
@@ -193,12 +194,13 @@ namespace QuickClinique.Controllers
                     totalPatients = await _context.Students.CountAsync(),
                     availableSlots = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes" && s.Date >= DateOnly.FromDateTime(DateTime.Today))
                 },
-                // Today's appointments
+                // Today's appointments - sorted by queue number descending, then by time descending
                 todaysAppointments = await _context.Appointments
                     .Include(a => a.Patient)
                     .Include(a => a.Schedule)
                     .Where(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Today))
-                    .OrderBy(a => a.QueueNumber)
+                    .OrderByDescending(a => a.QueueNumber)
+                    .ThenByDescending(a => a.Schedule.StartTime)
                     .Select(a => new
                     {
                         appointmentId = a.AppointmentId,
