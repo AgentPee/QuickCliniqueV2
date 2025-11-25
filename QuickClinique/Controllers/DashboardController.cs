@@ -284,7 +284,7 @@ namespace QuickClinique.Controllers
                     senderName = m.Sender.Name,
                     receiverName = m.Receiver.Name,
                     message = m.Message1,
-                    createdAt = m.CreatedAt,
+                    createdAt = m.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                     isSent = m.SenderId == clinicStaff.UserId
                 })
                 .ToListAsync();
@@ -348,7 +348,7 @@ namespace QuickClinique.Controllers
                 senderName = savedMessage.Sender.Name,
                 receiverName = savedMessage.Receiver.Name,
                 message = savedMessage.Message1,
-                createdAt = savedMessage.CreatedAt,
+                createdAt = savedMessage.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 isSent = true
             };
 
@@ -361,7 +361,7 @@ namespace QuickClinique.Controllers
                 senderName = savedMessage.Sender.Name,
                 receiverName = savedMessage.Receiver.Name,
                 message = savedMessage.Message1,
-                createdAt = savedMessage.CreatedAt,
+                createdAt = savedMessage.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 isSent = false // For student, this is a received message
             });
 
