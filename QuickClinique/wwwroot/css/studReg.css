@@ -458,6 +458,41 @@ input[type="date"]::-moz-calendar-picker-indicator {
     display: block;
 }
 
+/* Emergency Contact Section */
+.form-section-divider {
+    margin: 30px 0 20px 0;
+    padding-top: 25px;
+    border-top: 2px solid #e1e5e9;
+}
+
+.section-title-emergency {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title-emergency i {
+    color: #dc3545;
+    font-size: 1.5rem;
+}
+
+.section-subtitle {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.required-asterisk {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 3px;
+}
+
 .field-validation-error {
     color: #dc3545;
     font-size: 0.875rem;

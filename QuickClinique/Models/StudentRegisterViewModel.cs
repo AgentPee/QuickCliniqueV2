@@ -52,5 +52,19 @@ namespace QuickClinique.Models
         [Display(Name = "Confirm Password")]
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = null!;
+
+        // Emergency Contact Information
+        [Required(ErrorMessage = "Emergency Contact Name is required")]
+        [Display(Name = "Emergency Contact Name")]
+        public string EmergencyContactName { get; set; } = null!;
+
+        [Required(ErrorMessage = "Emergency Contact Relationship is required")]
+        [Display(Name = "Emergency Contact Relationship")]
+        public string EmergencyContactRelationship { get; set; } = null!;
+
+        [Required(ErrorMessage = "Emergency Contact Phone Number is required")]
+        [Display(Name = "Emergency Contact Phone Number")]
+        [RegularExpression(@"^09[0-9]{9}$", ErrorMessage = "Emergency contact phone number must start with 09 and be 11 digits total")]
+        public string EmergencyContactPhoneNumber { get; set; } = null!;
     }
 }

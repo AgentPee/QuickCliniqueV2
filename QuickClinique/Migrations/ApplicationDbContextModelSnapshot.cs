@@ -472,6 +472,18 @@ namespace QuickClinique.Migrations
                         .HasColumnType("varchar(500)")
                         .HasColumnName("Image");
 
+                    b.Property<string>("EmergencyContactName")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("EmergencyContactName");
+
+                    b.Property<string>("EmergencyContactPhoneNumber")
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("EmergencyContactPhoneNumber");
+
+                    b.Property<string>("EmergencyContactRelationship")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("EmergencyContactRelationship");
+
                     b.Property<string>("InsuranceReceipt")
                         .HasColumnType("varchar(500)")
                         .HasColumnName("InsuranceReceipt");

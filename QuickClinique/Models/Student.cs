@@ -33,6 +33,11 @@ public partial class Student
     public string? Image { get; set; }
     public string? InsuranceReceipt { get; set; }
 
+    // Emergency Contact Information
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactRelationship { get; set; }
+    public string? EmergencyContactPhoneNumber { get; set; }
+
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<History> Histories { get; set; } = new List<History>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
