@@ -327,22 +327,66 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     <script>
-        let messagesInterval = null;
+        let connection = null;
+        let currentUserId = null;
 
         $(document).ready(function() {
             initializeMessaging();
         });
 
-        // Initialize messaging
-        function initializeMessaging() {
-            console.log('Initializing messaging...');
+        // Initialize messaging with SignalR
+        async function initializeMessaging() {
+            console.log('Initializing messaging with SignalR...');
             
-            // Load messages on page load
-            loadMessages();
+            // First, get current user ID and load initial messages
+            await loadMessages();
+            
+            // Initialize SignalR connection
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/messageHub")
+                .withAutomaticReconnect()
+                .build();
 
-            // Auto-refresh messages every 10 seconds
-            startMessagingAutoRefresh();
+            // Handle incoming messages
+            connection.on("ReceiveMessage", function (message) {
+                console.log('Received message via SignalR:', message);
+                addMessageToChat(message);
+            });
+
+            // Handle connection events
+            connection.onreconnecting(() => {
+                console.log('SignalR reconnecting...');
+            });
+
+            connection.onreconnected(() => {
+                console.log('SignalR reconnected');
+                // Rejoin user group after reconnection
+                if (currentUserId) {
+                    connection.invoke("JoinUserGroup", currentUserId).catch(err => console.error(err));
+                }
+            });
+
+            connection.onclose(() => {
+                console.log('SignalR connection closed');
+            });
+
+            // Start connection
+            try {
+                await connection.start();
+                console.log('SignalR connected');
+
+                // Join user group after connection is established
+                if (currentUserId) {
+                    await connection.invoke("JoinUserGroup", currentUserId);
+                    console.log('Joined user group:', currentUserId);
+                }
+            } catch (err) {
+                console.error('Error starting SignalR connection:', err);
+                // Fallback to polling if SignalR fails
+                startMessagingAutoRefresh();
+            }
 
             // Send message button click
             const sendButton = document.getElementById('sendMessage');
@@ -368,6 +412,7 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
+                    currentUserId = result.currentUserId;
                     displayMessages(result.data);
                 } else {
                     console.error('Failed to load messages:', result.error);
@@ -375,6 +420,34 @@
             } catch (error) {
                 console.error('Error loading messages:', error);
             }
+        }
+
+        // Add a single message to the chat (for real-time updates)
+        function addMessageToChat(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages) return;
+
+            // Check if message already exists (prevent duplicates)
+            const existingMessage = chatMessages.querySelector(`[data-message-id="${message.messageId}"]`);
+            if (existingMessage) {
+                return;
+            }
+
+            const messageClass = message.isSent ? 'sent' : 'received';
+            const messageTime = formatMessageTime(message.createdAt);
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${messageClass}`;
+            messageElement.setAttribute('data-message-id', message.messageId);
+            messageElement.innerHTML = `
+                <div class="message-content">${escapeHtml(message.message)}</div>
+                <div class="message-time">${messageTime}</div>
+            `;
+
+            chatMessages.appendChild(messageElement);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // Display messages in the chat
@@ -439,8 +512,10 @@
                     // Clear input
                     messageInput.value = '';
 
-                    // Reload messages
-                    await loadMessages();
+                    // Message will be added via SignalR, but we can also add it immediately for better UX
+                    if (result.data) {
+                        addMessageToChat(result.data);
+                    }
                 } else {
                     alert('Failed to send message: ' + (result.error || 'Unknown error'));
                 }
@@ -482,24 +557,20 @@
             return div.innerHTML;
         }
 
-        // Start auto-refresh for messages
+        // Fallback: Start auto-refresh for messages (only used if SignalR fails)
         function startMessagingAutoRefresh() {
-            if (messagesInterval) {
-                clearInterval(messagesInterval);
-            }
-
-            messagesInterval = setInterval(function() {
+            console.log('Using polling fallback for messages');
+            return setInterval(function() {
                 loadMessages();
             }, 10000); // Refresh every 10 seconds
         }
 
-        // Stop messaging auto-refresh
-        function stopMessagingAutoRefresh() {
-            if (messagesInterval) {
-                clearInterval(messagesInterval);
-                messagesInterval = null;
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (connection) {
+                connection.stop();
             }
-        }
+        });
     </script>
 
     <script>
