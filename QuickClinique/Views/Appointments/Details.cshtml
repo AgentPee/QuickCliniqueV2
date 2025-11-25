@@ -24,6 +24,11 @@
                 <strong>Status:</strong> @Model.AppointmentStatus
                 <div class="status-subtext">
                     Queue Status: @Model.QueueStatus | Queue Number: #@Model.QueueNumber
+                    @if (Model.AppointmentStatus == "Cancelled" && !string.IsNullOrEmpty(Model.CancellationReason))
+                    {
+                        <br />
+                        <strong>Reason:</strong> @Model.CancellationReason
+                    }
                 </div>
             </div>
         </div>
