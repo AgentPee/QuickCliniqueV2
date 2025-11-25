@@ -299,6 +299,26 @@ namespace QuickClinique.Controllers
             return _context.Appointments.Any(e => e.AppointmentId == id);
         }
 
+        /// <summary>
+        /// Calculates age from a birthdate
+        /// </summary>
+        /// <param name="birthdate">The birthdate to calculate age from</param>
+        /// <returns>The age in years, or 0 if birthdate is null</returns>
+        private static int CalculateAge(DateOnly? birthdate)
+        {
+            if (!birthdate.HasValue)
+                return 0;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var age = today.Year - birthdate.Value.Year;
+            
+            // If birthday hasn't occurred this year yet, subtract 1
+            if (birthdate.Value > today.AddYears(-age))
+                age--;
+
+            return age;
+        }
+
         private bool IsAjaxRequest()
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
@@ -445,15 +465,8 @@ namespace QuickClinique.Controllers
                     // We'll create a new one for each appointment start
                     
                     // Calculate age from Birthdate if available, otherwise use request.Age or 0
-                    int age = 0;
-                    if (appointment.Patient?.Birthdate.HasValue == true)
-                    {
-                        var today = DateOnly.FromDateTime(DateTime.Today);
-                        age = today.Year - appointment.Patient.Birthdate.Value.Year;
-                        if (appointment.Patient.Birthdate.Value > today.AddYears(-age))
-                            age--;
-                    }
-                    else if (request.Age.HasValue)
+                    int age = CalculateAge(appointment.Patient?.Birthdate);
+                    if (age == 0 && request.Age.HasValue)
                     {
                         age = request.Age.Value;
                     }
@@ -792,13 +805,7 @@ namespace QuickClinique.Controllers
                      request.OxygenSaturation.HasValue || request.Bmi.HasValue || request.Allergies != null))
                 {
                     // Calculate age from Birthdate if available
-                    int age = 0;
-                    if (nextAppointment.Patient?.Birthdate.HasValue == true)
-                    {
-                        age = today.Year - nextAppointment.Patient.Birthdate.Value.Year;
-                        if (nextAppointment.Patient.Birthdate.Value > today.AddYears(-age))
-                            age--;
-                    }
+                    int age = CalculateAge(nextAppointment.Patient?.Birthdate);
                     
                     // Get gender from patient if available
                     string gender = nextAppointment.Patient?.Gender ?? "Not specified";
@@ -1379,14 +1386,7 @@ namespace QuickClinique.Controllers
                 }
 
                 // Calculate age from Birthdate if available
-                int age = 0;
-                if (appointment.Patient?.Birthdate.HasValue == true)
-                {
-                    var today = DateOnly.FromDateTime(DateTime.Today);
-                    age = today.Year - appointment.Patient.Birthdate.Value.Year;
-                    if (appointment.Patient.Birthdate.Value > today.AddYears(-age))
-                        age--;
-                }
+                int age = CalculateAge(appointment.Patient?.Birthdate);
                 
                 // Get gender from patient if available
                 string gender = appointment.Patient?.Gender ?? "Not specified";
