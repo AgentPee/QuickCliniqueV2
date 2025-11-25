@@ -471,6 +471,225 @@ namespace QuickClinique.Controllers
 
             return Json(new { success = true, message = "Emergency marked as resolved" });
         }
+
+        // POST: Dashboard/CreateWalkInAppointment - Create walk-in appointment
+        [HttpPost]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> CreateWalkInAppointment([FromBody] CreateWalkInAppointmentRequest request)
+        {
+            try
+            {
+                // Validate request
+                if (request == null)
+                {
+                    return Json(new { success = false, error = "Invalid request data" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.StudentIdNumber))
+                {
+                    return Json(new { success = false, error = "Student ID Number is required" });
+                }
+
+                if (!int.TryParse(request.StudentIdNumber, out int studentIdNumber))
+                {
+                    return Json(new { success = false, error = "Invalid Student ID Number format" });
+                }
+
+                // Validate student ID exists
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.Idnumber == studentIdNumber);
+
+                if (student == null)
+                {
+                    return Json(new { 
+                        success = false, 
+                        error = "Student ID not found. Appointment cannot be created." 
+                    });
+                }
+
+                // Validate other required fields
+                if (string.IsNullOrWhiteSpace(request.StudentFullName))
+                {
+                    return Json(new { success = false, error = "Student Full Name is required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.AppointmentDate))
+                {
+                    return Json(new { success = false, error = "Appointment Date is required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.AppointmentTime))
+                {
+                    return Json(new { success = false, error = "Appointment Time is required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.ReasonForVisit))
+                {
+                    return Json(new { success = false, error = "Reason for Visit is required" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.PriorityLevel))
+                {
+                    return Json(new { success = false, error = "Priority Level is required" });
+                }
+
+                // Parse date and time
+                if (!DateOnly.TryParse(request.AppointmentDate, out DateOnly appointmentDate))
+                {
+                    return Json(new { success = false, error = "Invalid appointment date format" });
+                }
+
+                if (!TimeOnly.TryParse(request.AppointmentTime, out TimeOnly appointmentTime))
+                {
+                    return Json(new { success = false, error = "Invalid appointment time format" });
+                }
+
+                // Calculate end time (default to 30 minutes after start time)
+                // Convert to DateTime, add minutes, then convert back to TimeOnly
+                var dateTime = appointmentDate.ToDateTime(appointmentTime);
+                var endDateTime = dateTime.AddMinutes(30);
+                var endTime = TimeOnly.FromDateTime(endDateTime);
+
+                // Find or create schedule for this date and time
+                var schedule = await _context.Schedules
+                    .FirstOrDefaultAsync(s => s.Date == appointmentDate && 
+                                           s.StartTime == appointmentTime &&
+                                           s.EndTime == endTime);
+
+                if (schedule == null)
+                {
+                    // Create a new schedule for walk-in
+                    schedule = new Schedule
+                    {
+                        Date = appointmentDate,
+                        StartTime = appointmentTime,
+                        EndTime = endTime,
+                        IsAvailable = "No" // Mark as unavailable since it's being used
+                    };
+                    _context.Schedules.Add(schedule);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // Mark schedule as unavailable if it's available
+                    if (schedule.IsAvailable == "Yes")
+                    {
+                        schedule.IsAvailable = "No";
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                // Get today's date for queue calculation
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                int queueNumber;
+
+                // Handle queue placement based on priority
+                if (request.PriorityLevel == "Priority")
+                {
+                    // Priority: Place immediately next in queue
+                    // Find the current "In Progress" appointment or the next waiting appointment
+                    var currentAppointment = await _context.Appointments
+                        .Include(a => a.Schedule)
+                        .Where(a => a.Schedule.Date == today && 
+                                   a.AppointmentStatus == "In Progress")
+                        .FirstOrDefaultAsync();
+
+                    if (currentAppointment != null)
+                    {
+                        // Place right after the current appointment
+                        queueNumber = currentAppointment.QueueNumber + 1;
+                        
+                        // Shift all subsequent appointments by 1
+                        var subsequentAppointments = await _context.Appointments
+                            .Include(a => a.Schedule)
+                            .Where(a => a.Schedule.Date == today && 
+                                       a.QueueNumber >= queueNumber)
+                            .ToListAsync();
+
+                        foreach (var appt in subsequentAppointments)
+                        {
+                            appt.QueueNumber += 1;
+                        }
+                    }
+                    else
+                    {
+                        // No current appointment, place at the front
+                        var firstWaiting = await _context.Appointments
+                            .Include(a => a.Schedule)
+                            .Where(a => a.Schedule.Date == today && 
+                                       (a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "Pending") &&
+                                       a.QueueStatus == "Waiting")
+                            .OrderBy(a => a.QueueNumber)
+                            .FirstOrDefaultAsync();
+
+                        if (firstWaiting != null)
+                        {
+                            queueNumber = firstWaiting.QueueNumber;
+                            
+                            // Shift all appointments from this queue number onwards
+                            var subsequentAppointments = await _context.Appointments
+                                .Include(a => a.Schedule)
+                                .Where(a => a.Schedule.Date == today && 
+                                           a.QueueNumber >= queueNumber)
+                                .ToListAsync();
+
+                            foreach (var appt in subsequentAppointments)
+                            {
+                                appt.QueueNumber += 1;
+                            }
+                        }
+                        else
+                        {
+                            // No appointments today, start at 1
+                            queueNumber = 1;
+                        }
+                    }
+                }
+                else
+                {
+                    // Regular: Place at the end of the queue
+                    var lastQueue = await _context.Appointments
+                        .Include(a => a.Schedule)
+                        .Where(a => a.Schedule.Date == today)
+                        .OrderByDescending(a => a.QueueNumber)
+                        .FirstOrDefaultAsync();
+                    
+                    queueNumber = (lastQueue?.QueueNumber ?? 0) + 1;
+                }
+
+                // Create the appointment
+                var appointment = new Appointment
+                {
+                    PatientId = student.StudentId,
+                    ScheduleId = schedule.ScheduleId,
+                    ReasonForVisit = request.ReasonForVisit,
+                    Symptoms = "Walk-in appointment",
+                    DateBooked = DateOnly.FromDateTime(DateTime.Now),
+                    AppointmentStatus = "Confirmed", // Walk-ins are automatically confirmed
+                    QueueStatus = "Waiting",
+                    QueueNumber = queueNumber
+                };
+
+                _context.Appointments.Add(appointment);
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = "Appointment successfully added.",
+                    appointmentId = appointment.AppointmentId,
+                    queueNumber = appointment.QueueNumber
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating walk-in appointment: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while creating the appointment. Please try again." 
+                });
+            }
+        }
     }
 
     public class DashboardViewModel
@@ -501,5 +720,15 @@ namespace QuickClinique.Controllers
     public class MarkEmergencyResolvedRequest
     {
         public int EmergencyId { get; set; }
+    }
+
+    public class CreateWalkInAppointmentRequest
+    {
+        public string StudentFullName { get; set; } = string.Empty;
+        public string StudentIdNumber { get; set; } = string.Empty;
+        public string AppointmentDate { get; set; } = string.Empty;
+        public string AppointmentTime { get; set; } = string.Empty;
+        public string ReasonForVisit { get; set; } = string.Empty;
+        public string PriorityLevel { get; set; } = string.Empty;
     }
 }

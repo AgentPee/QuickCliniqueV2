@@ -2095,3 +2095,313 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
 }
+
+/* Walk-In Patient Intake Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.walk-in-modal {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: slideDown 0.4s ease-out;
+}
+
+.walk-in-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.modal-header {
+    padding: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-header h3 i {
+    font-size: 1.75rem;
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.modal-body {
+    padding: 2rem;
+    flex: 1;
+    background: var(--white);
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 2px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Form Styles */
+.walk-in-modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.walk-in-modal .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.walk-in-modal .form-group .form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--white);
+    color: var(--text-dark);
+    font-family: inherit;
+}
+
+.walk-in-modal .form-group .form-control:focus {
+    outline: none;
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    background: var(--white);
+}
+
+.walk-in-modal .form-group .form-control.is-invalid {
+    border-color: var(--danger);
+    background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+}
+
+.walk-in-modal .form-group .invalid-feedback {
+    display: block;
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    padding-left: 0.5rem;
+}
+
+.walk-in-modal .form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.walk-in-modal .form-row .form-group {
+    flex: 1;
+}
+
+.walk-in-modal .text-danger {
+    color: var(--danger);
+}
+
+/* Button Styles */
+.walk-in-modal .btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.walk-in-modal .btn-primary {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+    box-shadow: 0 4px 14px rgba(78, 205, 196, 0.4);
+}
+
+.walk-in-modal .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(78, 205, 196, 0.5);
+}
+
+.walk-in-modal .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.walk-in-modal .btn-secondary {
+    background: linear-gradient(135deg, #6C757D 0%, #495057 100%);
+    color: var(--white);
+    box-shadow: 0 4px 14px rgba(108, 117, 125, 0.3);
+}
+
+.walk-in-modal .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(108, 117, 125, 0.4);
+}
+
+/* Alert Styles */
+.walk-in-modal .alert {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+.walk-in-modal .alert-danger {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
+    color: #991B1B;
+    border-left: 4px solid var(--danger);
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+    .walk-in-modal {
+        width: 95%;
+        max-height: 95vh;
+        margin: 1rem;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1.25rem 1.5rem;
+        flex-direction: column-reverse;
+    }
+
+    .walk-in-modal .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .walk-in-modal .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .walk-in-modal {
+        width: 98%;
+        max-height: 98vh;
+    }
+
+    .modal-header {
+        padding: 1.25rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body {
+        padding: 1.25rem;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.25rem;
+    }
+}

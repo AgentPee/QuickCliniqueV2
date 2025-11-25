@@ -1526,6 +1526,7 @@ namespace QuickClinique.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error fetching queue status: {ex.Message}");
                 return Json(new { success = false, error = "Failed to fetch queue status" });
             }
         }
