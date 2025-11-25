@@ -443,6 +443,24 @@ namespace QuickClinique.Controllers
                 {
                     // Check if a Precord already exists for this appointment (in case of re-start)
                     // We'll create a new one for each appointment start
+                    
+                    // Calculate age from Birthdate if available, otherwise use request.Age or 0
+                    int age = 0;
+                    if (appointment.Patient?.Birthdate.HasValue == true)
+                    {
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        age = today.Year - appointment.Patient.Birthdate.Value.Year;
+                        if (appointment.Patient.Birthdate.Value > today.AddYears(-age))
+                            age--;
+                    }
+                    else if (request.Age.HasValue)
+                    {
+                        age = request.Age.Value;
+                    }
+                    
+                    // Get gender from patient if available, otherwise use request.Gender or default
+                    string gender = appointment.Patient?.Gender ?? request.Gender ?? "Not specified";
+                    
                     var medicalRecord = new Precord
                     {
                         PatientId = appointment.PatientId,
@@ -450,8 +468,8 @@ namespace QuickClinique.Controllers
                         Medications = "None",
                         Allergies = request.Allergies ?? "None",
                         Name = appointment.Patient?.FullName ?? "Unknown",
-                        Age = request.Age ?? 0,
-                        Gender = request.Gender ?? "Not specified",
+                        Age = age,
+                        Gender = gender,
                         Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0
                     };
 
@@ -773,6 +791,19 @@ namespace QuickClinique.Controllers
                      request.Temperature.HasValue || request.RespiratoryRate.HasValue ||
                      request.OxygenSaturation.HasValue || request.Bmi.HasValue || request.Allergies != null))
                 {
+                    // Calculate age from Birthdate if available
+                    int age = 0;
+                    if (nextAppointment.Patient?.Birthdate.HasValue == true)
+                    {
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        age = today.Year - nextAppointment.Patient.Birthdate.Value.Year;
+                        if (nextAppointment.Patient.Birthdate.Value > today.AddYears(-age))
+                            age--;
+                    }
+                    
+                    // Get gender from patient if available
+                    string gender = nextAppointment.Patient?.Gender ?? "Not specified";
+                    
                     var medicalRecord = new Precord
                     {
                         PatientId = nextAppointment.PatientId,
@@ -780,8 +811,8 @@ namespace QuickClinique.Controllers
                         Medications = "None",
                         Allergies = request.Allergies ?? "None",
                         Name = nextAppointment.Patient?.FullName ?? "Unknown",
-                        Age = 0, // Age removed from triage, will be set from patient profile if available
-                        Gender = "Not specified", // Gender removed from triage, will be set from patient profile if available
+                        Age = age,
+                        Gender = gender,
                         Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0,
                         PulseRate = request.PulseRate,
                         BloodPressure = request.BloodPressure,
@@ -1348,6 +1379,19 @@ namespace QuickClinique.Controllers
                         .FirstOrDefaultAsync();
                 }
 
+                // Calculate age from Birthdate if available
+                int age = 0;
+                if (appointment.Patient?.Birthdate.HasValue == true)
+                {
+                    var today = DateOnly.FromDateTime(DateTime.Today);
+                    age = today.Year - appointment.Patient.Birthdate.Value.Year;
+                    if (appointment.Patient.Birthdate.Value > today.AddYears(-age))
+                        age--;
+                }
+                
+                // Get gender from patient if available
+                string gender = appointment.Patient?.Gender ?? "Not specified";
+                
                 // Create or update medical record (Precord)
                 var medicalRecord = existingPrecord != null 
                     ? existingPrecord // Update existing record from triage
@@ -1355,8 +1399,8 @@ namespace QuickClinique.Controllers
                     {
                         PatientId = model.PatientId,
                         Name = appointment.Patient?.FullName ?? "Unknown",
-                        Age = 0,
-                        Gender = "Not specified",
+                        Age = age,
+                        Gender = gender,
                         Bmi = 0,
                         Allergies = "None"
                     };
@@ -1364,6 +1408,16 @@ namespace QuickClinique.Controllers
                 // Update diagnosis and medications
                 medicalRecord.Diagnosis = model.Diagnosis;
                 medicalRecord.Medications = model.Medications;
+                
+                // Update age and gender if not already set from triage
+                if (existingPrecord == null || existingPrecord.Age == 0)
+                {
+                    medicalRecord.Age = age;
+                }
+                if (existingPrecord == null || string.IsNullOrWhiteSpace(existingPrecord.Gender) || existingPrecord.Gender == "Not specified")
+                {
+                    medicalRecord.Gender = gender;
+                }
 
                 // Only add if creating new record (not updating existing)
                 if (existingPrecord == null)

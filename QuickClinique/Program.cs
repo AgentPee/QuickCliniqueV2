@@ -1116,6 +1116,37 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] EmergencyContactPhoneNumber column already exists in students table.");
             }
 
+            // Update precords table with age and gender from students table
+            Console.WriteLine("[INIT] Updating precords table with age and gender from students table...");
+            try
+            {
+                // Update Gender from students table where PatientID matches StudentID
+                command.CommandText = @"
+                    UPDATE precords p
+                    INNER JOIN students s ON p.PatientID = s.StudentID
+                    SET p.Gender = s.Gender
+                    WHERE s.Gender IS NOT NULL 
+                    AND s.Gender != '' 
+                    AND (p.Gender IS NULL OR p.Gender = '' OR p.Gender = 'Not specified')";
+                var genderUpdated = await command.ExecuteNonQueryAsync();
+                Console.WriteLine($"[SUCCESS] Updated Gender for {genderUpdated} precords from students table!");
+
+                // Update Age from students table (calculate from Birthdate)
+                command.CommandText = @"
+                    UPDATE precords p
+                    INNER JOIN students s ON p.PatientID = s.StudentID
+                    SET p.Age = TIMESTAMPDIFF(YEAR, s.Birthdate, CURDATE())
+                    WHERE s.Birthdate IS NOT NULL 
+                    AND (p.Age = 0 OR p.Age IS NULL)";
+                var ageUpdated = await command.ExecuteNonQueryAsync();
+                Console.WriteLine($"[SUCCESS] Updated Age for {ageUpdated} precords from students table (calculated from Birthdate)!");
+            }
+            catch (Exception updateEx)
+            {
+                Console.WriteLine($"[WARNING] Failed to update precords with age/gender from students: {updateEx.Message}");
+                // Don't throw - this is not critical for app startup
+            }
+
             // Check and create DataProtectionKeys table if it doesn't exist
             Console.WriteLine("[INIT] Checking for DataProtectionKeys table...");
             command.CommandText = @"

@@ -91,9 +91,9 @@ namespace QuickClinique.Controllers
             {
                 try
                 {
-                    // Verify patient exists
-                    var patientExists = await _context.Students.AnyAsync(s => s.StudentId == precord.PatientId);
-                    if (!patientExists)
+                    // Verify patient exists and get patient data
+                    var patient = await _context.Students.FirstOrDefaultAsync(s => s.StudentId == precord.PatientId);
+                    if (patient == null)
                     {
                         if (IsAjaxRequest())
                             return Json(new { success = false, error = "Selected patient not found. Please select a valid patient." });
@@ -101,6 +101,21 @@ namespace QuickClinique.Controllers
                         ModelState.AddModelError("PatientId", "Selected patient not found. Please select a valid patient.");
                         ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FirstName", precord.PatientId);
                         return View(precord);
+                    }
+
+                    // Populate age from Birthdate if available and age is 0
+                    if (precord.Age == 0 && patient.Birthdate.HasValue)
+                    {
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        precord.Age = today.Year - patient.Birthdate.Value.Year;
+                        if (patient.Birthdate.Value > today.AddYears(-precord.Age))
+                            precord.Age--;
+                    }
+                    
+                    // Populate gender from patient if available and gender is not set or is default
+                    if ((string.IsNullOrWhiteSpace(precord.Gender) || precord.Gender == "Not specified") && !string.IsNullOrWhiteSpace(patient.Gender))
+                    {
+                        precord.Gender = patient.Gender;
                     }
 
                     _context.Add(precord);
