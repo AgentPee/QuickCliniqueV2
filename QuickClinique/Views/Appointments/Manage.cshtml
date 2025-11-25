@@ -203,12 +203,6 @@
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         }
-                                        @if (item.AppointmentStatus == "Confirmed")
-                                        {
-                                            <button class="btn btn-primary btn-sm" onclick="showStartAppointmentModal(@item.AppointmentId)" title="Start Appointment">
-                                                <i class="fas fa-play"></i>
-                                            </button>
-                                        }
                                         @if (item.AppointmentStatus == "In Progress")
                                         {
                                             <button class="btn btn-success btn-sm" onclick="completeAppointment(@item.AppointmentId, @item.PatientId)" title="Complete Appointment">
@@ -229,6 +223,38 @@
                             </tr>
                         }
                     }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Emergency Schedules Table -->
+    <div class="table-card" style="margin-top: 2rem;">
+        <div class="table-header">
+            <h5><i class="fas fa-exclamation-triangle"></i> Emergency Schedules</h5>
+            <span class="table-count" id="emergencyTableCount">Loading...</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover" id="emergenciesTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Student Name</th>
+                        <th><i class="fas fa-id-card"></i> Student ID</th>
+                        <th><i class="fas fa-map-marker-alt"></i> Location</th>
+                        <th><i class="fas fa-tools"></i> Needs</th>
+                        <th><i class="fas fa-clock"></i> Created At</th>
+                        <th><i class="fas fa-info-circle"></i> Status</th>
+                    </tr>
+                </thead>
+                <tbody id="emergenciesTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="no-appointments">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <h5>Loading Emergency Schedules...</h5>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
