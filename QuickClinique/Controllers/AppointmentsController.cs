@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json.Serialization;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
 using QuickClinique.Services;
@@ -1031,7 +1032,11 @@ namespace QuickClinique.Controllers
 
                 appointment.AppointmentStatus = "Cancelled";
                 appointment.QueueStatus = "Cancelled";
-                appointment.CancellationReason = "Cancelled by patient";
+                
+                // Store the cancellation reason from the request, or use default if not provided
+                appointment.CancellationReason = !string.IsNullOrWhiteSpace(request.Reason) 
+                    ? request.Reason 
+                    : "Cancelled by patient";
 
                 await _context.SaveChangesAsync();
 
@@ -1051,26 +1056,35 @@ namespace QuickClinique.Controllers
                     var patientName = appointment.Patient.FullName;
                     var cancellationReason = appointment.CancellationReason;
                     
-                    // Fire-and-forget: don't await, let it run in background
+                    // Fire-and-forget: don't await, let it run in background with proper scope
                     _ = Task.Run(async () =>
                     {
-                        try
+                        // Create a new scope for the background task
+                        using (var scope = _serviceScopeFactory.CreateScope())
                         {
-                            Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Task.Run started, sending email to {patientEmail}");
-                            await _emailService.SendAppointmentCancellationEmail(
-                                patientEmail,
-                                patientName,
-                                appointmentDate,
-                                appointmentTime,
-                                cancellationReason
-                            );
-                            Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Email sent successfully to {patientEmail}");
-                        }
-                        catch (Exception emailEx)
-                        {
-                            // Log email error but don't fail the request
-                            Console.WriteLine($"[EMAIL ERROR] PatientCancelAppointment - Failed to send cancellation email to {patientEmail}: {emailEx.Message}");
-                            Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                            var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                            try
+                            {
+                                Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Task.Run started, sending email to {patientEmail}");
+                                await emailService.SendAppointmentCancellationEmail(
+                                    patientEmail,
+                                    patientName,
+                                    appointmentDate,
+                                    appointmentTime,
+                                    cancellationReason
+                                );
+                                Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Email sent successfully to {patientEmail}");
+                            }
+                            catch (Exception emailEx)
+                            {
+                                // Log email error but don't fail the request
+                                Console.WriteLine($"[EMAIL ERROR] PatientCancelAppointment - Failed to send cancellation email to {patientEmail}: {emailEx.Message}");
+                                Console.WriteLine($"[EMAIL ERROR] Stack trace: {emailEx.StackTrace}");
+                                if (emailEx.InnerException != null)
+                                {
+                                    Console.WriteLine($"[EMAIL ERROR] Inner exception: {emailEx.InnerException.Message}");
+                                }
+                            }
                         }
                     });
                 }
@@ -1177,7 +1191,11 @@ namespace QuickClinique.Controllers
         // Helper classes for patient requests
         public class PatientCancelRequest
         {
+            [JsonPropertyName("appointmentId")]
             public int AppointmentId { get; set; }
+            
+            [JsonPropertyName("reason")]
+            public string? Reason { get; set; }
         }
 
         public class PatientRescheduleRequest
