@@ -129,6 +129,11 @@ body {
     font-size: 1.5rem;
     animation: float 3s ease-in-out infinite;
     opacity: 0.3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-align: center;
 }
 
 
@@ -264,10 +269,15 @@ body {
     position: absolute;
     right: 15px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%); /* Centers vertically */
     font-size: 1.1rem;
     color: #666;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; /* Add fixed width */
+    height: 20px; /* Add fixed height */
 }
 
 /* Hide default datepicker icon and use emoji icon instead */
@@ -317,9 +327,9 @@ input[type="date"]::-moz-calendar-picker-indicator {
 
 .toggle-password {
     position: absolute;
-    right: 40px;
+    right: 15px; /* Changed from 40px to 15px */
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%); /* Centers vertically */
     cursor: pointer;
     font-size: 1.1rem;
     opacity: 0.6;
@@ -328,6 +338,11 @@ input[type="date"]::-moz-calendar-picker-indicator {
     background: none;
     border: none;
     color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; /* Add fixed width */
+    height: 20px; /* Add fixed height */
 }
 
     .toggle-password:hover {
