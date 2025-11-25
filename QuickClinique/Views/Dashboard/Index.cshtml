@@ -320,6 +320,7 @@
 @await Html.PartialAsync("_EmergencyPolling")
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     <script>
         // Update dashboard data in the background without page reload
         async function refreshDashboardData() {
@@ -618,15 +619,17 @@
         let patientDirectory = [];
         let patientDirectoryLoaded = false;
         let patientDirectoryLoading = false;
+        let connection = null;
+        let currentStaffUserId = null;
 
         // Initialize messaging when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Load patient messages on page load
-            loadPatientMessages();
+            await loadPatientMessages();
             loadPatientDirectory();
 
-            // Auto-refresh messages every 10 seconds
-            startMessagingAutoRefresh();
+            // Initialize SignalR connection
+            await initializeSignalR();
 
             // Initialize patient search interactions
             setupPatientSearchHandlers();
@@ -641,6 +644,70 @@
                 }
             });
         });
+
+        // Initialize SignalR connection
+        async function initializeSignalR() {
+            console.log('Initializing SignalR for clinic staff...');
+
+            // Get current staff user ID from the messages endpoint
+            try {
+                const response = await fetch('/Dashboard/GetMessages');
+                const result = await response.json();
+                if (result.success && result.currentUserId) {
+                    currentStaffUserId = result.currentUserId;
+                }
+            } catch (error) {
+                console.error('Error getting current user ID:', error);
+            }
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/messageHub")
+                .withAutomaticReconnect()
+                .build();
+
+            // Handle incoming messages
+            connection.on("ReceiveMessage", function (message) {
+                console.log('Received message via SignalR:', message);
+                
+                // If message is for currently selected patient, add it to chat
+                if (selectedPatientUserId && 
+                    (message.senderId === selectedPatientUserId || message.receiverId === selectedPatientUserId)) {
+                    addMessageToStaffChat(message);
+                }
+                
+                // Always refresh patient list to update last message
+                loadPatientMessages();
+            });
+
+            // Handle connection events
+            connection.onreconnecting(() => {
+                console.log('SignalR reconnecting...');
+            });
+
+            connection.onreconnected(() => {
+                console.log('SignalR reconnected');
+                // Rejoin clinic staff group after reconnection
+                connection.invoke("JoinClinicStaffGroup").catch(err => console.error(err));
+            });
+
+            connection.onclose(() => {
+                console.log('SignalR connection closed');
+            });
+
+            // Start connection
+            try {
+                await connection.start();
+                console.log('SignalR connected');
+
+                // Join clinic staff group
+                await connection.invoke("JoinClinicStaffGroup");
+                console.log('Joined clinic staff group');
+            } catch (err) {
+                console.error('Error starting SignalR connection:', err);
+                // Fallback to polling if SignalR fails
+                startMessagingAutoRefresh();
+            }
+        }
 
         // Load patient messages grouped by patient
         async function loadPatientMessages() {
@@ -969,13 +1036,41 @@
                 const messageTime = formatMessageTime(msg.createdAt);
                 
                 return `
-                    <div class="message-staff ${messageClass}">
+                    <div class="message-staff ${messageClass}" data-message-id="${msg.messageId}">
                         <div class="message-content">${escapeHtml(msg.message)}</div>
                         <div class="message-time">${messageTime}</div>
                     </div>
                 `;
             }).join('');
 
+            // Scroll to bottom
+            chatMessagesStaff.scrollTop = chatMessagesStaff.scrollHeight;
+        }
+
+        // Add a single message to the staff chat (for real-time updates)
+        function addMessageToStaffChat(message) {
+            const chatMessagesStaff = document.getElementById('chatMessagesStaff');
+            if (!chatMessagesStaff) return;
+
+            // Check if message already exists (prevent duplicates)
+            const existingMessage = chatMessagesStaff.querySelector(`[data-message-id="${message.messageId}"]`);
+            if (existingMessage) {
+                return;
+            }
+
+            const messageClass = message.isSent ? 'sent' : 'received';
+            const messageTime = formatMessageTime(message.createdAt);
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = `message-staff ${messageClass}`;
+            messageElement.setAttribute('data-message-id', message.messageId);
+            messageElement.innerHTML = `
+                <div class="message-content">${escapeHtml(message.message)}</div>
+                <div class="message-time">${messageTime}</div>
+            `;
+
+            chatMessagesStaff.appendChild(messageElement);
+            
             // Scroll to bottom
             chatMessagesStaff.scrollTop = chatMessagesStaff.scrollHeight;
         }
@@ -1018,8 +1113,10 @@
                     // Clear input
                     replyInput.value = '';
 
-                    // Reload messages for the patient
-                    await loadMessagesForPatient(selectedPatientUserId);
+                    // Message will be added via SignalR, but we can also add it immediately for better UX
+                    if (result.data) {
+                        addMessageToStaffChat(result.data);
+                    }
 
                     // Reload patient list to update last message
                     await loadPatientMessages();
@@ -1064,8 +1161,9 @@
             return div.innerHTML;
         }
 
-        // Start auto-refresh for messages
+        // Fallback: Start auto-refresh for messages (only used if SignalR fails)
         function startMessagingAutoRefresh() {
+            console.log('Using polling fallback for messages');
             if (messagesInterval) {
                 clearInterval(messagesInterval);
             }
@@ -1077,6 +1175,13 @@
                 }
             }, 10000); // Refresh every 10 seconds
         }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (connection) {
+                connection.stop();
+            }
+        });
 
         // ===== WALK-IN MODAL FUNCTIONALITY =====
         function openWalkInModal() {

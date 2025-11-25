@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
+using QuickClinique.Hubs;
 
 namespace QuickClinique.Controllers
 {
@@ -9,10 +11,12 @@ namespace QuickClinique.Controllers
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<MessageHub> _hubContext;
 
-        public DashboardController(ApplicationDbContext context)
+        public DashboardController(ApplicationDbContext context, IHubContext<MessageHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<IActionResult> Index()
@@ -324,24 +328,50 @@ namespace QuickClinique.Controllers
                 SenderId = clinicStaff.UserId,
                 ReceiverId = request.ReceiverId,
                 Message1 = request.Message,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
+            // Reload message with navigation properties for SignalR broadcast
+            var savedMessage = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .FirstOrDefaultAsync(m => m.MessageId == message.MessageId);
+
+            var messageData = new
+            {
+                messageId = savedMessage.MessageId,
+                senderId = savedMessage.SenderId,
+                receiverId = savedMessage.ReceiverId,
+                senderName = savedMessage.Sender.Name,
+                receiverName = savedMessage.Receiver.Name,
+                message = savedMessage.Message1,
+                createdAt = savedMessage.CreatedAt,
+                isSent = true
+            };
+
+            // Broadcast to student (receiver)
+            await _hubContext.Clients.Group($"user_{request.ReceiverId}").SendAsync("ReceiveMessage", new
+            {
+                messageId = savedMessage.MessageId,
+                senderId = savedMessage.SenderId,
+                receiverId = savedMessage.ReceiverId,
+                senderName = savedMessage.Sender.Name,
+                receiverName = savedMessage.Receiver.Name,
+                message = savedMessage.Message1,
+                createdAt = savedMessage.CreatedAt,
+                isSent = false // For student, this is a received message
+            });
+
+            // Broadcast to all clinic staff (shared inbox)
+            await _hubContext.Clients.Group("clinic_staff").SendAsync("ReceiveMessage", messageData);
+
             return Json(new { 
                 success = true, 
                 message = "Message sent successfully",
-                data = new {
-                    messageId = message.MessageId,
-                    senderId = message.SenderId,
-                    receiverId = message.ReceiverId,
-                    senderName = clinicStaff.User.Name,
-                    message = message.Message1,
-                    createdAt = message.CreatedAt,
-                    isSent = true
-                }
+                data = messageData
             });
         }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.DataProtection.Repositories;
 using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Middleware;
+using QuickClinique.Hubs;
 using System.Linq;
 using MySqlConnector;
 using Amazon.S3;
@@ -15,6 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 // Add services
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -244,6 +248,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<MessageHub>("/messageHub");
 
 app.MapControllerRoute(
     name: "default",
