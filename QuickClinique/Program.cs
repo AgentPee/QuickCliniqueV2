@@ -1132,10 +1132,12 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine($"[SUCCESS] Updated Gender for {genderUpdated} precords from students table!");
 
                 // Update Age from students table (calculate from Birthdate)
+                // Calculate age correctly: subtract years, then subtract 1 if birthday hasn't occurred this year
                 command.CommandText = @"
                     UPDATE precords p
                     INNER JOIN students s ON p.PatientID = s.StudentID
-                    SET p.Age = TIMESTAMPDIFF(YEAR, s.Birthdate, CURDATE())
+                    SET p.Age = YEAR(CURDATE()) - YEAR(s.Birthdate) - 
+                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(s.Birthdate, '%m%d'))
                     WHERE s.Birthdate IS NOT NULL 
                     AND (p.Age = 0 OR p.Age IS NULL)";
                 var ageUpdated = await command.ExecuteNonQueryAsync();

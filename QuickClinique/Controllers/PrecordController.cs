@@ -104,12 +104,9 @@ namespace QuickClinique.Controllers
                     }
 
                     // Populate age from Birthdate if available and age is 0
-                    if (precord.Age == 0 && patient.Birthdate.HasValue)
+                    if (precord.Age == 0)
                     {
-                        var today = DateOnly.FromDateTime(DateTime.Today);
-                        precord.Age = today.Year - patient.Birthdate.Value.Year;
-                        if (patient.Birthdate.Value > today.AddYears(-precord.Age))
-                            precord.Age--;
+                        precord.Age = CalculateAge(patient.Birthdate);
                     }
                     
                     // Populate gender from patient if available and gender is not set or is default
@@ -270,6 +267,26 @@ namespace QuickClinique.Controllers
         private bool PrecordExists(int id)
         {
             return _context.Precords.Any(e => e.RecordId == id);
+        }
+
+        /// <summary>
+        /// Calculates age from a birthdate
+        /// </summary>
+        /// <param name="birthdate">The birthdate to calculate age from</param>
+        /// <returns>The age in years, or 0 if birthdate is null</returns>
+        private static int CalculateAge(DateOnly? birthdate)
+        {
+            if (!birthdate.HasValue)
+                return 0;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var age = today.Year - birthdate.Value.Year;
+            
+            // If birthday hasn't occurred this year yet, subtract 1
+            if (birthdate.Value > today.AddYears(-age))
+                age--;
+
+            return age;
         }
 
         private bool IsAjaxRequest()
