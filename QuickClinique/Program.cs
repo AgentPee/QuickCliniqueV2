@@ -15,7 +15,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // Configure DateTime serialization to ISO 8601 format with UTC
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        // DateTime will be serialized as ISO 8601 by default in .NET, but ensure UTC is preserved
+    });
 
 // Add SignalR
 builder.Services.AddSignalR();

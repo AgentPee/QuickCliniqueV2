@@ -89,7 +89,7 @@ public class HomeController : Controller
                 senderName = m.Sender.Name,
                 receiverName = m.Receiver.Name,
                 message = m.Message1,
-                createdAt = m.CreatedAt,
+                createdAt = m.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                 isSent = m.SenderId == student.UserId
             })
             .ToListAsync();
@@ -158,7 +158,7 @@ public class HomeController : Controller
             senderName = savedMessage.Sender.Name,
             receiverName = savedMessage.Receiver.Name,
             message = savedMessage.Message1,
-            createdAt = savedMessage.CreatedAt,
+            createdAt = savedMessage.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
             isSent = true
         };
 
@@ -174,7 +174,7 @@ public class HomeController : Controller
             senderName = savedMessage.Sender.Name,
             receiverName = savedMessage.Receiver.Name,
             message = savedMessage.Message1,
-            createdAt = savedMessage.CreatedAt,
+            createdAt = savedMessage.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
             isSent = false // For clinic staff, this is a received message
         });
 
