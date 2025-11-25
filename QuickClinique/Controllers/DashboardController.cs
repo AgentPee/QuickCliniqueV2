@@ -504,6 +504,52 @@ namespace QuickClinique.Controllers
             return Json(new { success = true, message = "Emergency marked as resolved" });
         }
 
+        // GET: Dashboard/GetStudentByIdNumber - Get student by ID number
+        [HttpGet]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> GetStudentByIdNumber(string idNumber)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(idNumber))
+                {
+                    return Json(new { success = false, error = "ID Number is required" });
+                }
+
+                if (!int.TryParse(idNumber, out int studentIdNumber))
+                {
+                    return Json(new { success = false, error = "Invalid ID Number format" });
+                }
+
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.Idnumber == studentIdNumber);
+
+                if (student == null)
+                {
+                    return Json(new { success = false, error = "Student not found" });
+                }
+
+                return Json(new { 
+                    success = true, 
+                    data = new {
+                        fullName = student.FullName,
+                        firstName = student.FirstName,
+                        lastName = student.LastName,
+                        email = student.Email,
+                        phoneNumber = student.PhoneNumber
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting student by ID number: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while fetching student information." 
+                });
+            }
+        }
+
         // POST: Dashboard/CreateWalkInAppointment - Create walk-in appointment
         [HttpPost]
         [ClinicStaffOnly]
@@ -543,6 +589,15 @@ namespace QuickClinique.Controllers
                 if (string.IsNullOrWhiteSpace(request.StudentFullName))
                 {
                     return Json(new { success = false, error = "Student Full Name is required" });
+                }
+
+                // Validate that the submitted name matches the student's name from database
+                if (!string.Equals(request.StudentFullName.Trim(), student.FullName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new { 
+                        success = false, 
+                        error = "Student name does not match the ID number. Please verify the ID number." 
+                    });
                 }
 
                 if (string.IsNullOrWhiteSpace(request.AppointmentDate))
