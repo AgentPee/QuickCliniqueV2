@@ -6,7 +6,6 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard-index.css" asp-append-version="true" />
-    
 }
 
 <div class="dashboard-container">
@@ -158,9 +157,9 @@
                 <a href="@Url.Action("Analytics", "Clinicstaff")" class="action-btn">
                     <i class="fas fa-chart-bar"></i> Analytics Review
                 </a>
-                <a href="@Url.Action("Index", "Notification")" class="action-btn secondary">
-                    <i class="fas fa-bell"></i> Send Notifications
-                </a>
+                <button type="button" class="action-btn secondary" onclick="openWalkInModal()">
+                    <i class="fas fa-user-plus"></i> Walk-in Schedule
+                </button>
             </div>
 
             <!-- Recent Notifications -->
@@ -250,6 +249,71 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Walk-In Patient Intake Modal -->
+<div id="walkInModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content walk-in-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Walk-In Patient Intake</h3>
+            <button type="button" class="modal-close" onclick="closeWalkInModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="walkInForm" onsubmit="submitWalkInForm(event)">
+            <div class="modal-body">
+                <div id="walkInErrorAlert" class="alert alert-danger" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="studentFullName">Student Full Name <span class="text-danger">*</span></label>
+                    <input type="text" id="studentFullName" name="studentFullName" class="form-control" required>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentIdNumber">Student ID Number <span class="text-danger">*</span></label>
+                    <input type="text" id="studentIdNumber" name="studentIdNumber" class="form-control" required inputmode="numeric">
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="appointmentDate">Appointment Date <span class="text-danger">*</span></label>
+                        <input type="date" id="appointmentDate" name="appointmentDate" class="form-control" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="appointmentTime">Appointment Time <span class="text-danger">*</span></label>
+                        <input type="time" id="appointmentTime" name="appointmentTime" class="form-control" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reasonForVisit">Reason for Visit <span class="text-danger">*</span></label>
+                    <textarea id="reasonForVisit" name="reasonForVisit" class="form-control" rows="4" required></textarea>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="priorityLevel">Priority Level <span class="text-danger">*</span></label>
+                    <select id="priorityLevel" name="priorityLevel" class="form-control" required>
+                        <option value="">Select Priority Level</option>
+                        <option value="Priority">Priority (automatically next in queue)</option>
+                        <option value="Regular">Regular</option>
+                    </select>
+                    <div class="invalid-feedback"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeWalkInModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitWalkInBtn">
+                    <i class="fas fa-plus"></i> Add to Queue
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -1012,6 +1076,189 @@
                     loadMessagesForPatient(selectedPatientUserId);
                 }
             }, 10000); // Refresh every 10 seconds
+        }
+
+        // ===== WALK-IN MODAL FUNCTIONALITY =====
+        function openWalkInModal() {
+            const modal = document.getElementById('walkInModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Set today's date as default
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('appointmentDate').value = today;
+                // Set current time as default (rounded to nearest 15 minutes)
+                const now = new Date();
+                const minutes = Math.round(now.getMinutes() / 15) * 15;
+                now.setMinutes(minutes);
+                const timeString = now.toTimeString().slice(0, 5);
+                document.getElementById('appointmentTime').value = timeString;
+                // Clear form
+                document.getElementById('walkInForm').reset();
+                document.getElementById('appointmentDate').value = today;
+                document.getElementById('appointmentTime').value = timeString;
+                // Hide error alert
+                document.getElementById('walkInErrorAlert').style.display = 'none';
+                // Clear validation errors
+                document.querySelectorAll('.invalid-feedback').forEach(el => {
+                    el.textContent = '';
+                });
+                document.querySelectorAll('.form-control.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+            }
+        }
+
+        function closeWalkInModal() {
+            const modal = document.getElementById('walkInModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('walkInModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeWalkInModal();
+                    }
+                });
+            }
+        });
+
+        async function submitWalkInForm(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('walkInForm');
+            const submitBtn = document.getElementById('submitWalkInBtn');
+            const errorAlert = document.getElementById('walkInErrorAlert');
+            
+            // Clear previous errors
+            errorAlert.style.display = 'none';
+            errorAlert.textContent = '';
+            document.querySelectorAll('.invalid-feedback').forEach(el => {
+                el.textContent = '';
+            });
+            document.querySelectorAll('.form-control.is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+
+            // Validate required fields
+            const studentFullName = document.getElementById('studentFullName').value.trim();
+            const studentIdNumber = document.getElementById('studentIdNumber').value.trim();
+            const appointmentDate = document.getElementById('appointmentDate').value;
+            const appointmentTime = document.getElementById('appointmentTime').value;
+            const reasonForVisit = document.getElementById('reasonForVisit').value.trim();
+            const priorityLevel = document.getElementById('priorityLevel').value;
+
+            let hasErrors = false;
+
+            if (!studentFullName) {
+                showFieldError('studentFullName', 'Student Full Name is required');
+                hasErrors = true;
+            }
+
+            if (!studentIdNumber) {
+                showFieldError('studentIdNumber', 'Student ID Number is required');
+                hasErrors = true;
+            }
+
+            if (!appointmentDate) {
+                showFieldError('appointmentDate', 'Appointment Date is required');
+                hasErrors = true;
+            }
+
+            if (!appointmentTime) {
+                showFieldError('appointmentTime', 'Appointment Time is required');
+                hasErrors = true;
+            }
+
+            if (!reasonForVisit) {
+                showFieldError('reasonForVisit', 'Reason for Visit is required');
+                hasErrors = true;
+            }
+
+            if (!priorityLevel) {
+                showFieldError('priorityLevel', 'Priority Level is required');
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
+                return;
+            }
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                const response = await fetch('/Dashboard/CreateWalkInAppointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        studentFullName: studentFullName,
+                        studentIdNumber: studentIdNumber,
+                        appointmentDate: appointmentDate,
+                        appointmentTime: appointmentTime,
+                        reasonForVisit: reasonForVisit,
+                        priorityLevel: priorityLevel
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success message
+                    showMessage('Appointment successfully added.', 'success');
+                    
+                    // Close modal
+                    closeWalkInModal();
+                    
+                    // Refresh dashboard data
+                    setTimeout(() => {
+                        refreshDashboardData();
+                    }, 500);
+                } else {
+                    // Show error message
+                    if (result.error) {
+                        errorAlert.textContent = result.error;
+                        errorAlert.style.display = 'block';
+                    } else if (result.errors) {
+                        // Show field-specific errors
+                        Object.keys(result.errors).forEach(field => {
+                            const errorMessages = result.errors[field];
+                            if (errorMessages && errorMessages.length > 0) {
+                                showFieldError(field, errorMessages[0]);
+                            }
+                        });
+                    } else {
+                        errorAlert.textContent = result.message || 'Failed to create appointment. Please try again.';
+                        errorAlert.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error submitting walk-in form:', error);
+                errorAlert.textContent = 'An error occurred while creating the appointment. Please try again.';
+                errorAlert.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-plus"></i> Add to Queue';
+            }
+        }
+
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.classList.add('is-invalid');
+                const feedback = field.parentElement.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                }
+            }
         }
 
     </script>
