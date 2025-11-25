@@ -55,8 +55,8 @@
             
             <div class="current-patient">
                 <h3><i class="fas fa-user-md"></i> Currently Serving</h3>
-                <div class="patient-name">@currentPatient.Patient?.FullName</div>
-                <div class="queue-number">Queue #@currentPatient.QueueNumber</div>
+                <div class="patient-name"><i class="fas fa-user"></i> @currentPatient.Patient?.FullName</div>
+                <div class="queue-number">🎫 Queue #@currentPatient.QueueNumber</div>
                 <div class="queue-controls">
                     @if (hasWaitingPatients)
                     {
@@ -104,11 +104,9 @@
                             <div class="queue-number-badge">#@patient.QueueNumber</div>
                             <div class="patient-details">
                                 <h5>@patient.Patient?.FullName</h5>
-                                <p>@patient.ReasonForVisit</p>
                                 <p><i class="fas fa-clock"></i> @patient.Schedule?.StartTime.ToString("h:mm tt") - @patient.Schedule?.EndTime.ToString("h:mm tt")</p>
                             </div>
                         </div>
-                      
                     </div>
                 }
             }
