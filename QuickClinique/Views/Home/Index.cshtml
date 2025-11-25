@@ -1160,7 +1160,7 @@
             // Update "Waiting Count"
             const waitingCountElement = document.getElementById('waitingCount');
             waitingCountElement.textContent = data.waitingCount + ' patient(s)';
-            waitingCountElement.style.color = data.waitingCount > 0 ? '#007bff' : '#6c757d';
+            waitingCountElement.style.color = data.waitingCount > 0 ? '#FFFFFF' : 'rgba(255, 255, 255, 0.8)';
 
             // Update user's queue information
             const queueMessageElement = document.getElementById('queueMessage');
@@ -1168,7 +1168,7 @@
 
             if (data.userQueueNumber) {
                 // User has an appointment today
-                userQueueNumberElement.innerHTML = '<span style="font-size: 2rem; font-weight: bold; color: #007bff;">' +
+                userQueueNumberElement.innerHTML = '<span style="font-size: 2rem; font-weight: bold; color: #FFFFFF;">' +
                     '#' + data.userQueueNumber + '</span>';
 
                 // Show status message based on queue status
@@ -1179,7 +1179,7 @@
                 switch (data.userQueueStatus) {
                     case 'Waiting':
                         statusIcon = '<i class="fas fa-clock"></i>';
-                        statusColor = '#ffc107';
+                        statusColor = '#FFFFFF';
                         if (data.userPosition) {
                             statusMessage = 'You are #' + data.userPosition + ' in line. Please wait for your turn.';
                         } else {
@@ -1191,7 +1191,7 @@
                         const estimatedWaitTimeElement = document.getElementById('estimatedWaitTime');
                         if (data.estimatedWaitTime && estimatedWaitTimeContainer && estimatedWaitTimeElement) {
                             estimatedWaitTimeContainer.style.display = 'block';
-                            estimatedWaitTimeElement.innerHTML = '<span style="font-size: 1.5rem; font-weight: bold; color: #ffc107;">' +
+                            estimatedWaitTimeElement.innerHTML = '<span style="font-size: 1.5rem; font-weight: bold; color: #FFFFFF;">' +
                                 data.estimatedWaitTime + ' <small style="font-size: 1rem;">minutes</small></span>';
                         }
                         break;
@@ -1213,7 +1213,7 @@
                         break;
                     default:
                         statusIcon = '<i class="fas fa-info-circle"></i>';
-                        statusColor = '#007bff';
+                        statusColor = '#FFFFFF';
                         statusMessage = 'You have an appointment today.';
                         // Hide wait time for other statuses
                         const waitTimeContainerDefault = document.getElementById('estimatedWaitTimeContainer');
@@ -1243,7 +1243,7 @@
             
             // Pulse the status indicator to show it's updating
             if (statusIndicator) {
-                statusIndicator.style.color = '#ffc107'; // Yellow during update
+                statusIndicator.style.color = '#FFFFFF'; // White during update
                 setTimeout(() => {
                     statusIndicator.style.color = '#28a745'; // Green when done
                 }, 500);    
