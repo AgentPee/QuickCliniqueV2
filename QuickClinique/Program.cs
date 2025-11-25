@@ -1133,15 +1133,36 @@ using (var scope = app.Services.CreateScope())
 
                 // Update Age from students table (calculate from Birthdate)
                 // Calculate age correctly: subtract years, then subtract 1 if birthday hasn't occurred this year
+                // Also fix any records with -1 or invalid ages
                 command.CommandText = @"
                     UPDATE precords p
                     INNER JOIN students s ON p.PatientID = s.StudentID
-                    SET p.Age = YEAR(CURDATE()) - YEAR(s.Birthdate) - 
+                    SET p.Age = GREATEST(0, 
+                        YEAR(CURDATE()) - YEAR(s.Birthdate) - 
                         (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(s.Birthdate, '%m%d'))
+                    )
                     WHERE s.Birthdate IS NOT NULL 
-                    AND (p.Age = 0 OR p.Age IS NULL)";
+                    AND s.Birthdate <= CURDATE()
+                    AND (p.Age = 0 OR p.Age IS NULL OR p.Age < 0)";
                 var ageUpdated = await command.ExecuteNonQueryAsync();
                 Console.WriteLine($"[SUCCESS] Updated Age for {ageUpdated} precords from students table (calculated from Birthdate)!");
+                
+                // Fix any remaining records with negative age (safety check)
+                command.CommandText = @"
+                    UPDATE precords p
+                    INNER JOIN students s ON p.PatientID = s.StudentID
+                    SET p.Age = GREATEST(0, 
+                        YEAR(CURDATE()) - YEAR(s.Birthdate) - 
+                        (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(s.Birthdate, '%m%d'))
+                    )
+                    WHERE s.Birthdate IS NOT NULL 
+                    AND s.Birthdate <= CURDATE()
+                    AND p.Age < 0";
+                var negativeAgeFixed = await command.ExecuteNonQueryAsync();
+                if (negativeAgeFixed > 0)
+                {
+                    Console.WriteLine($"[FIXED] Corrected {negativeAgeFixed} precords with negative age values!");
+                }
             }
             catch (Exception updateEx)
             {
