@@ -31,8 +31,8 @@
                     <span class="validation-error" id="patientError"></span>
                     <div class="form-group">
                         <label for="appointmentDate">Select Date</label>
-                        <input type="date" id="appointmentDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" required>
-                        <small class="form-text text-muted">Only dates with available slots are selectable</small>
+                        <input type="text" id="appointmentDate" placeholder="Select a date" required>
+                        <small class="form-text text-muted">Past dates and unavailable dates are disabled. Only dates with available slots can be selected.</small>
                         <span class="validation-error" id="dateError"></span>
                     </div>
 
@@ -342,10 +342,12 @@
 </div>
     
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
              // Enhanced appointment functionality
         let availableSlots = [];
         let availableDates = [];
+        let flatpickrInstance = null;
 
         function initializeEnhancedAppointment() {
             const appointmentDate = document.getElementById('appointmentDate');
@@ -355,26 +357,24 @@
             availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
             availableSlotsSelect.disabled = true;
 
-            // Set minimum date to today
-            const today = new Date().toISOString().split('T')[0];
-            appointmentDate.min = today;
-
             // Load available dates when page loads
             loadAvailableDates().then(() => {
-                // Once dates are loaded, set up the date input
+                // Once dates are loaded, set up Flatpickr date input
                 setupDateInput();
-            });
-
-            // Load available slots when date changes
-            appointmentDate.addEventListener('change', function() {
-                const selectedDate = this.value;
-                if (selectedDate && isDateAvailable(selectedDate)) {
-                    loadAvailableSlots(selectedDate);
-                } else {
-                    availableSlotsSelect.innerHTML = '<option value="">Selected date is not available</option>';
-                    availableSlotsSelect.disabled = true;
+                
+                // Auto-select the first available date after Flatpickr is initialized
+                if (availableDates.length > 0 && flatpickrInstance) {
+                    const firstAvailableDate = availableDates[0];
+                    flatpickrInstance.setDate(firstAvailableDate, false);
+                    
+                    // Load slots for the first available date
+                    setTimeout(() => {
+                        loadAvailableSlots(firstAvailableDate);
+                    }, 100);
                 }
             });
+
+            // Note: Date change handling is now done in Flatpickr's onChange callback
 
             // Initialize appointment form
             const appointmentForm = document.getElementById('appointmentForm');
@@ -518,6 +518,11 @@
                     // Reset form
                     document.getElementById('appointmentForm').reset();
 
+                    // Clear Flatpickr date
+                    if (flatpickrInstance) {
+                        flatpickrInstance.clear();
+                    }
+
                     // Reset slots dropdown
                     document.getElementById('availableSlots').innerHTML = '<option value="">Select a date first</option>';
                     document.getElementById('availableSlots').disabled = true;
@@ -559,24 +564,53 @@
             }
         }
 
-        // Setup date input with available dates restriction
+        // Setup date input with Flatpickr and available dates restriction
         function setupDateInput() {
             const appointmentDate = document.getElementById('appointmentDate');
             const dateError = document.getElementById('dateError');
 
-            // Add input event listener for real-time validation
-            appointmentDate.addEventListener('input', function() {
-                const selectedDate = this.value;
-                validateSelectedDate(selectedDate);
+            // Destroy existing Flatpickr instance if it exists
+            if (flatpickrInstance) {
+                flatpickrInstance.destroy();
+                flatpickrInstance = null;
+            }
+
+            // Get today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Convert available dates to Date objects for Flatpickr
+            const enabledDates = availableDates.map(dateStr => {
+                const date = new Date(dateStr);
+                date.setHours(0, 0, 0, 0);
+                return date;
             });
 
-            // Add change event listener for additional validation
-            appointmentDate.addEventListener('change', function() {
-                const selectedDate = this.value;
-                validateSelectedDate(selectedDate);
+            // Initialize Flatpickr
+            flatpickrInstance = flatpickr(appointmentDate, {
+                minDate: today, // Disable past dates
+                dateFormat: "Y-m-d", // Format: YYYY-MM-DD
+                enable: enabledDates.length > 0 ? enabledDates : [], // Only enable available dates (all others are disabled)
+                onChange: function(selectedDates, dateStr, instance) {
+                    // Validate when date is selected
+                    if (dateStr) {
+                        validateSelectedDate(dateStr);
+                        // Load slots for the selected date
+                        loadAvailableSlots(dateStr);
+                    } else {
+                        dateError.textContent = '';
+                        const availableSlotsSelect = document.getElementById('availableSlots');
+                        availableSlotsSelect.innerHTML = '<option value="">Select a date first</option>';
+                        availableSlotsSelect.disabled = true;
+                    }
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Ensure minimum date is set to today
+                    instance.set('minDate', today);
+                }
             });
 
-            // Add a custom property to store available dates
+            // Store reference to available dates
             appointmentDate.availableDates = availableDates;
         }
 
@@ -628,18 +662,6 @@
 
                     console.log('Processed available dates:', availableDates);
                     updateAvailableDatesUI();
-
-                    // Auto-select the first available date and load its slots
-                    if (availableDates.length > 0) {
-                        const appointmentDate = document.getElementById('appointmentDate');
-                        const firstAvailableDate = availableDates[0];
-                        appointmentDate.value = firstAvailableDate;
-
-                        // Load slots for the first available date
-                        setTimeout(() => {
-                            loadAvailableSlots(firstAvailableDate);
-                        }, 100);
-                    }
 
                     return availableDates;
                 } else {
@@ -697,35 +719,12 @@
             }
         }
 
-        // Enhanced date picker with custom validation (alternative approach)
+        // Enhanced date picker - now handled by Flatpickr
+        // This function is kept for compatibility but does nothing
+        // as Flatpickr handles all date picker functionality
         function enhanceDatePicker() {
-            const appointmentDate = document.getElementById('appointmentDate');
-
-            // Store original value for comparison
-            let lastValidValue = '';
-
-            appointmentDate.addEventListener('blur', function() {
-                const selectedDate = this.value;
-                if (selectedDate && !isDateAvailable(selectedDate)) {
-                    // Reset to last valid value or clear
-                    this.value = lastValidValue;
-                    validateSelectedDate(this.value);
-                } else if (selectedDate) {
-                    lastValidValue = selectedDate;
-                }
-            });
-
-            // Prevent invalid dates from being entered
-            appointmentDate.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    const selectedDate = this.value;
-                    if (selectedDate && !isDateAvailable(selectedDate)) {
-                        e.preventDefault();
-                        this.value = lastValidValue;
-                        validateSelectedDate(this.value);
-                    }
-                }
-            });
+            // Flatpickr initialization is handled in setupDateInput()
+            // No additional setup needed
         }
 
                  // Load available slots for selected date - FIXED VERSION

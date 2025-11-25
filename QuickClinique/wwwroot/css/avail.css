@@ -343,6 +343,32 @@
         transform: translateX(5px);
     }
 
+/* Past Schedule Styling */
+.schedule-row.past-schedule {
+    opacity: 0.6;
+    background: #f5f5f5;
+}
+
+    .schedule-row.past-schedule:hover {
+        background: #eeeeee;
+        opacity: 0.8;
+    }
+
+    .schedule-row.past-schedule td {
+        color: #6c757d;
+    }
+
+    .schedule-row.past-schedule .date-cell,
+    .schedule-row.past-schedule .day-cell,
+    .schedule-row.past-schedule .time-cell {
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .schedule-row.past-schedule .availability-badge {
+        opacity: 0.7;
+    }
+
 /* Column Specific Styles */
 .checkbox-column {
     width: 50px;

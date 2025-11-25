@@ -251,14 +251,29 @@ namespace QuickClinique.Controllers
                         // Check if we should create schedule for this day of week
                         if (ShouldCreateForDay(currentDate, model.SelectedDays))
                         {
-                            var schedule = new Schedule
+                            // Generate 1-hour time slots from StartTime to EndTime
+                            var currentTime = model.StartTime;
+                            while (currentTime < model.EndTime)
                             {
-                                Date = currentDate,
-                                StartTime = model.StartTime,
-                                EndTime = model.EndTime,
-                                IsAvailable = model.IsAvailable
-                            };
-                            schedules.Add(schedule);
+                                var slotEndTime = currentTime.AddHours(1);
+                                // Ensure we don't exceed the end time
+                                if (slotEndTime > model.EndTime)
+                                {
+                                    slotEndTime = model.EndTime;
+                                }
+
+                                var schedule = new Schedule
+                                {
+                                    Date = currentDate,
+                                    StartTime = currentTime,
+                                    EndTime = slotEndTime,
+                                    IsAvailable = model.IsAvailable
+                                };
+                                schedules.Add(schedule);
+
+                                // Move to next hour slot
+                                currentTime = currentTime.AddHours(1);
+                            }
                         }
                         currentDate = currentDate.AddDays(1);
                     }
@@ -399,11 +414,15 @@ namespace QuickClinique.Controllers
         }
 
         // GET: Schedule/Availability
-        public async Task<IActionResult> Availability(string status = "All", DateOnly? startDate = null, DateOnly? endDate = null)
+        public async Task<IActionResult> Availability(string status = "All", DateOnly? startDate = null, DateOnly? endDate = null, bool showPast = false)
         {
             ViewData["CurrentFilter"] = status;
             ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
             ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+            ViewData["ShowPast"] = showPast;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var currentTime = TimeOnly.FromDateTime(DateTime.Now);
 
             var schedules = _context.Schedules.AsQueryable();
 
@@ -413,7 +432,16 @@ namespace QuickClinique.Controllers
                 schedules = schedules.Where(s => s.IsAvailable == status);
             }
 
-            // Filter by date range
+            // Filter out past schedules by default (unless showPast is true)
+            if (!showPast)
+            {
+                schedules = schedules.Where(s => 
+                    s.Date > today || 
+                    (s.Date == today && s.EndTime > currentTime)
+                );
+            }
+
+            // Filter by date range (only if not filtering past schedules)
             if (startDate.HasValue)
             {
                 schedules = schedules.Where(s => s.Date >= startDate.Value);
@@ -430,10 +458,16 @@ namespace QuickClinique.Controllers
 
             var model = await schedules.ToListAsync();
 
-            // Calculate statistics
+            // Calculate statistics (always include all schedules for stats)
             ViewBag.TotalSchedules = await _context.Schedules.CountAsync();
             ViewBag.AvailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes");
             ViewBag.UnavailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "No");
+            
+            // Calculate past schedules count
+            ViewBag.PastSchedules = await _context.Schedules.CountAsync(s => 
+                s.Date < today || 
+                (s.Date == today && s.EndTime < currentTime)
+            );
 
             if (IsAjaxRequest())
                 return Json(new
@@ -444,7 +478,8 @@ namespace QuickClinique.Controllers
                     {
                         total = ViewBag.TotalSchedules,
                         available = ViewBag.AvailableSchedules,
-                        unavailable = ViewBag.UnavailableSchedules
+                        unavailable = ViewBag.UnavailableSchedules,
+                        past = ViewBag.PastSchedules
                     }
                 });
 

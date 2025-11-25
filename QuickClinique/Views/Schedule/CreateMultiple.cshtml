@@ -156,7 +156,7 @@
                 selectedDays.push(checkbox.value);
             });
 
-            // Calculate schedules
+            // Calculate schedules with 1-hour time slots
             const schedules = [];
             const currentDate = new Date(startDate);
             while (currentDate <= endDate) {
@@ -164,12 +164,34 @@
                 // Always exclude Sunday
                 if (dayName !== 'Sunday') {
                     if (selectedDays.length === 0 || selectedDays.includes(dayName)) {
-                        schedules.push({
-                            date: currentDate.toISOString().split('T')[0],
-                            day: dayName,
-                            startTime: startTime,
-                            endTime: endTime
-                        });
+                        // Generate 1-hour time slots
+                        const [startHour, startMin] = startTime.split(':').map(Number);
+                        const [endHour, endMin] = endTime.split(':').map(Number);
+                        const startMinutes = startHour * 60 + startMin;
+                        const endMinutes = endHour * 60 + endMin;
+                        
+                        let currentMinutes = startMinutes;
+                        while (currentMinutes < endMinutes) {
+                            const slotStartMinutes = currentMinutes;
+                            const slotEndMinutes = Math.min(currentMinutes + 60, endMinutes);
+                            
+                            const slotStartHour = Math.floor(slotStartMinutes / 60);
+                            const slotStartMin = slotStartMinutes % 60;
+                            const slotEndHour = Math.floor(slotEndMinutes / 60);
+                            const slotEndMin = slotEndMinutes % 60;
+                            
+                            const slotStartTime = `${String(slotStartHour).padStart(2, '0')}:${String(slotStartMin).padStart(2, '0')}`;
+                            const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMin).padStart(2, '0')}`;
+                            
+                            schedules.push({
+                                date: currentDate.toISOString().split('T')[0],
+                                day: dayName,
+                                startTime: slotStartTime,
+                                endTime: slotEndTime
+                            });
+                            
+                            currentMinutes += 60;
+                        }
                     }
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
