@@ -304,6 +304,11 @@
     font-size: 0.9rem;
     font-weight: normal;
     margin-top: 0.25rem;
+    line-height: 1.6;
+}
+
+.status-subtext strong {
+    font-weight: 600;
 }
 
 /* Text muted symptoms */
