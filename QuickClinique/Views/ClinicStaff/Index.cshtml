@@ -244,6 +244,15 @@
                     const loadedForm = modalBody.querySelector('form');
                     if (loadedForm) {
                         loadedForm.addEventListener('submit', (e) => submitEditForm(e, staffId));
+                        
+                        // Initialize password validation
+                        initializePasswordValidation();
+                        
+                        // Initialize phone number validation
+                        initializePhoneValidation();
+                        
+                        // Initialize input touched state
+                        initializeInputTouched();
                     } else {
                         modalBody.innerHTML = '<p class="modal-error-text">Failed to load edit form.</p>';
                     }
@@ -421,6 +430,118 @@
                 notification.style.transition = 'opacity 0.3s';
                 setTimeout(() => notification.remove(), 300);
             }, 5000);
+        }
+
+        // Initialize password validation for dynamically loaded forms
+        function initializePasswordValidation() {
+            const newPasswordInput = document.querySelector('#newPassword');
+            const confirmPasswordInput = document.querySelector('#confirmPassword');
+            const confirmPasswordError = document.querySelector('#confirmPasswordError');
+
+            if (!newPasswordInput || !confirmPasswordInput) return;
+
+            function validatePasswordMatch() {
+                const password = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                // If new password is entered, confirm password is required and must match
+                if (password && confirmPassword) {
+                    if (password !== confirmPassword) {
+                        if (confirmPasswordError) {
+                            confirmPasswordError.textContent = 'Passwords do not match. Please ensure both passwords are identical.';
+                            confirmPasswordError.style.display = 'block';
+                        }
+                        confirmPasswordInput.classList.add('is-invalid');
+                        confirmPasswordInput.classList.remove('is-valid');
+                        newPasswordInput.classList.add('is-invalid');
+                        return false;
+                    } else {
+                        if (confirmPasswordError) {
+                            confirmPasswordError.style.display = 'none';
+                        }
+                        confirmPasswordInput.classList.remove('is-invalid');
+                        confirmPasswordInput.classList.add('is-valid');
+                        newPasswordInput.classList.remove('is-invalid');
+                        newPasswordInput.classList.add('is-valid');
+                        return true;
+                    }
+                } else if (password && !confirmPassword) {
+                    if (confirmPasswordError) {
+                        confirmPasswordError.textContent = 'Please confirm your password. Both fields must match.';
+                        confirmPasswordError.style.display = 'block';
+                    }
+                    confirmPasswordInput.classList.add('is-invalid');
+                    confirmPasswordInput.classList.remove('is-valid');
+                    return false;
+                } else if (!password && confirmPassword) {
+                    if (confirmPasswordError) {
+                        confirmPasswordError.textContent = 'Please enter a new password first before confirming.';
+                        confirmPasswordError.style.display = 'block';
+                    }
+                    confirmPasswordInput.classList.add('is-invalid');
+                    confirmPasswordInput.classList.remove('is-valid');
+                    return false;
+                } else {
+                    // Both fields are empty - this is allowed (password change is optional)
+                    if (confirmPasswordError) {
+                        confirmPasswordError.style.display = 'none';
+                    }
+                    confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
+                    newPasswordInput.classList.remove('is-invalid', 'is-valid');
+                    return true;
+                }
+            }
+
+            newPasswordInput.addEventListener('input', validatePasswordMatch);
+            confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+            confirmPasswordInput.addEventListener('blur', validatePasswordMatch);
+
+            // Form submission validation
+            const form = document.querySelector('.staff-edit-form');
+            if (form) {
+                const originalSubmit = form.onsubmit;
+                form.addEventListener('submit', function(e) {
+                    if (!validatePasswordMatch()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            }
+        }
+
+        // Initialize phone number validation
+        function initializePhoneValidation() {
+            const phoneInput = document.querySelector('#PhoneNumber');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function() {
+                    const value = this.value;
+                    // Remove any non-digit characters
+                    this.value = value.replace(/\D/g, '');
+
+                    // Limit to 11 digits
+                    if (this.value.length > 11) {
+                        this.value = this.value.slice(0, 11);
+                    }
+                });
+            }
+        }
+
+        // Initialize input touched state
+        function initializeInputTouched() {
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.add('touched');
+                    }
+                });
+
+                input.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.add('touched');
+                    }
+                });
+            });
         }
 
     </script>
