@@ -2256,6 +2256,18 @@
     background: var(--white);
 }
 
+.walk-in-modal .form-group .form-control[readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+.walk-in-modal .form-group .form-control[readonly]:focus {
+    border-color: #dee2e6;
+    box-shadow: none;
+    background-color: #f8f9fa;
+}
+
 .walk-in-modal .form-group .form-control.is-invalid {
     border-color: var(--danger);
     background: linear-gradient(135deg, #FEE2E2 0%, #FEF2F2 100%);
