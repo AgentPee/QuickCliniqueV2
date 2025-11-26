@@ -988,6 +988,19 @@ namespace QuickClinique.Controllers
                 student.InsuranceReceipt = await _fileStorageService.UploadFileAsync(InsuranceReceiptFile, "insurance-receipts", fileName);
             }
 
+            // Validate emergency contact phone number format if provided
+            if (!string.IsNullOrWhiteSpace(model.EmergencyContactPhoneNumber))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(model.EmergencyContactPhoneNumber, @"^09[0-9]{9}$"))
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Emergency contact phone number must start with 09 and be 11 digits total (e.g., 09345672824)." });
+                    
+                    ModelState.AddModelError("EmergencyContactPhoneNumber", "Emergency contact phone number must start with 09 and be 11 digits total.");
+                    return View(model);
+                }
+            }
+
             // Update only allowed fields
             student.FirstName = model.FirstName;
             student.LastName = model.LastName;
@@ -995,6 +1008,11 @@ namespace QuickClinique.Controllers
             student.PhoneNumber = model.PhoneNumber;
             student.Birthdate = model.Birthdate;
             student.Gender = model.Gender;
+            
+            // Update emergency contact information
+            student.EmergencyContactName = model.EmergencyContactName;
+            student.EmergencyContactRelationship = model.EmergencyContactRelationship;
+            student.EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber;
 
             await _context.SaveChangesAsync();
 
