@@ -159,6 +159,8 @@
 
 @await Html.PartialAsync("_EmergencyPolling")
 
+}
+
 @section Scripts {
     <script>
         let currentToggleId = null;
@@ -189,329 +191,32 @@
 
             try {
                 const response = await fetch(`/Clinicstaff/Details/${staffId}`);
-                
                 if (!response.ok) throw new Error('Failed to load staff details');
                 
-                // Check if response is JSON (AJAX request)
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    const result = await response.json();
-                    if (result.success && result.data) {
-                        // Build HTML from JSON data
-                        const staff = result.data;
-                        modalBody.innerHTML = buildStaffDetailsHTML(staff);
-                    } else {
-                        throw new Error(result.error || 'Failed to load staff details');
-                    }
-                } else {
-                    // Regular HTML response
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const content = doc.querySelector('.staff-details-container');
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const content = doc.querySelector('.staff-details-container');
+                
+                if (content) {
+                    // Remove back button and action buttons
+                    const backBtn = content.querySelector('a[href*="/Clinicstaff"]');
+                    if (backBtn && backBtn.textContent.includes('Back')) backBtn.remove();
+                    const actionButtons = content.querySelector('.action-buttons');
+                    if (actionButtons) actionButtons.remove();
                     
-                    if (content) {
-                        // Remove back button and action buttons
-                        const backBtn = content.querySelector('a[href*="/Clinicstaff"]');
-                        if (backBtn && backBtn.textContent.includes('Back')) backBtn.remove();
-                        const actionButtons = content.querySelector('.action-buttons');
-                        if (actionButtons) actionButtons.remove();
-                        
-                        // Remove details header since we have it in modal header
-                        const detailsHeader = content.querySelector('.details-header');
-                        if (detailsHeader) detailsHeader.remove();
-                        
-                        modalBody.innerHTML = content.innerHTML;
-                        
-                        // Fix image paths if any
-                        fixImagePaths(modalBody);
-                    } else {
-                        modalBody.innerHTML = '<p class="modal-error-text">Failed to load staff details.</p>';
-                    }
+                    // Remove details header since we have it in modal header
+                    const detailsHeader = content.querySelector('.details-header');
+                    if (detailsHeader) detailsHeader.remove();
+                    
+                    modalBody.innerHTML = content.innerHTML;
+                } else {
+                    modalBody.innerHTML = '<p class="modal-error-text">Failed to load staff details.</p>';
                 }
             } catch (error) {
                 console.error('Error:', error);
                 modalBody.innerHTML = '<p class="modal-error-text">Error loading staff details. Please try again.</p>';
             }
-        }
-
-        function buildStaffDetailsHTML(staff) {
-            const statusBadge = staff.isActive 
-                ? '<span class="badge badge-success" style="padding: 0.5rem 1rem; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-check-circle"></i> Active</span>'
-                : '<span class="badge badge-danger" style="padding: 0.5rem 1rem; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-ban"></i> Inactive</span>';
-            
-            const firstName = staff.firstName || '';
-            const lastName = staff.lastName || '';
-            const initials = (firstName.charAt(0) || '') + (lastName.charAt(0) || '');
-            
-            // Build birthdate HTML if available
-            let birthdateHTML = '';
-            if (staff.birthdate) {
-                try {
-                    const birthdate = new Date(staff.birthdate);
-                    // Check if date is valid
-                    if (!isNaN(birthdate.getTime())) {
-                        const today = new Date();
-                        let age = today.getFullYear() - birthdate.getFullYear();
-                        const monthDiff = today.getMonth() - birthdate.getMonth();
-                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
-                            age--;
-                        }
-                        // Only show age if it's a valid positive number
-                        if (age < 0) age = 0;
-                        
-                        const formattedDate = birthdate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                        birthdateHTML = `
-                            <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1);">
-                                <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-birthday-cake"></i> Birthdate
-                                </div>
-                                <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
-                                    ${formattedDate}
-                                    ${age >= 0 ? `<span style="color: var(--text-muted, #718096); font-size: 0.875rem; font-weight: 500; margin-left: 0.5rem;">(Age: ${age})</span>` : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
-                } catch (e) {
-                    console.error('Error parsing birthdate:', e);
-                }
-            }
-            
-            // Build gender HTML if available
-            const genderHTML = staff.gender ? `
-                <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1);">
-                    <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-venus-mars"></i> Gender
-                    </div>
-                    <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
-                        ${staff.gender}
-                    </div>
-                </div>
-            ` : '';
-            
-            return `
-                <div class="staff-info-card" style="background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
-                    <div class="staff-profile" style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15);">
-                        <div class="profile-avatar" style="font-size: 4.5rem; color: var(--primary-teal, #179C8E); background: linear-gradient(135deg, rgba(78, 205, 196, 0.2) 0%, rgba(68, 160, 141, 0.2) 100%); width: 110px; height: 110px; border-radius: 50%; border: 3px solid rgba(78, 205, 196, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);">
-                            ${initials}
-                        </div>
-                        <div>
-                            <h2 class="staff-name" style="font-size: 1.875rem; margin-bottom: 0.5rem; font-weight: 800;">
-                                <span class="first-name" style="color: var(--primary-teal, #179C8E);">${firstName}</span>
-                                <span class="last-name" style="color: var(--secondary-teal, #0F3D57);">${lastName}</span>
-                            </h2>
-                            <p style="color: #718096; font-size: 0.875rem; margin-bottom: 0.75rem;">
-                                <i class="fas fa-id-card"></i> Staff ID: #${staff.clinicStaffId || ''}
-                            </p>
-                            ${staff.user ? `<span class="role-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 0.8125rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #FFFFFF !important; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);"><i class="fas fa-user-tag"></i> ${staff.user.role || ''}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="details-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                        <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1);">
-                            <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-envelope"></i> Email Address
-                            </div>
-                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
-                                ${staff.email || 'N/A'}
-                            </div>
-                        </div>
-                        <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1);">
-                            <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </div>
-                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
-                                ${staff.phoneNumber || 'N/A'}
-                            </div>
-                        </div>
-                        ${birthdateHTML}
-                        ${genderHTML}
-                        <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1);">
-                            <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-toggle-on"></i> Account Status
-                            </div>
-                            <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748); display: flex; align-items: center; gap: 0.75rem;">
-                                ${statusBadge}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                ${buildIdImagesSection(staff)}
-            `;
-        }
-
-        function buildIdImagesSection(staff) {
-            // Parse image paths (comma-separated: front, back)
-            let idFrontImage = null;
-            let idBackImage = null;
-            
-            if (staff.image) {
-                const imagePaths = staff.image.split(',').map(path => path.trim()).filter(path => path);
-                if (imagePaths.length > 0) {
-                    idFrontImage = imagePaths[0];
-                }
-                if (imagePaths.length > 1) {
-                    idBackImage = imagePaths[1];
-                }
-            }
-            
-            // Build front image HTML
-            const frontImageHTML = idFrontImage ? `
-                <div class="insurance-receipt-container" style="text-align: center;">
-                    <div class="current-file">
-                        <p style="font-weight: 600; color: var(--text-dark, #2D3748); margin-bottom: 1rem; font-size: 0.875rem;">Current ID Front:</p>
-                        <img src="${idFrontImage}" alt="ID Front" class="preview-image" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; cursor: pointer;" onclick="openImageModal('${idFrontImage}', 'Staff ID Front')" />
-                        <a href="${idFrontImage}" target="_blank" class="btn btn-sm btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); color: white; border: none; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: all 0.3s ease;">
-                            <i class="fas fa-external-link-alt"></i> View Full Size
-                        </a>
-                    </div>
-                </div>
-            ` : `
-                <div class="document-placeholder" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted, #718096);">
-                    <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="margin: 0; font-weight: 500;">No ID Front image available</p>
-                </div>
-            `;
-            
-            // Build back image HTML
-            const backImageHTML = idBackImage ? `
-                <div class="insurance-receipt-container" style="text-align: center;">
-                    <div class="current-file">
-                        <p style="font-weight: 600; color: var(--text-dark, #2D3748); margin-bottom: 1rem; font-size: 0.875rem;">Current ID Back:</p>
-                        <img src="${idBackImage}" alt="ID Back" class="preview-image" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; cursor: pointer;" onclick="openImageModal('${idBackImage}', 'Staff ID Back')" />
-                        <a href="${idBackImage}" target="_blank" class="btn btn-sm btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); color: white; border: none; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: all 0.3s ease;">
-                            <i class="fas fa-external-link-alt"></i> View Full Size
-                        </a>
-                    </div>
-                </div>
-            ` : `
-                <div class="document-placeholder" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted, #718096);">
-                    <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p style="margin: 0; font-weight: 500;">No ID Back image available</p>
-                </div>
-            `;
-            
-            return `
-                <div class="documents-section" style="background: white; border-radius: 12px; padding: 2rem; margin-top: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
-                    <div class="section-header" style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15);">
-                        <h3 class="section-title" style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark, #2D3748); display: flex; align-items: center; gap: 0.75rem;">
-                            <i class="fas fa-id-card" style="color: var(--primary-teal, #179C8E);"></i>
-                            Staff ID Documents
-                        </h3>
-                    </div>
-                    <div class="documents-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                        <div class="document-card" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); overflow: hidden;">
-                            <div class="document-header" style="background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); padding: 1.25rem; color: white;">
-                                <h4 class="document-title" style="font-size: 1.125rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-id-card"></i> ID Front
-                                </h4>
-                            </div>
-                            <div class="document-content" style="padding: 1.5rem;">
-                                ${frontImageHTML}
-                            </div>
-                        </div>
-                        <div class="document-card" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); overflow: hidden;">
-                            <div class="document-header" style="background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); padding: 1.25rem; color: white;">
-                                <h4 class="document-title" style="font-size: 1.125rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-id-card"></i> ID Back
-                                </h4>
-                            </div>
-                            <div class="document-content" style="padding: 1.5rem;">
-                                ${backImageHTML}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Image Modal Functions
-        function openImageModal(imageSrc, title) {
-            // Check if modal exists, if not create it
-            let modal = document.getElementById('imageModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'imageModal';
-                modal.className = 'modal';
-                modal.style.cssText = 'display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center;';
-                modal.innerHTML = `
-                    <div class="modal-content modal-large" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; position: relative; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-                        <div class="modal-header" style="padding: 1.5rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15); display: flex; justify-content: space-between; align-items: center;">
-                            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark, #2D3748); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-image" style="color: var(--primary-teal, #179C8E);"></i> 
-                                <span id="imageModalTitle">Image</span>
-                            </h2>
-                            <button class="modal-close" onclick="closeImageModal()" style="background: none; border: none; font-size: 2rem; color: var(--text-muted, #718096); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">&times;</button>
-                        </div>
-                        <div class="modal-body" style="text-align: center; padding: 2rem; max-height: calc(90vh - 100px); overflow: auto;">
-                            <img id="modalImage" src="" alt="Document Image" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" />
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                
-                // Close modal when clicking outside
-                modal.addEventListener('click', function(event) {
-                    if (event.target === modal) {
-                        closeImageModal();
-                    }
-                });
-                
-                // Close modal with Escape key
-                document.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape' && modal.style.display === 'flex') {
-                        closeImageModal();
-                    }
-                });
-            }
-            
-            const modalImage = document.getElementById('modalImage');
-            const modalTitle = document.getElementById('imageModalTitle');
-            
-            modalImage.src = imageSrc;
-            modalTitle.textContent = title;
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeImageModal() {
-            const modal = document.getElementById('imageModal');
-            if (modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-        }
-
-        function fixImagePaths(container) {
-            // Fix image paths - convert relative paths to absolute URLs
-            const images = container.querySelectorAll('img[src]');
-            images.forEach(img => {
-                const src = img.getAttribute('src');
-                if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
-                    if (src.startsWith('/')) {
-                        img.src = src;
-                    } else if (src.startsWith('~/')) {
-                        img.src = src.replace('~/', '/');
-                    } else {
-                        img.src = '/' + src;
-                    }
-                }
-            });
-            
-            // Fix anchor hrefs for image links
-            const imageLinks = container.querySelectorAll('a[href]');
-            imageLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('#')) {
-                    if (href.startsWith('/')) {
-                        link.href = href;
-                    } else if (href.startsWith('~/')) {
-                        link.href = href.replace('~/', '/');
-                    } else {
-                        link.href = '/' + href;
-                    }
-                }
-            });
         }
 
         // Edit Modal
@@ -579,27 +284,10 @@
             const form = event.target;
             const formData = new FormData(form);
             
-            // Get anti-forgery token from the form itself or the main page
-            let token = form.querySelector('input[name="__RequestVerificationToken"]');
-            if (!token) {
-                token = document.querySelector('input[name="__RequestVerificationToken"]');
-            }
+            // Get or add anti-forgery token
+            let token = document.querySelector('input[name="__RequestVerificationToken"]');
             if (token) {
                 formData.append('__RequestVerificationToken', token.value);
-            }
-            
-            // Ensure all form fields are included in FormData
-            // Get Birthdate value explicitly (since it uses name="Birthdate" instead of asp-for)
-            const birthdateInput = form.querySelector('input[name="Birthdate"]');
-            if (birthdateInput) {
-                // The controller expects 'birthdate' parameter (lowercase)
-                formData.set('birthdate', birthdateInput.value || '');
-            }
-            
-            // Debug: Log form data
-            console.log('Form Data being sent:');
-            for (let [key, value] of formData.entries()) {
-                console.log(key + ':', value);
             }
             
             const submitBtn = form.querySelector('button[type="submit"]');

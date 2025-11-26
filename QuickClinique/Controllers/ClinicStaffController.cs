@@ -158,7 +158,7 @@ namespace QuickClinique.Controllers
         // POST: Clinicstaff/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber,Gender")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword, string? birthdate)
+        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
         {
             Console.WriteLine($"=== EDIT POST STARTED ===");
             Console.WriteLine($"ID: {id}, ClinicStaffId: {clinicstaff.ClinicStaffId}");
@@ -170,19 +170,12 @@ namespace QuickClinique.Controllers
                 return NotFound();
             }
 
-            // Parse Birthdate from string if provided
-            if (!string.IsNullOrWhiteSpace(birthdate) && DateOnly.TryParse(birthdate, out DateOnly parsedBirthdate))
-            {
-                clinicstaff.Birthdate = parsedBirthdate;
-            }
-
             // Remove validation for navigation properties and password
             ModelState.Remove("User");
             ModelState.Remove("Password");
             ModelState.Remove("Notifications");
             ModelState.Remove("newPassword");
             ModelState.Remove("confirmPassword");
-            ModelState.Remove("Birthdate");
 
             // Validate password confirmation if new password is provided
             if (!string.IsNullOrWhiteSpace(newPassword))
@@ -241,21 +234,6 @@ namespace QuickClinique.Controllers
                     existingStaff.LastName = clinicstaff.LastName;
                     existingStaff.Email = clinicstaff.Email;
                     existingStaff.PhoneNumber = clinicstaff.PhoneNumber;
-                    existingStaff.Gender = clinicstaff.Gender;
-                    
-                    // Update Birthdate if provided
-                    if (clinicstaff.Birthdate.HasValue)
-                    {
-                        existingStaff.Birthdate = clinicstaff.Birthdate;
-                    }
-                    else if (!string.IsNullOrWhiteSpace(birthdate))
-                    {
-                        // Try to parse birthdate from string parameter
-                        if (DateOnly.TryParse(birthdate, out DateOnly parsedBirthdate))
-                        {
-                            existingStaff.Birthdate = parsedBirthdate;
-                        }
-                    }
 
                     // Only update password if a new one was provided
                     if (!string.IsNullOrWhiteSpace(newPassword))
