@@ -362,11 +362,48 @@
     </div>
 </div>
 
+<!-- Help is on the Way Modal -->
+<div class="modal fade" id="helpOnTheWayModal" tabindex="-1" aria-labelledby="helpOnTheWayModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content help-on-the-way-modal-content">
+            <div class="modal-header help-on-the-way-header">
+                <h5 class="modal-title" id="helpOnTheWayModalLabel">
+                    <i class="fas fa-check-circle"></i> Help is on the Way!
+                </h5>
+            </div>
+            <div class="modal-body help-on-the-way-body">
+                <div class="help-message-container">
+                    <div class="help-icon-wrapper">
+                        <i class="fas fa-ambulance"></i>
+                    </div>
+                    <h3 class="help-title">Your SOS Alert Has Been Received</h3>
+                    <p class="help-message">
+                        Clinic staff has acknowledged your emergency request and help is on the way. 
+                        Please stay where you are and wait for assistance.
+                    </p>
+                    <div class="help-info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Stay calm and wait for clinic staff to arrive at your location.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer help-on-the-way-footer">
+                <button type="button" class="btn btn-primary" id="acknowledgeHelpBtn">
+                    <i class="fas fa-check"></i> Understood
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     <script>
         let connection = null;
         let currentUserId = null;
+        let emergencyCheckInterval = null;
+        let lastCheckedEmergencyId = null;
+        let helpModalShown = false;
 
         $(document).ready(function() {
             initializeMessaging();
@@ -745,6 +782,10 @@
                     // Reset form
                     document.getElementById('sosForm').reset();
                     document.getElementById('otherInputContainer').classList.add('hidden');
+                    
+                    // Reset help modal flag so it can show when resolved
+                    helpModalShown = false;
+                    lastCheckedEmergencyId = result.emergencyId;
                 } else {
                     alert('Failed to send SOS: ' + (result.error || 'Unknown error'));
                 }
@@ -756,6 +797,87 @@
                 btn.innerHTML = originalHtml;
             }
         });
+
+        // ===== EMERGENCY RESOLVED CHECK POLLING =====
+        function startEmergencyResolvedCheck() {
+            if (emergencyCheckInterval) {
+                clearInterval(emergencyCheckInterval);
+            }
+
+            emergencyCheckInterval = setInterval(async () => {
+                await checkIfEmergencyResolved();
+            }, 5000); // Check every 5 seconds
+
+            // Check immediately on page load
+            checkIfEmergencyResolved();
+        }
+
+        async function checkIfEmergencyResolved() {
+            try {
+                const response = await fetch('/Student/CheckEmergencyResolved');
+                if (!response.ok) {
+                    console.error('Failed to check emergency status:', response.status);
+                    return;
+                }
+                
+                const result = await response.json();
+
+                if (result.success && result.resolved && !helpModalShown) {
+                    // Emergency was resolved - show modal only if we haven't shown it for this emergency
+                    if (result.emergencyId !== lastCheckedEmergencyId || lastCheckedEmergencyId === null) {
+                        showHelpOnTheWayModal();
+                        helpModalShown = true;
+                        lastCheckedEmergencyId = result.emergencyId;
+                    }
+                } else if (result.success && !result.resolved) {
+                    // No resolved emergency - reset flag if we have a new unresolved emergency
+                    if (result.emergencyId && result.emergencyId !== lastCheckedEmergencyId) {
+                        helpModalShown = false;
+                        lastCheckedEmergencyId = result.emergencyId;
+                    } else if (!result.emergencyId) {
+                        // No active emergency at all - reset tracking
+                        helpModalShown = false;
+                        lastCheckedEmergencyId = null;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking emergency status:', error);
+            }
+        }
+
+        function showHelpOnTheWayModal() {
+            const modalElement = document.getElementById('helpOnTheWayModal');
+            if (!modalElement) {
+                console.error('Help on the way modal element not found');
+                return;
+            }
+
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+
+            modal.show();
+
+            // Handle acknowledge button
+            const acknowledgeBtn = document.getElementById('acknowledgeHelpBtn');
+            if (acknowledgeBtn) {
+                acknowledgeBtn.onclick = function() {
+                    modal.hide();
+                    helpModalShown = true; // Keep flag true so it doesn't show again
+                };
+            }
+        }
+
+        // Initialize emergency resolved check when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startEmergencyResolvedCheck);
+        } else {
+            startEmergencyResolvedCheck();
+        }
     </script>
 
     <style>
@@ -986,6 +1108,210 @@
             }
             50% {
                 box-shadow: 0 4px 20px rgba(220, 53, 69, 0.8), 0 0 0 4px rgba(220, 53, 69, 0.2);
+            }
+        }
+
+        /* Help is on the Way Modal Styles */
+        .help-on-the-way-modal-content {
+            border: 4px solid #10b981;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.4), 0 0 80px rgba(16, 185, 129, 0.2);
+            animation: helpModalEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        @@keyframes helpModalEntrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.7) translateY(-50px);
+            }
+            50% {
+                transform: scale(1.05) translateY(0);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .help-on-the-way-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-bottom: none;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .help-on-the-way-header::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            pointer-events: none;
+            animation: helpPulse 3s ease-in-out infinite;
+        }
+
+        @@keyframes helpPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .help-on-the-way-header .modal-title {
+            font-weight: 700;
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .help-on-the-way-header .modal-title i {
+            font-size: 2rem;
+            animation: helpIconSpin 2s ease-in-out infinite;
+        }
+
+        @@keyframes helpIconSpin {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        .help-on-the-way-body {
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+            text-align: center;
+        }
+
+        .help-message-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .help-icon-wrapper {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+            animation: helpIconBounce 2s ease-in-out infinite;
+        }
+
+        @@keyframes helpIconBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .help-icon-wrapper i {
+            color: white;
+            font-size: 3rem;
+        }
+
+        .help-title {
+            color: #059669;
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        .help-message {
+            color: #374151;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 0;
+            max-width: 500px;
+        }
+
+        .help-info-box {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #10b981;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .help-info-box i {
+            color: #059669;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .help-info-box span {
+            color: #065f46;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .help-on-the-way-footer {
+            border-top: 3px solid #d1fae5;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+            display: flex;
+            justify-content: center;
+        }
+
+        .help-on-the-way-footer .btn-primary {
+            padding: 1rem 3rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .help-on-the-way-footer .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        @@media (max-width: 768px) {
+            .help-on-the-way-header {
+                padding: 1.5rem;
+            }
+
+            .help-on-the-way-header .modal-title {
+                font-size: 1.25rem;
+            }
+
+            .help-on-the-way-body {
+                padding: 2rem 1.5rem;
+            }
+
+            .help-icon-wrapper {
+                width: 80px;
+                height: 80px;
+            }
+
+            .help-icon-wrapper i {
+                font-size: 2.5rem;
+            }
+
+            .help-title {
+                font-size: 1.5rem;
+            }
+
+            .help-message {
+                font-size: 1rem;
             }
         }
     </style>
