@@ -9,6 +9,7 @@
 }
 
 <div class="staff-details-container">
+    @Html.AntiForgeryToken()
     <div class="details-header" style="display: none;">
         <h2><i class="fas fa-user-md"></i> Staff Details</h2>
     </div>
@@ -61,7 +62,6 @@
                 var age = today.Year - birthdate.Year;
                 
                 // Subtract one year if birthday hasn't occurred yet this year
-                // Create a date for this year's birthday
                 var birthdayThisYear = new DateOnly(today.Year, birthdate.Month, birthdate.Day);
                 if (birthdayThisYear > today)
                 {
@@ -207,6 +207,31 @@
             </div>
         </div>
     </div>
+
+    <!-- Action Buttons Section -->
+    <div class="action-buttons-container" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(78, 205, 196, 0.15);">
+        <button onclick="showEditModal(@Model.ClinicStaffId)" class="btn-action btn-edit" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(23, 156, 142, 0.3);">
+            <i class="fas fa-edit"></i> Edit Staff Info
+        </button>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center;">
+    <div class="modal-content modal-large" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; position: relative; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); overflow: auto;">
+        <div class="modal-header" style="padding: 1.5rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 10;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark, #2D3748); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-edit" style="color: var(--primary-teal, #179C8E);"></i> Edit Staff Information
+            </h2>
+            <button class="modal-close" onclick="closeEditModal()" style="background: none; border: none; font-size: 2rem; color: var(--text-muted, #718096); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">&times;</button>
+        </div>
+        <div class="modal-body" id="editModalBody" style="padding: 2rem; max-height: calc(90vh - 100px); overflow: auto;">
+            <div class="loading-spinner" style="text-align: center; padding: 3rem;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-teal, #179C8E);"></i>
+                <span style="display: block; margin-top: 1rem; color: var(--text-muted, #718096);">Loading...</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Image View Modal -->
@@ -254,11 +279,142 @@
     // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            const modal = document.getElementById('imageModal');
-            if (modal && modal.style.display === 'flex') {
+            const imageModal = document.getElementById('imageModal');
+            const editModal = document.getElementById('editModal');
+            if (imageModal && imageModal.style.display === 'flex') {
                 closeImageModal();
+            }
+            if (editModal && editModal.style.display === 'flex') {
+                closeEditModal();
             }
         }
     });
-</script>
 
+    // Edit Modal Functions
+    function openEditModal() {
+        const modal = document.getElementById('editModal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function showEditModal(staffId) {
+        openEditModal();
+        const modalBody = document.getElementById('editModalBody');
+        modalBody.innerHTML = '<div class="loading-spinner" style="text-align: center; padding: 3rem;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-teal, #179C8E);"></i><span style="display: block; margin-top: 1rem; color: var(--text-muted, #718096);">Loading...</span></div>';
+
+        try {
+            const response = await fetch(`/Clinicstaff/Edit/${staffId}`);
+            if (!response.ok) throw new Error('Failed to load staff data');
+            
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const content = doc.querySelector('.staff-edit-container');
+            
+            if (content) {
+                // Remove the edit header since we have it in modal header
+                const editHeader = content.querySelector('.edit-header');
+                if (editHeader) {
+                    editHeader.remove();
+                }
+                
+                modalBody.innerHTML = content.innerHTML;
+                
+                // Setup form submission after content is loaded
+                const loadedForm = modalBody.querySelector('form');
+                if (loadedForm) {
+                    loadedForm.addEventListener('submit', (e) => submitEditForm(e, staffId));
+                }
+            } else {
+                modalBody.innerHTML = '<p class="modal-error-text" style="color: #ef4444; text-align: center; padding: 2rem;">Failed to load edit form.</p>';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            modalBody.innerHTML = '<p class="modal-error-text" style="color: #ef4444; text-align: center; padding: 2rem;">Error loading edit form. Please try again.</p>';
+        }
+    }
+
+    async function submitEditForm(event, staffId) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        // Get anti-forgery token from form first, then from page
+        let token = form.querySelector('input[name="__RequestVerificationToken"]') || 
+                    document.querySelector('input[name="__RequestVerificationToken"]');
+        if (token) {
+            formData.append('__RequestVerificationToken', token.value);
+        } else {
+            console.error('Anti-forgery token not found!');
+            alert('Security token not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalHtml = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/Clinicstaff/Edit/${staffId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success notification
+                    alert('Staff information updated successfully!');
+                    closeEditModal();
+                    // Reload the page to show updated details
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    // Display validation errors
+                    let errorMessage = result.error || result.message || 'Failed to update staff information.';
+                    
+                    if (result.errors) {
+                        const errorList = Object.entries(result.errors)
+                            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                            .join('\\n');
+                        errorMessage += '\\n' + errorList;
+                    }
+                    
+                    alert(errorMessage);
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+            } else {
+                // If not JSON, might be HTML (validation errors)
+                alert('An error occurred. Please try again.');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while saving. Please try again.');
+            submitBtn.innerHTML = originalHtml;
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Close edit modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const editModal = document.getElementById('editModal');
+        if (event.target === editModal) {
+            closeEditModal();
+        }
+    });
+</script>
