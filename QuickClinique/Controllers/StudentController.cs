@@ -1587,6 +1587,52 @@ namespace QuickClinique.Controllers
             });
         }
 
+        // GET: Student/CheckEmergencyResolved - Check if student's emergency was resolved
+        [HttpGet]
+        [StudentOnly]
+        public async Task<IActionResult> CheckEmergencyResolved()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            // Get the most recent unresolved emergency for this student
+            var emergency = await _context.Emergencies
+                .Where(e => e.StudentId == studentId.Value && !e.IsResolved)
+                .OrderByDescending(e => e.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (emergency == null)
+            {
+                // Check if there's a recently resolved emergency (within last 5 minutes)
+                var recentlyResolved = await _context.Emergencies
+                    .Where(e => e.StudentId == studentId.Value && e.IsResolved)
+                    .OrderByDescending(e => e.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                if (recentlyResolved != null && recentlyResolved.CreatedAt.HasValue)
+                {
+                    var timeSinceCreated = DateTime.Now - recentlyResolved.CreatedAt.Value;
+                    // If resolved within last 5 minutes, return it
+                    if (timeSinceCreated.TotalMinutes <= 5)
+                    {
+                        return Json(new { 
+                            success = true, 
+                            resolved = true,
+                            emergencyId = recentlyResolved.EmergencyId,
+                            message = "Your SOS alert has been received. Help is on the way."
+                        });
+                    }
+                }
+
+                return Json(new { success = true, resolved = false });
+            }
+
+            return Json(new { success = true, resolved = false, emergencyId = emergency.EmergencyId });
+        }
+
         // Helper method to generate tokens
         private string GenerateToken()
         {
