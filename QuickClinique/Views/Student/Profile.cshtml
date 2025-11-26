@@ -121,49 +121,51 @@
             </div>
 
             <!-- Emergency Contact Information -->
-            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
-            {
-                <div class="form-section">
-                    <h3><i class="fas fa-phone-alt"></i> Emergency Contact Information</h3>
-                    <p class="text-muted-custom">
-                        Your emergency contact details are stored for safety purposes. Contact clinic staff to update this information.
-                    </p>
+            <div class="form-section">
+                <h3><i class="fas fa-phone-alt"></i> Emergency Contact Information</h3>
+                <p class="text-muted-custom">
+                    Your emergency contact details are stored for safety purposes. Keep this information up to date.
+                </p>
 
-                    <div class="emergency-contact-display">
-                        <div class="emergency-contact-item-display">
-                            <div class="emergency-contact-label-display">
-                                <i class="fas fa-user"></i> Contact Name
-                            </div>
-                            <div class="emergency-contact-value-display">@Model.EmergencyContactName</div>
-                        </div>
-
-                        <div class="emergency-contact-item-display">
-                            <div class="emergency-contact-label-display">
-                                <i class="fas fa-users"></i> Relationship
-                            </div>
-                            <div class="emergency-contact-value-display">@(Model.EmergencyContactRelationship ?? "N/A")</div>
-                        </div>
-
-                        <div class="emergency-contact-item-display">
-                            <div class="emergency-contact-label-display">
-                                <i class="fas fa-phone"></i> Phone Number
-                            </div>
-                            <div class="emergency-contact-value-display">
-                                @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactPhoneNumber))
-                                {
-                                    <a href="tel:@Model.EmergencyContactPhoneNumber" class="phone-link-display">
-                                        @Model.EmergencyContactPhoneNumber
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span>N/A</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label asp-for="EmergencyContactName">
+                        <i class="fas fa-user"></i> Emergency Contact Name
+                    </label>
+                    <input asp-for="EmergencyContactName" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
                 </div>
-            }
+
+                <div class="form-group">
+                    <label asp-for="EmergencyContactRelationship">
+                        <i class="fas fa-users"></i> Relationship
+                    </label>
+                    <select asp-for="EmergencyContactRelationship" class="form-control">
+                        <option value="">Select Relationship</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Guardian">Guardian</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Relative">Relative</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="EmergencyContactRelationship" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="EmergencyContactPhoneNumber">
+                        <i class="fas fa-phone"></i> Emergency Contact Phone Number
+                    </label>
+                    <input asp-for="EmergencyContactPhoneNumber" class="form-control" 
+                           placeholder="e.g., 09345672824"
+                           pattern="09[0-9]{9}"
+                           title="Phone number must start with 09 and be 11 digits" />
+                    <small class="form-text text-muted">
+                        Must start with 09 and be 11 digits total (e.g., 09345672824)
+                    </small>
+                    <span asp-validation-for="EmergencyContactPhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
 
             <!-- Insurance Receipt Upload -->
             <div class="form-section">
