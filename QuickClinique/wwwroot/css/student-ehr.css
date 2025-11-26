@@ -3,16 +3,29 @@
    ============================================ */
 
 :root {
-    --primary-teal: #4ECDC4;
-    --secondary-teal: #44A08D;
+    /* Primary Colors */
+    --primary-teal: #179C8E;
+    --primary-cyan: #4FC4D3;
+    
+    /* Secondary Colors */
+    --secondary-teal: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    
+    /* Neutral Colors */
     --white: #FFFFFF;
+    --border-color: #E8ECEF;
+    
+    /* Text Colors */
     --text-dark: #2D3748;
     --text-muted: #718096;
-    --border-color: #E2E8F0;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #DC2626;
-    --info: #3B82F6;
+    
+    /* Alert Colors */
+    --success: #179C8E;
+    --warning: #F8D66D;
+    --danger: #FF6B6B;
+    --info: #4FC4D3;
+    
+    /* Other */
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     --radius: 10px;
 }
@@ -22,7 +35,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 1rem;
-    background: #F0F4F8;
+    background: #E8ECEF;
     min-height: 100vh;
 }
 

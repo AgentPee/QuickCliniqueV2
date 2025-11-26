@@ -3,18 +3,20 @@
 
 /* CSS Variables */
 :root {
-    --primary-teal: #4ECDC4;
-    --secondary-teal: #44A08D;
-    --dark-teal: #3BA89F;
-    --light-bg: #F0F4F8;
+    --primary-teal: #179C8E;
+    --primary-cyan: #4FC4D3;
+    --secondary-teal: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    --dark-teal: #179C8E;
+    --light-bg: #E8ECEF;
     --white: #FFFFFF;
     --text-dark: #2D3748;
     --text-muted: #718096;
-    --border-color: #E2E8F0;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #DC2626;
-    --info: #3B82F6;
+    --border-color: #E8ECEF;
+    --success: #179C8E;
+    --warning: #F8D66D;
+    --danger: #FF6B6B;
+    --info: #4FC4D3;
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
@@ -31,7 +33,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #F0F4F8 0%, #E2E8F0 100%);
+    background: linear-gradient(135deg, #E8ECEF 0%, #E8ECEF 100%);
     min-height: 100vh;
     color: var(--text-dark);
     line-height: 1.6;

@@ -1,0 +1,264 @@
+@model QuickClinique.Models.Clinicstaff
+@{
+    ViewData["Title"] = "Staff Details";
+    Layout = null;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/StaffIndex.css" asp-append-version="true" />
+}
+
+<div class="staff-details-container">
+    <div class="details-header" style="display: none;">
+        <h2><i class="fas fa-user-md"></i> Staff Details</h2>
+    </div>
+
+    <div class="staff-info-card" style="background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+        <div class="staff-profile" style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15);">
+            <div class="profile-avatar" style="font-size: 4.5rem; color: var(--primary-teal, #179C8E); background: linear-gradient(135deg, rgba(78, 205, 196, 0.2) 0%, rgba(68, 160, 141, 0.2) 100%); width: 110px; height: 110px; border-radius: 50%; border: 3px solid rgba(78, 205, 196, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);">
+                @(Model.FirstName?.Substring(0, 1).ToUpper() ?? "")@(Model.LastName?.Substring(0, 1).ToUpper() ?? "")
+            </div>
+            <div>
+                <h2 class="staff-name" style="font-size: 1.875rem; margin-bottom: 0.5rem; font-weight: 800;">
+                    <span class="first-name" style="color: var(--primary-teal, #179C8E);">@Model.FirstName</span>
+                    <span class="last-name" style="color: var(--secondary-teal, #0F3D57);">@Model.LastName</span>
+                </h2>
+                <p style="color: #718096; font-size: 0.875rem; margin-bottom: 0.75rem;">
+                    <i class="fas fa-id-card"></i> Staff ID: #@Model.ClinicStaffId
+                </p>
+                @if (Model.User != null)
+                {
+                    <span class="role-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 0.8125rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #FFFFFF !important; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);">
+                        <i class="fas fa-user-tag"></i> @Model.User.Role
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="details-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); transition: all 0.3s ease;">
+                <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-envelope"></i> Email Address
+                </div>
+                <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
+                    @Model.Email
+                </div>
+            </div>
+
+            <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); transition: all 0.3s ease;">
+                <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-phone"></i> Phone Number
+                </div>
+                <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
+                    @Model.PhoneNumber
+                </div>
+            </div>
+
+            @if (Model.Birthdate.HasValue)
+            {
+                var birthdate = Model.Birthdate.Value;
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var age = today.Year - birthdate.Year;
+                
+                // Subtract one year if birthday hasn't occurred yet this year
+                // Create a date for this year's birthday
+                var birthdayThisYear = new DateOnly(today.Year, birthdate.Month, birthdate.Day);
+                if (birthdayThisYear > today)
+                {
+                    age--;
+                }
+                
+                <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); transition: all 0.3s ease;">
+                    <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-birthday-cake"></i> Birthdate
+                    </div>
+                    <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
+                        @birthdate.ToString("MMMM dd, yyyy")
+                        @if (age >= 0)
+                        {
+                            <span style="color: var(--text-muted, #718096); font-size: 0.875rem; font-weight: 500; margin-left: 0.5rem;">
+                                (Age: @age)
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Gender))
+            {
+                <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); transition: all 0.3s ease;">
+                    <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-venus-mars"></i> Gender
+                    </div>
+                    <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748);">
+                        @Model.Gender
+                    </div>
+                </div>
+            }
+
+            <div class="detail-item" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); transition: all 0.3s ease;">
+                <div class="detail-label" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted, #718096); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-toggle-on"></i> Account Status
+                </div>
+                <div class="detail-value" style="font-size: 1.125rem; font-weight: 600; color: var(--text-dark, #2D3748); display: flex; align-items: center; gap: 0.75rem;">
+                    @if (Model.IsActive)
+                    {
+                        <span class="badge badge-success" style="padding: 0.5rem 1rem; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 0.875rem; font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                            <i class="fas fa-check-circle"></i> Active
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-danger" style="padding: 0.5rem 1rem; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; font-size: 0.875rem; font-weight: 600; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">
+                            <i class="fas fa-ban"></i> Inactive
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @{
+        // Parse ID images (comma-separated: front, back)
+        string? idFrontImage = null;
+        string? idBackImage = null;
+        if (!string.IsNullOrEmpty(Model.Image))
+        {
+            var imagePaths = Model.Image.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (imagePaths.Length > 0)
+            {
+                idFrontImage = imagePaths[0];
+            }
+            if (imagePaths.Length > 1)
+            {
+                idBackImage = imagePaths[1];
+            }
+        }
+    }
+
+    <!-- Staff ID Documents Section -->
+    <div class="documents-section" style="background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+        <div class="section-header" style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15);">
+            <h3 class="section-title" style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark, #2D3748); display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-id-card" style="color: var(--primary-teal, #179C8E);"></i>
+                Staff ID Documents
+            </h3>
+        </div>
+
+        <div class="documents-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <!-- ID Front -->
+            <div class="document-card" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); overflow: hidden; transition: all 0.3s ease;">
+                <div class="document-header" style="background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); padding: 1.25rem; color: white;">
+                    <h4 class="document-title" style="font-size: 1.125rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-id-card"></i> ID Front
+                    </h4>
+                </div>
+                <div class="document-content" style="padding: 1.5rem;">
+                    @if (!string.IsNullOrEmpty(idFrontImage))
+                    {
+                        <div class="insurance-receipt-container" style="text-align: center;">
+                            <div class="current-file">
+                                <p style="font-weight: 600; color: var(--text-dark, #2D3748); margin-bottom: 1rem; font-size: 0.875rem;">Current ID Front:</p>
+                                <img src="@Url.Content(idFrontImage)" alt="ID Front" class="preview-image" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; cursor: pointer;" onclick="openImageModal('@Url.Content(idFrontImage)', 'Staff ID Front')" />
+                                <a href="@Url.Content(idFrontImage)" target="_blank" class="btn btn-sm btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); color: white; border: none; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: all 0.3s ease;">
+                                    <i class="fas fa-external-link-alt"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="document-placeholder" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted, #718096);">
+                            <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p style="margin: 0; font-weight: 500;">No ID Front image available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ID Back -->
+            <div class="document-card" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 12px; border: 2px solid rgba(78, 205, 196, 0.1); overflow: hidden; transition: all 0.3s ease;">
+                <div class="document-header" style="background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); padding: 1.25rem; color: white;">
+                    <h4 class="document-title" style="font-size: 1.125rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-id-card"></i> ID Back
+                    </h4>
+                </div>
+                <div class="document-content" style="padding: 1.5rem;">
+                    @if (!string.IsNullOrEmpty(idBackImage))
+                    {
+                        <div class="insurance-receipt-container" style="text-align: center;">
+                            <div class="current-file">
+                                <p style="font-weight: 600; color: var(--text-dark, #2D3748); margin-bottom: 1rem; font-size: 0.875rem;">Current ID Back:</p>
+                                <img src="@Url.Content(idBackImage)" alt="ID Back" class="preview-image" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; cursor: pointer;" onclick="openImageModal('@Url.Content(idBackImage)', 'Staff ID Back')" />
+                                <a href="@Url.Content(idBackImage)" target="_blank" class="btn btn-sm btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%); color: white; border: none; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: all 0.3s ease;">
+                                    <i class="fas fa-external-link-alt"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="document-placeholder" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted, #718096);">
+                            <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p style="margin: 0; font-weight: 500;">No ID Back image available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image View Modal -->
+<div id="imageModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center;">
+    <div class="modal-content modal-large" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; position: relative; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+        <div class="modal-header" style="padding: 1.5rem; border-bottom: 2px solid rgba(78, 205, 196, 0.15); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark, #2D3748); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-image" style="color: var(--primary-teal, #179C8E);"></i> 
+                <span id="imageModalTitle">Image</span>
+            </h2>
+            <button class="modal-close" onclick="closeImageModal()" style="background: none; border: none; font-size: 2rem; color: var(--text-muted, #718096); cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 2rem; max-height: calc(90vh - 100px); overflow: auto;">
+            <img id="modalImage" src="" alt="Document Image" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" />
+        </div>
+    </div>
+</div>
+
+<script>
+    function openImageModal(imageSrc, title) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalTitle = document.getElementById('imageModalTitle');
+        
+        modalImage.src = imageSrc;
+        modalTitle.textContent = title;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside the image
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('imageModal');
+        if (event.target === modal) {
+            closeImageModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('imageModal');
+            if (modal && modal.style.display === 'flex') {
+                closeImageModal();
+            }
+        }
+    });
+</script>
+

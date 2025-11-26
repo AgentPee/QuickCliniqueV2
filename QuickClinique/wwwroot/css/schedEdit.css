@@ -8,7 +8,7 @@
 }
 
 .edit-header {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     padding: 2rem;
     border-radius: 12px 12px 0 0;
@@ -40,7 +40,7 @@
 }
 
 .edit-content {
-    background: white;
+    background: #FFFFFF;
     padding: 2rem;
     border-radius: 0 0 12px 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -48,7 +48,7 @@
 
 /* Edit Card */
 .edit-card {
-    background: white;
+    background: #FFFFFF;
     border-radius: 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     margin-bottom: 0;
@@ -134,7 +134,7 @@
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: white;
+    background: #FFFFFF;
     font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
     line-height: 1.6;
@@ -279,7 +279,7 @@
 }
 
 .info-card {
-    background: white;
+    background: #FFFFFF;
     border-radius: 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
     border: 1px solid #e1e5e9;

@@ -2,21 +2,36 @@
 
 /* CSS Variables */
 :root {
-    --primary-teal: #4ECDC4;
-    --secondary-teal: #44A08D;
-    --dark-teal: #3BA89F;
-    --light-bg: #F0F4F8;
+    /* Primary Colors */
+    --primary-teal: #179C8E;
+    --primary-cyan: #4FC4D3;
+    
+    /* Secondary Colors */
+    --secondary-teal: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    --dark-teal: #179C8E;
+    
+    /* Neutral Colors */
+    --light-bg: #E8ECEF;
     --white: #FFFFFF;
+    --border-color: #E8ECEF;
+    
+    /* Text Colors */
     --text-dark: #2D3748;
     --text-muted: #718096;
-    --border-color: #E2E8F0;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #DC2626;
-    --info: #3B82F6;
+    
+    /* Alert Colors */
+    --success: #179C8E;
+    --warning: #F8D66D;
+    --danger: #FF6B6B;
+    --info: #4FC4D3;
+    
+    /* Shadows */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+    
+    /* Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -30,7 +45,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #F0F4F8 0%, #E2E8F0 100%);
+    background: linear-gradient(135deg, #E8ECEF 0%, #E8ECEF 100%);
     min-height: 100vh;
     color: var(--text-dark);
     line-height: 1.6;
@@ -253,7 +268,7 @@ body {
     transform: translateZ(0);
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     scrollbar-width: thin; /* Firefox */
-    scrollbar-color: var(--primary-teal, #4ECDC4) var(--light-bg, #F0F4F8); /* Firefox */
+    scrollbar-color: var(--primary-teal, #179C8E) var(--light-bg, #E8ECEF); /* Firefox */
     width: 100%;
     max-width: 100%;
     display: block;
@@ -279,13 +294,13 @@ body {
 }
 
 .staff-table-container::-webkit-scrollbar-thumb {
-    background: linear-gradient(90deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(90deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     border-radius: 6px;
     border: 2px solid var(--light-bg, #F0F4F8);
 }
 
 .staff-table-container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(90deg, var(--secondary-teal, #44A08D) 0%, var(--dark-teal, #3BA89F) 100%);
+    background: linear-gradient(90deg, var(--primary-cyan, #4FC4D3) 0%, var(--primary-teal, #179C8E) 100%);
 }
 
     .staff-table-container::before {
@@ -320,7 +335,7 @@ body {
 }
 
     .staff-table thead {
-        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        background: linear-gradient(135deg, #179C8E, #4FC4D3);
         color: white;
     }
 
@@ -984,19 +999,19 @@ body {
 }
 
 .modal-body::-webkit-scrollbar-thumb {
-    background: var(--primary-teal, #4ECDC4);
+    background: var(--primary-teal, #179C8E);
     border-radius: 4px;
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover {
-    background: var(--dark-teal, #3BA89F);
+    background: var(--dark-teal, #179C8E);
 }
 
 /* Loading Spinner - Theme Consistent */
 .loading-spinner {
     text-align: center;
     padding: 3rem 2rem;
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
 }
 
 .loading-spinner i {
@@ -1035,7 +1050,7 @@ body {
 }
 
 .modal-body .edit-header {
-    background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     color: white;
     padding: 2rem 2.5rem;
     border-radius: 12px 12px 0 0;
@@ -1139,7 +1154,7 @@ body {
     transform: translateY(-50%);
     width: 3px;
     height: 16px;
-    background: linear-gradient(180deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(180deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     border-radius: 2px;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1150,7 +1165,7 @@ body {
 }
 
 .modal-body .form-label i {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     width: 18px;
     font-size: 1rem;
     transition: transform 0.3s ease;
@@ -1180,7 +1195,7 @@ body {
 
 .modal-body .form-control:focus {
     outline: none;
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
     box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.15), 0 4px 12px rgba(78, 205, 196, 0.2);
     transform: translateY(-1px);
     background: #ffffff;
@@ -1219,7 +1234,7 @@ body {
 
 .modal-body .form-text::before {
     content: 'ℹ';
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     font-weight: 600;
 }
 
@@ -1282,7 +1297,7 @@ body {
 
 .modal-body .staff-profile {
     background: linear-gradient(135deg, rgba(78, 205, 196, 0.12) 0%, rgba(68, 160, 141, 0.12) 100%);
-    border-left: 5px solid var(--primary-teal, #4ECDC4);
+    border-left: 5px solid var(--primary-teal, #179C8E);
     margin-bottom: 2.5rem;
     padding: 2.5rem;
     border-radius: var(--radius-md, 12px);
@@ -1299,7 +1314,7 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(90deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
 }
 
 .modal-body .staff-profile:hover {
@@ -1310,7 +1325,7 @@ body {
 
 .modal-body .profile-avatar {
     font-size: 4.5rem;
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     background: linear-gradient(135deg, rgba(78, 205, 196, 0.2) 0%, rgba(68, 160, 141, 0.2) 100%);
     width: 110px;
     height: 110px;
@@ -1325,7 +1340,7 @@ body {
 
 .modal-body .staff-profile:hover .profile-avatar {
     transform: scale(1.05);
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
     box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
 }
 
@@ -1336,16 +1351,16 @@ body {
 }
 
 .modal-body .first-name {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     font-weight: 800;
-    background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .modal-body .last-name {
-    color: var(--secondary-teal, #44A08D);
+    color: var(--secondary-teal, #0F3D57);
     font-weight: 800;
 }
 
@@ -1383,7 +1398,7 @@ body {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     padding: 2rem;
     border-radius: var(--radius-md, 12px);
-    border-left: 5px solid var(--primary-teal, #4ECDC4);
+    border-left: 5px solid var(--primary-teal, #179C8E);
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -1397,7 +1412,7 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(90deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
 }
 
 .modal-body .detail-section:hover {
@@ -1421,7 +1436,7 @@ body {
 }
 
 .modal-body .detail-section h4 i {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     font-size: 1.25rem;
     transition: transform 0.3s ease;
 }
@@ -1454,7 +1469,7 @@ body {
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(180deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     transform: scaleY(0);
     transition: transform 0.3s ease;
     border-radius: 3px 0 0 3px;
@@ -1483,7 +1498,7 @@ body {
 }
 
 .modal-body .detail-label i {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     width: 16px;
     font-size: 0.9rem;
     transition: transform 0.3s ease;
@@ -1508,11 +1523,11 @@ body {
 }
 
 .modal-body .name-first {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
 }
 
 .modal-body .name-last {
-    color: var(--secondary-teal, #44A08D);
+    color: var(--secondary-teal, #0F3D57);
 }
 
 .modal-body .id-number {
@@ -1590,7 +1605,7 @@ body {
     left: 0;
     width: 80px;
     height: 2px;
-    background: linear-gradient(90deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(90deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     border-radius: 2px;
 }
 
@@ -1606,7 +1621,7 @@ body {
 }
 
 .modal-body .section-title i {
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     font-size: 1.75rem;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(135deg, rgba(78, 205, 196, 0.15) 0%, rgba(68, 160, 141, 0.15) 100%);
@@ -1661,11 +1676,11 @@ body {
 .modal-body .document-card:hover {
     transform: translateY(-5px) scale(1.01);
     box-shadow: 0 12px 40px rgba(78, 205, 196, 0.2), 0 0 0 1px rgba(78, 205, 196, 0.1);
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
 }
 
 .modal-body .document-header {
-    background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     color: white;
     padding: 1.5rem 2rem;
     border-bottom: none;
@@ -1739,7 +1754,7 @@ body {
     content: '';
     width: 4px;
     height: 16px;
-    background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     border-radius: 2px;
 }
 
@@ -1764,7 +1779,7 @@ body {
 .modal-body .insurance-receipt-container .preview-image:hover,
 .modal-body .preview-image:hover {
     box-shadow: 0 8px 24px rgba(78, 205, 196, 0.25), 0 0 0 2px rgba(78, 205, 196, 0.3);
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
     transform: scale(1.02);
 }
 
@@ -1865,7 +1880,7 @@ body {
 }
 
 .modal-body .document-card:hover .document-placeholder {
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
     background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
     border-style: solid;
     box-shadow: inset 0 0 20px rgba(78, 205, 196, 0.1);
@@ -1876,7 +1891,7 @@ body {
     margin-bottom: 1rem;
     opacity: 0.5;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    color: var(--primary-teal, #4ECDC4);
+    color: var(--primary-teal, #179C8E);
     position: relative;
     z-index: 1;
 }
@@ -1884,7 +1899,7 @@ body {
 .modal-body .document-card:hover .document-placeholder i {
     transform: scale(1.15) rotate(5deg);
     opacity: 0.8;
-    color: var(--secondary-teal, #44A08D);
+    color: var(--secondary-teal, #0F3D57);
 }
 
 .modal-body .document-placeholder p {
@@ -1948,7 +1963,7 @@ body {
 .modal-body select:not(.form-control):focus,
 .modal-body textarea:not(.form-control):focus {
     outline: none;
-    border-color: var(--primary-teal, #4ECDC4);
+    border-color: var(--primary-teal, #179C8E);
     box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.15), 0 4px 12px rgba(78, 205, 196, 0.2);
     transform: translateY(-1px);
 }
@@ -2004,7 +2019,7 @@ body {
 }
 
 .modal-body .btn-primary {
-    background: linear-gradient(135deg, var(--primary-teal, #4ECDC4) 0%, var(--secondary-teal, #44A08D) 100%);
+    background: linear-gradient(135deg, var(--primary-teal, #179C8E) 0%, var(--primary-cyan, #4FC4D3) 100%);
     color: var(--white, #FFFFFF);
     box-shadow: 0 4px 14px rgba(78, 205, 196, 0.4);
     position: relative;

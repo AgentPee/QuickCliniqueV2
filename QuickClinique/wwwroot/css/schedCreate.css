@@ -6,7 +6,7 @@
 }
 
 .create-header {
-    background: linear-gradient(135deg, #4ECDC4, #44A08D);
+    background: linear-gradient(135deg, #179C8E, #4FC4D3);
     color: white;
     padding: 2rem;
     border-radius: 12px 12px 0 0;
@@ -45,9 +45,9 @@
 }
 
 .card-header {
-    background: #f8f9fa;
+    background: #E8ECEF;
     padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e1e5e9;
+    border-bottom: 1px solid #E8ECEF;
 }
 
     .card-header h4 {

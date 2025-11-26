@@ -1,11 +1,27 @@
 ﻿:root {
-    --primary: #4ECDC4;
-    --secondary: #44A08D;
-    --background: #f8f9fa;
+    /* Primary Colors */
+    --primary: #179C8E;
+    --primary-cyan: #4FC4D3;
+    
+    /* Secondary Colors */
+    --secondary: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    
+    /* Neutral Colors */
+    --white: #FFFFFF;
+    --cool-gray: #E8ECEF;
+    --background: #E8ECEF;
+    --borders: #E8ECEF;
+    
+    /* Text Colors */
     --text: #333;
     --text-secondary: #718096;
-    --white: #ffffff;
-    --borders: #e1e5e9;
+    
+    /* Alert Colors */
+    --alert-red: #FF6B6B;
+    --alert-yellow: #F8D66D;
+    
+    /* Other */
     --shadow: rgba(0, 0, 0, 0.08);
     --border-radius: 15px;
     --transition: all 0.3s ease;
@@ -14,12 +30,12 @@
 /* Container */
 .appointments-container {
     padding: 2rem;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-cyan) 100%);
     min-height: calc(100vh - 60px);
 }
 
 .content-card {
-    background: white;
+    background: var(--white);
     border-radius: var(--border-radius);
     box-shadow: 0 10px 30px var(--shadow);
     overflow: hidden;
@@ -28,7 +44,7 @@
 
 /* Enhanced Page Header */
 .page-header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-cyan) 100%);
     color: white;
     padding: 2.5rem;
     position: relative;
@@ -114,7 +130,7 @@
     }
 
 .btn-primary {
-    background: white;
+    background: var(--white);
     color: var(--primary);
 }
 
@@ -140,7 +156,7 @@
 }
 
     .btn-create:hover {
-        background: white;
+        background: var(--white);
         color: var(--secondary);
         box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
     }
@@ -160,7 +176,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: white;
+    background: var(--white);
     border-radius: 12px;
     box-shadow: 0 2px 8px var(--shadow);
     transition: var(--transition);
@@ -184,7 +200,7 @@
 }
 
 .stat-icon-total {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-cyan) 100%);
 }
 
 .stat-icon-pending {
@@ -255,7 +271,7 @@
 
 /* Table Styles */
 .table-responsive {
-    background: white;
+    background: var(--white);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 8px var(--shadow);
@@ -414,7 +430,7 @@
 }
 
 .queue-badge {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-cyan) 100%);
     color: white;
     padding: 0.4rem 0.8rem;
     border-radius: 15px;
@@ -518,7 +534,7 @@
     text-align: center;
     padding: 4rem 2rem;
     color: var(--text-secondary);
-    background: white;
+    background: var(--white);
     border-radius: 12px;
 }
 
