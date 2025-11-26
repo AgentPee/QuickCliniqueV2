@@ -6,7 +6,6 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/precord.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/dashboard-index.css" asp-append-version="true" />
 }
 
 <div class="patients-container">
@@ -34,24 +33,39 @@
             <table class="patients-table">
                 <thead>
                     <tr>
-                        <th>ID Number</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                 
+                        <th><i class="fas fa-id-card"></i> ID Number</th>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th><i class="fas fa-phone"></i> Phone</th>
+                        <th><i class="fas fa-info-circle"></i> Status</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
                     </tr>
                 </thead>
                 <tbody id="patientsTableBody">
                     @foreach (var patient in Model)
                     {
                         <tr data-search="@patient.Idnumber @patient.FirstName @patient.LastName @patient.Email @patient.PhoneNumber">
-                            <td>@patient.Idnumber</td>
                             <td>
-                                <span class="patient-name">@patient.FirstName @patient.LastName</span>
+                                <span class="patient-field">
+                                    <i class="fas fa-id-card"></i> @patient.Idnumber
+                                </span>
                             </td>
-                            <td>@patient.Email</td>
-                            <td>@patient.PhoneNumber</td>
+                            <td>
+                                <span class="patient-name">
+                                    <i class="fas fa-user"></i> @patient.FirstName @patient.LastName
+                                </span>
+                            </td>
+                            <td>
+                                <span class="patient-field">
+                                    <i class="fas fa-envelope"></i> @patient.Email
+                                </span>
+                            </td>
+                            <td>
+                                <span class="patient-field">
+                                    <i class="fas fa-phone"></i> @patient.PhoneNumber
+                                </span>
+                            </td>
                             <td>
                                 <div class="flex-align-center">
                                     @if (patient.IsActive)
