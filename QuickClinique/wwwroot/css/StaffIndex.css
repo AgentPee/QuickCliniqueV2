@@ -320,27 +320,41 @@ body {
 }
 
     .staff-table thead {
-        background: linear-gradient(135deg, #F8FAFB 0%, #F0F4F8 100%);
-        border-bottom: 2px solid var(--border-color);
+        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        color: white;
     }
 
     .staff-table th {
-        padding: 1rem 1.5rem;
+        padding: 1.25rem 1.5rem;
         text-align: left;
-        font-weight: 700;
-        color: var(--text-dark);
+        font-weight: 600;
+        color: white;
         text-transform: uppercase;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
         letter-spacing: 0.5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
+    .staff-table th i {
+        color: rgba(255, 255, 255, 0.95);
+        margin-right: 0.5rem;
+        font-size: 0.9rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+        transition: all 0.3s ease;
+    }
+
+    .staff-table th:hover i {
+        color: white;
+        transform: scale(1.1);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
     .staff-table td {
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--border-color);
-        color: var(--text-dark);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        color: #495057;
         line-height: 1.6;
         vertical-align: middle;
     }
@@ -405,31 +419,14 @@ body {
         }
 
     .staff-table tbody tr {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        background: var(--white);
-        position: relative;
+        transition: all 0.3s ease;
+        background: white;
     }
 
-        /* Color-coded left border based on role */
-        .staff-table tbody tr::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: transparent;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .staff-table tbody tr:hover::before {
-            background: linear-gradient(180deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
-        }
-
-        .staff-table tbody tr:hover {
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.04) 0%, rgba(68, 160, 141, 0.04) 100%);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
+    .staff-table tbody tr:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
 
 /* User Role - Plain Text Styling (No Badge Design) */
 .user-role-text {
@@ -438,6 +435,36 @@ body {
     color: var(--text-dark);
     text-transform: capitalize;
     display: inline-block;
+}
+
+/* Staff Field with Icons */
+.staff-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.staff-field i {
+    color: var(--primary-teal);
+    font-size: 0.9rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(78, 205, 196, 0.15);
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(78, 205, 196, 0.25);
+    transition: all 0.3s ease;
+}
+
+.staff-field:hover i {
+    background: rgba(78, 205, 196, 0.25);
+    border-color: var(--primary-teal);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
 }
 
 /* Action Buttons Container */
