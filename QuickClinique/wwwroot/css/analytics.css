@@ -247,6 +247,7 @@ html {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 2rem;
+    align-items: start;
 }
 
 /* Analytics grid responsive - ensure single column on mobile */
@@ -264,6 +265,9 @@ html {
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .analytics-card.full-width {
@@ -343,10 +347,16 @@ html {
 /* Card Body */
 .card-body {
     padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-body canvas {
     max-height: 400px;
+    min-height: 300px;
+    flex-shrink: 0;
+    width: 100%;
 }
 
 /* Demographics Content */
@@ -360,7 +370,8 @@ html {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    justify-content: center;
+    justify-content: flex-start;
+    align-self: flex-start;
 }
 
 .demographic-stat {
@@ -391,12 +402,61 @@ html {
     background-clip: text;
 }
 
+/* Appointment Volume Statistics */
+.volume-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 0;
+    align-self: flex-end;
+}
+
+.volume-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-teal);
+    min-height: 120px;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.volume-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.15);
+}
+
+.volume-stat .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.volume-stat .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--primary-teal);
+    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    min-height: 2.5rem;
+}
+
 /* Visit Frequency */
 .frequency-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-top: 2rem;
+    margin-bottom: 0;
+    align-self: flex-end;
 }
 
 .frequency-stat {
@@ -409,6 +469,12 @@ html {
     border-left: 4px solid var(--success);
     min-height: 120px;
     justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.frequency-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
 
 .frequency-stat .stat-label {
@@ -436,6 +502,8 @@ html {
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-top: 2rem;
+    margin-bottom: 0;
+    align-self: flex-end;
 }
 
 .cancellation-stat {
@@ -519,17 +587,44 @@ html {
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-top: 2rem;
+    margin-bottom: 0;
+    align-self: flex-end;
 }
 
 .emergency-stat {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
     padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(220, 38, 38, 0.02) 100%);
     border-radius: var(--radius-md);
-    text-align: center;
+    border-left: 4px solid var(--danger);
+    min-height: 120px;
+    justify-content: space-between;
     position: relative;
     overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.emergency-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.emergency-stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.03) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.emergency-stat:hover::before {
+    opacity: 1;
 }
 
 .emergency-stat.day {
@@ -558,12 +653,17 @@ html {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
 .emergency-stat .stat-value {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
-    color: var(--text-dark);
+    color: var(--danger);
+    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    min-height: 2.5rem;
 }
 
 .emergency-stat.day .stat-value {
@@ -596,6 +696,8 @@ html {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
     margin-top: 2rem;
+    margin-bottom: 0;
+    align-self: flex-end;
 }
 
 .reason-stat {
@@ -799,24 +901,23 @@ html {
         font-size: 1.5rem;
     }
     
+    .volume-stats,
     .frequency-stats,
     .cancellation-stats,
-    .reasons-stats {
+    .reasons-stats,
+    .emergency-stats {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
     
-    .emergency-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    
+    .volume-stat,
     .frequency-stat,
     .cancellation-stat,
     .emergency-stat {
         padding: 1.25rem;
     }
     
+    .volume-stat .stat-value,
     .frequency-stat .stat-value,
     .cancellation-stat .stat-value,
     .emergency-stat .stat-value {
@@ -899,12 +1000,14 @@ html {
         font-size: 1.25rem;
     }
     
+    .volume-stat,
     .frequency-stat,
     .cancellation-stat,
     .emergency-stat {
         padding: 1rem;
     }
     
+    .volume-stat .stat-value,
     .frequency-stat .stat-value,
     .cancellation-stat .stat-value,
     .emergency-stat .stat-value {
