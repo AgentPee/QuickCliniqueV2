@@ -70,6 +70,7 @@ async function loadChartData(chartType, timeRange) {
             case 'appointmentVolume':
                 analyticsData.appointmentVolume = chartData.appointmentVolume || [];
                 renderAppointmentVolumeChart();
+                updateVolumeStats();
                 break;
             case 'demographics':
                 analyticsData.ageDistribution = chartData.ageDistribution || analyticsData.ageDistribution;
@@ -93,6 +94,7 @@ async function loadChartData(chartType, timeRange) {
             case 'emergency':
                 analyticsData.emergencyStatistics = chartData.emergencyStatistics || analyticsData.emergencyStatistics;
                 renderEmergencyTrendChart();
+                updateEmergencyStats();
                 break;
             case 'reasonsForVisit':
                 analyticsData.reasonsForVisit = chartData.reasonsForVisit || analyticsData.reasonsForVisit;
@@ -329,6 +331,8 @@ function renderCharts() {
     updateDemographicsStats();
     updateFrequencyStats();
     updateCancellationStats();
+    updateVolumeStats();
+    updateEmergencyStats();
     updateReasonsStats();
 }
 
@@ -482,7 +486,7 @@ function renderVisitFrequencyChart() {
     charts.visitFrequency = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: sortedKeys.map(v => v === '5+' ? '5+' : v + ' visit' + (parseInt(v) > 1 ? 's' : '')),
+            labels: sortedKeys.map(v => v === '5+' ? '5+ visits' : v + ' visit' + (parseInt(v) > 1 ? 's' : '')),
             datasets: [{
                 label: 'Patients',
                 data: sortedKeys.map(key => data[key]),
@@ -619,6 +623,63 @@ function updateCancellationStats() {
     
     document.getElementById('totalCompleted').textContent = data.completed.toLocaleString();
     document.getElementById('completedPercentage').textContent = ((data.completed / total) * 100).toFixed(1) + '%';
+}
+
+// Update appointment volume statistics
+function updateVolumeStats() {
+    const data = analyticsData.appointmentVolume || [];
+    
+    if (data.length === 0) {
+        document.getElementById('totalAppointmentsVolume').textContent = '0';
+        document.getElementById('avgAppointmentsPerDay').textContent = '0';
+        document.getElementById('peakAppointmentDay').textContent = '-';
+        return;
+    }
+    
+    // Calculate total appointments
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    
+    // Calculate average per day
+    const avgPerDay = (total / data.length).toFixed(1);
+    
+    // Find peak day
+    const peakDay = data.reduce((max, item) => item.count > max.count ? item : max, data[0]);
+    const peakDayLabel = peakDay.day + ' (' + peakDay.count + ')';
+    
+    document.getElementById('totalAppointmentsVolume').textContent = total.toLocaleString();
+    document.getElementById('avgAppointmentsPerDay').textContent = avgPerDay;
+    document.getElementById('peakAppointmentDay').textContent = peakDayLabel;
+}
+
+// Update emergency statistics
+function updateEmergencyStats() {
+    const data = analyticsData.emergencyStatistics || {};
+    const volumeData = data.emergencyVolume || [];
+    
+    // Update today's emergencies
+    const emergenciesToday = data.emergenciesToday || 0;
+    document.getElementById('emergenciesToday').textContent = emergenciesToday.toLocaleString();
+    
+    if (volumeData.length === 0) {
+        document.getElementById('totalEmergenciesStats').textContent = '0';
+        document.getElementById('avgEmergenciesPerDay').textContent = '0';
+        document.getElementById('peakEmergencyDay').textContent = '-';
+        return;
+    }
+    
+    // Calculate total emergencies from volume data
+    const total = volumeData.reduce((sum, item) => sum + item.count, 0);
+    
+    // Calculate average per day
+    const avgPerDay = (total / volumeData.length).toFixed(1);
+    
+    // Find peak day
+    const peakDay = volumeData.reduce((max, item) => item.count > max.count ? item : max, volumeData[0]);
+    const peakDayLabel = peakDay.day + ' (' + peakDay.count + ')';
+    
+    document.getElementById('totalEmergenciesStats').textContent = total.toLocaleString();
+    document.getElementById('avgEmergenciesPerDay').textContent = avgPerDay;
+    document.getElementById('peakEmergencyDay').textContent = peakDayLabel;
 }
 
 // Render Emergency Trend Chart
