@@ -1,0 +1,558 @@
+/* ===== GLOBAL TABLE STYLES - Applied to All Tables ===== */
+/* This file provides consistent table styling across the entire application */
+
+/* Base Table Styles */
+.table,
+.patients-table,
+.staff-table,
+.schedules-table,
+table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Table Headers */
+.table thead th,
+.patients-table thead th,
+.staff-table thead th,
+.schedules-table thead th,
+table thead th {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+    border-bottom: 3px solid #4ECDC4;
+    font-weight: 700;
+    color: #179C8E;
+    padding: 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(78, 205, 196, 0.2);
+}
+
+    .table thead th i,
+    .patients-table thead th i,
+    .staff-table thead th i,
+    .schedules-table thead th i,
+    table thead th i {
+        color: #179C8E;
+        margin-right: 0.3rem;
+        font-size: 1em;
+    }
+
+/* Table Body */
+.table tbody tr,
+.patients-table tbody tr,
+.staff-table tbody tr,
+.schedules-table tbody tr,
+table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+    .table tbody tr:hover,
+    .patients-table tbody tr:hover,
+    .staff-table tbody tr:hover,
+    .schedules-table tbody tr:hover,
+    table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.001);
+    }
+
+/* Table Cells */
+.table td,
+.patients-table td,
+.staff-table td,
+.schedules-table td,
+table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+/* Table Icons Styling */
+.table i,
+.patients-table i,
+.staff-table i,
+.schedules-table i,
+table i {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover i,
+.patients-table tbody tr:hover i,
+.staff-table tbody tr:hover i,
+.schedules-table tbody tr:hover i,
+table tbody tr:hover i {
+    color: #4ECDC4;
+    transform: scale(1.1);
+}
+
+/* Status Badges in Tables */
+.table .status-badge,
+.patients-table .status-badge,
+.staff-table .status-badge,
+.schedules-table .status-badge,
+table .status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.3s ease;
+}
+
+    .table .status-badge:hover,
+    .patients-table .status-badge:hover,
+    .staff-table .status-badge:hover,
+    .schedules-table .status-badge:hover,
+    table .status-badge:hover {
+        transform: scale(1.05);
+    }
+
+    .table .status-badge i,
+    .patients-table .status-badge i,
+    .staff-table .status-badge i,
+    .schedules-table .status-badge i,
+    table .status-badge i {
+        font-size: 0.9em;
+    }
+
+/* Badge Variants */
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-confirmed {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #d1ecf1 0%, #4ECDC4 100%);
+    color: #0c5460;
+    border: 2px solid #4ECDC4;
+}
+
+.status-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-completed {
+    background-color: #e8f4fe;
+    color: #004085;
+    border: 1px solid #b8daff;
+}
+
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Action Buttons in Tables */
+.table .action-buttons,
+.patients-table .action-buttons,
+.staff-table .action-buttons,
+.schedules-table .action-buttons,
+table .action-buttons {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.table .btn-sm,
+.patients-table .btn-sm,
+.staff-table .btn-sm,
+.schedules-table .btn-sm,
+table .btn-sm {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9em;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .table .btn-sm:hover,
+    .patients-table .btn-sm:hover,
+    .staff-table .btn-sm:hover,
+    .schedules-table .btn-sm:hover,
+    table .btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+/* Table Responsive Container */
+.table-responsive,
+.table-container,
+.patients-table-container,
+.staff-table-container {
+    background: #FFFFFF;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* Table Card Wrapper */
+.table-card {
+    background: #FFFFFF;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.table-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid #e1e5e9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .table-header h5 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-header i {
+        color: #179C8E;
+    }
+
+.table-count {
+    color: #718096;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Patient/User Info in Tables */
+.patient-info,
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.patient-icon,
+.user-icon {
+    color: #4ECDC4;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover .patient-icon,
+.table tbody tr:hover .user-icon {
+    color: #179C8E;
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* Date/Time Display in Tables */
+.date-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.date-primary {
+    font-weight: 600;
+    color: #333;
+}
+
+.date-booked {
+    color: #718096;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    background: transparent;
+}
+
+    .date-booked:hover {
+        background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+        color: #333;
+        transform: translateX(2px);
+    }
+
+    .date-booked i {
+        color: #179C8E;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
+    }
+
+    .date-booked:hover i {
+        color: #4ECDC4;
+        transform: scale(1.15) rotate(-5deg);
+    }
+
+/* ID Badge in Tables */
+.id-badge,
+.queue-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+    .id-badge:hover,
+    .queue-badge:hover {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-color: #4ECDC4;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    }
+
+    .id-badge i,
+    .queue-badge i {
+        color: #179C8E;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .id-badge:hover i,
+    .queue-badge:hover i {
+        color: #4ECDC4;
+        transform: scale(1.1) rotate(5deg);
+    }
+
+.queue-badge {
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+}
+
+/* Reason Badge */
+.reason-badge {
+    background-color: #f1f3f5;
+    color: #333;
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+    .reason-badge:hover {
+        background-color: #e9ecef;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    }
+
+    .reason-badge i {
+        color: #179C8E;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        min-width: 16px;
+    }
+
+    .reason-badge:hover i {
+        color: #4ECDC4;
+        transform: scale(1.15);
+    }
+
+/* Symptoms Text */
+.symptoms-text {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #718096;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.2rem 0;
+}
+
+    .symptoms-text:hover {
+        color: #333;
+    }
+
+    .symptoms-text i {
+        color: #179C8E;
+        font-size: 0.95em;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        min-width: 16px;
+    }
+
+    .symptoms-text:hover i {
+        color: #4ECDC4;
+        transform: scale(1.1);
+    }
+
+/* Empty State */
+.no-appointments,
+.no-data {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #718096;
+}
+
+    .no-appointments i,
+    .no-data i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: #179C8E;
+        opacity: 0.5;
+    }
+
+    .no-appointments h5,
+    .no-data h5 {
+        color: #333;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        font-size: 1.3rem;
+    }
+
+    .no-appointments p,
+    .no-data p {
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.8;
+    }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .table-responsive,
+    .table-container,
+    .patients-table-container,
+    .staff-table-container {
+        font-size: 0.85em;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        display: block !important;
+    }
+    
+    /* Custom scrollbar */
+    .table-responsive::-webkit-scrollbar,
+    .table-container::-webkit-scrollbar {
+        height: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track,
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb,
+    .table-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
+        border-radius: 5px;
+    }
+
+    .table,
+    .patients-table,
+    .staff-table,
+    .schedules-table,
+    table {
+        min-width: 1000px !important;
+        width: auto !important;
+        display: table !important;
+    }
+
+    .table th,
+    .table td,
+    .patients-table th,
+    .patients-table td,
+    .staff-table th,
+    .staff-table td,
+    .schedules-table th,
+    .schedules-table td,
+    table th,
+    table td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap !important;
+    }
+
+    .status-badge,
+    .queue-badge,
+    .id-badge {
+        font-size: 0.75em;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.5rem;
+        min-width: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-responsive,
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .table,
+    .patients-table,
+    .staff-table,
+    .schedules-table,
+    table {
+        min-width: 1200px !important;
+        font-size: 0.8em;
+    }
+    
+    .table th,
+    .table td,
+    .patients-table th,
+    .patients-table td,
+    .staff-table th,
+    .staff-table td,
+    .schedules-table th,
+    .schedules-table td,
+    table th,
+    table td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.8em;
+        white-space: nowrap !important;
+    }
+}
+

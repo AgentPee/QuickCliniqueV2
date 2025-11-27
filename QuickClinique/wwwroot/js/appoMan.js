@@ -683,6 +683,8 @@ function updateEmergenciesTable(emergencies) {
             : 'Unknown';
         
         const row = document.createElement('tr');
+        row.setAttribute('data-status', statusClass);
+        row.setAttribute('data-resolved', emergency.isResolved ? 'true' : 'false');
         row.innerHTML = `
             <td>
                 <div class="patient-info">

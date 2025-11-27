@@ -48,14 +48,16 @@
 
 /* Enhanced Status Badges */
 .status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.85em;
+    padding: 0.4rem 0.85rem;
+    border-radius: 18px;
+    font-size: 0.8em;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     transition: all 0.3s ease;
+    line-height: 1.3;
+    white-space: nowrap;
 }
 
     .status-badge:hover {
@@ -64,6 +66,7 @@
 
     .status-badge i {
         font-size: 0.9em;
+        flex-shrink: 0;
     }
 
 .status-pending {
@@ -100,9 +103,9 @@
 .queue-badge {
     background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
-    padding: 0.4rem 0.9rem;
-    border-radius: 20px;
-    font-size: 0.85em;
+    padding: 0.35rem 0.75rem;
+    border-radius: 18px;
+    font-size: 0.8em;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
     display: inline-block;
@@ -111,12 +114,14 @@
 .queue-info-cell {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.25rem;
+    align-items: flex-start;
 }
 
 .queue-status {
     color: #718096;
-    font-size: 0.85em;
+    font-size: 0.8em;
+    line-height: 1.3;
 }
 
 /* Action Buttons */
@@ -125,6 +130,7 @@
     gap: 0.4rem;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
 }
 
 .btn-sm {
@@ -346,31 +352,68 @@
 /* Table Styles */
 .table-responsive {
     background: #FFFFFF;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    display: block;
 }
+
+    /* Custom scrollbar styling */
+    .table-responsive::-webkit-scrollbar {
+        height: 12px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+        margin: 0 1rem;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
+        border-radius: 10px;
+        border: 2px solid #f1f1f1;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(90deg, #4ECDC4 0%, #179C8E 100%);
+    }
 
 .table {
     margin-bottom: 0;
+    width: 100%;
+    table-layout: auto;
 }
 
     .table th {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #e1e5e9;
-        font-weight: 600;
-        color: #333;
-        padding: 1rem;
-        font-size: 0.9rem;
+        background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+        border-bottom: 3px solid #4ECDC4;
+        font-weight: 700;
+        color: #179C8E;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
         white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(78, 205, 196, 0.2);
+        vertical-align: middle;
     }
 
         .table th i {
             color: #179C8E;
-            margin-right: 0.3rem;
+            margin-right: 0.35rem;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
         }
 
     .table td {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
         vertical-align: middle;
         border-bottom: 1px solid #f1f3f5;
+        line-height: 1.4;
     }
 
     .table tbody tr {
@@ -386,26 +429,29 @@
 .patient-info {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
     font-weight: 600;
     color: #333;
+    line-height: 1.4;
+    font-size: 0.9em;
 }
 
 .patient-icon {
     color: #4ECDC4;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 /* ID Badge Styles */
 .id-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #333;
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.9em;
+    padding: 0.35rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.85em;
     font-weight: 600;
     border: 1px solid #e1e5e9;
     transition: all 0.3s ease;
@@ -435,20 +481,21 @@
 .date-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
 }
 
 .date-primary {
     font-weight: 600;
     color: #333;
+    font-size: 0.9em;
 }
 
 .appointment-time {
     color: #718096;
-    font-size: 0.85em;
+    font-size: 0.8em;
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.25rem;
 }
 
     .appointment-time i {
@@ -457,12 +504,12 @@
 
 .date-booked {
     color: #718096;
-    font-size: 0.9em;
+    font-size: 0.85em;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: all 0.3s ease;
-    padding: 0.3rem 0.6rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 8px;
     background: transparent;
 }
@@ -491,13 +538,13 @@
 .reason-badge {
     background-color: #f1f3f5;
     color: #333;
-    padding: 0.3rem 0.7rem;
-    border-radius: 12px;
-    font-size: 0.85em;
+    padding: 0.3rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.8em;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: all 0.3s ease;
 }
 
@@ -521,17 +568,17 @@
     }
 
 .symptoms-text {
-    max-width: 220px;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #718096;
-    font-size: 0.9em;
+    font-size: 0.85em;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: all 0.3s ease;
-    padding: 0.2rem 0;
+    padding: 0.15rem 0;
 }
 
     .symptoms-text:hover {
@@ -1110,4 +1157,205 @@ textarea.form-control {
 /* BMI result modal hidden */
 .bmi-result-modal-hidden {
     display: none;
+}
+
+/* ===== EMERGENCY SCHEDULES TABLE STYLES ===== */
+
+/* Emergency table specific styling */
+#emergenciesTable {
+    margin-top: 0;
+}
+
+#emergenciesTable thead th {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+    color: #179C8E;
+    font-weight: 700;
+    border-bottom: 3px solid #4ECDC4;
+    position: relative;
+}
+
+    #emergenciesTable thead th i {
+        color: #179C8E;
+        margin-right: 0.4rem;
+        font-size: 1em;
+    }
+
+/* Emergency table rows */
+#emergenciesTable tbody tr {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+    #emergenciesTable tbody tr:hover {
+        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%);
+        transform: translateX(3px);
+        border-left-color: #4ECDC4;
+        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.2);
+    }
+
+    /* Active emergency row styling */
+    #emergenciesTable tbody tr[data-status="active"],
+    #emergenciesTable tbody tr:not([data-resolved="true"]) {
+        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 50%);
+        border-left-color: #4ECDC4;
+        animation: emergencyPulse 2s ease-in-out infinite;
+    }
+
+    /* Resolved emergency row styling */
+    #emergenciesTable tbody tr[data-status="resolved"],
+    #emergenciesTable tbody tr[data-resolved="true"] {
+        background: linear-gradient(90deg, #e0f2fe 0%, #ffffff 50%);
+        border-left-color: #179C8E;
+        opacity: 0.85;
+    }
+
+        #emergenciesTable tbody tr[data-status="resolved"]:hover,
+        #emergenciesTable tbody tr[data-resolved="true"]:hover {
+            opacity: 1;
+            border-left-color: #179C8E;
+        }
+
+/* Emergency pulse animation for active emergencies */
+@keyframes emergencyPulse {
+    0%, 100% {
+        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.1);
+    }
+    50% {
+        box-shadow: -2px 0 12px rgba(78, 205, 196, 0.3);
+    }
+}
+
+/* Emergency status badges */
+#emergenciesTable .status-badge.status-pending {
+    background: linear-gradient(135deg, #d1ecf1 0%, #4ECDC4 100%);
+    color: #0c5460;
+    border: 2px solid #4ECDC4;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+#emergenciesTable .status-badge.status-completed {
+    background: linear-gradient(135deg, #d1ecf1 0%, #179C8E 100%);
+    color: #0c5460;
+    border: 2px solid #179C8E;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 8px rgba(23, 156, 142, 0.3);
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.5);
+    }
+}
+
+/* Emergency icons styling */
+#emergenciesTable .patient-icon {
+    color: #179C8E;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+}
+
+#emergenciesTable tbody tr:hover .patient-icon {
+    color: #4ECDC4;
+    transform: scale(1.1) rotate(5deg);
+}
+
+#emergenciesTable .symptoms-text i {
+    color: #179C8E;
+    transition: all 0.3s ease;
+}
+
+#emergenciesTable tbody tr:hover .symptoms-text i {
+    color: #4ECDC4;
+    transform: scale(1.1);
+}
+
+#emergenciesTable .date-booked i {
+    color: #179C8E;
+    transition: all 0.3s ease;
+}
+
+#emergenciesTable tbody tr:hover .date-booked i {
+    color: #4ECDC4;
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* Emergency queue badge styling */
+#emergenciesTable .queue-badge {
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
+    color: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+#emergenciesTable tbody tr:hover .queue-badge {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+}
+
+/* Emergency table header enhancement */
+#emergenciesTable + .table-header {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+    border-bottom: 3px solid #4ECDC4;
+}
+
+    #emergenciesTable + .table-header h5 {
+        color: #179C8E;
+        font-weight: 700;
+    }
+
+    #emergenciesTable + .table-header h5 i {
+        color: #179C8E;
+        animation: emergencyIconPulse 2s ease-in-out infinite;
+    }
+
+@keyframes emergencyIconPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Emergency table card styling - enhanced visual distinction */
+.table-card:last-of-type {
+    border-top: 4px solid #4ECDC4;
+    box-shadow: 0 5px 20px rgba(78, 205, 196, 0.15);
+    position: relative;
+}
+
+    .table-card:last-of-type::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
+    }
+
+/* Responsive emergency table */
+@media (max-width: 768px) {
+    #emergenciesTable tbody tr:hover {
+        transform: none;
+    }
+
+    #emergenciesTable .status-badge {
+        font-size: 0.75em;
+        padding: 0.4rem 0.8rem;
+    }
 }
