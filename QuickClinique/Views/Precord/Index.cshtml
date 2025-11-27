@@ -45,7 +45,7 @@
                 <tbody id="patientsTableBody">
                     @foreach (var patient in Model)
                     {
-                        <tr data-search="@patient.Idnumber @patient.FirstName @patient.LastName @patient.Email @patient.PhoneNumber">
+                        <tr data-patient-id="@patient.StudentId" data-search="@patient.Idnumber @patient.FirstName @patient.LastName @patient.Email @patient.PhoneNumber">
                             <td>
                                 <span class="patient-field">
                                     <i class="fas fa-id-card"></i> @patient.Idnumber
@@ -458,7 +458,9 @@
                 if (result.success) {
                     showNotification(result.message || 'Patient status updated successfully!', 'success');
                     closeModal('toggleModal');
-                    setTimeout(() => location.reload(), 1000);
+                    
+                    // Update UI dynamically without reloading
+                    updatePatientStatusUI(currentToggleId, result.isActive);
                 } else {
                     throw new Error(result.message || 'Failed to update patient status');
                 }
@@ -467,6 +469,40 @@
                 showNotification('Error updating patient status. Please try again.', 'error');
                 closeModal('toggleModal');
             }
+        }
+
+        // Update patient status UI dynamically
+        function updatePatientStatusUI(patientId, isActive) {
+            const row = document.querySelector(`tr[data-patient-id="${patientId}"]`);
+            if (!row) return;
+            
+            const statusCell = row.querySelector('td:nth-child(5)'); // Status column
+            if (!statusCell) return;
+            
+            const statusDiv = statusCell.querySelector('.flex-align-center');
+            if (!statusDiv) return;
+            
+            // Get patient name from the row for the button
+            const nameCell = row.querySelector('td:nth-child(2)');
+            const patientName = nameCell ? nameCell.textContent.trim() : 'Patient';
+            
+            // Clear existing content
+            statusDiv.innerHTML = '';
+            
+            // Create badge
+            const badge = document.createElement('span');
+            badge.className = isActive ? 'badge badge-success' : 'badge badge-danger';
+            badge.innerHTML = `<i class="fas fa-${isActive ? 'check-circle' : 'ban'}"></i> ${isActive ? 'Active' : 'Inactive'}`;
+            statusDiv.appendChild(badge);
+            
+            // Create button
+            const button = document.createElement('button');
+            button.className = isActive ? 'btn-action btn-delete btn-sm-custom' : 'btn-action status-button-activate';
+            button.innerHTML = `<i class="fas fa-${isActive ? 'ban' : 'check'}"></i> ${isActive ? 'Deactivate' : 'Activate'}`;
+            button.addEventListener('click', function() {
+                showToggleModal(patientId, patientName, isActive);
+            });
+            statusDiv.appendChild(button);
         }
 
         // Notification System

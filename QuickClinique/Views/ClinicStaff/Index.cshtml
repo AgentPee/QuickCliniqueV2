@@ -31,7 +31,7 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr data-staff-id="@item.ClinicStaffId">
                         <td>
                             <span class="staff-field">
                                 <i class="fas fa-user"></i> @item.FirstName @item.LastName
@@ -615,7 +615,9 @@
                 if (result.success) {
                     showNotification(result.message || 'Staff status updated successfully!', 'success');
                     closeModal('toggleModal');
-                    setTimeout(() => location.reload(), 1000);
+                    
+                    // Update UI dynamically without reloading
+                    updateStaffStatusUI(currentToggleId, result.isActive);
                 } else {
                     throw new Error(result.message || 'Failed to update staff status');
                 }
@@ -624,6 +626,40 @@
                 showNotification('Error updating staff status. Please try again.', 'error');
                 closeModal('toggleModal');
             }
+        }
+
+        // Update staff status UI dynamically
+        function updateStaffStatusUI(staffId, isActive) {
+            const row = document.querySelector(`tr[data-staff-id="${staffId}"]`);
+            if (!row) return;
+            
+            const statusCell = row.querySelector('td:nth-child(5)'); // Status column
+            if (!statusCell) return;
+            
+            const statusDiv = statusCell.querySelector('.flex-align-center');
+            if (!statusDiv) return;
+            
+            // Get staff name from the row for the button
+            const nameCell = row.querySelector('td:nth-child(1)');
+            const staffName = nameCell ? nameCell.textContent.trim() : 'Staff';
+            
+            // Clear existing content
+            statusDiv.innerHTML = '';
+            
+            // Create badge
+            const badge = document.createElement('span');
+            badge.className = isActive ? 'badge badge-success' : 'badge badge-danger';
+            badge.innerHTML = `<i class="fas fa-${isActive ? 'check-circle' : 'ban'}"></i> ${isActive ? 'Active' : 'Inactive'}`;
+            statusDiv.appendChild(badge);
+            
+            // Create button
+            const button = document.createElement('button');
+            button.className = isActive ? 'btn btn-danger btn-sm btn-sm-custom' : 'btn btn-success btn-sm btn-sm-custom';
+            button.innerHTML = `<i class="fas fa-${isActive ? 'ban' : 'check'}"></i> ${isActive ? 'Deactivate' : 'Activate'}`;
+            button.addEventListener('click', function() {
+                showToggleModal(staffId, staffName, isActive);
+            });
+            statusDiv.appendChild(button);
         }
 
         function showNotification(message, type) {

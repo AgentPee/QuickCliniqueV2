@@ -109,6 +109,56 @@ namespace QuickClinique.Services
             }
         }
 
+        public async Task SendAccountActivationEmail(string toEmail, string name, string loginUrl)
+        {
+            try
+            {
+                Console.WriteLine($"[EMAIL] SendAccountActivationEmail called for: {toEmail}, Name: {name}");
+                
+                if (string.IsNullOrWhiteSpace(toEmail))
+                {
+                    Console.WriteLine("[EMAIL ERROR] SendAccountActivationEmail: toEmail is null or empty");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    name = "User";
+                }
+
+                if (string.IsNullOrWhiteSpace(loginUrl))
+                {
+                    Console.WriteLine("[EMAIL ERROR] SendAccountActivationEmail: loginUrl is null or empty");
+                    return;
+                }
+
+                var subject = "Account Activated - QuickClinique";
+                var body = GetEmailTemplate(
+                    title: "Account Activated",
+                    greeting: $"Hello {System.Net.WebUtility.HtmlEncode(name)},",
+                    content: $@"
+                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Great news! Your account has been activated by an administrator. You can now log in and start using QuickClinique.</p>
+                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748; line-height: 1.6;'>Your account is now active and ready to use. You can log in to access all features of QuickClinique.</p>
+                        </div>
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{System.Net.WebUtility.HtmlEncode(loginUrl)}' style='display: inline-block; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);'>Login to Your Account</a>
+                        </div>
+                        <p style='margin: 20px 0; color: #718096; font-size: 14px;'>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+                        <p style='margin: 0; color: #718096; font-size: 14px;'>Welcome to QuickClinique!</p>",
+                    primaryColor: "#10B981"
+                );
+
+                await SendEmailAsync(toEmail, subject, body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EMAIL ERROR] SendAccountActivationEmail exception: {ex.Message}");
+                Console.WriteLine($"[EMAIL ERROR] Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+
         public async Task SendAppointmentConfirmationEmail(string toEmail, string patientName, string appointmentDate, string appointmentTime, int queueNumber)
         {
             try

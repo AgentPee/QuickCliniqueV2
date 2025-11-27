@@ -638,6 +638,7 @@ namespace QuickClinique.Controllers
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        IsActive = false, // Account starts as inactive until activated by administrator
                         EmergencyContactName = model.EmergencyContactName,
                         EmergencyContactRelationship = model.EmergencyContactRelationship,
                         EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
@@ -724,13 +725,13 @@ namespace QuickClinique.Controllers
                     if (IsAjaxRequest())
                         return Json(new { 
                             success = true, 
-                            message = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.",
+                            message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.",
                             redirectUrl = Url.Action("verificationE", "Student", new { email = student.Email }),
                             studentEmail = student.Email,
                             studentIdNumber = student.Idnumber
                         });
 
-                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.";
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
                     TempData["StudentEmail"] = student.Email;
                     TempData["StudentIdNumber"] = student.Idnumber;
                     return RedirectToAction("verificationE", "Student", new { email = student.Email });
@@ -851,10 +852,15 @@ namespace QuickClinique.Controllers
 
                     if (!student.IsActive)
                     {
+                        // If email is verified but account is inactive, it means pending activation
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the clinic staff for assistance." });
+                            return Json(new { 
+                                success = false, 
+                                error = "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.",
+                                pendingActivation = true
+                            });
 
-                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the clinic staff for assistance.");
+                        ModelState.AddModelError("", "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.");
                         return View(model);
                     }
 
@@ -1213,9 +1219,9 @@ namespace QuickClinique.Controllers
             await _context.SaveChangesAsync();
 
             if (IsAjaxRequest())
-                return Json(new { success = true, message = "Email verified successfully! You can now login.", redirectUrl = Url.Action(nameof(Login)) });
+                return Json(new { success = true, message = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
 
-            TempData["SuccessMessage"] = "Email verified successfully! You can now login.";
+            TempData["SuccessMessage"] = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.";
             return RedirectToAction(nameof(Login));
         }
 
@@ -1649,6 +1655,84 @@ namespace QuickClinique.Controllers
             }
 
             return Json(new { success = true, resolved = false, emergencyId = emergency.EmergencyId });
+        }
+
+        // POST: Student/Activate/{id}
+        // Staff-only endpoint to activate a student account
+        [HttpPost]
+        [ClinicStaffOnly]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate(int? id)
+        {
+            if (id == null)
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Student ID not provided." });
+                return NotFound();
+            }
+
+            try
+            {
+                var student = await _context.Students
+                    .FirstOrDefaultAsync(s => s.StudentId == id);
+
+                if (student == null)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Student not found." });
+                    return NotFound();
+                }
+
+                // Check if student's email is verified
+                if (!student.IsEmailVerified)
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "Cannot activate account. Student's email has not been verified yet." });
+                    return BadRequest("Cannot activate account. Student's email has not been verified yet.");
+                }
+
+                // Activate the account
+                student.IsActive = true;
+                await _context.SaveChangesAsync();
+
+                // Send activation email
+                var baseUrl = GetBaseUrl();
+                var loginUrl = $"{baseUrl}{Url.Action("Login", "Student")}";
+
+                Console.WriteLine($"[ACTIVATION] Attempting to send activation email to {student.Email}");
+                Console.WriteLine($"[ACTIVATION] Login URL: {loginUrl}");
+                
+                // Send email - await it but don't fail activation if email fails
+                try
+                {
+                    await _emailService.SendAccountActivationEmail(student.Email, student.FirstName, loginUrl);
+                    Console.WriteLine($"[ACTIVATION] Activation email sent successfully to {student.Email}");
+                }
+                catch (Exception emailEx)
+                {
+                    // Log email error but don't fail activation
+                    Console.WriteLine($"[ACTIVATION ERROR] Failed to send activation email to {student.Email}: {emailEx.Message}");
+                    Console.WriteLine($"[ACTIVATION ERROR] Stack trace: {emailEx.StackTrace}");
+                    if (emailEx.InnerException != null)
+                    {
+                        Console.WriteLine($"[ACTIVATION ERROR] Inner exception: {emailEx.InnerException.Message}");
+                    }
+                }
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = $"Student account activated successfully. Activation email sent to {student.Email}.", isActive = student.IsActive });
+
+                TempData["SuccessMessage"] = $"Student account activated successfully. Activation email sent to {student.Email}.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error activating student account: {ex.Message}");
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = $"Error activating account: {ex.Message}" });
+
+                return StatusCode(500, "An error occurred while activating the account.");
+            }
         }
 
         // Helper method to generate tokens
