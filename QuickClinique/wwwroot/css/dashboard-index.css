@@ -1,17 +1,19 @@
 ﻿/* CSS Variables */
 :root {
-    --primary-teal: #4ECDC4;
-    --secondary-teal: #44A08D;
-    --dark-teal: #3BA89F;
-    --light-bg: #F0F4F8;
+    --primary-teal: #179C8E;
+    --primary-cyan: #4FC4D3;
+    --secondary-teal: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    --dark-teal: #179C8E;
+    --light-bg: #E8ECEF;
     --white: #FFFFFF;
     --text-dark: #2D3748;
     --text-muted: #718096;
-    --border-color: #E2E8F0;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #DC2626;
-    --info: #3B82F6;
+    --border-color: #E8ECEF;
+    --success: #179C8E;
+    --warning: #F8D66D;
+    --danger: #FF6B6B;
+    --info: #4FC4D3;
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
@@ -27,13 +29,13 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 2.5rem;
-    background: linear-gradient(135deg, #F0F4F8 0%, #E2E8F0 100%);
+    background: linear-gradient(135deg, #E8ECEF 0%, #E8ECEF 100%);
     min-height: 100vh;
 }
 
 /* Dashboard Header */
 .dashboard-header {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     padding: 2.5rem;
     border-radius: var(--radius-lg);
@@ -291,7 +293,7 @@
     }
 
 .refresh-btn {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     border: none;
     padding: 0.65rem 1.25rem;
@@ -554,7 +556,7 @@
     width: 100%;
     padding: 1rem;
     margin-bottom: 0.75rem;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     text-decoration: none;
     border-radius: var(--radius-sm);
@@ -752,7 +754,7 @@
 .bmi-calculate-btn {
     width: 100%;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     border: none;
     border-radius: var(--radius-md);
@@ -1054,7 +1056,7 @@
 }
 
 .messages-header {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     padding: 1.5rem;
     display: flex;
@@ -1274,7 +1276,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     display: flex;
     align-items: center;
@@ -1438,7 +1440,7 @@
 }
 
     .message-staff.sent .message-content {
-        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
         color: var(--white);
         padding: 0.75rem 1rem;
         border-radius: 12px 12px 4px 12px;
@@ -1489,7 +1491,7 @@
         }
 
     .chat-input-staff .send-reply-btn {
-        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
         color: var(--white);
         border: none;
         padding: 0.75rem 1.5rem;
@@ -2152,7 +2154,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     position: relative;
@@ -2313,7 +2315,7 @@
 }
 
 .walk-in-modal .btn-primary {
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-cyan) 100%);
     color: var(--white);
     box-shadow: 0 4px 14px rgba(78, 205, 196, 0.4);
 }

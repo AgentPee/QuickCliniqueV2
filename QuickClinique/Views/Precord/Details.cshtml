@@ -46,6 +46,51 @@
                 </div>
             </div>
 
+            @if (Model.Birthdate.HasValue)
+            {
+                var birthdate = Model.Birthdate.Value;
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var age = today.Year - birthdate.Year;
+                
+                // Subtract one year if birthday hasn't occurred yet this year
+                var birthdayThisYear = new DateOnly(today.Year, birthdate.Month, birthdate.Day);
+                if (birthdayThisYear > today)
+                {
+                    age--;
+                }
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-birthday-cake"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Birthdate</div>
+                        <div class="info-value">
+                            @birthdate.ToString("MMMM dd, yyyy")
+                            @if (age >= 0)
+                            {
+                                <span style="color: #718096; font-size: 0.875rem; font-weight: 500; margin-left: 0.5rem;">
+                                    (Age: @age)
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Gender))
+            {
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="fas fa-venus-mars"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Gender</div>
+                        <div class="info-value">@Model.Gender</div>
+                    </div>
+                </div>
+            }
+
             <div class="info-item">
                 <div class="info-icon">
                     <i class="fas fa-user-check"></i>

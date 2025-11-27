@@ -6,7 +6,7 @@
 }
 
 .delete-header {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+    background: linear-gradient(135deg, #FF6B6B, #FF6B6B);
     color: white;
     padding: 2rem;
     border-radius: 12px 12px 0 0;
@@ -44,8 +44,8 @@
 
 /* Warning Banner */
 .warning-banner {
-    background: #fff3cd;
-    border: 2px solid #ffc107;
+    background: rgba(248, 214, 109, 0.2);
+    border: 2px solid #F8D66D;
     border-radius: 10px;
     padding: 1.5rem;
     text-align: center;

@@ -2,21 +2,36 @@
 
 /* CSS Variables */
 :root {
-    --primary-teal: #4ECDC4;
-    --secondary-teal: #44A08D;
-    --dark-teal: #3BA89F;
-    --light-bg: #F0F4F8;
+    /* Primary Colors */
+    --primary-teal: #179C8E;
+    --primary-cyan: #4FC4D3;
+    
+    /* Secondary Colors */
+    --secondary-teal: #0F3D57;
+    --secondary-mint: #C9F3E0;
+    --dark-teal: #179C8E;
+    
+    /* Neutral Colors */
+    --light-bg: #E8ECEF;
     --white: #FFFFFF;
+    --border-color: #E8ECEF;
+    
+    /* Text Colors */
     --text-dark: #2D3748;
     --text-muted: #718096;
-    --border-color: #E2E8F0;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #DC2626;
-    --info: #3B82F6;
+    
+    /* Alert Colors */
+    --success: #179C8E;
+    --warning: #F8D66D;
+    --danger: #FF6B6B;
+    --info: #4FC4D3;
+    
+    /* Shadows */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+    
+    /* Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -31,7 +46,7 @@
 
 /* Page Header - Enhanced with Frosted Glass Effect (Matching Staff Header) */
 .page-header {
-    background: linear-gradient(135deg, rgba(78, 205, 196, 0.95) 0%, rgba(68, 160, 141, 0.95) 100%);
+    background: linear-gradient(135deg, rgba(23, 156, 142, 0.95) 0%, rgba(79, 196, 211, 0.95) 100%);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     color: var(--white);
@@ -111,7 +126,7 @@
     .search-box button,
     .btn-search {
         padding: 0.75rem 2rem;
-        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        background: linear-gradient(135deg, #179C8E, #4FC4D3);
         color: white;
         border: none;
         border-radius: 8px;
@@ -199,7 +214,7 @@
 }
 
     .patients-table thead {
-        background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        background: linear-gradient(135deg, #179C8E, #4FC4D3);
         color: white;
     }
 
@@ -270,18 +285,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(78, 205, 196, 0.15);
+    background: rgba(23, 156, 142, 0.15);
     border-radius: 50%;
     flex-shrink: 0;
-    border: 1px solid rgba(78, 205, 196, 0.25);
+    border: 1px solid rgba(23, 156, 142, 0.25);
     transition: all 0.3s ease;
 }
 
 .patient-name:hover i {
-    background: rgba(78, 205, 196, 0.25);
+    background: rgba(23, 156, 142, 0.25);
     border-color: var(--primary-teal);
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    box-shadow: 0 2px 8px rgba(23, 156, 142, 0.2);
 }
 
 /* Patient Field with Icons */
@@ -300,18 +315,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(78, 205, 196, 0.15);
+    background: rgba(23, 156, 142, 0.15);
     border-radius: 50%;
     flex-shrink: 0;
-    border: 1px solid rgba(78, 205, 196, 0.25);
+    border: 1px solid rgba(23, 156, 142, 0.25);
     transition: all 0.3s ease;
 }
 
 .patient-field:hover i {
-    background: rgba(78, 205, 196, 0.25);
+    background: rgba(23, 156, 142, 0.25);
     border-color: var(--primary-teal);
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    box-shadow: 0 2px 8px rgba(23, 156, 142, 0.2);
 }
 
 /* Action Buttons */

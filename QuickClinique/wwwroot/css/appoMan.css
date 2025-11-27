@@ -1,7 +1,7 @@
 ﻿/* Appointment Management Styles */
 .appointment-management {
     padding: 2rem;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     min-height: calc(100vh - 60px);
 }
 
@@ -12,7 +12,7 @@
     align-items: center;
     margin-bottom: 2rem;
     padding: 2rem;
-    background: white;
+    background: #FFFFFF;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     transition: all 0.3s ease;
@@ -32,7 +32,7 @@
 }
 
     .header-content h2 i {
-        color: #4ECDC4;
+        color: #179C8E;
     }
 
 .header-subtitle {
@@ -98,7 +98,7 @@
 
 /* Enhanced Queue Badge */
 .queue-badge {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     padding: 0.4rem 0.9rem;
     border-radius: 20px;
@@ -171,7 +171,7 @@
     }
 
     .filter-header i {
-        color: #4ECDC4;
+        color: #179C8E;
     }
 
 .filter-group {
@@ -198,7 +198,7 @@
     }
 
         .filter-item label i {
-            color: #4ECDC4;
+            color: #179C8E;
             font-size: 0.85em;
         }
 
@@ -228,7 +228,7 @@
 }
 
 .stat-card {
-    background: white;
+    background: #FFFFFF;
     padding: 1.5rem;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
@@ -268,7 +268,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.8rem;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     flex-shrink: 0;
 }
@@ -308,7 +308,7 @@
 
 /* Enhanced Table Card */
 .table-card {
-    background: white;
+    background: #FFFFFF;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     overflow: hidden;
@@ -334,7 +334,7 @@
     }
 
     .table-header i {
-        color: #4ECDC4;
+        color: #179C8E;
     }
 
 .table-count {
@@ -345,7 +345,7 @@
 
 /* Table Styles */
 .table-responsive {
-    background: white;
+    background: #FFFFFF;
 }
 
 .table {
@@ -363,7 +363,7 @@
     }
 
         .table th i {
-            color: #4ECDC4;
+            color: #179C8E;
             margin-right: 0.3rem;
         }
 
@@ -453,7 +453,7 @@
     .no-appointments i {
         font-size: 4rem;
         margin-bottom: 1.5rem;
-        color: #4ECDC4;
+        color: #179C8E;
         opacity: 0.5;
     }
 
@@ -535,7 +535,7 @@
 }
 
     .section-title i {
-        color: #4ECDC4;
+        color: #179C8E;
     }
 
 /* Enhanced Alert */
@@ -630,7 +630,7 @@
     }
 
         .form-group label i {
-            color: #4ECDC4;
+            color: #179C8E;
         }
 
 .form-control {
@@ -959,7 +959,7 @@ textarea.form-control {
 /* Print Styles */
 @media print {
     .appointment-management {
-        background: white;
+        background: #FFFFFF;
         padding: 0;
     }
 

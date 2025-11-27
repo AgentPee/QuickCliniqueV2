@@ -15,7 +15,7 @@ body {
 
 /* Header Styles */
 .header {
-    background: rgb(0, 93, 101);
+    background: #0F3D57;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 18px 0;
@@ -24,7 +24,7 @@ body {
     top: 0;
     z-index: 1000;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 1px solid rgba(0, 136, 127, 0.1);
+    border-bottom: 1px solid rgba(23, 156, 142, 0.1);
 }
 
     .header::after {
@@ -34,7 +34,7 @@ body {
         left: 0;
         right: 0;
         height: 2px;
-        background: linear-gradient(90deg, transparent, #4ECDC4, #44A08D, transparent);
+        background: linear-gradient(90deg, transparent, #179C8E, #4FC4D3, transparent);
         opacity: 0;
         transition: opacity 0.4s ease;
     }
@@ -45,7 +45,7 @@ body {
 
     .header.scrolled {
         padding: 12px 0;
-        box-shadow: 0 12px 48px rgba(78, 205, 196, 0.18);
+        box-shadow: 0 12px 48px rgba(23, 156, 142, 0.18);
         background: rgba(255, 255, 255, 0.99);
     }
 
@@ -77,7 +77,7 @@ body {
     letter-spacing: -0.5px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 50%, #4ECDC4 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 50%, #179C8E 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -97,7 +97,7 @@ body {
 
 .navbar-brand:hover {
     transform: translateY(-3px);
-    filter: drop-shadow(0 4px 8px rgba(78, 205, 196, 0.4));
+    filter: drop-shadow(0 4px 8px rgba(23, 156, 142, 0.4));
 }
 
 .logo-img {
@@ -108,7 +108,7 @@ body {
     border-radius: 16px;
     padding: 10px;
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    box-shadow: 0 8px 24px rgba(78, 205, 196, 0.35);
+    box-shadow: 0 8px 24px rgba(23, 156, 142, 0.35);
     position: relative;
     overflow: hidden;
 }
@@ -171,7 +171,7 @@ body {
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(68, 160, 141, 0.15));
+            background: linear-gradient(135deg, rgba(23, 156, 142, 0.15), rgba(79, 196, 211, 0.15));
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -191,7 +191,7 @@ body {
             transform: translateX(-50%) scaleX(0);
             width: 60%;
             height: 3px;
-            background: linear-gradient(90deg, #4ECDC4, #44A08D);
+            background: linear-gradient(90deg, #179C8E, #4FC4D3);
             border-radius: 2px;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -203,7 +203,7 @@ body {
         .navbar-nav .nav-link i {
             margin-right: 8px;
             font-size: 1.1rem;
-            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            background: linear-gradient(135deg, #179C8E, #4FC4D3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -211,14 +211,14 @@ body {
         }
 
         .navbar-nav .nav-link:hover {
-            color: #4ECDC4 !important;
+            color: #179C8E !important;
             transform: translateY(-2px);
             background: transparent !important;
         }
 
             .navbar-nav .nav-link:hover i {
                 transform: scale(1.2) rotate(5deg);
-                filter: drop-shadow(0 2px 4px rgba(78, 205, 196, 0.4));
+                filter: drop-shadow(0 2px 4px rgba(23, 156, 142, 0.4));
             }
 
         .navbar-nav .nav-link:active {
@@ -228,9 +228,9 @@ body {
         /* Active/Current Page Link State */
         .navbar-nav .nav-link.active,
         .navbar-nav .nav-item.active .nav-link {
-            color: #4ECDC4 !important;
-            background: rgba(78, 205, 196, 0.2) !important;
-            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.25);
+            color: #179C8E !important;
+            background: rgba(23, 156, 142, 0.2) !important;
+            box-shadow: 0 4px 12px rgba(23, 156, 142, 0.25);
             font-weight: 700;
         }
 

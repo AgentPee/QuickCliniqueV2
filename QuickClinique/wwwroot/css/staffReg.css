@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #36636e 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #0F3D57 0%, #179C8E 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -43,7 +43,7 @@ body {
 /* Side Panel */
 .side-panel {
     flex: 1;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     padding: 40px;
     display: flex;
     flex-direction: column;
@@ -255,7 +255,7 @@ body {
 
         .input-group .form-control:focus {
             outline: none;
-            border-color: #4ECDC4;
+            border-color: #179C8E;
             background: white;
             box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
         }
@@ -341,7 +341,7 @@ body {
 .submit-btn {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     border: none;
     border-radius: 10px;
@@ -456,14 +456,14 @@ body {
 }
 
 .back-link {
-    color: #4ECDC4;
+    color: #179C8E;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s ease;
 }
 
     .back-link:hover {
-        color: #44A08D;
+        color: #4FC4D3;
         text-decoration: underline;
     }
 
@@ -583,10 +583,10 @@ body {
 .btn-camera {
     flex: 1;
     padding: 12px 20px;
-    border: 2px solid #4ECDC4;
+    border: 2px solid #179C8E;
     border-radius: 10px;
     background: white;
-    color: #4ECDC4;
+    color: #179C8E;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -600,7 +600,7 @@ body {
 
 .btn-upload:hover,
 .btn-camera:hover {
-    background: #4ECDC4;
+    background: #179C8E;
     color: white;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);

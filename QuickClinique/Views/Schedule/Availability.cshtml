@@ -80,7 +80,7 @@
             <form method="get" asp-action="Availability" class="filter-form">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="status" class="form-label">Availability Status</label>
+                        <label for="status" class="form-label"><i class="fas fa-toggle-on"></i> Availability Status</label>
                         <select name="status" id="status" class="form-select">
                             <option value="All" selected="@(currentFilter == "All")">All Schedules</option>
                             <option value="Yes" selected="@(currentFilter == "Yes")">Available Only</option>
@@ -88,11 +88,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="startDate" class="form-label">Start Date</label>
+                        <label for="startDate" class="form-label"><i class="fas fa-calendar-day"></i> Start Date</label>
                         <input type="date" name="startDate" id="startDate" class="form-control" value="@startDate" />
                     </div>
                     <div class="form-group">
-                        <label for="endDate" class="form-label">End Date</label>
+                        <label for="endDate" class="form-label"><i class="fas fa-calendar-day"></i> End Date</label>
                         <input type="date" name="endDate" id="endDate" class="form-control" value="@endDate" />
                     </div>
                     <div class="form-group">
@@ -100,10 +100,10 @@
                         <div class="form-check mt-3">
                             <input class="form-check-input" type="checkbox" name="showPast" id="showPast" value="true" @(showPast ? "checked" : "") />
                             <label class="form-check-label" for="showPast">
-                                Show Past Schedules
+                                <i class="fas fa-history"></i> Show Past Schedules
                                 @if (ViewBag.PastSchedules > 0)
                                 {
-                                    <span class="badge bg-secondary ms-2">@ViewBag.PastSchedules</span>
+                                    <span class="badge bg-secondary ms-2"><i class="fas fa-clock"></i> @ViewBag.PastSchedules</span>
                                 }
                             </label>
                         </div>
@@ -171,12 +171,12 @@
                                     <th class="checkbox-column">
                                         <input type="checkbox" id="selectAll" />
                                     </th>
-                                    <th>Date</th>
-                                    <th>Day</th>
-                                    <th>Time Slot</th>
-                                    <th>Availability</th>
-                                    <th>Appointments</th>
-                                    <th class="actions-column">Actions</th>
+                                    <th><i class="fas fa-calendar"></i> Date</th>
+                                    <th><i class="fas fa-calendar-week"></i> Day</th>
+                                    <th><i class="fas fa-clock"></i> Time Slot</th>
+                                    <th><i class="fas fa-toggle-on"></i> Availability</th>
+                                    <th><i class="fas fa-calendar-check"></i> Appointments</th>
+                                    <th class="actions-column"><i class="fas fa-cog"></i> Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,14 +188,14 @@
                                             <input type="checkbox" name="scheduleIds" value="@item.ScheduleId" class="schedule-checkbox" />
                                         </td>
                                         <td class="date-cell">
-                                            @item.Date.ToString("yyyy-MM-dd")
+                                            <i class="fas fa-calendar"></i> @item.Date.ToString("yyyy-MM-dd")
                                             @if (isPast)
                                             {
-                                                <span class="badge bg-secondary ms-2">Past</span>
+                                                <span class="badge bg-secondary ms-2"><i class="fas fa-history"></i> Past</span>
                                             }
                                         </td>
-                                        <td class="day-cell">@item.Date.DayOfWeek</td>
-                                        <td class="time-cell">@item.StartTime.ToString("hh\\:mm tt") - @item.EndTime.ToString("hh\\:mm tt")</td>
+                                        <td class="day-cell"><i class="fas fa-calendar-week"></i> @item.Date.DayOfWeek</td>
+                                        <td class="time-cell"><i class="fas fa-clock"></i> @item.StartTime.ToString("hh\\:mm tt") - @item.EndTime.ToString("hh\\:mm tt")</td>
                                         <td class="availability-cell">
                                             <span class="availability-badge @(item.IsAvailable == "Yes" ? "available" : "unavailable")">
                                                 <i class="fas @(item.IsAvailable == "Yes" ? "fa-check" : "fa-times")"></i>

@@ -337,6 +337,8 @@ namespace QuickClinique.Controllers
             var lastName = Request.Form["LastName"];
             var email = Request.Form["Email"];
             var phoneNumber = Request.Form["PhoneNumber"];
+            var birthdate = Request.Form["Birthdate"];
+            var gender = Request.Form["Gender"];
 
             // Validate required fields
             if (string.IsNullOrWhiteSpace(firstName))
@@ -368,6 +370,28 @@ namespace QuickClinique.Controllers
                 existingStudent.LastName = lastName.ToString().Trim();
                 existingStudent.Email = email.ToString().Trim();
                 existingStudent.PhoneNumber = phoneNumber.ToString().Trim();
+                
+                // Handle Birthdate
+                if (!string.IsNullOrWhiteSpace(birthdate) && DateOnly.TryParse(birthdate, out DateOnly parsedBirthdate))
+                {
+                    existingStudent.Birthdate = parsedBirthdate;
+                }
+                else if (string.IsNullOrWhiteSpace(birthdate))
+                {
+                    // Allow clearing the birthdate if empty string is provided
+                    existingStudent.Birthdate = null;
+                }
+                
+                // Handle Gender
+                if (!string.IsNullOrWhiteSpace(gender))
+                {
+                    existingStudent.Gender = gender.ToString().Trim();
+                }
+                else
+                {
+                    // Allow clearing the gender if empty string is provided
+                    existingStudent.Gender = null;
+                }
 
                 _context.Update(existingStudent);
                 await _context.SaveChangesAsync();

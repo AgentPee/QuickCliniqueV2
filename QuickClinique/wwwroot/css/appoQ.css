@@ -3,12 +3,12 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     min-height: calc(100vh - 60px);
 }
 
 .content-card {
-    background: white;
+    background: #FFFFFF;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     overflow: hidden;
@@ -23,7 +23,7 @@
 
 /* Header Section */
 .queue-header {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     padding: 2.5rem;
     margin-bottom: 0;
@@ -66,7 +66,7 @@
 }
 
 .btn-primary {
-    background: #4ECDC4;
+    background: #179C8E;
     color: white;
 }
 
@@ -123,7 +123,7 @@
 
 /* Current Patient Section */
 .current-patient {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     padding: 3.5rem 2.5rem;
     border-radius: 15px;
@@ -228,7 +228,7 @@
 }
 
 .stat-card {
-    background: white;
+    background: #FFFFFF;
     padding: 1.5rem;
     border-radius: 15px;
     text-align: center;
@@ -259,7 +259,7 @@
 
 /* Waiting Queue */
 .waiting-queue {
-    background: white;
+    background: #FFFFFF;
     border-radius: 15px;
     padding: 2rem;
     margin: 2rem;
@@ -315,7 +315,7 @@
 }
 
 .queue-number-badge {
-    background: #4ECDC4;
+    background: #179C8E;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 20px;
@@ -419,7 +419,7 @@ input:checked + .slider {
     text-align: center;
     padding: 3rem 2rem;
     color: #718096;
-    background: white;
+    background: #FFFFFF;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     margin: 2rem;
@@ -636,7 +636,7 @@ input:checked + .slider {
 }
 
 #nextPatientModal .modal-header {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     border-bottom: none;
     padding: 1.5rem 2rem;
     border-radius: 0;
@@ -673,7 +673,7 @@ input:checked + .slider {
 }
 
 #nextPatientModal .modal-body::-webkit-scrollbar-thumb {
-    background: #4ECDC4;
+    background: #179C8E;
     border-radius: 10px;
 }
 
@@ -1073,7 +1073,7 @@ input:checked + .slider {
 }
 
 #nextPatientModal .btn-primary {
-    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
     color: white;
     box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
 }
