@@ -766,7 +766,7 @@ namespace QuickClinique.Controllers
                     appointmentId = a.AppointmentId,
                     patientId = a.PatientId,
                     patientName = a.Patient != null ? $"{a.Patient.FirstName} {a.Patient.LastName}" : "Unknown Patient",
-                    scheduleDate = a.Schedule.Date.ToString("MMM dd, yyyy"),
+                    scheduleDate = a.Schedule.Date.ToString("MM/dd/yyyy"),
                     startTime = a.Schedule.StartTime.ToString("h:mm tt"),
                     endTime = a.Schedule.EndTime.ToString("h:mm tt"),
                     timeSlot = $"{a.Schedule.StartTime.ToString("h:mm tt")} - {a.Schedule.EndTime.ToString("h:mm tt")}",
@@ -775,7 +775,7 @@ namespace QuickClinique.Controllers
                     queueStatus = a.QueueStatus,
                     reasonForVisit = a.ReasonForVisit,
                     symptoms = a.Symptoms,
-                    dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
+                    dateBooked = a.DateBooked.ToString("MM/dd/yyyy")
                 })
                 .ToListAsync();
 
@@ -808,7 +808,7 @@ namespace QuickClinique.Controllers
                         patientId = a.PatientId,
                         patientName = a.Patient?.FullName,
                         studentIdNumber = a.Patient?.Idnumber ?? 0,
-                        scheduleDate = a.Schedule.Date.ToString("MMM dd, yyyy"),
+                        scheduleDate = a.Schedule.Date.ToString("MM/dd/yyyy"),
                         scheduleDateFilter = a.Schedule.Date.ToString("yyyy-MM-dd"),
                         startTime = a.Schedule.StartTime.ToString("h:mm tt"),
                         endTime = a.Schedule.EndTime.ToString("h:mm tt"),
@@ -817,7 +817,7 @@ namespace QuickClinique.Controllers
                         queueStatus = a.QueueStatus,
                         reasonForVisit = a.ReasonForVisit,
                         symptoms = a.Symptoms,
-                        dateBooked = a.DateBooked.ToString("MMM dd, yyyy")
+                        dateBooked = a.DateBooked.ToString("MM/dd/yyyy")
                     }).ToList(),
                     todaysAppointments = todaysAppointments,
                     emergencies = emergencies
