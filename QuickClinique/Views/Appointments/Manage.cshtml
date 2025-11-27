@@ -88,8 +88,8 @@
                 <input type="date" id="dateFilter" class="form-control">
             </div>
             <div class="filter-item">
-                <label for="searchPatient"><i class="fas fa-search"></i> Search Patient</label>
-                <input type="text" id="searchPatient" class="form-control" placeholder="Enter patient name...">
+                <label for="searchPatient"><i class="fas fa-search"></i> Search Patient / ID Number</label>
+                <input type="text" id="searchPatient" class="form-control" placeholder="Enter patient name or ID number...">
             </div>
             <div class="filter-item filter-actions">
                 <button class="btn btn-secondary" onclick="clearFilters()">
@@ -109,6 +109,7 @@
             <table class="table table-hover" id="appointmentsTable">
                 <thead>
                     <tr>
+                        <th><i class="fas fa-id-card"></i> Student ID</th>
                         <th><i class="fas fa-user"></i> Patient</th>
                         <th><i class="fas fa-calendar"></i> Date & Time</th>
                         <th><i class="fas fa-info-circle"></i> Status</th>
@@ -123,7 +124,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="8" class="text-center">
+                            <td colspan="9" class="text-center">
                                 <div class="no-appointments">
                                     <i class="fas fa-calendar-times"></i>
                                     <h5>No Appointments Found</h5>
@@ -136,7 +137,10 @@
                     {
                         @foreach (var item in Model)
                         {
-                            <tr data-status="@item.AppointmentStatus" data-date="@item.Schedule.Date.ToString("yyyy-MM-dd")" data-patient="@item.Patient.FullName.ToLower()">
+                            <tr data-status="@item.AppointmentStatus" data-date="@item.Schedule.Date.ToString("yyyy-MM-dd")" data-patient="@item.Patient.FullName.ToLower()" data-student-id="@item.Patient.Idnumber">
+                                <td>
+                                    <span class="id-badge"><i class="fas fa-id-card"></i> @item.Patient.Idnumber</span>
+                                </td>
                                 <td>
                                     <div class="patient-info">
                                         <i class="fas fa-user-circle patient-icon"></i>
@@ -183,16 +187,50 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="reason-badge">@item.ReasonForVisit</span>
+                                    <span class="reason-badge">
+                                        @{
+                                            string reasonIcon = "fa-stethoscope"; // default icon
+                                            string reason = item.ReasonForVisit?.ToLower() ?? "";
+                                            if (reason.Contains("medical-checkup") || reason.Contains("general medical"))
+                                            {
+                                                reasonIcon = "fa-heartbeat";
+                                            }
+                                            else if (reason.Contains("dental-checkup") || reason.Contains("dental"))
+                                            {
+                                                reasonIcon = "fa-tooth";
+                                            }
+                                            else if (reason.Contains("dental-cleaning") || reason.Contains("prophylaxis"))
+                                            {
+                                                reasonIcon = "fa-spray-can";
+                                            }
+                                            else if (reason.Contains("dental-pasta") || reason.Contains("fillings"))
+                                            {
+                                                reasonIcon = "fa-tools";
+                                            }
+                                            else if (reason.Contains("dental-extraction") || reason.Contains("extraction"))
+                                            {
+                                                reasonIcon = "fa-tooth";
+                                            }
+                                            else if (reason.Contains("consultation"))
+                                            {
+                                                reasonIcon = "fa-user-md";
+                                            }
+                                            else if (reason.Contains("bp-monitoring") || reason.Contains("blood pressure"))
+                                            {
+                                                reasonIcon = "fa-heartbeat";
+                                            }
+                                        }
+                                        <i class="fas @reasonIcon"></i> @item.ReasonForVisit
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="symptoms-text" title="@item.Symptoms">
-                                        @item.Symptoms
+                                        <i class="fas fa-notes-medical"></i> @item.Symptoms
                                     </div>
                                 </td>
                                 <td>
                                     <div class="date-booked">
-                                        @item.DateBooked.ToString("MMM dd, yyyy")
+                                        <i class="fas fa-calendar"></i> @item.DateBooked.ToString("MMM dd, yyyy")
                                     </div>
                                 </td>
                                 <td>
