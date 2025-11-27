@@ -267,10 +267,15 @@
     </div>
 
     <!-- Emergency Schedules Table -->
-    <div class="table-card" style="margin-top: 2rem;">
+    <div class="table-card emergency-table-card">
         <div class="table-header">
             <h5><i class="fas fa-exclamation-triangle"></i> Emergency Schedules</h5>
-            <span class="table-count" id="emergencyTableCount">Loading...</span>
+            <div class="emergency-header-actions">
+                <div class="emergency-search-item">
+                    <input type="text" id="searchEmergency" class="form-control" placeholder="Search by name or ID number...">
+                </div>
+                <span class="table-count" id="emergencyTableCount">Loading...</span>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover" id="emergenciesTable">

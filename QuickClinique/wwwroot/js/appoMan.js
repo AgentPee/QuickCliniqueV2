@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusFilter = document.getElementById('statusFilter');
     const dateFilter = document.getElementById('dateFilter');
     const searchPatient = document.getElementById('searchPatient');
+    const searchEmergency = document.getElementById('searchEmergency');
 
     if (statusFilter) {
         statusFilter.addEventListener('change', filterTable);
@@ -12,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (searchPatient) {
         searchPatient.addEventListener('input', filterTable);
+    }
+    if (searchEmergency) {
+        searchEmergency.addEventListener('input', filterEmergencyTable);
     }
 });
 
@@ -46,6 +50,49 @@ function clearFilters() {
     document.getElementById('dateFilter').value = '';
     document.getElementById('searchPatient').value = '';
     filterTable();
+}
+
+// Filter emergency table
+function filterEmergencyTable() {
+    const searchInput = document.getElementById('searchEmergency');
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#emergenciesTable tbody tr');
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const studentName = row.dataset.studentName || '';
+        const studentId = row.dataset.studentId || '';
+
+        if (!searchTerm) {
+            // Show all rows if search is empty
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            // Filter by name or ID
+            const nameMatch = studentName.includes(searchTerm);
+            const idMatch = studentId.includes(searchTerm);
+
+            if (nameMatch || idMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+
+    // Update count
+    const countEl = document.getElementById('emergencyTableCount');
+    if (countEl) {
+        const total = rows.length;
+        if (searchTerm) {
+            countEl.textContent = `Showing ${visibleCount} of ${total} emergency${total !== 1 ? 's' : ''}`;
+        } else {
+            countEl.textContent = `Showing ${total} emergency${total !== 1 ? 's' : ''}`;
+        }
+    }
 }
 
 // Refresh appointments data in background without page reload
@@ -685,6 +732,8 @@ function updateEmergenciesTable(emergencies) {
         const row = document.createElement('tr');
         row.setAttribute('data-status', statusClass);
         row.setAttribute('data-resolved', emergency.isResolved ? 'true' : 'false');
+        row.setAttribute('data-student-name', (emergency.studentName || 'Unknown').toLowerCase());
+        row.setAttribute('data-student-id', (emergency.studentIdNumber || '').toString());
         row.innerHTML = `
             <td>
                 <div class="patient-info">
@@ -719,4 +768,10 @@ function updateEmergenciesTable(emergencies) {
         `;
         tbody.appendChild(row);
     });
+    
+    // Apply any active search filter
+    const searchEmergency = document.getElementById('searchEmergency');
+    if (searchEmergency && searchEmergency.value) {
+        filterEmergencyTable();
+    }
 }

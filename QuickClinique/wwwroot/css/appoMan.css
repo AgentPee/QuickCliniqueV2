@@ -318,7 +318,12 @@
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     overflow: hidden;
+    margin-bottom: 2rem;
 }
+
+    .table-card:last-child {
+        margin-bottom: 0;
+    }
 
 .table-header {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -1332,12 +1337,16 @@ textarea.form-control {
 }
 
 /* Emergency table card styling - enhanced visual distinction */
+.emergency-table-card,
 .table-card:last-of-type {
+    margin-top: 2rem;
+    margin-bottom: 0;
     border-top: 4px solid #4ECDC4;
     box-shadow: 0 5px 20px rgba(78, 205, 196, 0.15);
     position: relative;
 }
 
+    .emergency-table-card::before,
     .table-card:last-of-type::before {
         content: '';
         position: absolute;
@@ -1347,6 +1356,19 @@ textarea.form-control {
         height: 4px;
         background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
     }
+
+/* Emergency header actions */
+.emergency-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.emergency-search-item {
+    flex: 0 0 auto;
+    min-width: 250px;
+    margin: 0;
+}
 
 /* Responsive emergency table */
 @media (max-width: 768px) {
