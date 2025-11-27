@@ -158,7 +158,7 @@ namespace QuickClinique.Controllers
         // POST: Clinicstaff/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
+        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber,Birthdate,Gender")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
         {
             Console.WriteLine($"=== EDIT POST STARTED ===");
             Console.WriteLine($"ID: {id}, ClinicStaffId: {clinicstaff.ClinicStaffId}");
@@ -234,6 +234,8 @@ namespace QuickClinique.Controllers
                     existingStaff.LastName = clinicstaff.LastName;
                     existingStaff.Email = clinicstaff.Email;
                     existingStaff.PhoneNumber = clinicstaff.PhoneNumber;
+                    existingStaff.Birthdate = clinicstaff.Birthdate;
+                    existingStaff.Gender = clinicstaff.Gender;
 
                     // Only update password if a new one was provided
                     if (!string.IsNullOrWhiteSpace(newPassword))
