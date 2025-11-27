@@ -16,7 +16,9 @@
 
     <div class="edit-form-container">
         <form asp-action="Edit" method="post" class="staff-edit-form">
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="ClinicStaffId" />
+            <input type="hidden" asp-for="UserId" />
 
             <div asp-validation-summary="ModelOnly" class="text-danger validation-summary"></div>
 

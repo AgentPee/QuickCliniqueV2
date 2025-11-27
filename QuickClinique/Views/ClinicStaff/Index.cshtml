@@ -257,7 +257,25 @@
                     // Setup form submission after content is loaded
                     const loadedForm = modalBody.querySelector('form');
                     if (loadedForm) {
-                        loadedForm.addEventListener('submit', (e) => submitEditForm(e, staffId));
+                        // Remove any existing submit handlers to avoid duplicates
+                        const newForm = loadedForm.cloneNode(true);
+                        loadedForm.parentNode.replaceChild(newForm, loadedForm);
+                        
+                        // Add submit event listener with proper prevention
+                        newForm.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            submitEditForm(e, staffId);
+                            return false;
+                        }, true); // Use capture phase to catch early
+                        
+                        // Also prevent default on form element itself
+                        newForm.onsubmit = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        };
                         
                         // Initialize password validation
                         initializePasswordValidation();
@@ -281,20 +299,63 @@
 
         async function submitEditForm(event, staffId) {
             event.preventDefault();
+            event.stopPropagation();
+            
             const form = event.target;
+            
+            // Get submit button before creating FormData
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                submitBtn.disabled = true;
+            }
+            
+            // Verify anti-forgery token exists in form BEFORE creating FormData
+            let token = form.querySelector('input[name="__RequestVerificationToken"]');
+            if (!token) {
+                // Try to get from page as fallback
+                token = document.querySelector('input[name="__RequestVerificationToken"]');
+            }
+            
+            if (!token) {
+                console.error('Anti-forgery token not found in form or page!');
+                showNotification('Security token not found. Please refresh the page and try again.', 'error');
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+                return;
+            }
+            
+            // Create FormData from form - this will automatically include all form fields including the token
             const formData = new FormData(form);
             
-            // Get or add anti-forgery token
-            let token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if (token) {
+            // Ensure token is in FormData (it should be from the form, but double-check)
+            if (!formData.has('__RequestVerificationToken')) {
+                console.warn('Token not in FormData, adding it manually');
                 formData.append('__RequestVerificationToken', token.value);
             }
             
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalHtml = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            submitBtn.disabled = true;
-
+            // Log form data for debugging (without sensitive data)
+            const formFields = Array.from(formData.keys()).filter(k => k !== '__RequestVerificationToken' && !k.includes('Password'));
+            console.log('Submitting form with fields:', formFields);
+            console.log('Form has token:', !!form.querySelector('input[name="__RequestVerificationToken"]'));
+            console.log('Staff ID being submitted:', staffId);
+            
+            // Verify required fields are present
+            const requiredFields = ['ClinicStaffId', 'UserId', 'FirstName', 'LastName', 'Email', 'PhoneNumber'];
+            const missingFields = requiredFields.filter(field => !formData.has(field));
+            if (missingFields.length > 0) {
+                console.error('Missing required fields:', missingFields);
+                showNotification(`Missing required fields: ${missingFields.join(', ')}. Please refresh and try again.`, 'error');
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+                return;
+            }
+            
             try {
                 const response = await fetch(`/Clinicstaff/Edit/${staffId}`, {
                     method: 'POST',
@@ -304,9 +365,59 @@
                     body: formData
                 });
 
+                // Check response status first
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Server error (${response.status}):`, errorText);
+                    console.error('Response headers:', Object.fromEntries(response.headers.entries()));
+                    
+                    // For 400 errors, try to extract more details
+                    if (response.status === 400) {
+                        // Try to parse as JSON first
+                        let errorMessage = `Bad Request (400). `;
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            if (errorJson.error) {
+                                errorMessage += errorJson.error;
+                            } else if (errorJson.message) {
+                                errorMessage += errorJson.message;
+                            } else if (errorJson.errors) {
+                                const errorList = Object.entries(errorJson.errors)
+                                    .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                                    .join('; ');
+                                errorMessage += errorList;
+                            } else {
+                                errorMessage += 'Please check the console for details.';
+                            }
+                        } catch {
+                            // If not JSON, check if it's HTML with validation errors
+                            if (errorText.includes('validation') || errorText.includes('error') || errorText.includes('required')) {
+                                errorMessage += 'Validation error occurred. Please check all required fields are filled correctly.';
+                            } else {
+                                errorMessage += 'Please check the console for details.';
+                            }
+                        }
+                        showNotification(errorMessage, 'error');
+                    } else {
+                        // For other errors, try to parse as JSON
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            showNotification(errorJson.error || errorJson.message || `Server error: ${response.status}`, 'error');
+                        } catch {
+                            showNotification(`Server error (${response.status}): ${response.statusText}. Please check the console for details.`, 'error');
+                        }
+                    }
+                    
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalHtml;
+                        submitBtn.disabled = false;
+                    }
+                    return;
+                }
+
                 // Check if response is JSON
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
+                const contentType = response.headers.get("content-type") || '';
+                if (contentType.includes("application/json")) {
                     const result = await response.json();
 
                     if (result.success) {
@@ -325,31 +436,120 @@
                         }
                         
                         showNotification(errorMessage, 'error');
-                        submitBtn.innerHTML = originalHtml;
-                        submitBtn.disabled = false;
+                        if (submitBtn) {
+                            submitBtn.innerHTML = originalHtml;
+                            submitBtn.disabled = false;
+                        }
                     }
                 } else {
-                    // If not JSON, might be HTML (validation errors)
+                    // If not JSON, might be HTML (validation errors or success page)
                     const html = await response.text();
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const validationSummary = doc.querySelector('.validation-summary');
+                    const editContainer = doc.querySelector('.staff-edit-container');
                     
-                    if (validationSummary) {
-                        showNotification('Validation errors occurred. Please check the form.', 'error');
+                    if (validationSummary || editContainer) {
+                        // Validation errors - update modal content with the form that has errors
+                        const modalBody = document.getElementById('editModalBody');
+                        if (editContainer) {
+                            // Process the HTML similar to how we load it initially
+                            const content = editContainer.cloneNode(true);
+                            
+                            // Replace cancel button
+                            const cancelBtn = content.querySelector('a[href*="/Clinicstaff"]');
+                            if (cancelBtn && (cancelBtn.textContent.includes('Cancel') || cancelBtn.textContent.includes('Back'))) {
+                                const newCancelBtn = document.createElement('button');
+                                newCancelBtn.type = 'button';
+                                newCancelBtn.className = 'btn btn-secondary';
+                                newCancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                                newCancelBtn.onclick = () => closeModal('editModal');
+                                cancelBtn.replaceWith(newCancelBtn);
+                            }
+                            
+                            // Remove the edit header
+                            const editHeader = content.querySelector('.edit-header');
+                            if (editHeader) {
+                                editHeader.remove();
+                            }
+                            
+                            modalBody.innerHTML = content.innerHTML;
+                            
+                            // Re-setup form submission
+                            const loadedForm = modalBody.querySelector('form');
+                            if (loadedForm) {
+                                // Remove any existing submit handlers to avoid duplicates
+                                const newForm = loadedForm.cloneNode(true);
+                                loadedForm.parentNode.replaceChild(newForm, loadedForm);
+                                
+                                // Add submit event listener with proper prevention
+                                newForm.addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    submitEditForm(e, staffId);
+                                    return false;
+                                }, true); // Use capture phase to catch early
+                                
+                                // Also prevent default on form element itself
+                                newForm.onsubmit = function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    return false;
+                                };
+                                
+                                // Re-initialize validations
+                                initializePasswordValidation();
+                                initializePhoneValidation();
+                                initializeInputTouched();
+                            }
+                            
+                            // Scroll to top of modal to show errors
+                            modalBody.scrollTop = 0;
+                            
+                            // Show notification about validation errors
+                            const errorText = validationSummary ? validationSummary.textContent.trim() : 'Please correct the errors and try again.';
+                            showNotification(errorText || 'Validation errors occurred. Please check the form.', 'error');
+                        } else {
+                            showNotification('Validation errors occurred. Please check the form.', 'error');
+                        }
                     } else {
-                        showNotification('Staff information updated successfully!', 'success');
-                        closeModal('editModal');
-                        setTimeout(() => location.reload(), 1000);
+                        // Might be a redirect or success page - check response status
+                        if (response.ok) {
+                            showNotification('Staff information updated successfully!', 'success');
+                            closeModal('editModal');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('An error occurred while saving. Please try again.', 'error');
+                        }
                     }
+                    
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalHtml;
+                        submitBtn.disabled = false;
+                    }
+                }
+            } catch (error) {
+                // Log error to console with timestamp so it persists
+                const errorMsg = `[${new Date().toISOString()}] Error updating staff: ${error.message}`;
+                console.error(errorMsg, error);
+                
+                // Also log to a persistent storage if available
+                if (typeof sessionStorage !== 'undefined') {
+                    try {
+                        const errorLog = JSON.parse(sessionStorage.getItem('errorLog') || '[]');
+                        errorLog.push({ timestamp: new Date().toISOString(), error: error.message, stack: error.stack });
+                        sessionStorage.setItem('errorLog', JSON.stringify(errorLog.slice(-10))); // Keep last 10 errors
+                    } catch (e) {
+                        // Ignore storage errors
+                    }
+                }
+                
+                showNotification('Error updating staff information: ' + error.message + '. Please check the console for details.', 'error');
+                if (submitBtn) {
                     submitBtn.innerHTML = originalHtml;
                     submitBtn.disabled = false;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Error updating staff information. Please try again.', 'error');
-                submitBtn.innerHTML = originalHtml;
-                submitBtn.disabled = false;
             }
         }
 
