@@ -638,6 +638,7 @@ namespace QuickClinique.Controllers
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        IsActive = false, // New accounts are deactivated by default
                         EmergencyContactName = model.EmergencyContactName,
                         EmergencyContactRelationship = model.EmergencyContactRelationship,
                         EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
@@ -724,13 +725,13 @@ namespace QuickClinique.Controllers
                     if (IsAjaxRequest())
                         return Json(new { 
                             success = true, 
-                            message = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.",
+                            message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.",
                             redirectUrl = Url.Action("verificationE", "Student", new { email = student.Email }),
                             studentEmail = student.Email,
                             studentIdNumber = student.Idnumber
                         });
 
-                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. If you don't receive an email, you can resend it from the login page.";
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
                     TempData["StudentEmail"] = student.Email;
                     TempData["StudentIdNumber"] = student.Idnumber;
                     return RedirectToAction("verificationE", "Student", new { email = student.Email });
@@ -852,9 +853,13 @@ namespace QuickClinique.Controllers
                     if (!student.IsActive)
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the clinic staff for assistance." });
+                            return Json(new { 
+                                success = false, 
+                                error = "Your account is pending activation. Please wait for clinic staff to activate your account. You will receive an email notification once your account is activated. If you have any questions, please contact the clinic staff.",
+                                pendingActivation = true
+                            });
 
-                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the clinic staff for assistance.");
+                        ModelState.AddModelError("", "Your account is pending activation. Please wait for clinic staff to activate your account. You will receive an email notification once your account is activated. If you have any questions, please contact the clinic staff.");
                         return View(model);
                     }
 

@@ -109,6 +109,48 @@ namespace QuickClinique.Services
             }
         }
 
+        public async Task SendAccountActivationEmail(string toEmail, string name)
+        {
+            try
+            {
+                Console.WriteLine($"[EMAIL] SendAccountActivationEmail called for: {toEmail}, Name: {name}");
+                
+                if (string.IsNullOrWhiteSpace(toEmail))
+                {
+                    Console.WriteLine("[EMAIL ERROR] SendAccountActivationEmail: toEmail is null or empty");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    name = "User";
+                }
+
+                var subject = "Account Activated - QuickClinique";
+                var body = GetEmailTemplate(
+                    title: "Account Activated",
+                    greeting: $"Hello {System.Net.WebUtility.HtmlEncode(name)},",
+                    content: $@"
+                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Great news! Your account has been activated by the administrator.</p>
+                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748; line-height: 1.6;'><strong style='color: #059669;'>Your account is now active!</strong></p>
+                            <p style='margin: 0; color: #2D3748; line-height: 1.6;'>You can now log in to your QuickClinique account and start using all the features available to you.</p>
+                        </div>
+                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+                        <p style='margin: 0; color: #718096; font-size: 14px;'>Welcome to QuickClinique!</p>",
+                    primaryColor: "#10B981"
+                );
+
+                await SendEmailAsync(toEmail, subject, body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EMAIL ERROR] SendAccountActivationEmail exception: {ex.Message}");
+                Console.WriteLine($"[EMAIL ERROR] Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+
         public async Task SendAppointmentConfirmationEmail(string toEmail, string patientName, string appointmentDate, string appointmentTime, int queueNumber)
         {
             try

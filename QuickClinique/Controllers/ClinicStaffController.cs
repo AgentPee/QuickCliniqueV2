@@ -374,9 +374,41 @@ namespace QuickClinique.Controllers
 
             try
             {
+                // Store the previous state to check if we're activating
+                bool wasInactive = !clinicstaff.IsActive;
+                
                 // Toggle the IsActive status
                 clinicstaff.IsActive = !clinicstaff.IsActive;
                 await _context.SaveChangesAsync();
+
+                // Send activation email if account was just activated
+                if (wasInactive && clinicstaff.IsActive)
+                {
+                    try
+                    {
+                        // Fire-and-forget: don't await, let it run in background
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _emailService.SendAccountActivationEmail(
+                                    clinicstaff.Email, 
+                                    clinicstaff.FirstName
+                                );
+                                Console.WriteLine($"[EMAIL] Activation email sent successfully to {clinicstaff.Email}");
+                            }
+                            catch (Exception emailEx)
+                            {
+                                Console.WriteLine($"[EMAIL ERROR] Failed to send activation email to {clinicstaff.Email}: {emailEx.Message}");
+                            }
+                        });
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail the activation
+                        Console.WriteLine($"Error sending activation email: {emailEx.Message}");
+                    }
+                }
 
                 string action = clinicstaff.IsActive ? "activated" : "deactivated";
                 return Json(new { success = true, message = $"Staff member {action} successfully", isActive = clinicstaff.IsActive });
@@ -430,9 +462,13 @@ namespace QuickClinique.Controllers
                     if (!staff.IsActive)
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the administrator for assistance." });
+                            return Json(new { 
+                                success = false, 
+                                error = "Your account is pending activation. Please wait for an administrator to activate your account. You will receive an email notification once your account is activated. If you have any questions, please contact the administrator.",
+                                pendingActivation = true
+                            });
 
-                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the administrator for assistance.");
+                        ModelState.AddModelError("", "Your account is pending activation. Please wait for an administrator to activate your account. You will receive an email notification once your account is activated. If you have any questions, please contact the administrator.");
                         return View(model);
                     }
 
@@ -732,7 +768,8 @@ namespace QuickClinique.Controllers
                         Password = _passwordService.HashPassword(model.Password),
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
-                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
+                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        IsActive = false // New accounts are deactivated by default
                     };
 
                     try
@@ -802,9 +839,9 @@ namespace QuickClinique.Controllers
                     }
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
 
-                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
                     return RedirectToAction(nameof(Login));
                 }
                 catch (DbUpdateException dbEx)

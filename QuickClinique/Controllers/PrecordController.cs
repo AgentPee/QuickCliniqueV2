@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
+using QuickClinique.Services;
 
 namespace QuickClinique.Controllers
 {
@@ -10,10 +11,12 @@ namespace QuickClinique.Controllers
     public class PrecordController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public PrecordController(ApplicationDbContext context)
+        public PrecordController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Precord - Show all patients registered in the system
@@ -452,9 +455,41 @@ namespace QuickClinique.Controllers
 
             try
             {
+                // Store the previous state to check if we're activating
+                bool wasInactive = !student.IsActive;
+                
                 // Toggle the IsActive status
                 student.IsActive = !student.IsActive;
                 await _context.SaveChangesAsync();
+
+                // Send activation email if account was just activated
+                if (wasInactive && student.IsActive)
+                {
+                    try
+                    {
+                        // Fire-and-forget: don't await, let it run in background
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _emailService.SendAccountActivationEmail(
+                                    student.Email, 
+                                    student.FirstName
+                                );
+                                Console.WriteLine($"[EMAIL] Activation email sent successfully to {student.Email}");
+                            }
+                            catch (Exception emailEx)
+                            {
+                                Console.WriteLine($"[EMAIL ERROR] Failed to send activation email to {student.Email}: {emailEx.Message}");
+                            }
+                        });
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail the activation
+                        Console.WriteLine($"Error sending activation email: {emailEx.Message}");
+                    }
+                }
 
                 string action = student.IsActive ? "activated" : "deactivated";
                 return Json(new { success = true, message = $"Patient {action} successfully", isActive = student.IsActive });
