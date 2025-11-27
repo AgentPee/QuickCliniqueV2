@@ -12,7 +12,7 @@
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <h1><i class="fas fa-tachometer-alt"></i> Clinic Staff Dashboard</h1>
-        <p>Welcome back, @Context.Session.GetString("ClinicStaffName")! Here's what's happening today.</p>
+        <p>Welcome, @Context.Session.GetString("ClinicStaffName")! Here's what's happening today.</p>
     </div>
 
     <!-- Statistics Cards -->
@@ -113,7 +113,7 @@
                                     @appointment.ReasonForVisit
                                 </div>
                             </div>
-                            <div class="appointment-actions">
+                            @*<div class="appointment-actions">
                                 <button class="status-btn confirm"
                                         data-appointment-id="@appointment.AppointmentId"
                                         data-status="Confirmed"
@@ -126,7 +126,7 @@
                                         onclick="updateAppointmentStatus(this.getAttribute('data-appointment-id'), this.getAttribute('data-status'))">
                                     Cancel
                                 </button>
-                            </div>
+                            </div>*@
                         </div>
                     }
                 }
