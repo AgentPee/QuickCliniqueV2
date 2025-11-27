@@ -1484,6 +1484,22 @@ namespace QuickClinique.Controllers
         // GET: Student/ResetPassword
         public async Task<IActionResult> ResetPassword(string token, string email)
         {
+            // Check if token and email are provided
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Reset link is required. Please request a new password reset link." });
+
+                // Show the view with an error message instead of redirecting
+                var errorModel = new ResetPasswordViewModel
+                {
+                    Token = token ?? string.Empty,
+                    Email = email ?? string.Empty
+                };
+                ViewData["ErrorMessage"] = "Reset link is required. Please request a new password reset link from the Forgot Password page.";
+                return View(errorModel);
+            }
+
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.PasswordResetToken == token &&
@@ -1494,8 +1510,14 @@ namespace QuickClinique.Controllers
                 if (IsAjaxRequest())
                     return Json(new { success = false, error = "Invalid or expired reset link." });
 
-                TempData["ErrorMessage"] = "Invalid or expired reset link.";
-                return RedirectToAction(nameof(ForgotPassword));
+                // Show the view with an error message instead of redirecting
+                var errorModel = new ResetPasswordViewModel
+                {
+                    Token = token,
+                    Email = email
+                };
+                ViewData["ErrorMessage"] = "Invalid or expired reset link. Please request a new password reset link.";
+                return View(errorModel);
             }
 
             var model = new ResetPasswordViewModel

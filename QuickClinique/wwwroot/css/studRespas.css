@@ -116,10 +116,12 @@ body {
 
 /* Medical Icons - Same as Login Page */
 .medical-icons {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    margin-top: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
 }
 
 
@@ -176,7 +178,6 @@ body {
         transform: translateY(-10px);
     }
 }
-}
 
 /* Form Panel */
 .form-panel {
@@ -199,12 +200,14 @@ body {
     color: #333;
     margin-bottom: 8px;
     font-weight: 600;
+    text-align: center;
 }
 
 .form-subtitle {
     color: #666;
     margin-bottom: 30px;
     font-size: 0.95rem;
+    text-align: center;
 }
 
 .auth-form {
@@ -385,6 +388,27 @@ body {
     padding: 12px;
     margin-bottom: 20px;
     animation: slideDown 0.3s ease-out;
+}
+
+.error-message strong {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.error-message a {
+    color: #179C8E;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.error-message a:hover {
+    color: #4FC4D3;
+}
+
+.auth-form.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .text-danger {
