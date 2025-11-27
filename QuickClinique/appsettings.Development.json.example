@@ -1,10 +1,4 @@
 {
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
   "EmailSettings": {
     "SmtpPassword": "SG.YOUR_SENDGRID_API_KEY_HERE"
   }
