@@ -197,7 +197,7 @@ table .btn-sm {
     }
 
 /* Table Responsive Container */
-.table-responsive,
+.table-responsive:not(.emergency-table-card .table-responsive),
 .table-container,
 .patients-table-container,
 .staff-table-container {
@@ -209,7 +209,7 @@ table .btn-sm {
 }
 
 /* Table Card Wrapper */
-.table-card {
+.table-card:not(.emergency-table-card) {
     background: #FFFFFF;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
@@ -457,7 +457,7 @@ table .btn-sm {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .table-responsive,
+    .table-responsive:not(.emergency-table-card .table-responsive),
     .table-container,
     .patients-table-container,
     .staff-table-container {
@@ -470,28 +470,28 @@ table .btn-sm {
     }
     
     /* Custom scrollbar */
-    .table-responsive::-webkit-scrollbar,
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar,
     .table-container::-webkit-scrollbar {
         height: 10px;
     }
     
-    .table-responsive::-webkit-scrollbar-track,
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar-track,
     .table-container::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 5px;
     }
     
-    .table-responsive::-webkit-scrollbar-thumb,
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar-thumb,
     .table-container::-webkit-scrollbar-thumb {
         background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
         border-radius: 5px;
     }
 
-    .table,
+    .table:not(#emergenciesTable),
     .patients-table,
     .staff-table,
     .schedules-table,
-    table {
+    table:not(#emergenciesTable) {
         min-width: 1000px !important;
         width: auto !important;
         display: table !important;
@@ -525,17 +525,17 @@ table .btn-sm {
 }
 
 @media (max-width: 480px) {
-    .table-responsive,
+    .table-responsive:not(.emergency-table-card .table-responsive),
     .table-container {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
     
-    .table,
+    .table:not(#emergenciesTable),
     .patients-table,
     .staff-table,
     .schedules-table,
-    table {
+    table:not(#emergenciesTable) {
         min-width: 1200px !important;
         font-size: 0.8em;
     }

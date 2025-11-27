@@ -594,9 +594,9 @@ img {
 @media (max-width: 992px) {
     /* All table containers should allow horizontal scroll */
     .table-container,
-    .table-responsive,
-    [class*="table-container"],
-    [class*="-table-container"] {
+    .table-responsive:not(.emergency-table-card .table-responsive),
+    [class*="table-container"]:not(.emergency-table-card),
+    [class*="-table-container"]:not(.emergency-table-card) {
         overflow-x: auto !important;
         overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
@@ -605,9 +605,9 @@ img {
     }
     
     /* All tables should have minimum width to trigger scroll */
-    table,
-    .table,
-    [class*="-table"]:not([class*="container"]) {
+    table:not(#emergenciesTable),
+    .table:not(#emergenciesTable),
+    [class*="-table"]:not([class*="container"]):not(.emergency-table-card) {
         min-width: 800px !important;
         width: auto !important;
         display: table !important;
@@ -615,21 +615,21 @@ img {
     
     /* Custom scrollbar for all table containers */
     .table-container::-webkit-scrollbar,
-    .table-responsive::-webkit-scrollbar,
-    [class*="table-container"]::-webkit-scrollbar {
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar,
+    [class*="table-container"]:not(.emergency-table-card)::-webkit-scrollbar {
         height: 10px;
     }
     
     .table-container::-webkit-scrollbar-track,
-    .table-responsive::-webkit-scrollbar-track,
-    [class*="table-container"]::-webkit-scrollbar-track {
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar-track,
+    [class*="table-container"]:not(.emergency-table-card)::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 5px;
     }
     
     .table-container::-webkit-scrollbar-thumb,
-    .table-responsive::-webkit-scrollbar-thumb,
-    [class*="table-container"]::-webkit-scrollbar-thumb {
+    .table-responsive:not(.emergency-table-card .table-responsive)::-webkit-scrollbar-thumb,
+    [class*="table-container"]:not(.emergency-table-card)::-webkit-scrollbar-thumb {
         background: linear-gradient(90deg, #4ECDC4 0%, #44A08D 100%);
         border-radius: 5px;
     }
@@ -638,26 +638,26 @@ img {
 @media (max-width: 768px) {
     /* Force all tables to be scrollable on mobile */
     .table-container,
-    .table-responsive,
-    [class*="table-container"],
-    [class*="-table-container"] {
+    .table-responsive:not(.emergency-table-card .table-responsive),
+    [class*="table-container"]:not(.emergency-table-card),
+    [class*="-table-container"]:not(.emergency-table-card) {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
     
-    table,
-    .table,
-    [class*="-table"]:not([class*="container"]) {
+    table:not(#emergenciesTable),
+    .table:not(#emergenciesTable),
+    [class*="-table"]:not([class*="container"]):not(.emergency-table-card) {
         min-width: 900px !important;
         font-size: 0.875rem;
     }
     
-    table th,
-    table td,
-    .table th,
-    .table td,
-    [class*="-table"] th,
-    [class*="-table"] td {
+    table:not(#emergenciesTable) th,
+    table:not(#emergenciesTable) td,
+    .table:not(#emergenciesTable) th,
+    .table:not(#emergenciesTable) td,
+    [class*="-table"]:not(.emergency-table-card) th,
+    [class*="-table"]:not(.emergency-table-card) td {
         white-space: nowrap !important;
         padding: 0.75rem 0.5rem !important;
     }
@@ -665,30 +665,30 @@ img {
 
 @media (max-width: 480px) {
     /* Force all tables to be scrollable or stacked on very small screens */
-    .table-responsive,
+    .table-responsive:not(.emergency-table-card .table-responsive),
     .table-container,
-    [class*="table-container"],
-    [class*="-table-container"] {
+    [class*="table-container"]:not(.emergency-table-card),
+    [class*="-table-container"]:not(.emergency-table-card) {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         display: block !important;
         width: 100% !important;
     }
     
-    table,
-    .table,
-    [class*="-table"]:not([class*="container"]) {
+    table:not(#emergenciesTable),
+    .table:not(#emergenciesTable),
+    [class*="-table"]:not([class*="container"]):not(.emergency-table-card) {
         min-width: 1000px !important; /* Wider minimum width to ensure scroll triggers */
         font-size: 0.8rem;
         width: auto !important;
     }
     
-    .table th,
-    .table td,
-    table th,
-    table td,
-    [class*="-table"] th,
-    [class*="-table"] td {
+    .table:not(#emergenciesTable) th,
+    .table:not(#emergenciesTable) td,
+    table:not(#emergenciesTable) th,
+    table:not(#emergenciesTable) td,
+    [class*="-table"]:not(.emergency-table-card) th,
+    [class*="-table"]:not(.emergency-table-card) td {
         padding: 0.5rem 0.25rem !important;
         white-space: nowrap !important;
         font-size: 0.8rem;

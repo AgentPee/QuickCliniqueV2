@@ -362,6 +362,7 @@
     -webkit-overflow-scrolling: touch;
     width: 100%;
     display: block;
+    position: relative;
 }
 
     /* Custom scrollbar styling */
@@ -1003,14 +1004,18 @@ textarea.form-control {
         border-radius: 5px;
     }
 
-    .table {
+    .table,
+    #appointmentsTable {
         min-width: 1000px !important;
         width: auto !important;
         display: table !important;
+        table-layout: auto !important;
     }
 
     .table th,
-    .table td {
+    .table td,
+    #appointmentsTable th,
+    #appointmentsTable td {
         padding: 0.75rem 0.5rem;
         white-space: nowrap !important;
     }
@@ -1074,16 +1079,40 @@ textarea.form-control {
 
     .table-responsive {
         overflow-x: auto !important;
+        overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+        display: block !important;
     }
     
-    .table {
+    /* Custom scrollbar for very small screens */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
+        border-radius: 4px;
+    }
+    
+    .table,
+    #appointmentsTable {
         min-width: 1200px !important;
+        width: auto !important;
         font-size: 0.8em;
+        display: table !important;
+        table-layout: auto !important;
     }
     
     .table th,
-    .table td {
+    .table td,
+    #appointmentsTable th,
+    #appointmentsTable td {
         padding: 0.6rem 0.4rem;
         font-size: 0.8em;
         white-space: nowrap !important;
@@ -1164,220 +1193,58 @@ textarea.form-control {
     display: none;
 }
 
-/* ===== EMERGENCY SCHEDULES TABLE STYLES ===== */
-
-/* Emergency table specific styling */
-#emergenciesTable {
-    margin-top: 0;
-}
-
-#emergenciesTable thead th {
+/* BMI Result Modal Styles */
+.bmi-result-modal {
     background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    color: #179C8E;
+    border-left: 4px solid #4ECDC4;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+.bmi-result-value-modal {
+    font-size: 2rem;
     font-weight: 700;
-    border-bottom: 3px solid #4ECDC4;
-    position: relative;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
 }
 
-    #emergenciesTable thead th i {
-        color: #179C8E;
-        margin-right: 0.4rem;
-        font-size: 1em;
-    }
-
-/* Emergency table rows */
-#emergenciesTable tbody tr {
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-}
-
-    #emergenciesTable tbody tr:hover {
-        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%);
-        transform: translateX(3px);
-        border-left-color: #4ECDC4;
-        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.2);
-    }
-
-    /* Active emergency row styling */
-    #emergenciesTable tbody tr[data-status="active"],
-    #emergenciesTable tbody tr:not([data-resolved="true"]) {
-        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 50%);
-        border-left-color: #4ECDC4;
-        animation: emergencyPulse 2s ease-in-out infinite;
-    }
-
-    /* Resolved emergency row styling */
-    #emergenciesTable tbody tr[data-status="resolved"],
-    #emergenciesTable tbody tr[data-resolved="true"] {
-        background: linear-gradient(90deg, #e0f2fe 0%, #ffffff 50%);
-        border-left-color: #179C8E;
-        opacity: 0.85;
-    }
-
-        #emergenciesTable tbody tr[data-status="resolved"]:hover,
-        #emergenciesTable tbody tr[data-resolved="true"]:hover {
-            opacity: 1;
-            border-left-color: #179C8E;
-        }
-
-/* Emergency pulse animation for active emergencies */
-@keyframes emergencyPulse {
-    0%, 100% {
-        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.1);
-    }
-    50% {
-        box-shadow: -2px 0 12px rgba(78, 205, 196, 0.3);
-    }
-}
-
-/* Emergency status badges */
-#emergenciesTable .status-badge.status-pending {
-    background: linear-gradient(135deg, #d1ecf1 0%, #4ECDC4 100%);
-    color: #0c5460;
-    border: 2px solid #4ECDC4;
-    font-weight: 700;
+.bmi-result-category-modal {
+    font-size: 1rem;
+    font-weight: 600;
     padding: 0.5rem 1rem;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-    animation: statusPulse 2s ease-in-out infinite;
-}
-
-#emergenciesTable .status-badge.status-completed {
-    background: linear-gradient(135deg, #d1ecf1 0%, #179C8E 100%);
-    color: #0c5460;
-    border: 2px solid #179C8E;
-    font-weight: 700;
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 8px rgba(23, 156, 142, 0.3);
-}
-
-@keyframes statusPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-    }
-    50% {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.5);
-    }
-}
-
-/* Emergency icons styling */
-#emergenciesTable .patient-icon {
-    color: #179C8E;
-    font-size: 1.3rem;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .patient-icon {
-    color: #4ECDC4;
-    transform: scale(1.1) rotate(5deg);
-}
-
-#emergenciesTable .symptoms-text i {
-    color: #179C8E;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .symptoms-text i {
-    color: #4ECDC4;
-    transform: scale(1.1);
-}
-
-#emergenciesTable .date-booked i {
-    color: #179C8E;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .date-booked i {
-    color: #4ECDC4;
-    transform: scale(1.1) rotate(-5deg);
-}
-
-/* Emergency queue badge styling */
-#emergenciesTable .queue-badge {
-    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
-    color: white;
-    padding: 0.4rem 0.9rem;
-    border-radius: 20px;
-    font-size: 0.9em;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+    border-radius: 6px;
     display: inline-block;
-    transition: all 0.3s ease;
 }
 
-#emergenciesTable tbody tr:hover .queue-badge {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
+.bmi-result-category-modal.underweight {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
 }
 
-/* Emergency table header enhancement */
-#emergenciesTable + .table-header {
-    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    border-bottom: 3px solid #4ECDC4;
+.bmi-result-category-modal.normal {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
 }
 
-    #emergenciesTable + .table-header h5 {
-        color: #179C8E;
-        font-weight: 700;
+.bmi-result-category-modal.overweight {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+}
+
+.bmi-result-category-modal.obese {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
     }
-
-    #emergenciesTable + .table-header h5 i {
-        color: #179C8E;
-        animation: emergencyIconPulse 2s ease-in-out infinite;
-    }
-
-@keyframes emergencyIconPulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-/* Emergency table card styling - enhanced visual distinction */
-.emergency-table-card,
-.table-card:last-of-type {
-    margin-top: 2rem;
-    margin-bottom: 0;
-    border-top: 4px solid #4ECDC4;
-    box-shadow: 0 5px 20px rgba(78, 205, 196, 0.15);
-    position: relative;
-}
-
-    .emergency-table-card::before,
-    .table-card:last-of-type::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
-    }
-
-/* Emergency header actions */
-.emergency-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.emergency-search-item {
-    flex: 0 0 auto;
-    min-width: 250px;
-    margin: 0;
-}
-
-/* Responsive emergency table */
-@media (max-width: 768px) {
-    #emergenciesTable tbody tr:hover {
-        transform: none;
-    }
-
-    #emergenciesTable .status-badge {
-        font-size: 0.75em;
-        padding: 0.4rem 0.8rem;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
