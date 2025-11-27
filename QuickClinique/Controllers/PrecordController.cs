@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
+using QuickClinique.Services;
 using QuickClinique.Attributes;
 
 namespace QuickClinique.Controllers
@@ -10,10 +11,28 @@ namespace QuickClinique.Controllers
     public class PrecordController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public PrecordController(ApplicationDbContext context)
+        public PrecordController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
+        }
+
+        // Helper method to get the base URL for absolute links (for email verification, etc.)
+        private string GetBaseUrl()
+        {
+            // Check for BASE_URL environment variable first (for Railway/production)
+            var baseUrl = Environment.GetEnvironmentVariable("BASE_URL");
+            if (!string.IsNullOrEmpty(baseUrl))
+            {
+                return baseUrl.TrimEnd('/');
+            }
+
+            // Fall back to using the request's scheme and host
+            var scheme = Request.Scheme;
+            var host = Request.Host.Value;
+            return $"{scheme}://{host}";
         }
 
         // GET: Precord - Show all patients registered in the system
@@ -452,12 +471,45 @@ namespace QuickClinique.Controllers
 
             try
             {
+                var wasInactive = !student.IsActive;
+                
                 // Toggle the IsActive status
                 student.IsActive = !student.IsActive;
                 await _context.SaveChangesAsync();
 
+                // If activating an inactive account, send activation email
+                if (wasInactive && student.IsActive && student.IsEmailVerified)
+                {
+                    var baseUrl = GetBaseUrl();
+                    var loginUrl = $"{baseUrl}{Url.Action("Login", "Student")}";
+
+                    Console.WriteLine($"[ACTIVATION] Attempting to send activation email to {student.Email}");
+                    Console.WriteLine($"[ACTIVATION] Login URL: {loginUrl}");
+                    
+                    // Send email - await it but don't fail activation if email fails
+                    try
+                    {
+                        await _emailService.SendAccountActivationEmail(student.Email, student.FirstName, loginUrl);
+                        Console.WriteLine($"[ACTIVATION] Activation email sent successfully to {student.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail activation
+                        Console.WriteLine($"[ACTIVATION ERROR] Failed to send activation email to {student.Email}: {emailEx.Message}");
+                        Console.WriteLine($"[ACTIVATION ERROR] Stack trace: {emailEx.StackTrace}");
+                        if (emailEx.InnerException != null)
+                        {
+                            Console.WriteLine($"[ACTIVATION ERROR] Inner exception: {emailEx.InnerException.Message}");
+                        }
+                    }
+                }
+
                 string action = student.IsActive ? "activated" : "deactivated";
-                return Json(new { success = true, message = $"Patient {action} successfully", isActive = student.IsActive });
+                string message = student.IsActive 
+                    ? $"Patient {action} successfully. Activation email sent to {student.Email}."
+                    : $"Patient {action} successfully.";
+                    
+                return Json(new { success = true, message = message, isActive = student.IsActive });
             }
             catch (DbUpdateException dbEx)
             {
