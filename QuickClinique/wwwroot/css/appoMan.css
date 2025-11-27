@@ -396,6 +396,42 @@
     font-size: 1.2rem;
 }
 
+/* ID Badge Styles */
+.id-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+    .id-badge:hover {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-color: #4ECDC4;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    }
+
+    .id-badge i {
+        color: #179C8E;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .id-badge:hover i {
+        color: #4ECDC4;
+        transform: scale(1.1) rotate(5deg);
+    }
+
 .date-info {
     display: flex;
     flex-direction: column;
@@ -422,7 +458,35 @@
 .date-booked {
     color: #718096;
     font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    background: transparent;
 }
+
+    .date-booked:hover {
+        background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+        color: #333;
+        transform: translateX(2px);
+    }
+
+    .date-booked i {
+        color: #179C8E;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
+    }
+
+    .date-booked:hover i {
+        color: #4ECDC4;
+        transform: scale(1.15) rotate(-5deg);
+    }
 
 .reason-badge {
     background-color: #f1f3f5;
@@ -431,8 +495,30 @@
     border-radius: 12px;
     font-size: 0.85em;
     font-weight: 500;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
 }
+
+    .reason-badge:hover {
+        background-color: #e9ecef;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+    }
+
+    .reason-badge i {
+        color: #179C8E;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        min-width: 16px;
+    }
+
+    .reason-badge:hover i {
+        color: #4ECDC4;
+        transform: scale(1.15);
+    }
 
 .symptoms-text {
     max-width: 220px;
@@ -441,7 +527,29 @@
     white-space: nowrap;
     color: #718096;
     font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.2rem 0;
 }
+
+    .symptoms-text:hover {
+        color: #333;
+    }
+
+    .symptoms-text i {
+        color: #179C8E;
+        font-size: 0.95em;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        min-width: 16px;
+    }
+
+    .symptoms-text:hover i {
+        color: #4ECDC4;
+        transform: scale(1.1);
+    }
 
 /* Empty State */
 .no-appointments {

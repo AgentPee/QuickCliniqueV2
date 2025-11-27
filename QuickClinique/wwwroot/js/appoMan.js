@@ -26,12 +26,14 @@ function filterTable() {
         const status = row.dataset.status.toLowerCase();
         const date = row.dataset.date;
         const patient = row.dataset.patient;
+        const studentId = row.dataset.studentId ? row.dataset.studentId.toString() : '';
 
         const statusMatch = !statusFilter || status.includes(statusFilter);
         const dateMatch = !dateFilter || date === dateFilter;
         const patientMatch = !searchPatient || patient.includes(searchPatient);
+        const idMatch = !searchPatient || studentId.includes(searchPatient);
 
-        if (statusMatch && dateMatch && patientMatch) {
+        if (statusMatch && dateMatch && (patientMatch || idMatch)) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -94,7 +96,7 @@ function updateAppointmentsTable(appointments) {
     if (appointments.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center">
+                <td colspan="9" class="text-center">
                     <div class="no-appointments">
                         <i class="fas fa-calendar-times"></i>
                         <h5>No Appointments Found</h5>
@@ -144,7 +146,10 @@ function updateAppointmentsTable(appointments) {
         const statusIcon = getStatusIcon(appointment.appointmentStatus);
         
         const rowHtml = `
-            <tr data-status="${appointment.appointmentStatus}" data-date="${appointment.scheduleDate}" data-patient="${appointment.patientName.toLowerCase()}">
+            <tr data-status="${appointment.appointmentStatus}" data-date="${appointment.scheduleDateFilter || appointment.scheduleDate}" data-patient="${appointment.patientName.toLowerCase()}" data-student-id="${appointment.studentIdNumber || ''}">
+                <td>
+                    <span class="id-badge"><i class="fas fa-id-card"></i> ${appointment.studentIdNumber || 'N/A'}</span>
+                </td>
                 <td>
                     <div class="patient-info">
                         <i class="fas fa-user-circle patient-icon"></i>
@@ -172,16 +177,18 @@ function updateAppointmentsTable(appointments) {
                     </div>
                 </td>
                 <td>
-                    <span class="reason-badge">${escapeHtml(appointment.reasonForVisit)}</span>
+                    <span class="reason-badge">
+                        <i class="fas ${getReasonIcon(appointment.reasonForVisit)}"></i> ${escapeHtml(appointment.reasonForVisit)}
+                    </span>
                 </td>
                 <td>
                     <div class="symptoms-text" title="${escapeHtml(appointment.symptoms)}">
-                        ${escapeHtml(appointment.symptoms)}
+                        <i class="fas fa-notes-medical"></i> ${escapeHtml(appointment.symptoms)}
                     </div>
                 </td>
                 <td>
                     <div class="date-booked">
-                        ${appointment.dateBooked}
+                        <i class="fas fa-calendar"></i> ${appointment.dateBooked}
                     </div>
                 </td>
                 <td>
@@ -208,6 +215,31 @@ function getStatusIcon(status) {
         case "Cancelled": return '<i class="fas fa-times-circle"></i>';
         default: return '';
     }
+}
+
+// Get reason icon based on reason for visit
+function getReasonIcon(reason) {
+    if (!reason) return 'fa-stethoscope'; // default icon
+    
+    const reasonLower = reason.toLowerCase();
+    
+    if (reasonLower.includes('medical-checkup') || reasonLower.includes('general medical')) {
+        return 'fa-heartbeat';
+    } else if (reasonLower.includes('dental-checkup') || reasonLower.includes('dental') && !reasonLower.includes('cleaning') && !reasonLower.includes('pasta') && !reasonLower.includes('extraction')) {
+        return 'fa-tooth';
+    } else if (reasonLower.includes('dental-cleaning') || reasonLower.includes('prophylaxis')) {
+        return 'fa-spray-can';
+    } else if (reasonLower.includes('dental-pasta') || reasonLower.includes('fillings')) {
+        return 'fa-fill-drip';
+    } else if (reasonLower.includes('dental-extraction') || reasonLower.includes('extraction')) {
+        return 'fa-tooth';
+    } else if (reasonLower.includes('consultation')) {
+        return 'fa-user-md';
+    } else if (reasonLower.includes('bp-monitoring') || reasonLower.includes('blood pressure')) {
+        return 'fa-heartbeat';
+    }
+    
+    return 'fa-stethoscope'; // default icon
 }
 
 // Get action buttons for appointment
