@@ -288,7 +288,7 @@ namespace QuickClinique.Controllers
                             return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
 
                         TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
-                        return RedirectToAction(nameof(Index));
+                        return RedirectToAction(nameof(Availability));
                     }
                     else
                     {
