@@ -376,12 +376,45 @@ namespace QuickClinique.Controllers
 
             try
             {
+                var wasInactive = !clinicstaff.IsActive;
+                
                 // Toggle the IsActive status
                 clinicstaff.IsActive = !clinicstaff.IsActive;
                 await _context.SaveChangesAsync();
 
+                // If activating an inactive account, send activation email
+                if (wasInactive && clinicstaff.IsActive && clinicstaff.IsEmailVerified)
+                {
+                    var baseUrl = GetBaseUrl();
+                    var loginUrl = $"{baseUrl}{Url.Action("Login", "Clinicstaff")}";
+
+                    Console.WriteLine($"[ACTIVATION] Attempting to send activation email to {clinicstaff.Email}");
+                    Console.WriteLine($"[ACTIVATION] Login URL: {loginUrl}");
+                    
+                    // Send email - await it but don't fail activation if email fails
+                    try
+                    {
+                        await _emailService.SendAccountActivationEmail(clinicstaff.Email, clinicstaff.FirstName, loginUrl);
+                        Console.WriteLine($"[ACTIVATION] Activation email sent successfully to {clinicstaff.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // Log email error but don't fail activation
+                        Console.WriteLine($"[ACTIVATION ERROR] Failed to send activation email to {clinicstaff.Email}: {emailEx.Message}");
+                        Console.WriteLine($"[ACTIVATION ERROR] Stack trace: {emailEx.StackTrace}");
+                        if (emailEx.InnerException != null)
+                        {
+                            Console.WriteLine($"[ACTIVATION ERROR] Inner exception: {emailEx.InnerException.Message}");
+                        }
+                    }
+                }
+
                 string action = clinicstaff.IsActive ? "activated" : "deactivated";
-                return Json(new { success = true, message = $"Staff member {action} successfully", isActive = clinicstaff.IsActive });
+                string message = clinicstaff.IsActive 
+                    ? $"Staff member {action} successfully. Activation email sent to {clinicstaff.Email}."
+                    : $"Staff member {action} successfully.";
+                    
+                return Json(new { success = true, message = message, isActive = clinicstaff.IsActive });
             }
             catch (Exception ex)
             {
@@ -431,10 +464,15 @@ namespace QuickClinique.Controllers
 
                     if (!staff.IsActive)
                     {
+                        // If email is verified but account is inactive, it means pending activation
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Your account has been deactivated. Please contact the administrator for assistance." });
+                            return Json(new { 
+                                success = false, 
+                                error = "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.",
+                                pendingActivation = true
+                            });
 
-                        ModelState.AddModelError("", "Your account has been deactivated. Please contact the administrator for assistance.");
+                        ModelState.AddModelError("", "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.");
                         return View(model);
                     }
 
@@ -734,7 +772,8 @@ namespace QuickClinique.Controllers
                         Password = _passwordService.HashPassword(model.Password),
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
-                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24)
+                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        IsActive = false // Account starts as inactive until activated by administrator
                     };
 
                     try
@@ -804,9 +843,9 @@ namespace QuickClinique.Controllers
                     }
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
 
-                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account.";
+                    TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
                     return RedirectToAction(nameof(Login));
                 }
                 catch (DbUpdateException dbEx)
@@ -905,9 +944,9 @@ namespace QuickClinique.Controllers
             await _context.SaveChangesAsync();
 
             if (IsAjaxRequest())
-                return Json(new { success = true, message = "Email verified successfully! You can now login.", redirectUrl = Url.Action(nameof(Login)) });
+                return Json(new { success = true, message = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
 
-            TempData["SuccessMessage"] = "Email verified successfully! You can now login.";
+            TempData["SuccessMessage"] = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.";
             return RedirectToAction(nameof(Login));
         }
 
