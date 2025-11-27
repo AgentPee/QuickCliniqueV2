@@ -799,6 +799,34 @@
         });
 
         // ===== EMERGENCY RESOLVED CHECK POLLING =====
+        // Helper functions for localStorage
+        function getAcknowledgedEmergencyIds() {
+            try {
+                const stored = localStorage.getItem('acknowledgedEmergencyIds');
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function addAcknowledgedEmergencyId(emergencyId) {
+            try {
+                const acknowledged = getAcknowledgedEmergencyIds();
+                if (!acknowledged.includes(emergencyId)) {
+                    acknowledged.push(emergencyId);
+                    localStorage.setItem('acknowledgedEmergencyIds', JSON.stringify(acknowledged));
+                }
+            } catch (e) {
+                console.error('Error storing acknowledged emergency ID:', e);
+            }
+        }
+
+        function isEmergencyAcknowledged(emergencyId) {
+            if (!emergencyId) return false;
+            const acknowledged = getAcknowledgedEmergencyIds();
+            return acknowledged.includes(emergencyId);
+        }
+
         function startEmergencyResolvedCheck() {
             if (emergencyCheckInterval) {
                 clearInterval(emergencyCheckInterval);
@@ -824,8 +852,11 @@
 
                 if (result.success && result.resolved && !helpModalShown) {
                     // Emergency was resolved - show modal only if we haven't shown it for this emergency
-                    if (result.emergencyId !== lastCheckedEmergencyId || lastCheckedEmergencyId === null) {
-                        showHelpOnTheWayModal();
+                    // and it hasn't been acknowledged yet
+                    if (result.emergencyId && 
+                        !isEmergencyAcknowledged(result.emergencyId) &&
+                        (result.emergencyId !== lastCheckedEmergencyId || lastCheckedEmergencyId === null)) {
+                        showHelpOnTheWayModal(result.emergencyId);
                         helpModalShown = true;
                         lastCheckedEmergencyId = result.emergencyId;
                     }
@@ -845,7 +876,7 @@
             }
         }
 
-        function showHelpOnTheWayModal() {
+        function showHelpOnTheWayModal(emergencyId) {
             const modalElement = document.getElementById('helpOnTheWayModal');
             if (!modalElement) {
                 console.error('Help on the way modal element not found');
@@ -866,8 +897,14 @@
             const acknowledgeBtn = document.getElementById('acknowledgeHelpBtn');
             if (acknowledgeBtn) {
                 acknowledgeBtn.onclick = function() {
+                    // Mark this emergency as acknowledged in localStorage
+                    if (emergencyId) {
+                        addAcknowledgedEmergencyId(emergencyId);
+                    }
                     modal.hide();
                     helpModalShown = true; // Keep flag true so it doesn't show again
+                    // Reload the page
+                    window.location.reload();
                 };
             }
         }
