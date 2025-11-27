@@ -832,9 +832,10 @@
                 clearInterval(emergencyCheckInterval);
             }
 
+            // Check more frequently (every 2 seconds) for better responsiveness
             emergencyCheckInterval = setInterval(async () => {
                 await checkIfEmergencyResolved();
-            }, 5000); // Check every 5 seconds
+            }, 2000); // Check every 2 seconds
 
             // Check immediately on page load
             checkIfEmergencyResolved();
@@ -850,15 +851,15 @@
                 
                 const result = await response.json();
 
-                if (result.success && result.resolved && !helpModalShown) {
-                    // Emergency was resolved - show modal only if we haven't shown it for this emergency
-                    // and it hasn't been acknowledged yet
-                    if (result.emergencyId && 
-                        !isEmergencyAcknowledged(result.emergencyId) &&
-                        (result.emergencyId !== lastCheckedEmergencyId || lastCheckedEmergencyId === null)) {
-                        showHelpOnTheWayModal(result.emergencyId);
-                        helpModalShown = true;
-                        lastCheckedEmergencyId = result.emergencyId;
+                if (result.success && result.resolved) {
+                    // Emergency was resolved - show modal only if we haven't acknowledged it yet
+                    if (result.emergencyId && !isEmergencyAcknowledged(result.emergencyId)) {
+                        // Show modal if this is a different emergency, or if we haven't shown it yet for this emergency
+                        if (result.emergencyId !== lastCheckedEmergencyId || !helpModalShown) {
+                            showHelpOnTheWayModal(result.emergencyId);
+                            helpModalShown = true;
+                            lastCheckedEmergencyId = result.emergencyId;
+                        }
                     }
                 } else if (result.success && !result.resolved) {
                     // No resolved emergency - reset flag if we have a new unresolved emergency
