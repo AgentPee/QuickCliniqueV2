@@ -182,13 +182,13 @@
                                         <div class="col-6">
                                             <label for="triageBPSystolic" class="visually-hidden">Systolic Blood Pressure</label>
                                             <input type="number" class="form-control" id="triageBPSystolic" 
-                                                   placeholder="120" min="70" max="250" oninput="updateBPIndicator()" aria-label="Systolic Blood Pressure">
+                                                   placeholder="Systolic" min="70" max="250" oninput="updateBPIndicator()" aria-label="Systolic Blood Pressure">
                                             <small class="form-text text-muted">Systolic</small>
                                         </div>
                                         <div class="col-6">
                                             <label for="triageBPDiastolic" class="visually-hidden">Diastolic Blood Pressure</label>
                                             <input type="number" class="form-control" id="triageBPDiastolic" 
-                                                   placeholder="80" min="40" max="150" oninput="updateBPIndicator()" aria-label="Diastolic Blood Pressure">
+                                                   placeholder="Diastolic" min="40" max="150" oninput="updateBPIndicator()" aria-label="Diastolic Blood Pressure">
                                             <small class="form-text text-muted">Diastolic</small>
                                         </div>
                                     </div>
@@ -236,14 +236,20 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <label for="triageHeight" class="visually-hidden">Height in centimeters</label>
-                                            <input type="number" class="form-control" id="triageHeight" 
-                                                   placeholder="170" min="100" max="250" oninput="updateBMIIndicator()" aria-label="Height in centimeters">
+                                            <div class="input-group-icon-wrapper">
+                                                <i class="fas fa-ruler-vertical input-icon"></i>
+                                                <input type="number" class="form-control form-control-icon" id="triageHeight" 
+                                                       placeholder="Height" min="100" max="250" oninput="updateBMIIndicator()" aria-label="Height in centimeters">
+                                            </div>
                                             <small class="form-text text-muted">Height (cm)</small>
                                         </div>
                                         <div class="col-6">
                                             <label for="triageWeight" class="visually-hidden">Weight in kilograms</label>
-                                            <input type="number" class="form-control" id="triageWeight" 
-                                                   placeholder="70" min="30" max="200" oninput="updateBMIIndicator()" aria-label="Weight in kilograms">
+                                            <div class="input-group-icon-wrapper">
+                                                <i class="fas fa-weight input-icon"></i>
+                                                <input type="number" class="form-control form-control-icon" id="triageWeight" 
+                                                       placeholder="Weight" min="30" max="200" oninput="updateBMIIndicator()" aria-label="Weight in kilograms">
+                                            </div>
                                             <small class="form-text text-muted">Weight (kg)</small>
                                         </div>
                                     </div>
