@@ -456,10 +456,16 @@ namespace QuickClinique.Controllers
                     if (!staff.IsEmailVerified)
                     {
                         if (IsAjaxRequest())
-                            return Json(new { success = false, error = "Please verify your email before logging in." });
+                            return Json(new { 
+                                success = false, 
+                                error = "Please verify your email before logging in.",
+                                requiresVerification = true,
+                                redirectUrl = Url.Action("verificationE", "Clinicstaff", new { email = staff.Email }),
+                                email = staff.Email
+                            });
 
-                        ModelState.AddModelError("", "Please verify your email before logging in.");
-                        return View(model);
+                        TempData["ErrorMessage"] = "Please verify your email before logging in.";
+                        return RedirectToAction("verificationE", "Clinicstaff", new { email = staff.Email });
                     }
 
                     if (!staff.IsActive)
@@ -843,10 +849,16 @@ namespace QuickClinique.Controllers
                     }
 
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { 
+                            success = true, 
+                            message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.",
+                            redirectUrl = Url.Action("verificationE", "Clinicstaff", new { email = clinicstaff.Email }),
+                            clinicStaffEmail = clinicstaff.Email
+                        });
 
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
-                    return RedirectToAction(nameof(Login));
+                    TempData["ClinicStaffEmail"] = clinicstaff.Email;
+                    return RedirectToAction("verificationE", "Clinicstaff", new { email = clinicstaff.Email });
                 }
                 catch (DbUpdateException dbEx)
                 {
@@ -920,6 +932,26 @@ namespace QuickClinique.Controllers
             return View(model);
         }
 
+        // GET: Clinicstaff/verificationE - Display email verification page
+        public IActionResult verificationE(string? email = null)
+        {
+            // Pass email to view if provided
+            if (!string.IsNullOrEmpty(email))
+            {
+                ViewBag.Email = email;
+            }
+            else if (TempData["ClinicStaffEmail"] != null)
+            {
+                ViewBag.Email = TempData["ClinicStaffEmail"].ToString();
+                TempData.Keep("ClinicStaffEmail");
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
+        }
+
         // GET: Clinicstaff/VerifyEmail
         public async Task<IActionResult> VerifyEmail(string token, string email)
         {
@@ -948,6 +980,172 @@ namespace QuickClinique.Controllers
 
             TempData["SuccessMessage"] = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.";
             return RedirectToAction(nameof(Login));
+        }
+
+        // POST: Clinicstaff/ResendVerificationEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendVerificationEmail()
+        {
+            try
+            {
+                string? email = null;
+
+                // Get from form data (FormData submissions)
+                email = Request.Form["Email"].FirstOrDefault();
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return Json(new { success = false, error = "Email is required." });
+                }
+
+                var clinicstaff = await _context.Clinicstaffs
+                    .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
+
+                if (clinicstaff == null)
+                {
+                    // Don't reveal that the user doesn't exist (security best practice)
+                    return Json(new { 
+                        success = true, 
+                        message = "If your email is registered, a verification email will be sent." 
+                    });
+                }
+
+                if (clinicstaff.IsEmailVerified)
+                {
+                    return Json(new { 
+                        success = false, 
+                        error = "Your email is already verified. You can login now." 
+                    });
+                }
+
+                // Generate new token and extend expiry
+                var newToken = GenerateToken();
+                clinicstaff.EmailVerificationToken = newToken;
+                clinicstaff.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+
+                await _context.SaveChangesAsync();
+
+                // Send verification email (fire-and-forget)
+                var baseUrl = GetBaseUrl();
+                var verificationLink = $"{baseUrl}{Url.Action("VerifyEmail", "Clinicstaff", new { token = newToken, email = clinicstaff.Email })}";
+
+                // Fire-and-forget: don't await, let it run in background
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendVerificationEmail(clinicstaff.Email, clinicstaff.FirstName, verificationLink);
+                        Console.WriteLine($"[EMAIL] Verification email sent successfully to {clinicstaff.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"[EMAIL ERROR] Failed to send verification email to {clinicstaff.Email}: {emailEx.Message}");
+                    }
+                });
+
+                return Json(new { 
+                    success = true, 
+                    message = "Verification email has been sent. Please check your inbox (and spam folder)." 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error resending verification email: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while sending the verification email. Please try again later." 
+                });
+            }
+        }
+
+        // GET: Clinicstaff/resetPasswordE - Display password reset email page
+        public IActionResult resetPasswordE(string? email = null)
+        {
+            // Pass email to view if provided
+            if (!string.IsNullOrEmpty(email))
+            {
+                ViewBag.Email = email;
+            }
+            else if (TempData["ClinicStaffEmail"] != null)
+            {
+                ViewBag.Email = TempData["ClinicStaffEmail"].ToString();
+                TempData.Keep("ClinicStaffEmail");
+            }
+
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
+        }
+
+        // POST: Clinicstaff/ResendPasswordResetEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendPasswordResetEmail()
+        {
+            try
+            {
+                string? email = null;
+
+                // Get from form data (FormData submissions)
+                email = Request.Form["Email"].FirstOrDefault();
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return Json(new { success = false, error = "Email is required." });
+                }
+
+                var clinicstaff = await _context.Clinicstaffs
+                    .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower() && s.IsEmailVerified);
+
+                if (clinicstaff == null)
+                {
+                    // Don't reveal that the user doesn't exist (security best practice)
+                    return Json(new { 
+                        success = true, 
+                        message = "If your email is registered and verified, a password reset email will be sent." 
+                    });
+                }
+
+                // Generate new token and extend expiry
+                var resetToken = GenerateToken();
+                clinicstaff.PasswordResetToken = resetToken;
+                clinicstaff.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+
+                await _context.SaveChangesAsync();
+
+                // Send password reset email (fire-and-forget)
+                var baseUrl = GetBaseUrl();
+                var resetLink = $"{baseUrl}{Url.Action("ResetPassword", "Clinicstaff", new { token = resetToken, email = clinicstaff.Email })}";
+
+                // Fire-and-forget: don't await, let it run in background
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendPasswordResetEmail(clinicstaff.Email, clinicstaff.FirstName, resetLink);
+                        Console.WriteLine($"[EMAIL] Password reset email sent successfully to {clinicstaff.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"[EMAIL ERROR] Failed to send password reset email to {clinicstaff.Email}: {emailEx.Message}");
+                    }
+                });
+
+                return Json(new { 
+                    success = true, 
+                    message = "Password reset email has been sent. Please check your inbox (and spam folder)." 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error resending password reset email: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    error = "An error occurred while sending the password reset email. Please try again later." 
+                });
+            }
         }
 
         // GET: Clinicstaff/ForgotPassword
@@ -985,18 +1183,18 @@ namespace QuickClinique.Controllers
                         await _emailService.SendPasswordResetEmail(clinicstaff.Email, clinicstaff.FirstName, resetLink);
 
                         if (IsAjaxRequest())
-                            return Json(new { success = true, message = "Password reset link has been sent to your email.", redirectUrl = Url.Action(nameof(Login)) });
+                            return Json(new { success = true, message = "Password reset link has been sent to your email.", redirectUrl = Url.Action("resetPasswordE", "Clinicstaff", new { email = clinicstaff.Email }) });
 
                         TempData["SuccessMessage"] = "Password reset link has been sent to your email.";
-                        return RedirectToAction(nameof(Login));
+                        return RedirectToAction("resetPasswordE", "Clinicstaff", new { email = clinicstaff.Email });
                     }
 
                     // Don't reveal that the user doesn't exist or isn't verified
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = "If your email is registered and verified, you will receive a password reset link.", redirectUrl = Url.Action(nameof(Login)) });
+                        return Json(new { success = true, message = "If your email is registered and verified, you will receive a password reset link.", redirectUrl = Url.Action("resetPasswordE", "Clinicstaff", new { email = model.Email }) });
 
                     TempData["SuccessMessage"] = "If your email is registered and verified, you will receive a password reset link.";
-                    return RedirectToAction(nameof(Login));
+                    return RedirectToAction("resetPasswordE", "Clinicstaff", new { email = model.Email });
                 }
                 catch (Exception ex)
                 {
@@ -1026,6 +1224,22 @@ namespace QuickClinique.Controllers
         // GET: Clinicstaff/ResetPassword
         public async Task<IActionResult> ResetPassword(string token, string email)
         {
+            // Check if token and email are provided
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "Reset link is required. Please request a new password reset link." });
+
+                // Show the view with an error message instead of redirecting
+                var errorModel = new ResetPasswordViewModel
+                {
+                    Token = token ?? string.Empty,
+                    Email = email ?? string.Empty
+                };
+                ViewData["ErrorMessage"] = "Reset link is required. Please request a new password reset link from the Forgot Password page.";
+                return View(errorModel);
+            }
+
             var clinicstaff = await _context.Clinicstaffs
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.PasswordResetToken == token &&
@@ -1036,8 +1250,14 @@ namespace QuickClinique.Controllers
                 if (IsAjaxRequest())
                     return Json(new { success = false, error = "Invalid or expired reset link." });
 
-                TempData["ErrorMessage"] = "Invalid or expired reset link.";
-                return RedirectToAction(nameof(ForgotPassword));
+                // Show the view with an error message instead of redirecting
+                var errorModel = new ResetPasswordViewModel
+                {
+                    Token = token,
+                    Email = email
+                };
+                ViewData["ErrorMessage"] = "Invalid or expired reset link. Please request a new password reset link.";
+                return View(errorModel);
             }
 
             var model = new ResetPasswordViewModel
