@@ -281,7 +281,7 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        // Toggle password visibility function
+        // Toggle password visibility for change password form
         function togglePassword(inputId) {
             const passwordInput = document.getElementById(inputId) || document.querySelector(`input[name="${inputId}"]`);
             if (!passwordInput) return;
