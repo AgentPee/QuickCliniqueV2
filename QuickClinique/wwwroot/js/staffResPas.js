@@ -1,7 +1,10 @@
 // Toggle password visibility
 function togglePassword(inputId) {
-    const passwordInput = document.getElementById(inputId);
+    const passwordInput = document.getElementById(inputId) || document.querySelector(`input[name="${inputId}"]`);
+    if (!passwordInput) return;
+    
     const toggleIcon = passwordInput.parentElement.querySelector('.toggle-password');
+    if (!toggleIcon) return;
 
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';

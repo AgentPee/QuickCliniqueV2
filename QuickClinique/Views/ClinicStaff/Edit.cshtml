@@ -123,9 +123,12 @@
                     <label for="newPassword" class="form-label">
                         <i class="fas fa-lock"></i> New Password
                     </label>
-                    <input type="password" id="newPassword" name="newPassword" class="form-control" 
-                           minlength="6"
-                           placeholder="Enter new password (min 6 characters)" />
+                    <div style="position: relative;">
+                        <input type="password" id="newPassword" name="newPassword" class="form-control" 
+                               minlength="6"
+                               placeholder="Enter new password (min 6 characters)" />
+                        <span class="toggle-password" onclick="togglePassword('newPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem;">👁️</span>
+                    </div>
                     <small class="form-text">Minimum 6 characters</small>
                 </div>
 
@@ -133,8 +136,11 @@
                     <label for="confirmPassword" class="form-label">
                         <i class="fas fa-lock"></i> Confirm Password
                     </label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" 
-                           placeholder="Confirm new password" />
+                    <div style="position: relative;">
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" 
+                               placeholder="Confirm new password" />
+                        <span class="toggle-password" onclick="togglePassword('confirmPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem;">👁️</span>
+                    </div>
                     <span id="confirmPasswordError" class="text-danger" style="display: none;"></span>
                 </div>
             </div>
@@ -152,4 +158,28 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 }
+
+<script>
+    // Toggle password visibility function
+    function togglePassword(inputId) {
+        const passwordInput = document.getElementById(inputId) || document.querySelector(`input[name="${inputId}"]`);
+        if (!passwordInput) return;
+        
+        const toggleIcon = passwordInput.parentElement.querySelector('.toggle-password');
+        if (!toggleIcon) return;
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.textContent = '🙈';
+            toggleIcon.setAttribute('aria-label', 'Hide password');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.textContent = '👁️';
+            toggleIcon.setAttribute('aria-label', 'Show password');
+        }
+
+        // Focus back on the input for better UX
+        passwordInput.focus();
+    }
+</script>
 
