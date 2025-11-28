@@ -849,12 +849,20 @@ input:checked + .slider {
 #nextPatientModal .form-group .row {
     margin-left: -0.5rem;
     margin-right: -0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    display: flex;
+    align-items: flex-start;
 }
 
 #nextPatientModal .form-group .row .col-6 {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#nextPatientModal .form-group .row .col-6 input {
+    width: 100%;
 }
 
 #nextPatientModal .form-group .row .col-6 small {
@@ -863,6 +871,45 @@ input:checked + .slider {
     margin-top: 0.25rem;
     display: block;
     font-weight: 500;
+}
+
+/* Ensure input fields align at same baseline */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group input[type="number"],
+#nextPatientModal .form-section .row [class*="col-md-6"] .form-group input[type="number"],
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group .input-group-icon-wrapper,
+#nextPatientModal .form-section .row [class*="col-md-6"] .form-group .input-group-icon-wrapper {
+    margin-top: 0;
+}
+
+/* Ensure all input boxes start at the same vertical position */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure labels take up consistent space */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group > label {
+    height: 2rem;
+    margin-bottom: 0.625rem;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Ensure inputs start at same position after labels */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group > input[type="number"],
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group > .row {
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+/* Make sure BP inputs align with single inputs */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group .row {
+    margin-top: 0;
+}
+
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group .row .col-6 input {
+    margin-top: 0;
 }
 
 /* Vital Signs Grid - Better Alignment */
@@ -885,6 +932,28 @@ input:checked + .slider {
     height: 100%;
     flex: 1;
     margin-bottom: 0;
+}
+
+/* Align labels consistently */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group label,
+#nextPatientModal .form-section .row [class*="col-md-6"] .form-group label {
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.625rem;
+    height: 2rem;
+}
+
+/* Ensure all input boxes align at the same top position */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group > input[type="number"],
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group > .row {
+    margin-top: 0;
+}
+
+/* Align BP inputs with other single inputs */
+#nextPatientModal .form-section .row [class*="col-md-4"] .form-group .row {
+    margin-top: 0;
+    align-items: flex-start;
 }
 
 /* Better alignment for vital signs in grid */
@@ -1057,6 +1126,53 @@ input:checked + .slider {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
+}
+
+/* Input Group with Icons - Height and Weight */
+.input-group-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0;
+}
+
+.input-group-icon-wrapper .input-icon {
+    color: #4ECDC4;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.input-group-icon-wrapper .form-control-icon {
+    flex: 1;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.input-group-icon-wrapper .form-control-icon:focus {
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+    outline: none;
+}
+
+.input-group-icon-wrapper:focus-within .input-icon {
+    color: #179C8E;
+    transform: scale(1.15);
+}
+
+.input-group-icon-wrapper:hover .input-icon {
+    color: #179C8E;
+}
+
+/* Ensure consistent input height across all fields */
+#nextPatientModal .form-control {
+    min-height: 2.75rem;
+    box-sizing: border-box;
 }
 
 /* Button Styling in Modal */
