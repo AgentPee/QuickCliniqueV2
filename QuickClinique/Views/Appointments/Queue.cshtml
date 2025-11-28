@@ -90,7 +90,9 @@
             <h4><i class="fas fa-clock"></i> Waiting Queue</h4>
 
             @{
-                var waitingPatients = Model.Where(a => a.AppointmentStatus == "Confirmed" && a.QueueStatus == "Waiting")
+                var waitingPatients = Model.Where(a => a.AppointmentStatus == "Confirmed" && 
+                                                       a.QueueStatus == "Waiting" && 
+                                                       a.QueueNumber > 0) // Only show appointments with queue numbers
                 .OrderBy(a => a.QueueNumber)
                 .ToList();
             }

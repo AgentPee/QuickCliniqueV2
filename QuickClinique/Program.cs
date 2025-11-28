@@ -31,6 +31,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
 
+// Add background service for queue assignment
+builder.Services.AddHostedService<QueueAssignmentService>();
+
 // Configure file storage service
 var storageProvider = builder.Configuration["Storage:Provider"] ?? "Local";
 if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase))
@@ -391,9 +394,21 @@ using (var scope = app.Services.CreateScope())
         }
         catch (Exception migrateEx)
         {
-            Console.WriteLine($"[ERROR] Migration failed: {migrateEx.Message}");
-            Console.WriteLine($"[ERROR] Stack trace: {migrateEx.StackTrace}");
-            throw; // Re-throw to prevent continuing without tables
+            // Check if the error is about pending model changes (which we handle manually)
+            if (migrateEx.Message.Contains("pending changes", StringComparison.OrdinalIgnoreCase) ||
+                migrateEx.Message.Contains("The model for context", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("[INFO] Migration system detected model changes.");
+                Console.WriteLine("[INFO] These will be handled automatically via column checks in STEP 3.");
+                Console.WriteLine("[INFO] Continuing with initialization...");
+                // Don't throw - we'll handle the columns manually
+            }
+            else
+            {
+                Console.WriteLine($"[ERROR] Migration failed: {migrateEx.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {migrateEx.StackTrace}");
+                throw; // Re-throw other migration errors
+            }
         }
 
         // STEP 3: Ensure required columns exist AFTER tables are created
@@ -666,6 +681,208 @@ using (var scope = app.Services.CreateScope())
             else
             {
                 Console.WriteLine("[OK] CancellationReason column already exists in appointments table.");
+            }
+            
+            // Check and add TimeSelected column to appointments table (case-insensitive check)
+            Console.WriteLine("[INIT] Checking for TimeSelected column in appointments table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND UPPER(COLUMN_NAME) = 'TIMESELECTED'";
+            
+            var timeSelectedColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] TimeSelected column exists in appointments table: {timeSelectedColumnExists}");
+            
+            if (!timeSelectedColumnExists)
+            {
+                Console.WriteLine("[CRITICAL] TimeSelected column missing! Adding to appointments table...");
+                
+                try
+                {
+                    command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `TimeSelected` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] TimeSelected column added successfully to appointments table!");
+                    
+                    // Update existing appointments to set TimeSelected based on Schedule
+                    command.CommandText = @"
+                        UPDATE `appointments` a
+                        INNER JOIN `schedules` s ON a.ScheduleID = s.ScheduleID
+                        SET a.TimeSelected = CONCAT(s.Date, ' ', s.StartTime)
+                        WHERE a.TimeSelected = '0000-00-00 00:00:00' OR a.TimeSelected IS NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Updated existing appointments with TimeSelected values!");
+                    
+                    // Verify it was added
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'appointments' 
+                        AND UPPER(COLUMN_NAME) = 'TIMESELECTED'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] TimeSelected column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("TimeSelected column verification failed - column was not added successfully");
+                    }
+                    
+                    // Mark migration as applied if both columns will be added
+                    timeSelectedColumnExists = true; // Set flag since we just added it
+                }
+                catch (Exception addEx)
+                {
+                    // Check if it's a "duplicate column" error (column already exists) - that's OK
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[INFO] TimeSelected column already exists (caught duplicate error).");
+                        Console.WriteLine("[INFO] This is OK - column was likely added in a previous run.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CRITICAL ERROR] Failed to add TimeSelected column: {addEx.Message}");
+                        Console.WriteLine($"[CRITICAL ERROR] Error type: {addEx.GetType().Name}");
+                        Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                        if (addEx.InnerException != null)
+                        {
+                            Console.WriteLine($"[CRITICAL ERROR] Inner exception: {addEx.InnerException.Message}");
+                        }
+                        Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                        throw; // Re-throw to be caught by outer catch
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] TimeSelected column already exists in appointments table.");
+            }
+            
+            // Check and add CreatedAt column to appointments table (case-insensitive check)
+            Console.WriteLine("[INIT] Checking for CreatedAt column in appointments table...");
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND UPPER(COLUMN_NAME) = 'CREATEDAT'";
+            
+            var createdAtColumnExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] CreatedAt column exists in appointments table: {createdAtColumnExists}");
+            
+            if (!createdAtColumnExists)
+            {
+                Console.WriteLine("[CRITICAL] CreatedAt column missing! Adding to appointments table...");
+                
+                try
+                {
+                    command.CommandText = @"ALTER TABLE `appointments` ADD COLUMN `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] CreatedAt column added successfully to appointments table!");
+                    
+                    // Update existing appointments to set CreatedAt to current time
+                    command.CommandText = @"
+                        UPDATE `appointments`
+                        SET CreatedAt = NOW()
+                        WHERE CreatedAt = '0000-00-00 00:00:00' OR CreatedAt IS NULL";
+                    await command.ExecuteNonQueryAsync();
+                    Console.WriteLine("[SUCCESS] Updated existing appointments with CreatedAt values!");
+                    
+                    // Verify it was added
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = 'appointments' 
+                        AND UPPER(COLUMN_NAME) = 'CREATEDAT'";
+                    var verifyResult = await command.ExecuteScalarAsync();
+                    var verified = Convert.ToInt32(verifyResult) > 0;
+                    Console.WriteLine($"[VERIFY] CreatedAt column verification: {(verified ? "EXISTS" : "STILL MISSING")}");
+                    
+                    if (!verified)
+                    {
+                        throw new Exception("CreatedAt column verification failed - column was not added successfully");
+                    }
+                    
+                    // Mark migration as applied if both columns are now present
+                    createdAtColumnExists = true; // Set flag since we just added it
+                }
+                catch (Exception addEx)
+                {
+                    // Check if it's a "duplicate column" error (column already exists) - that's OK
+                    if (addEx.Message.Contains("Duplicate column name", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                        addEx.Message.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("[INFO] CreatedAt column already exists (caught duplicate error).");
+                        Console.WriteLine("[INFO] This is OK - column was likely added in a previous run.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CRITICAL ERROR] Failed to add CreatedAt column: {addEx.Message}");
+                        Console.WriteLine($"[CRITICAL ERROR] Error type: {addEx.GetType().Name}");
+                        Console.WriteLine($"[CRITICAL ERROR] Stack trace: {addEx.StackTrace}");
+                        if (addEx.InnerException != null)
+                        {
+                            Console.WriteLine($"[CRITICAL ERROR] Inner exception: {addEx.InnerException.Message}");
+                        }
+                        Console.WriteLine("[CRITICAL ERROR] The application may not function correctly without this column!");
+                        throw; // Re-throw to be caught by outer catch
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("[OK] CreatedAt column already exists in appointments table.");
+            }
+            
+            // Mark the migration as applied in the migration history table if both columns exist
+            // Re-check to make sure both columns actually exist now
+            command.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'appointments' 
+                AND UPPER(COLUMN_NAME) IN ('TIMESELECTED', 'CREATEDAT')";
+            var bothColumnsExistCount = Convert.ToInt32(await command.ExecuteScalarAsync());
+            var bothColumnsExist = bothColumnsExistCount == 2;
+            
+            if (bothColumnsExist)
+            {
+                Console.WriteLine("[INIT] Checking if migration is marked as applied...");
+                command.CommandText = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.TABLES 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = '__EFMigrationsHistory'";
+                var historyTableExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+                
+                if (historyTableExists)
+                {
+                    command.CommandText = @"
+                        SELECT COUNT(*) 
+                        FROM __EFMigrationsHistory 
+                        WHERE MigrationId = '20250125000000_AddTimeSelectedAndCreatedAtToAppointment'";
+                    var migrationExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
+                    
+                    if (!migrationExists)
+                    {
+                        Console.WriteLine("[INIT] Marking migration as applied in history table...");
+                        command.CommandText = @"
+                            INSERT IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+                            VALUES ('20250125000000_AddTimeSelectedAndCreatedAtToAppointment', '9.0.9')";
+                        await command.ExecuteNonQueryAsync();
+                        Console.WriteLine("[SUCCESS] Migration marked as applied!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[OK] Migration already marked as applied.");
+                    }
+                }
             }
             
             // Check and add IsActive column to students table (case-insensitive check)

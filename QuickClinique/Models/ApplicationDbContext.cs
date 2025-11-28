@@ -83,6 +83,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("longtext");
             entity.Property(e => e.CancellationReason)
                 .HasColumnType("longtext");
+            entity.Property(e => e.TimeSelected)
+                .HasColumnType("datetime")
+                .HasColumnName("TimeSelected");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("CreatedAt");
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.PatientId)

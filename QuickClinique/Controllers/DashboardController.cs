@@ -745,16 +745,21 @@ namespace QuickClinique.Controllers
                 }
 
                 // Create the appointment
+                var now = DateTime.Now;
+                var timeSelected = appointmentDate.ToDateTime(appointmentTime);
+                
                 var appointment = new Appointment
                 {
                     PatientId = student.StudentId,
                     ScheduleId = schedule.ScheduleId,
                     ReasonForVisit = request.ReasonForVisit,
                     Symptoms = "Walk-in appointment",
-                    DateBooked = DateOnly.FromDateTime(DateTime.Now),
+                    DateBooked = DateOnly.FromDateTime(now),
                     AppointmentStatus = "Confirmed", // Walk-ins are automatically confirmed
                     QueueStatus = "Waiting",
-                    QueueNumber = queueNumber
+                    QueueNumber = queueNumber,
+                    TimeSelected = timeSelected, // Date and time selected for the appointment
+                    CreatedAt = now // When appointment was submitted
                 };
 
                 _context.Appointments.Add(appointment);
