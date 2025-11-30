@@ -175,7 +175,7 @@
                                     <th><i class="fas fa-calendar-week"></i> Day</th>
                                     <th><i class="fas fa-clock"></i> Time Slot</th>
                                     <th><i class="fas fa-toggle-on"></i> Availability</th>
-                                    <th><i class="fas fa-calendar-check"></i> Appointments</th>
+                                    @*<th><i class="fas fa-calendar-check"></i> Appointments</th>*@
                                     <th class="actions-column"><i class="fas fa-cog"></i> Actions</th>
                                 </tr>
                             </thead>
@@ -202,12 +202,12 @@
                                                 @(item.IsAvailable == "Yes" ? "Available" : "Unavailable")
                                             </span>
                                         </td>
-                                        <td class="appointments-cell">
+                                        @*<td class="appointments-cell">
                                             <span class="appointments-count">
                                                 <i class="fas fa-calendar-check"></i>
                                                 @(item.Appointments?.Count ?? 0)
                                             </span>
-                                        </td>
+                                        </td>*@
                                         <td class="actions-cell">
                                             <div class="action-buttons">
                                                 <a asp-action="Details" asp-route-id="@item.ScheduleId" class="btn btn-info btn-sm">
