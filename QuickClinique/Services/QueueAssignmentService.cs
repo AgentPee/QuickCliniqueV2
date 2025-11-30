@@ -47,40 +47,11 @@ namespace QuickClinique.Services
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-            // Check if CreatedAt column exists by querying the database schema directly
-            bool createdAtColumnExists = false;
-            try
-            {
-                await using var connection = context.Database.GetDbConnection();
-                await connection.OpenAsync();
-                await using var command = connection.CreateCommand();
-                command.CommandText = @"
-                    SELECT COUNT(*) 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_SCHEMA = DATABASE() 
-                    AND TABLE_NAME = 'appointments' 
-                    AND UPPER(COLUMN_NAME) = 'CREATEDAT'";
-                
-                var result = await command.ExecuteScalarAsync();
-                createdAtColumnExists = Convert.ToInt32(result) > 0;
-            }
-            catch (Exception ex)
-            {
-                // If we can't check the schema, log and skip processing
-                _logger.LogWarning("Could not check for CreatedAt column. Skipping queue assignment. Error: {Error}", ex.Message);
-                return;
-            }
-
-            if (!createdAtColumnExists)
-            {
-                _logger.LogWarning("CreatedAt column not found in appointments table. Please run the migration SQL script. Skipping queue assignment.");
-                return;
-            }
-
             var now = DateTime.Now;
             // Check appointments where TimeSelected matches current time (within 1 minute window)
             // and appointment is confirmed but doesn't have a queue number yet
             List<Appointment> appointmentsToProcess;
+            bool createdAtColumnExists = true; // Assume it exists, will be set to false if query fails
             try
             {
                 appointmentsToProcess = await context.Appointments
@@ -97,6 +68,7 @@ namespace QuickClinique.Services
             {
                 // If the query fails (e.g., CreatedAt column issue), log and skip
                 _logger.LogWarning("Failed to query appointments with CreatedAt. The column may not be available yet. Error: {Error}", ex.Message);
+                createdAtColumnExists = false;
                 return;
             }
 
