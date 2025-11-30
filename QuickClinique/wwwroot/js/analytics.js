@@ -350,6 +350,9 @@ function renderAppointmentVolumeChart() {
     const timeRange = document.getElementById('volumeTimeRange')?.value || 30;
     const data = analyticsData.appointmentVolume || [];
     
+    // Calculate total for percentage
+    const totalAppointments = data.reduce((sum, d) => sum + d.count, 0);
+    
     charts.appointmentVolume = new Chart(ctx, {
         type: 'line',
         data: {
@@ -362,8 +365,8 @@ function renderAppointmentVolumeChart() {
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                pointRadius: 7,
+                pointHoverRadius: 9,
                 pointBackgroundColor: '#4ECDC4',
                 pointBorderColor: '#FFFFFF',
                 pointBorderWidth: 2
@@ -377,14 +380,36 @@ function renderAppointmentVolumeChart() {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
                     titleFont: {
-                        size: 14,
+                        size: 15,
                         weight: 'bold'
                     },
                     bodyFont: {
                         size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return data[index] ? data[index].date : '';
+                        },
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const pointData = data[index];
+                            if (!pointData) return '';
+                            
+                            const count = pointData.count;
+                            const percentage = totalAppointments > 0 
+                                ? ((count / totalAppointments) * 100).toFixed(1) 
+                                : '0.0';
+                            
+                            return [
+                                `Day: ${pointData.day}`,
+                                `Appointments: ${count}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
                     }
                 }
             },
@@ -422,6 +447,7 @@ function renderAgeDistributionChart() {
     const data = analyticsData.ageDistribution || {};
     const labels = Object.keys(data).filter(key => data[key] > 0); // Only show groups with data
     const values = labels.map(key => data[key]);
+    const totalPatients = values.reduce((sum, val) => sum + val, 0);
     
     charts.ageDistribution = new Chart(ctx, {
         type: 'doughnut',
@@ -456,8 +482,29 @@ function renderAgeDistributionChart() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalPatients > 0 
+                                ? ((value / totalPatients) * 100).toFixed(1) 
+                                : '0.0';
+                            return [
+                                `Age Group: ${label}`,
+                                `Patients: ${value}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
+                    }
                 }
             }
         }
@@ -482,6 +529,7 @@ function renderVisitFrequencyChart() {
         if (b === '5+') return -1;
         return parseInt(a) - parseInt(b);
     });
+    const totalPatients = Object.values(data).reduce((sum, val) => sum + val, 0);
     
     charts.visitFrequency = new Chart(ctx, {
         type: 'bar',
@@ -503,8 +551,29 @@ function renderVisitFrequencyChart() {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed.y || 0;
+                            const percentage = totalPatients > 0 
+                                ? ((value / totalPatients) * 100).toFixed(1) 
+                                : '0.0';
+                            return [
+                                `Visit Frequency: ${label}`,
+                                `Patients: ${value}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
+                    }
                 }
             },
             scales: {
@@ -567,13 +636,29 @@ function renderNoShowCancellationChart() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
                     callbacks: {
+                        title: function(context) {
+                            return 'Appointment Status';
+                        },
                         label: function(context) {
-                            const value = context.parsed;
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return context.label + ': ' + value + ' (' + percentage + '%)';
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                            return [
+                                `Status: ${label}`,
+                                `Count: ${value}`,
+                                `Percentage: ${percentage}%`,
+                                `Total Appointments: ${total}`
+                            ];
                         }
                     }
                 }
@@ -695,6 +780,9 @@ function renderEmergencyTrendChart() {
     const timeRange = document.getElementById('emergencyTimeRange')?.value || 30;
     const data = analyticsData.emergencyStatistics?.emergencyVolume || [];
     
+    // Calculate total for percentage
+    const totalEmergencies = data.reduce((sum, d) => sum + d.count, 0);
+    
     charts.emergencyTrend = new Chart(ctx, {
         type: 'line',
         data: {
@@ -707,8 +795,8 @@ function renderEmergencyTrendChart() {
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                pointRadius: 7,
+                pointHoverRadius: 9,
                 pointBackgroundColor: '#DC2626',
                 pointBorderColor: '#FFFFFF',
                 pointBorderWidth: 2
@@ -722,14 +810,36 @@ function renderEmergencyTrendChart() {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
                     titleFont: {
-                        size: 14,
+                        size: 15,
                         weight: 'bold'
                     },
                     bodyFont: {
                         size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return data[index] ? data[index].date : '';
+                        },
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const pointData = data[index];
+                            if (!pointData) return '';
+                            
+                            const count = pointData.count;
+                            const percentage = totalEmergencies > 0 
+                                ? ((count / totalEmergencies) * 100).toFixed(1) 
+                                : '0.0';
+                            
+                            return [
+                                `Day: ${pointData.day}`,
+                                `Emergencies: ${count}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
                     }
                 }
             },
@@ -805,14 +915,30 @@ function renderReasonsForVisitChart() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
                     callbacks: {
+                        title: function(context) {
+                            return 'Visit Reason';
+                        },
                         label: function(context) {
-                            const value = context.parsed;
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
                             const total = counts.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return context.label + ': ' + value + ' (' + percentage + '%)';
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                            return [
+                                `Reason: ${label}`,
+                                `Visits: ${value}`,
+                                `Percentage: ${percentage}%`,
+                                `Total Visits: ${total}`
+                            ];
                         }
                     }
                 }
