@@ -1,21 +1,19 @@
 ﻿let autoRefreshInterval;
 
-// Auto-refresh functionality
-document.getElementById('autoRefreshToggle').addEventListener('change', function () {
-    if (this.checked) {
-        startAutoRefresh();
-    } else {
-        stopAutoRefresh();
-    }
-});
-
 function startAutoRefresh() {
+    // Clear any existing interval
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
     autoRefreshInterval = setInterval(refreshQueue, 10000); // Refresh every 10 seconds
+    console.log('Auto-refresh started');
 }
 
 function stopAutoRefresh() {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        console.log('Auto-refresh stopped');
     }
 }
 
@@ -29,10 +27,17 @@ async function refreshQueue() {
     }
     
     try {
+        console.log('Refreshing queue data...');
         const response = await fetch('/Appointments/GetQueueData');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         
         if (result.success && result.data) {
+            console.log('Queue data received, updating UI...');
             // Update statistics
             updateQueueStats(result.data.stats);
             
@@ -41,6 +46,9 @@ async function refreshQueue() {
             
             // Update waiting queue
             updateWaitingQueue(result.data.waitingPatients);
+            console.log('Queue updated successfully');
+        } else {
+            console.error('Failed to refresh queue:', result.error || 'Unknown error');
         }
     } catch (error) {
         console.error('Error refreshing queue:', error);
@@ -94,13 +102,16 @@ function updateCurrentPatient(currentPatient) {
 // Update waiting queue list
 function updateWaitingQueue(waitingPatients) {
     const waitingQueueSection = document.querySelector('.waiting-queue');
-    if (!waitingQueueSection) return;
+    if (!waitingQueueSection) {
+        console.error('Waiting queue section not found');
+        return;
+    }
     
     // Remove existing queue items (keep the header)
     const existingItems = waitingQueueSection.querySelectorAll('.queue-item, .no-patients');
     existingItems.forEach(item => item.remove());
     
-    if (waitingPatients.length === 0) {
+    if (!waitingPatients || waitingPatients.length === 0) {
         waitingQueueSection.insertAdjacentHTML('beforeend', `
             <div class="no-patients">
                 <i class="fas fa-user-friends"></i>
@@ -113,19 +124,26 @@ function updateWaitingQueue(waitingPatients) {
     
     // Add new queue items
     waitingPatients.forEach(patient => {
+        const patientName = patient.patientName || 'Unknown';
+        const startTime = patient.startTime || '-';
+        const endTime = patient.endTime || '-';
+        const queueNumber = patient.queueNumber || 0;
+        
         const queueItemHtml = `
             <div class="queue-item">
                 <div class="queue-info">
-                    <div class="queue-number-badge">#${patient.queueNumber}</div>
+                    <div class="queue-number-badge">#${queueNumber}</div>
                     <div class="patient-details">
-                        <h5>${escapeHtml(patient.patientName)}</h5>
-                        <p><i class="fas fa-clock"></i> ${patient.startTime} - ${patient.endTime}</p>
+                        <h5>${escapeHtml(patientName)}</h5>
+                        <p><i class="fas fa-clock"></i> ${startTime} - ${endTime}</p>
                     </div>
                 </div>
             </div>
         `;
         waitingQueueSection.insertAdjacentHTML('beforeend', queueItemHtml);
     });
+    
+    console.log(`Updated waiting queue with ${waitingPatients.length} patient(s)`);
 }
 
 // Escape HTML to prevent XSS
@@ -489,9 +507,26 @@ async function submitCompleteAppointment() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function () {
-    // Start auto-refresh by default
-    document.getElementById('autoRefreshToggle').checked = true;
-    startAutoRefresh();
+    // Initialize auto-refresh toggle
+    const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+    if (autoRefreshToggle) {
+        // Set toggle to checked by default
+        autoRefreshToggle.checked = true;
+        
+        // Add event listener for toggle
+        autoRefreshToggle.addEventListener('change', function () {
+            if (this.checked) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
+        
+        // Start auto-refresh by default
+        startAutoRefresh();
+    } else {
+        console.error('Auto-refresh toggle not found');
+    }
 
     // Reset complete appointment modal when hidden
     const completeModalElement = document.getElementById('completeAppointmentModal');
