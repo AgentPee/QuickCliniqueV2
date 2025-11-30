@@ -215,6 +215,13 @@ async function showNextPatientModal() {
         el.className = 'vital-result-category-modal';
     });
 
+    // Reset the submit button to its normal state (in case it was in loading state)
+    const submitBtn = document.querySelector('#nextPatientModal .btn-primary[onclick="submitNextPatient()"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-forward"></i> Start Next Patient';
+    }
+
     // Show the modal using Bootstrap 5
     const modalElement = document.getElementById('nextPatientModal');
     if (modalElement) {
@@ -532,6 +539,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 el.textContent = 'Enter value';
                 el.className = 'vital-result-category-modal';
             });
+
+            // Reset the submit button to its normal state
+            const submitBtn = document.querySelector('#nextPatientModal .btn-primary[onclick="submitNextPatient()"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-forward"></i> Start Next Patient';
+            }
         });
     }
 });
