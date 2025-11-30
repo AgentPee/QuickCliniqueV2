@@ -71,6 +71,14 @@ namespace QuickClinique.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime>("TimeSelected")
+                        .HasColumnType("datetime")
+                        .HasColumnName("TimeSelected");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("CreatedAt");
+
                     b.HasKey("AppointmentId")
                         .HasName("PRIMARY");
 

@@ -105,25 +105,22 @@ namespace QuickClinique.Controllers
                 }
 
                 // Create the appointment entity
+                var now = DateTime.Now;
+                var timeSelected = schedule.Date.ToDateTime(schedule.StartTime);
+                
                 var appointment = new Appointment
                 {
                     PatientId = model.PatientId,
                     ScheduleId = model.ScheduleId,
                     ReasonForVisit = model.ReasonForVisit,
                     Symptoms = string.IsNullOrWhiteSpace(model.Symptoms) ? "No symptoms provided" : model.Symptoms,
-                    DateBooked = DateOnly.FromDateTime(DateTime.Now),
+                    DateBooked = DateOnly.FromDateTime(now),
                     AppointmentStatus = "Pending",
-                    QueueStatus = "Waiting"
+                    QueueStatus = "Pending", // Will be set to "Waiting" when queue number is assigned
+                    TimeSelected = timeSelected, // Date and time selected for the appointment
+                    CreatedAt = now, // When appointment was submitted
+                    QueueNumber = 0 // Will be assigned when TimeSelected matches current time and appointment is confirmed
                 };
-
-                // Assign queue number based on the appointment date (not schedule ID)
-                // All appointments on the same day should share the same queue sequence
-                var lastQueue = await _context.Appointments
-                    .Include(a => a.Schedule)
-                    .Where(a => a.Schedule.Date == schedule.Date)
-                    .OrderByDescending(a => a.QueueNumber)
-                    .FirstOrDefaultAsync();
-                appointment.QueueNumber = (lastQueue?.QueueNumber ?? 0) + 1;
 
                 _context.Add(appointment);
                 await _context.SaveChangesAsync();
@@ -684,7 +681,8 @@ namespace QuickClinique.Controllers
                 .Include(a => a.Schedule)
                 .Where(a => a.Schedule.Date == today && 
                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress") &&
-                           a.QueueStatus != "Done")
+                           a.QueueStatus != "Done" &&
+                           a.QueueNumber > 0) // Only show appointments with queue numbers
                 .OrderBy(a => a.QueueNumber)
                 .ToListAsync();
 
@@ -705,7 +703,8 @@ namespace QuickClinique.Controllers
                 .Include(a => a.Schedule)
                 .Where(a => a.Schedule.Date == today && 
                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress" || a.AppointmentStatus == "Completed") &&
-                           a.QueueStatus != "Done")
+                           a.QueueStatus != "Done" &&
+                           a.QueueNumber > 0) // Only show appointments with queue numbers
                 .OrderBy(a => a.QueueNumber)
                 .ToListAsync();
 
@@ -713,6 +712,40 @@ namespace QuickClinique.Controllers
             var waitingPatients = appointments.Where(a => a.AppointmentStatus == "Confirmed" && a.QueueStatus == "Waiting")
                 .OrderBy(a => a.QueueNumber)
                 .ToList();
+
+            // Calculate position in line for each waiting patient (based on same time slot)
+            var waitingPatientsWithPosition = waitingPatients.Select(a =>
+            {
+                // Count appointments in the same time slot with lower queue numbers
+                var positionInLine = appointments
+                    .Where(ap => ap.Schedule.Date == a.Schedule.Date &&
+                                ap.Schedule.StartTime == a.Schedule.StartTime &&
+                                ap.AppointmentStatus == "Confirmed" &&
+                                ap.QueueStatus == "Waiting" &&
+                                ap.QueueNumber > 0 &&
+                                ap.QueueNumber < a.QueueNumber)
+                    .Count() + 1;
+
+                // Count total appointments in the same time slot
+                var totalInTimeSlot = appointments
+                    .Where(ap => ap.Schedule.Date == a.Schedule.Date &&
+                                ap.Schedule.StartTime == a.Schedule.StartTime &&
+                                ap.AppointmentStatus == "Confirmed" &&
+                                ap.QueueNumber > 0)
+                    .Count();
+
+                return new
+                {
+                    appointmentId = a.AppointmentId,
+                    patientName = a.Patient?.FullName,
+                    queueNumber = a.QueueNumber,
+                    reasonForVisit = a.ReasonForVisit,
+                    startTime = a.Schedule?.StartTime.ToString("h:mm tt"),
+                    endTime = a.Schedule?.EndTime.ToString("h:mm tt"),
+                    positionInLine = positionInLine,
+                    totalInTimeSlot = totalInTimeSlot
+                };
+            }).ToList();
 
             return Json(new { 
                 success = true, 
@@ -729,14 +762,7 @@ namespace QuickClinique.Controllers
                         queueNumber = currentPatient.QueueNumber,
                         hasWaitingPatients = waitingPatients.Any()
                     } : null,
-                    waitingPatients = waitingPatients.Select(a => new {
-                        appointmentId = a.AppointmentId,
-                        patientName = a.Patient?.FullName,
-                        queueNumber = a.QueueNumber,
-                        reasonForVisit = a.ReasonForVisit,
-                        startTime = a.Schedule?.StartTime.ToString("h:mm tt"),
-                        endTime = a.Schedule?.EndTime.ToString("h:mm tt")
-                    }).ToList()
+                    waitingPatients = waitingPatientsWithPosition
                 }
             });
         }
@@ -848,13 +874,14 @@ namespace QuickClinique.Controllers
                     // Keep status as "In Progress" until medical record is completed
                 }
                 
-                // Find the next appointment in queue
+                // Find the next appointment in queue (only those with queue numbers)
                 var nextAppointment = await _context.Appointments
                     .Include(a => a.Patient)
                     .Include(a => a.Schedule)
                     .Where(a => a.Schedule.Date == today && 
                                a.AppointmentStatus == "Confirmed" && 
-                               a.QueueStatus == "Waiting")
+                               a.QueueStatus == "Waiting" &&
+                               a.QueueNumber > 0) // Only appointments with queue numbers
                     .OrderBy(a => a.QueueNumber)
                     .FirstOrDefaultAsync();
 
@@ -1261,7 +1288,12 @@ namespace QuickClinique.Controllers
                 }
 
                 appointment.AppointmentStatus = "Confirmed";
-                appointment.QueueStatus = "Waiting";
+                // QueueStatus and QueueNumber will be set by the background service when TimeSelected matches current time
+                // For now, keep it as "Pending" if no queue number assigned yet
+                if (appointment.QueueNumber == 0)
+                {
+                    appointment.QueueStatus = "Pending";
+                }
                 
                 await _context.SaveChangesAsync();
 
@@ -1595,14 +1627,15 @@ namespace QuickClinique.Controllers
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 
-                // Get all today's appointments in queue
+                // Get all today's appointments in queue (only those with queue numbers)
                 var todayAppointments = await _context.Appointments
                     .Include(a => a.Patient)
                     .Include(a => a.Schedule)
                     .Where(a => a.Schedule.Date == today && 
                                (a.AppointmentStatus == "Pending" || 
                                 a.AppointmentStatus == "Confirmed" || 
-                                a.AppointmentStatus == "In Progress"))
+                                a.AppointmentStatus == "In Progress") &&
+                               a.QueueNumber > 0) // Only appointments with queue numbers
                     .OrderBy(a => a.QueueNumber)
                     .ToListAsync();
 
@@ -1625,20 +1658,25 @@ namespace QuickClinique.Controllers
                     var userAppointment = todayAppointments
                         .FirstOrDefault(a => a.PatientId == studentId.Value);
 
-                    if (userAppointment != null)
+                    if (userAppointment != null && userAppointment.QueueNumber > 0)
                     {
                         userQueueNumber = userAppointment.QueueNumber;
                         userQueueStatus = userAppointment.QueueStatus;
                         
-                        // Calculate position in queue (only count waiting appointments before this one)
+                        // Calculate position in queue based on same time slot
                         if (userAppointment.QueueStatus == "Waiting")
                         {
+                            // Count appointments in the same time slot with lower queue numbers
                             userPosition = todayAppointments
-                                .Count(a => a.QueueStatus == "Waiting" && 
-                                           a.QueueNumber < userAppointment.QueueNumber) + 1;
+                                .Where(a => a.Schedule.Date == userAppointment.Schedule.Date &&
+                                           a.Schedule.StartTime == userAppointment.Schedule.StartTime &&
+                                           a.QueueStatus == "Waiting" &&
+                                           a.QueueNumber > 0 &&
+                                           a.QueueNumber < userAppointment.QueueNumber)
+                                .Count() + 1;
                             
-                            // Calculate estimated wait time: 15 minutes for first in line, +5 minutes for each subsequent person
-                            // Formula: 15 + (position - 1) * 5
+                            // Calculate estimated wait time: 15 minutes for first in line, +15 minutes for each subsequent person
+                            // Formula: 15 + (position - 1) * 15
                             estimatedWaitTime = 15 + (userPosition.Value - 1) * 15;
                         }
                     }

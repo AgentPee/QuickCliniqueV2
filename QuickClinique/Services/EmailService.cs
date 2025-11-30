@@ -244,6 +244,50 @@ namespace QuickClinique.Services
             }
         }
 
+        public async Task SendQueueNumberAssignmentEmail(string toEmail, string patientName, string appointmentDate, string appointmentTime, int queueNumber, int positionInLine)
+        {
+            try
+            {
+                Console.WriteLine($"[EMAIL] SendQueueNumberAssignmentEmail called for: {toEmail}, Patient: {patientName}, Queue Number: {queueNumber}");
+                
+                if (string.IsNullOrWhiteSpace(toEmail))
+                {
+                    Console.WriteLine("[EMAIL ERROR] SendQueueNumberAssignmentEmail: toEmail is null or empty");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(patientName))
+                {
+                    patientName = "Valued Patient";
+                }
+
+                var subject = "Your Queue Number Has Been Assigned - QuickClinique";
+                var body = GetEmailTemplate(
+                    title: "Queue Number Assigned!",
+                    greeting: $"Hello {patientName},",
+                    content: $@"
+                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Your appointment time has arrived! Your queue number has been assigned.</p>
+                        <div style='background-color: #F0F4F8; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #06B6D4;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
+                            <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Your Position in Line:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{positionInLine}</span></p>
+                        </div>
+                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please proceed to the clinic and wait for your queue number to be called. You will be notified when it's your turn.</p>
+                        <p style='margin: 0; color: #718096; font-size: 14px;'>Thank you for your patience!</p>",
+                    primaryColor: "#06B6D4"
+                );
+
+                await SendEmailAsync(toEmail, subject, body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EMAIL ERROR] SendQueueNumberAssignmentEmail exception: {ex.Message}");
+                Console.WriteLine($"[EMAIL ERROR] Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+
         public async Task SendAppointmentCompletedEmail(string toEmail, string patientName, string appointmentDate)
         {
             try

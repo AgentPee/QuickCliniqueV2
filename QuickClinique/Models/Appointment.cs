@@ -27,6 +27,10 @@ public partial class Appointment
 
     public string QueueStatus { get; set; } = null!;
 
+    public DateTime TimeSelected { get; set; } // Date and time selected for the appointment
+
+    public DateTime CreatedAt { get; set; } // Date and time when appointment was submitted
+
     public virtual ICollection<History> Histories { get; set; } = new List<History>();
 
     public virtual Student Patient { get; set; } = null!;
