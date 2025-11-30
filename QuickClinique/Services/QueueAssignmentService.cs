@@ -47,35 +47,58 @@ namespace QuickClinique.Services
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
+            // Check if CreatedAt column exists by querying the database schema directly
+            bool createdAtColumnExists = false;
             try
             {
-                // First, check if the columns exist by trying a simple query
-                // This will throw if columns don't exist, which we'll catch
-                var testQuery = await context.Appointments
-                    .Where(a => a.AppointmentId > 0)
-                    .Select(a => new { a.AppointmentId, a.TimeSelected, a.CreatedAt })
-                    .Take(1)
-                    .ToListAsync();
+                await using var connection = context.Database.GetDbConnection();
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT COUNT(*) 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'appointments' 
+                    AND UPPER(COLUMN_NAME) = 'CREATEDAT'";
+                
+                var result = await command.ExecuteScalarAsync();
+                createdAtColumnExists = Convert.ToInt32(result) > 0;
             }
             catch (Exception ex)
             {
-                // Columns don't exist yet, skip processing
-                _logger.LogWarning("TimeSelected and CreatedAt columns not found. Please run the migration SQL script. Error: {Error}", ex.Message);
+                // If we can't check the schema, log and skip processing
+                _logger.LogWarning("Could not check for CreatedAt column. Skipping queue assignment. Error: {Error}", ex.Message);
+                return;
+            }
+
+            if (!createdAtColumnExists)
+            {
+                _logger.LogWarning("CreatedAt column not found in appointments table. Please run the migration SQL script. Skipping queue assignment.");
                 return;
             }
 
             var now = DateTime.Now;
             // Check appointments where TimeSelected matches current time (within 1 minute window)
             // and appointment is confirmed but doesn't have a queue number yet
-            var appointmentsToProcess = await context.Appointments
-                .Include(a => a.Patient)
-                .Include(a => a.Schedule)
-                .Where(a => a.AppointmentStatus == "Confirmed" &&
-                           a.QueueNumber == 0 &&
-                           a.TimeSelected <= now &&
-                           a.TimeSelected >= now.AddMinutes(-1)) // Within the last minute
-                .OrderBy(a => a.CreatedAt) // Process by creation time (first come first served)
-                .ToListAsync();
+            List<Appointment> appointmentsToProcess;
+            try
+            {
+                appointmentsToProcess = await context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Schedule)
+                    .Where(a => a.AppointmentStatus == "Confirmed" &&
+                               a.QueueNumber == 0 &&
+                               a.TimeSelected <= now &&
+                               a.TimeSelected >= now.AddMinutes(-1)) // Within the last minute
+                    .OrderBy(a => a.CreatedAt) // Process by creation time (first come first served)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // If the query fails (e.g., CreatedAt column issue), log and skip
+                _logger.LogWarning("Failed to query appointments with CreatedAt. The column may not be available yet. Error: {Error}", ex.Message);
+                return;
+            }
 
             if (!appointmentsToProcess.Any())
             {
@@ -111,7 +134,12 @@ namespace QuickClinique.Services
                     : 1;
 
                 // Assign queue numbers to appointments in this time slot
-                foreach (var appointment in timeSlotGroup.OrderBy(a => a.CreatedAt))
+                // Order by CreatedAt if available, otherwise fall back to AppointmentId
+                var orderedAppointments = createdAtColumnExists
+                    ? timeSlotGroup.OrderBy(a => a.CreatedAt)
+                    : timeSlotGroup.OrderBy(a => a.AppointmentId);
+                
+                foreach (var appointment in orderedAppointments)
                 {
                     appointment.QueueNumber = nextQueueNumber;
                     appointment.QueueStatus = "Waiting";
