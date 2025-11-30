@@ -1356,8 +1356,18 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var startDate = DateTime.Now.AddDays(-timeRange);
-                var endDate = DateTime.Now;
+                DateTime startDate;
+                DateTime endDate = DateTime.Now;
+                
+                // Handle "Today" (timeRange = 0) by setting start date to today at 00:00:00
+                if (timeRange == 0)
+                {
+                    startDate = new DateTime(endDate.Year, endDate.Month, endDate.Day, 0, 0, 0);
+                }
+                else
+                {
+                    startDate = DateTime.Now.AddDays(-timeRange);
+                }
 
                 // Get all appointments with related data
                 var appointments = await _context.Appointments
