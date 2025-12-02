@@ -87,7 +87,7 @@ namespace QuickClinique.Services
                 // 6. OCR validation - REQUIRED for ID verification
                 // This validates:
                 // - Front image: Must contain "university of cebu" text
-                // - Back image: Must have "SCH. YR." column with at least one signed row for current year
+                // - Back image: Must contain academic year "2025-2026"
                 using (var imageStream = new MemoryStream())
                 {
                     await idImage.CopyToAsync(imageStream);
@@ -221,7 +221,7 @@ namespace QuickClinique.Services
         /// <summary>
         /// Validates ID content using OCR
         /// Front image: Must contain "university of cebu" text
-        /// Back image: Must have "SCH. YR." column with at least one signed row for current year
+        /// Back image: Must contain academic year "2025-2026"
         /// </summary>
         private async Task<OcrContentValidationResult> ValidateIdContentWithOcrAsync(Stream imageStream, int expectedIdNumber, bool isFrontImage)
         {
@@ -291,7 +291,7 @@ namespace QuickClinique.Services
                 }
                 else
                 {
-                    // Back image validation: Must have academic year 2025-2026 with a signed row
+                    // Back image validation: Must have academic year 2025-2026
                     var requiredAcademicYear = "2025-2026";
                     var yearPattern1 = @"2025\s*[-–—]\s*2026"; // Matches "2025-2026", "2025 - 2026", "2025–2026", etc.
                     var yearPattern2 = @"2025\s*/\s*2026"; // Matches "2025/2026"
@@ -317,44 +317,6 @@ namespace QuickClinique.Services
                         result.IsValid = false;
                         result.ErrorMessage = $"The back ID image does not show the academic year {requiredAcademicYear}. Please ensure your ID is valid for the {requiredAcademicYear} academic year.";
                         _logger.LogWarning("Back ID validation failed - academic year {Year} not found. Extracted text: {Text}", requiredAcademicYear, extractedText.Substring(0, Math.Min(200, extractedText.Length)));
-                        return result;
-                    }
-
-                    // Check for signature indicators near the academic year 2025-2026
-                    // Look for patterns like "2025-2026 ✓", "2025-2026 √", "2025-2026 X", "2025-2026 signed", etc.
-                    // Also check for signatures near "2025" or "2026" when they appear together
-                    var academicYearWithSignaturePattern1 = $@"2025\s*[-–—]\s*2026.*?[✓√xX]|2025\s*[-–—]\s*2026.*?(signed|signature|sig|valid|ok|check)";
-                    var academicYearWithSignaturePattern2 = $@"2025\s*/\s*2026.*?[✓√xX]|2025\s*/\s*2026.*?(signed|signature|sig|valid|ok|check)";
-                    var academicYearWithSignaturePattern3 = $@"\b2025\b.*?\b2026\b.*?[✓√xX]|\b2025\b.*?\b2026\b.*?(signed|signature|sig|valid|ok|check)";
-                    
-                    var hasAcademicYearWithSignature = System.Text.RegularExpressions.Regex.IsMatch(
-                        extractedText, 
-                        academicYearWithSignaturePattern1, 
-                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                    ) || System.Text.RegularExpressions.Regex.IsMatch(
-                        extractedText, 
-                        academicYearWithSignaturePattern2, 
-                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                    ) || System.Text.RegularExpressions.Regex.IsMatch(
-                        extractedText, 
-                        academicYearWithSignaturePattern3, 
-                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                    );
-
-                    // Also check if signature indicators appear near 2025 or 2026 (within reasonable distance)
-                    // Look for 2025 or 2026 followed by signature indicators within 50 characters
-                    var yearNearSignaturePattern = $@"(2025|2026).{{0,50}}[✓√xX]|(2025|2026).{{0,50}}(signed|signature|sig|valid|ok|check)";
-                    var hasYearNearSignature = System.Text.RegularExpressions.Regex.IsMatch(
-                        extractedText, 
-                        yearNearSignaturePattern, 
-                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                    );
-
-                    if (!hasAcademicYearWithSignature && !hasYearNearSignature)
-                    {
-                        result.IsValid = false;
-                        result.ErrorMessage = $"The back ID image does not show a signed/validated row for the academic year {requiredAcademicYear}. Please ensure your ID is properly validated for the {requiredAcademicYear} academic year.";
-                        _logger.LogWarning("Back ID validation failed - no signature found for academic year {Year}. Extracted text: {Text}", requiredAcademicYear, extractedText.Substring(0, Math.Min(300, extractedText.Length)));
                         return result;
                     }
 
