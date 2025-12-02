@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.Vision.V1;
 using Google.Api.Gax;
+using Google.Apis.Auth.OAuth2;
 
 namespace QuickClinique.Services
 {
@@ -355,12 +356,39 @@ namespace QuickClinique.Services
         {
             try
             {
-                // Create client using default credentials
-                // This will use GOOGLE_APPLICATION_CREDENTIALS environment variable if set,
-                // or default service account credentials
-                // Note: API key authentication requires REST API calls, not the client library
-                // For API key support, use service account authentication (recommended) or implement REST API
-                var client = await ImageAnnotatorClient.CreateAsync();
+                ImageAnnotatorClient client;
+                
+                // Check if GOOGLE_APPLICATION_CREDENTIALS contains JSON content (Railway) or is a file path (localhost)
+                var credentialsEnv = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+                
+                if (!string.IsNullOrWhiteSpace(credentialsEnv) && credentialsEnv.TrimStart().StartsWith("{"))
+                {
+                    // Railway: GOOGLE_APPLICATION_CREDENTIALS contains JSON content directly
+                    _logger.LogDebug("Detected JSON credentials in GOOGLE_APPLICATION_CREDENTIALS (Railway mode)");
+                    
+                    try
+                    {
+                        // Parse JSON credentials and create client
+                        var credential = GoogleCredential.FromJson(credentialsEnv);
+                        var clientBuilder = new ImageAnnotatorClientBuilder
+                        {
+                            GoogleCredential = credential
+                        };
+                        client = await clientBuilder.BuildAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to parse JSON credentials from GOOGLE_APPLICATION_CREDENTIALS");
+                        throw new InvalidOperationException("Invalid JSON credentials in GOOGLE_APPLICATION_CREDENTIALS environment variable.", ex);
+                    }
+                }
+                else
+                {
+                    // Localhost: GOOGLE_APPLICATION_CREDENTIALS is a file path, or use default credentials
+                    // This will use GOOGLE_APPLICATION_CREDENTIALS environment variable if set (as file path),
+                    // or default service account credentials
+                    client = await ImageAnnotatorClient.CreateAsync();
+                }
 
                 // Read image bytes
                 imageStream.Position = 0;
