@@ -49,6 +49,10 @@
               "target": "Package",
               "version": "[3.7.400.45, )"
             },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
             "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
               "target": "Package",
               "version": "[9.0.0, )"
@@ -66,10 +70,6 @@
             "SendGrid": {
               "target": "Package",
               "version": "[9.29.3, )"
-            },
-            "Tesseract": {
-              "target": "Package",
-              "version": "[5.2.0, )"
             }
           },
           "imports": [

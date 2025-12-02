@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http;
+using Google.Cloud.Vision.V1;
+using Google.Api.Gax;
 
 namespace QuickClinique.Services
 {
     /// <summary>
     /// Service for validating student ID images
-    /// Validates image quality and optionally uses OCR to verify ID number matches
+    /// Validates image quality and uses Google Cloud Vision OCR to verify ID content
     /// </summary>
     public class IdValidationService : IIdValidationService
     {
@@ -13,6 +15,7 @@ namespace QuickClinique.Services
         private readonly double _minImageQualityScore;
         private readonly long _minImageSizeBytes;
         private readonly long _maxImageSizeBytes;
+        private readonly string? _googleCloudApiKey;
 
         public IdValidationService(
             ILogger<IdValidationService> logger,
@@ -25,6 +28,7 @@ namespace QuickClinique.Services
             _minImageQualityScore = configuration.GetValue<double>("IdValidation:MinImageQualityScore", 0.5);
             _minImageSizeBytes = configuration.GetValue<long>("IdValidation:MinImageSizeBytes", 5000); // 5KB minimum
             _maxImageSizeBytes = configuration.GetValue<long>("IdValidation:MaxImageSizeBytes", 5 * 1024 * 1024); // 5MB maximum
+            _googleCloudApiKey = configuration.GetValue<string>("IdValidation:GoogleCloudApiKey");
         }
 
         public async Task<IdValidationResult> ValidateIdImageAsync(IFormFile idImage, int expectedIdNumber, bool isFrontImage = true)
@@ -242,33 +246,18 @@ namespace QuickClinique.Services
                     return result;
                 }
 
-                // Perform OCR using Tesseract.NET
+                // Perform OCR using Google Cloud Vision API
                 string? extractedText = null;
                 try
                 {
                     extractedText = await PerformOcrAsync(imageStream);
                 }
-                catch (InvalidOperationException ex)
+                catch (Exception ex)
                 {
-                    // Check if this is a tessdata/Tesseract configuration error
-                    var isTessdataError = ex.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) || 
-                                         ex.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) ||
-                                         ex.Message.Contains("OCR validation requires", StringComparison.OrdinalIgnoreCase) ||
-                                         ex.Message.Contains("Tesseract.NET", StringComparison.OrdinalIgnoreCase) ||
-                                         ex.InnerException?.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) == true ||
-                                         ex.InnerException?.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) == true;
-                    
-                    if (isTessdataError)
-                    {
-                        // OCR is not available (tessdata missing or Tesseract not configured)
-                        // Log warning but allow registration to proceed
-                        _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
-                        result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
-                        return result; // Return with IsValid = true, but with a warning
-                    }
-                    
-                    // Re-throw if it's a different InvalidOperationException
-                    throw;
+                    // OCR failed - log warning but allow registration to proceed
+                    _logger.LogWarning(ex, "OCR validation failed - Google Cloud Vision API error: {Error}", ex.Message);
+                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
+                    return result; // Return with IsValid = true, but with a warning
                 }
                 
                 if (string.IsNullOrWhiteSpace(extractedText))
@@ -349,31 +338,10 @@ namespace QuickClinique.Services
                     result.IsValid = true;
                 }
             }
-            catch (InvalidOperationException ex)
-            {
-                // Check if this is a tessdata/Tesseract configuration error
-                var isTessdataError = ex.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) || 
-                                     ex.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) ||
-                                     ex.Message.Contains("OCR validation requires", StringComparison.OrdinalIgnoreCase) ||
-                                     ex.Message.Contains("Tesseract.NET", StringComparison.OrdinalIgnoreCase) ||
-                                     ex.InnerException?.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) == true ||
-                                     ex.InnerException?.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) == true;
-                
-                if (isTessdataError)
-                {
-                    // OCR is not available - allow registration to proceed with a warning
-                    _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
-                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
-                    return result; // Return with IsValid = true, but with a warning
-                }
-                
-                // Re-throw if it's a different InvalidOperationException
-                throw;
-            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OCR validation failed for {ImageType}", isFrontImage ? "front" : "back");
-                // For other errors, still allow registration but log the error
+                // For errors, allow registration but log the error
                 result.WarningMessage = "An error occurred during OCR validation. ID content validation was skipped. Please ensure your ID images are valid.";
             }
 
@@ -381,333 +349,44 @@ namespace QuickClinique.Services
         }
 
         /// <summary>
-        /// Performs OCR on the image stream using Tesseract.NET
+        /// Performs OCR on the image stream using Google Cloud Vision API
         /// </summary>
         private async Task<string> PerformOcrAsync(Stream imageStream)
         {
-            return await Task.Run(() =>
+            try
             {
-                try
-                {
-                    // Find tessdata folder - check multiple possible locations
-                    var possiblePaths = new List<string>();
-                    
-                    // 1. Current working directory (common in development)
-                    possiblePaths.Add(Path.Combine(Directory.GetCurrentDirectory(), "tessdata"));
-                    
-                    // 2. Application base directory (common in production/Railway)
-                    possiblePaths.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata"));
-                    
-                    // 3. Application base directory parent (in case app is in a subfolder)
-                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                    if (!string.IsNullOrEmpty(baseDir))
-                    {
-                        var parentDir = Directory.GetParent(baseDir)?.FullName;
-                        if (!string.IsNullOrEmpty(parentDir))
-                        {
-                            possiblePaths.Add(Path.Combine(parentDir, "tessdata"));
-                        }
-                    }
-                    
-                    // 4. Assembly location (where the DLL is located)
-                    var assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                    if (!string.IsNullOrEmpty(assemblyLocation))
-                    {
-                        var assemblyDir = Path.GetDirectoryName(assemblyLocation);
-                        if (!string.IsNullOrEmpty(assemblyDir))
-                        {
-                            possiblePaths.Add(Path.Combine(assemblyDir, "tessdata"));
-                        }
-                    }
-                    
-                    // 5. Check /app/tessdata (common Docker/Railway location)
-                    possiblePaths.Add("/app/tessdata");
-                    
-                    // 6. Check /src/QuickClinique/tessdata (build location)
-                    possiblePaths.Add("/src/QuickClinique/tessdata");
-                    
-                    // Log all paths being checked for debugging
-                    _logger.LogDebug("Checking for tessdata folder in the following locations: {Paths}", string.Join(", ", possiblePaths));
-                    
-                    string? tessdataPath = null;
-                    foreach (var path in possiblePaths)
-                    {
-                        if (Directory.Exists(path))
-                        {
-                            // Verify it contains at least eng.traineddata
-                            var engFile = Path.Combine(path, "eng.traineddata");
-                            if (File.Exists(engFile))
-                            {
-                                tessdataPath = path;
-                                _logger.LogInformation("Found tessdata folder at: {Path}", path);
-                                break;
-                            }
-                            else
-                            {
-                                _logger.LogDebug("Found tessdata folder at {Path} but eng.traineddata is missing", path);
-                            }
-                        }
-                    }
-                    
-                    if (string.IsNullOrEmpty(tessdataPath))
-                    {
-                        var currentDir = Directory.GetCurrentDirectory();
-                        var baseDirInfo = AppDomain.CurrentDomain.BaseDirectory;
-                        _logger.LogError(
-                            "Tesseract tessdata folder not found in any of the checked locations. " +
-                            "CurrentDirectory: {CurrentDir}, BaseDirectory: {BaseDir}, " +
-                            "Checked paths: {Paths}. " +
-                            "Please ensure tessdata files are included in the build output.",
-                            currentDir, baseDirInfo, string.Join(", ", possiblePaths));
-                        throw new InvalidOperationException(
-                            "Tesseract OCR is not properly configured. " +
-                            "Tessdata folder not found. Please ensure tessdata files are included in the build output.");
-                    }
+                // Create client using default credentials
+                // This will use GOOGLE_APPLICATION_CREDENTIALS environment variable if set,
+                // or default service account credentials
+                // Note: API key authentication requires REST API calls, not the client library
+                // For API key support, use service account authentication (recommended) or implement REST API
+                var client = await ImageAnnotatorClient.CreateAsync();
 
-                    // Try to use Tesseract.NET with direct references
-                    // First, try to find the assembly by checking loaded assemblies
-                    System.Reflection.Assembly? tesseractAssembly = null;
-                    
-                    // Check already loaded assemblies
-                    tesseractAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                        .FirstOrDefault(a => 
-                            a.GetName().Name == "Tesseract" || 
-                            a.GetName().Name == "TesseractOCR" ||
-                            a.FullName?.Contains("Tesseract") == true);
+                // Read image bytes
+                imageStream.Position = 0;
+                var imageBytes = new byte[imageStream.Length];
+                await imageStream.ReadAsync(imageBytes, 0, (int)imageStream.Length);
 
-                    if (tesseractAssembly == null)
-                    {
-                        // Try to load the assembly explicitly using different approaches
-                        var assemblyNames = new[] { 
-                            "Tesseract, Version=5.2.0.0, Culture=neutral, PublicKeyToken=null",
-                            "Tesseract",
-                            "TesseractOCR",
-                            "Tesseract.NET"
-                        };
-                        
-                        foreach (var name in assemblyNames)
-                        {
-                            try
-                            {
-                                tesseractAssembly = System.Reflection.Assembly.Load(name);
-                                if (tesseractAssembly != null)
-                                {
-                                    _logger.LogInformation("Successfully loaded Tesseract assembly: {AssemblyName}", tesseractAssembly.FullName);
-                                    break;
-                                }
-                            }
-                            catch (Exception loadEx)
-                            {
-                                _logger.LogDebug("Failed to load assembly '{Name}': {Error}", name, loadEx.Message);
-                            }
-                        }
-                        
-                        // If still not found, try loading from the application's base directory
-                        if (tesseractAssembly == null)
-                        {
-                            try
-                            {
-                                var assemblyBaseDir = AppDomain.CurrentDomain.BaseDirectory;
-                                var assemblyPaths = new[]
-                                {
-                                    Path.Combine(assemblyBaseDir, "Tesseract.dll"),
-                                    Path.Combine(assemblyBaseDir, "lib", "netstandard2.0", "Tesseract.dll"),
-                                    Path.Combine(assemblyBaseDir, "runtimes", "win-x64", "native", "Tesseract.dll")
-                                };
-                                
-                                foreach (var path in assemblyPaths)
-                                {
-                                    if (File.Exists(path))
-                                    {
-                                        try
-                                        {
-                                            tesseractAssembly = System.Reflection.Assembly.LoadFrom(path);
-                                            if (tesseractAssembly != null)
-                                            {
-                                                _logger.LogInformation("Successfully loaded Tesseract assembly from: {Path}", path);
-                                                break;
-                                            }
-                                        }
-                                        catch (Exception loadEx)
-                                        {
-                                            _logger.LogDebug("Failed to load from path '{Path}': {Error}", path, loadEx.Message);
-                                        }
-                                    }
-                                }
-                            }
-                            catch (Exception pathEx)
-                            {
-                                _logger.LogDebug("Error searching for Tesseract DLL: {Error}", pathEx.Message);
-                            }
-                        }
-                    }
+                // Create image object - Image.FromBytes expects byte[] directly
+                var image = Image.FromBytes(imageBytes);
 
-                    if (tesseractAssembly == null)
-                    {
-                        _logger.LogError("Tesseract.NET assembly not found. Please ensure the package is installed: dotnet add package Tesseract");
-                        throw new InvalidOperationException("Tesseract.NET package is not installed. Please install it using: dotnet add package Tesseract");
-                    }
+                // Perform text detection
+                var response = await client.DetectTextAsync(image);
 
-                    // Use reflection to load Tesseract types
-                    var engineType = tesseractAssembly.GetType("Tesseract.TesseractEngine");
-                    if (engineType == null)
-                    {
-                        engineType = tesseractAssembly.GetType("TesseractEngine");
-                    }
+                // Extract all text from annotations
+                // The first annotation contains the full text, others are individual words
+                var fullTextAnnotation = response.FirstOrDefault();
+                var extractedText = fullTextAnnotation?.Description ?? string.Empty;
 
-                    var pixType = tesseractAssembly.GetType("Tesseract.Pix");
-                    if (pixType == null)
-                    {
-                        pixType = tesseractAssembly.GetType("Pix");
-                    }
+                _logger.LogDebug("Google Cloud Vision OCR extracted {Length} characters", extractedText.Length);
 
-                    var pageType = tesseractAssembly.GetType("Tesseract.Page");
-                    if (pageType == null)
-                    {
-                        pageType = tesseractAssembly.GetType("Page");
-                    }
-
-                    if (engineType == null || pixType == null || pageType == null)
-                    {
-                        _logger.LogError("Tesseract.NET types not found. Assembly: {AssemblyName}, Types: Engine={Engine}, Pix={Pix}, Page={Page}", 
-                            tesseractAssembly.FullName, engineType != null, pixType != null, pageType != null);
-                        throw new InvalidOperationException("Tesseract.NET types not found. Please ensure the package is properly installed and restored.");
-                    }
-
-                    // Get EngineMode enum
-                    var engineModeType = tesseractAssembly.GetType("Tesseract.EngineMode") ?? 
-                                        tesseractAssembly.GetType("EngineMode");
-                    var defaultMode = engineModeType != null 
-                        ? Enum.Parse(engineModeType, "Default") 
-                        : 0; // Fallback to 0 if enum not found
-
-                    // Create engine
-                    var engine = Activator.CreateInstance(engineType, tessdataPath, "eng", defaultMode);
-                    if (engine == null)
-                    {
-                        throw new InvalidOperationException("Failed to create Tesseract engine.");
-                    }
-                    
-                    // Get PageSegMode enum type (needed for Process method)
-                    var pageSegModeType = tesseractAssembly.GetType("Tesseract.PageSegMode") ?? 
-                                         tesseractAssembly.GetType("PageSegMode");
-
-                    // Load image
-                    imageStream.Position = 0;
-                    var imageBytes = new byte[imageStream.Length];
-                    imageStream.Read(imageBytes, 0, (int)imageStream.Length);
-
-                    // Load image using Pix.LoadFromMemory
-                    var loadFromMemoryMethod = pixType.GetMethod("LoadFromMemory", 
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, 
-                        null, 
-                        new[] { typeof(byte[]) }, 
-                        null);
-                    
-                    if (loadFromMemoryMethod == null)
-                    {
-                        throw new InvalidOperationException("Tesseract Pix.LoadFromMemory method not found.");
-                    }
-
-                    var image = loadFromMemoryMethod.Invoke(null, new object[] { imageBytes });
-                    if (image == null)
-                    {
-                        throw new InvalidOperationException("Failed to load image for OCR.");
-                    }
-
-                    // Process image - Process method requires (Pix, Nullable<PageSegMode>)
-                    // Use the simplest overload: Process(Pix, Nullable<PageSegMode>) with null for PageSegMode
-                    System.Reflection.MethodInfo? processMethod = null;
-                    
-                    if (pageSegModeType != null)
-                    {
-                        // Create Nullable<PageSegMode> type
-                        var nullablePageSegModeType = typeof(Nullable<>).MakeGenericType(pageSegModeType);
-                        
-                        // Try to find Process(Pix, Nullable<PageSegMode>)
-                        processMethod = engineType.GetMethod("Process", 
-                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
-                            null,
-                            new[] { pixType, nullablePageSegModeType },
-                            null);
-                    }
-                    
-                    // If not found, try to get all Process methods and find the one that takes Pix and Nullable
-                    if (processMethod == null)
-                    {
-                        var allProcessMethods = engineType.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                            .Where(m => m.Name == "Process")
-                            .ToList();
-                        
-                        foreach (var method in allProcessMethods)
-                        {
-                            var parameters = method.GetParameters();
-                            // Look for Process(Pix, Nullable<PageSegMode>) - 2 parameters
-                            if (parameters.Length == 2 && 
-                                parameters[0].ParameterType == pixType &&
-                                parameters[1].ParameterType.IsGenericType &&
-                                parameters[1].ParameterType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                            {
-                                processMethod = method;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (processMethod == null)
-                    {
-                        // Log available methods for debugging
-                        var availableMethods = string.Join(", ", engineType.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                            .Where(m => m.Name == "Process")
-                            .Select(m => $"{m.Name}({string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name))})"));
-                        
-                        _logger.LogError("Tesseract Engine.Process method not found. Available Process methods: {Methods}", availableMethods);
-                        throw new InvalidOperationException($"Tesseract Engine.Process method not found. Available Process methods: {availableMethods}");
-                    }
-
-                    // Invoke Process with Pix and null (for PageSegMode)
-                    var page = processMethod.Invoke(engine, new object[] { image, null! });
-                    if (page == null)
-                    {
-                        throw new InvalidOperationException("Failed to process image with OCR.");
-                    }
-
-                    // Get text
-                    var getTextMethod = pageType.GetMethod("GetText");
-                    if (getTextMethod == null)
-                    {
-                        throw new InvalidOperationException("Tesseract Page.GetText method not found.");
-                    }
-
-                    var text = getTextMethod.Invoke(page, null) as string;
-
-                    // Dispose resources
-                    if (page is IDisposable pageDisposable) pageDisposable.Dispose();
-                    if (image is IDisposable imageDisposable) imageDisposable.Dispose();
-                    if (engine is IDisposable engineDisposable) engineDisposable.Dispose();
-
-                    return text ?? string.Empty;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to perform OCR. Error: {ErrorMessage}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
-                    
-                    // Provide helpful error message
-                    if (ex.Message.Contains("Tesseract") || ex.Message.Contains("tessdata") || ex.InnerException?.Message.Contains("Tesseract") == true)
-                    {
-                        throw new InvalidOperationException(
-                            "OCR validation requires Tesseract.NET. " +
-                            "Please ensure:\n" +
-                            "1. Package is installed: dotnet add package Tesseract\n" +
-                            "2. Packages are restored: dotnet restore\n" +
-                            "3. Tessdata files are downloaded from: https://github.com/tesseract-ocr/tessdata\n" +
-                            "4. Tessdata folder is placed in your project root\n" +
-                            $"Error: {ex.Message}", ex);
-                    }
-                    
-                    throw;
-                }
-            });
+                return extractedText;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to perform OCR using Google Cloud Vision. Error: {ErrorMessage}", ex.Message);
+                throw;
+            }
         }
 
         private class FormatValidationResult

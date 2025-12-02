@@ -17,16 +17,11 @@
     </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="SendGrid" Version="9.29.3" />
-    <PackageReference Include="Tesseract" Version="5.2.0" />
+    <PackageReference Include="Google.Cloud.Vision.V1" Version="3.7.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\img\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Include tessdata folder in build and publish output -->
-    <Content Include="tessdata\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
