@@ -37,12 +37,12 @@ If you don't have it:
 
 4. **Optional - Add Other Email Settings (if needed):**
    ```
-   EMAIL_FROM=quickclinique25@gmail.com
+   EMAIL_FROM=noreply@quickclinique.site
    EMAIL_FROM_NAME=QuickClinique
-   EMAIL_REPLY_TO=quickclinique25@gmail.com
+   EMAIL_REPLY_TO=noreply@quickclinique.site
    ```
    
-   **Note:** These are optional because they're already in `appsettings.json`, but you can override them if needed.
+   **Note:** These are optional because they're already in `appsettings.json` (defaults to `noreply@quickclinique.site`), but you can override them if needed.
 
 5. **Save:**
    - Click **"Add"** or **"Save"**
@@ -71,9 +71,9 @@ After Railway redeploys:
 Make sure these are set in Railway Variables:
 
 - [ ] `RESEND_API_KEY` = `re_your-actual-api-key` (REQUIRED)
-- [ ] `EMAIL_FROM` = `quickclinique25@gmail.com` (optional)
+- [ ] `EMAIL_FROM` = `noreply@quickclinique.site` (optional, defaults to this)
 - [ ] `EMAIL_FROM_NAME` = `QuickClinique` (optional)
-- [ ] `EMAIL_REPLY_TO` = `quickclinique25@gmail.com` (optional)
+- [ ] `EMAIL_REPLY_TO` = `noreply@quickclinique.site` (optional, defaults to EMAIL_FROM)
 
 ## Why It Works Locally But Not on Railway
 
@@ -115,9 +115,9 @@ Make sure these are set in Railway Variables:
 - **Fix:** Check that the API key starts with `re_`
 
 **Error: `Domain verification issue`**
-- **Fix:** Verify your sender email/domain in Resend Dashboard → Domains
-- **Fix:** For testing, you can use Resend's test domain
-- **Fix:** For production, add and verify your own domain
+- **Fix:** Ensure `quickclinique.site` is verified in Resend Dashboard → Domains
+- **Fix:** The default `noreply@quickclinique.site` uses your verified domain
+- **Fix:** If using a different email, make sure it's from a verified domain
 
 ## Using Railway CLI (Alternative)
 
