@@ -417,6 +417,15 @@ namespace QuickClinique.Services
                     return; // Return instead of throwing to avoid breaking the application
                 }
 
+                // Validate API key format (SendGrid API keys start with "SG.")
+                if (!apiKey.StartsWith("SG.", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("[EMAIL WARNING] API key format may be incorrect!");
+                    Console.WriteLine("[EMAIL WARNING] SendGrid API keys typically start with 'SG.'");
+                    Console.WriteLine("[EMAIL WARNING] Current API key prefix: " + (apiKey.Length > 10 ? apiKey.Substring(0, 10) + "..." : apiKey));
+                    Console.WriteLine("[EMAIL WARNING] Please verify your API key is correct");
+                }
+
                 if (string.IsNullOrEmpty(fromEmail))
                 {
                     Console.WriteLine("[EMAIL ERROR] FromEmail is not configured");
@@ -428,6 +437,8 @@ namespace QuickClinique.Services
                 Console.WriteLine($"[EMAIL] Using SendGrid Web API");
                 Console.WriteLine($"[EMAIL] From: {fromEmail} ({fromName})");
                 Console.WriteLine($"[EMAIL] API Key length: {(apiKey?.Length ?? 0)} characters");
+                Console.WriteLine($"[EMAIL] API Key prefix: {(apiKey?.Length > 3 ? apiKey.Substring(0, 3) : "N/A")}...");
+                Console.WriteLine($"[EMAIL] API Key source: {(Environment.GetEnvironmentVariable("SENDGRID_API_KEY") != null ? "SENDGRID_API_KEY env var" : Environment.GetEnvironmentVariable("SMTP_PASSWORD") != null ? "SMTP_PASSWORD env var" : "appsettings.json")}");
 
                 // Create SendGrid client
                 var client = new SendGridClient(apiKey);
@@ -481,6 +492,61 @@ namespace QuickClinique.Services
                     var responseBody = await response.Body.ReadAsStringAsync();
                     Console.WriteLine($"[EMAIL ERROR] SendGrid API Error: Status Code {response.StatusCode}");
                     Console.WriteLine($"[EMAIL ERROR] Response: {responseBody}");
+                    
+                    // Parse error message for better diagnostics
+                    try
+                    {
+                        var errorJson = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(responseBody);
+                        if (errorJson.TryGetProperty("errors", out var errors) && errors.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            foreach (var error in errors.EnumerateArray())
+                            {
+                                if (error.TryGetProperty("message", out var message))
+                                {
+                                    var errorMsg = message.GetString();
+                                    Console.WriteLine($"[EMAIL ERROR] SendGrid Error Message: {errorMsg}");
+                                    
+                                    // Provide specific guidance based on error type
+                                    if (errorMsg?.Contains("Maximum credits exceeded", StringComparison.OrdinalIgnoreCase) == true)
+                                    {
+                                        Console.WriteLine("[EMAIL ERROR] ========================================");
+                                        Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: 'Maximum credits exceeded' with 401 Unauthorized");
+                                        Console.WriteLine("[EMAIL ERROR] This is LIKELY an API KEY AUTHENTICATION issue, not a credit issue!");
+                                        Console.WriteLine("[EMAIL ERROR] ========================================");
+                                        Console.WriteLine("[EMAIL ERROR] Possible causes:");
+                                        Console.WriteLine("[EMAIL ERROR]   1. API key is INVALID or EXPIRED");
+                                        Console.WriteLine("[EMAIL ERROR]   2. API key belongs to a DIFFERENT SendGrid account");
+                                        Console.WriteLine("[EMAIL ERROR]   3. API key was REVOKED or DELETED");
+                                        Console.WriteLine("[EMAIL ERROR]   4. API key lacks 'Mail Send' permissions");
+                                        Console.WriteLine("[EMAIL ERROR]   5. Account is SUSPENDED or RESTRICTED");
+                                        Console.WriteLine("[EMAIL ERROR] ========================================");
+                                        Console.WriteLine("[EMAIL ERROR] ACTION REQUIRED:");
+                                        Console.WriteLine("[EMAIL ERROR]   1. Go to https://app.sendgrid.com → Settings → API Keys");
+                                        Console.WriteLine("[EMAIL ERROR]   2. Verify the API key exists and is ACTIVE");
+                                        Console.WriteLine("[EMAIL ERROR]   3. Check API key has 'Mail Send' permission enabled");
+                                        Console.WriteLine("[EMAIL ERROR]   4. Compare the API key in your app with SendGrid dashboard");
+                                        Console.WriteLine("[EMAIL ERROR]   5. If key is wrong, create a NEW API key and update your config");
+                                        Console.WriteLine("[EMAIL ERROR]   6. Verify sender email is verified in SendGrid");
+                                        Console.WriteLine("[EMAIL ERROR] ========================================");
+                                    }
+                                    else if (errorMsg?.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) == true || 
+                                             response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                                    {
+                                        Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: API key authentication failed");
+                                        Console.WriteLine("[EMAIL ERROR] ACTION: Verify:");
+                                        Console.WriteLine("[EMAIL ERROR]   1. API key is correct and not expired");
+                                        Console.WriteLine("[EMAIL ERROR]   2. API key belongs to the correct SendGrid account");
+                                        Console.WriteLine("[EMAIL ERROR]   3. API key has 'Mail Send' permissions enabled");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // If JSON parsing fails, just log the raw response
+                    }
+                    
                     throw new Exception($"SendGrid API returned status code {response.StatusCode}: {responseBody}");
                 }
             }
