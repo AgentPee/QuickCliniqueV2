@@ -12,19 +12,19 @@ Set the following environment variables before running the application:
 **Windows (PowerShell):**
 ```powershell
 $env:RESEND_API_KEY="re_your-resend-api-key-here"
-$env:EMAIL_FROM="quickclinique25@gmail.com"
+$env:EMAIL_FROM="noreply@quickclinique.site"
 ```
 
 **Windows (Command Prompt):**
 ```cmd
 set RESEND_API_KEY=re_your-resend-api-key-here
-set EMAIL_FROM=quickclinique25@gmail.com
+set EMAIL_FROM=noreply@quickclinique.site
 ```
 
 **Linux/Mac:**
 ```bash
 export RESEND_API_KEY="re_your-resend-api-key-here"
-export EMAIL_FROM="quickclinique25@gmail.com"
+export EMAIL_FROM="noreply@quickclinique.site"
 ```
 
 **Note:** For backward compatibility, `SMTP_PASSWORD` can also be used instead of `RESEND_API_KEY`.
@@ -36,7 +36,7 @@ Create or update `appsettings.Development.json` (this file should be in .gitigno
 ```json
 {
   "EmailSettings": {
-    "FromEmail": "quickclinique25@gmail.com",
+    "FromEmail": "noreply@quickclinique.site",
     "FromName": "QuickClinique",
     "SmtpPassword": "re_your-resend-api-key-here"
   }
@@ -64,9 +64,11 @@ Set the following environment variables in your hosting platform:
 ## Resend Setup
 
 1. Sign up at https://resend.com
-2. Verify your sender email/domain in Resend Dashboard → Domains
-   - For testing, you can use the Resend test domain
-   - For production, verify your own domain for better deliverability
+2. Verify your domain in Resend Dashboard → Domains
+   - **Current Setup:** `quickclinique.site` is verified ✅
+   - The application uses `noreply@quickclinique.site` as the sender email
+   - For testing, you can use Resend's test domain (`onboarding@resend.dev`)
+   - For production, use your verified domain for better deliverability
 3. Create an API Key in API Keys section
 4. Use the API key as `RESEND_API_KEY` environment variable
    - Resend API keys start with `re_`
