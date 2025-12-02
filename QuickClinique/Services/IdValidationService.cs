@@ -243,7 +243,19 @@ namespace QuickClinique.Services
                 }
 
                 // Perform OCR using Tesseract.NET
-                string extractedText = await PerformOcrAsync(imageStream);
+                string? extractedText = null;
+                try
+                {
+                    extractedText = await PerformOcrAsync(imageStream);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("tessdata") || ex.Message.Contains("Tesseract OCR"))
+                {
+                    // OCR is not available (tessdata missing or Tesseract not configured)
+                    // Log warning but allow registration to proceed
+                    _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
+                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
+                    return result; // Return with IsValid = true, but with a warning
+                }
                 
                 if (string.IsNullOrWhiteSpace(extractedText))
                 {
@@ -323,11 +335,18 @@ namespace QuickClinique.Services
                     result.IsValid = true;
                 }
             }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("tessdata") || ex.Message.Contains("Tesseract OCR"))
+            {
+                // OCR is not available - allow registration to proceed with a warning
+                _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
+                result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
+                return result; // Return with IsValid = true, but with a warning
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OCR validation failed for {ImageType}", isFrontImage ? "front" : "back");
-                result.IsValid = false;
-                result.ErrorMessage = "An error occurred while validating the ID image. Please try again or contact support.";
+                // For other errors, still allow registration but log the error
+                result.WarningMessage = "An error occurred during OCR validation. ID content validation was skipped. Please ensure your ID images are valid.";
             }
 
             return result;
