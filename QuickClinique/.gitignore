@@ -20,3 +20,9 @@ appsettings.Production.json
 appsettings.Local.json
 appsettings.Development.json
 *.secrets.json
+
+# Google Cloud credentials
+google-credentials.json
+*-credentials.json
+*service-account*.json
+*vision*.json
