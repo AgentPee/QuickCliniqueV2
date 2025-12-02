@@ -3929,20 +3929,20 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Ayan\\.nuget\\packages\\": {}
+    "C:\\Users\\bamboo-PC\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
+      "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
       "projectName": "QuickClinique",
-      "projectPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
-      "packagesPath": "C:\\Users\\Ayan\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\quickcliniquev2\\quickclinique\\obj\\",
+      "projectPath": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
+      "packagesPath": "C:\\Users\\bamboo-PC\\.nuget\\packages\\",
+      "outputPath": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\Branch-Main\\quickcliniquev2\\NuGet.Config",
-        "C:\\Users\\Ayan\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\NuGet.Config",
+        "C:\\Users\\bamboo-PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -4014,7 +4014,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
   },
