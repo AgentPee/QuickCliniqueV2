@@ -147,12 +147,6 @@
                     </button>
                 }
 
-                @if (Model.AppointmentStatus == "Confirmed")
-                {
-                    <button type="button" class="btn btn-primary" onclick="startAppointment(@Model.AppointmentId)">
-                        <i class="fas fa-play"></i> Start Appointment
-                    </button>
-                }
 
                 @if (Model.AppointmentStatus == "In Progress")
                 {
