@@ -507,15 +507,15 @@ namespace QuickClinique.Services
                         {
                             try
                             {
-                                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                                var possiblePaths = new[]
+                                var assemblyBaseDir = AppDomain.CurrentDomain.BaseDirectory;
+                                var assemblyPaths = new[]
                                 {
-                                    Path.Combine(baseDir, "Tesseract.dll"),
-                                    Path.Combine(baseDir, "lib", "netstandard2.0", "Tesseract.dll"),
-                                    Path.Combine(baseDir, "runtimes", "win-x64", "native", "Tesseract.dll")
+                                    Path.Combine(assemblyBaseDir, "Tesseract.dll"),
+                                    Path.Combine(assemblyBaseDir, "lib", "netstandard2.0", "Tesseract.dll"),
+                                    Path.Combine(assemblyBaseDir, "runtimes", "win-x64", "native", "Tesseract.dll")
                                 };
                                 
-                                foreach (var path in possiblePaths)
+                                foreach (var path in assemblyPaths)
                                 {
                                     if (File.Exists(path))
                                     {
