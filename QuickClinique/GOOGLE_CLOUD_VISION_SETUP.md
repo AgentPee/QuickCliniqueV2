@@ -139,7 +139,9 @@ The downloaded JSON file contains:
 
 ## Configuration for Railway (Production)
 
-### Method 1: Environment Variable (Recommended)
+### Method 1: JSON Content in Environment Variable (Recommended) ✅
+
+**The code automatically detects if `GOOGLE_APPLICATION_CREDENTIALS` contains JSON content (Railway) or is a file path (localhost).**
 
 1. **In Railway Dashboard**:
    - Go to your project
@@ -151,7 +153,18 @@ The downloaded JSON file contains:
    - **Name**: `GOOGLE_APPLICATION_CREDENTIALS`
    - **Value**: Paste the **entire contents** of your JSON file (as a single line or multi-line)
    
-   **OR** (Better approach - see Method 2)
+   **Example** (paste the entire JSON):
+   ```json
+   {
+     "type": "service_account",
+     "project_id": "your-project-id",
+     "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+     "client_email": "your-service-account@project.iam.gserviceaccount.com",
+     ...
+   }
+   ```
+   
+   **Note**: The code will automatically detect that this is JSON content (starts with `{`) and parse it directly. No file path needed!
 
 ### Method 2: Base64 Encoded JSON (More Secure)
 
@@ -214,7 +227,7 @@ private ImageAnnotatorClient CreateVisionClient()
 }
 ```
 
-**Note**: The current implementation already supports `GOOGLE_APPLICATION_CREDENTIALS` environment variable, so Method 1 should work out of the box.
+**Note**: The current implementation automatically detects whether `GOOGLE_APPLICATION_CREDENTIALS` contains JSON content (Railway) or is a file path (localhost). Method 1 works out of the box - just paste your JSON content directly into the Railway environment variable!
 
 ---
 
