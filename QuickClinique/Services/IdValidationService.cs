@@ -248,13 +248,27 @@ namespace QuickClinique.Services
                 {
                     extractedText = await PerformOcrAsync(imageStream);
                 }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("tessdata") || ex.Message.Contains("Tesseract OCR"))
+                catch (InvalidOperationException ex)
                 {
-                    // OCR is not available (tessdata missing or Tesseract not configured)
-                    // Log warning but allow registration to proceed
-                    _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
-                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
-                    return result; // Return with IsValid = true, but with a warning
+                    // Check if this is a tessdata/Tesseract configuration error
+                    var isTessdataError = ex.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) || 
+                                         ex.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) ||
+                                         ex.Message.Contains("OCR validation requires", StringComparison.OrdinalIgnoreCase) ||
+                                         ex.Message.Contains("Tesseract.NET", StringComparison.OrdinalIgnoreCase) ||
+                                         ex.InnerException?.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) == true ||
+                                         ex.InnerException?.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) == true;
+                    
+                    if (isTessdataError)
+                    {
+                        // OCR is not available (tessdata missing or Tesseract not configured)
+                        // Log warning but allow registration to proceed
+                        _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
+                        result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
+                        return result; // Return with IsValid = true, but with a warning
+                    }
+                    
+                    // Re-throw if it's a different InvalidOperationException
+                    throw;
                 }
                 
                 if (string.IsNullOrWhiteSpace(extractedText))
@@ -335,12 +349,26 @@ namespace QuickClinique.Services
                     result.IsValid = true;
                 }
             }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("tessdata") || ex.Message.Contains("Tesseract OCR"))
+            catch (InvalidOperationException ex)
             {
-                // OCR is not available - allow registration to proceed with a warning
-                _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
-                result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
-                return result; // Return with IsValid = true, but with a warning
+                // Check if this is a tessdata/Tesseract configuration error
+                var isTessdataError = ex.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) || 
+                                     ex.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) ||
+                                     ex.Message.Contains("OCR validation requires", StringComparison.OrdinalIgnoreCase) ||
+                                     ex.Message.Contains("Tesseract.NET", StringComparison.OrdinalIgnoreCase) ||
+                                     ex.InnerException?.Message.Contains("tessdata", StringComparison.OrdinalIgnoreCase) == true ||
+                                     ex.InnerException?.Message.Contains("Tesseract OCR", StringComparison.OrdinalIgnoreCase) == true;
+                
+                if (isTessdataError)
+                {
+                    // OCR is not available - allow registration to proceed with a warning
+                    _logger.LogWarning("OCR validation skipped - Tesseract not properly configured: {Error}", ex.Message);
+                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
+                    return result; // Return with IsValid = true, but with a warning
+                }
+                
+                // Re-throw if it's a different InvalidOperationException
+                throw;
             }
             catch (Exception ex)
             {
@@ -361,19 +389,79 @@ namespace QuickClinique.Services
             {
                 try
                 {
-                    // Find tessdata folder
-                    var tessdataPath = Path.Combine(Directory.GetCurrentDirectory(), "tessdata");
+                    // Find tessdata folder - check multiple possible locations
+                    var possiblePaths = new List<string>();
                     
-                    // If tessdata folder doesn't exist, try common alternative locations
-                    if (!Directory.Exists(tessdataPath))
+                    // 1. Current working directory (common in development)
+                    possiblePaths.Add(Path.Combine(Directory.GetCurrentDirectory(), "tessdata"));
+                    
+                    // 2. Application base directory (common in production/Railway)
+                    possiblePaths.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata"));
+                    
+                    // 3. Application base directory parent (in case app is in a subfolder)
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    if (!string.IsNullOrEmpty(baseDir))
                     {
-                        tessdataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
+                        var parentDir = Directory.GetParent(baseDir)?.FullName;
+                        if (!string.IsNullOrEmpty(parentDir))
+                        {
+                            possiblePaths.Add(Path.Combine(parentDir, "tessdata"));
+                        }
                     }
                     
-                    if (!Directory.Exists(tessdataPath))
+                    // 4. Assembly location (where the DLL is located)
+                    var assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    if (!string.IsNullOrEmpty(assemblyLocation))
                     {
-                        _logger.LogError("Tesseract tessdata folder not found. Please download tessdata files from https://github.com/tesseract-ocr/tessdata and place them in a 'tessdata' folder in your project root.");
-                        throw new InvalidOperationException("Tesseract OCR is not properly configured. Please download tessdata files from https://github.com/tesseract-ocr/tessdata and place them in a 'tessdata' folder in your project root.");
+                        var assemblyDir = Path.GetDirectoryName(assemblyLocation);
+                        if (!string.IsNullOrEmpty(assemblyDir))
+                        {
+                            possiblePaths.Add(Path.Combine(assemblyDir, "tessdata"));
+                        }
+                    }
+                    
+                    // 5. Check /app/tessdata (common Docker/Railway location)
+                    possiblePaths.Add("/app/tessdata");
+                    
+                    // 6. Check /src/QuickClinique/tessdata (build location)
+                    possiblePaths.Add("/src/QuickClinique/tessdata");
+                    
+                    // Log all paths being checked for debugging
+                    _logger.LogDebug("Checking for tessdata folder in the following locations: {Paths}", string.Join(", ", possiblePaths));
+                    
+                    string? tessdataPath = null;
+                    foreach (var path in possiblePaths)
+                    {
+                        if (Directory.Exists(path))
+                        {
+                            // Verify it contains at least eng.traineddata
+                            var engFile = Path.Combine(path, "eng.traineddata");
+                            if (File.Exists(engFile))
+                            {
+                                tessdataPath = path;
+                                _logger.LogInformation("Found tessdata folder at: {Path}", path);
+                                break;
+                            }
+                            else
+                            {
+                                _logger.LogDebug("Found tessdata folder at {Path} but eng.traineddata is missing", path);
+                            }
+                        }
+                    }
+                    
+                    if (string.IsNullOrEmpty(tessdataPath))
+                    {
+                        var currentDir = Directory.GetCurrentDirectory();
+                        var baseDirInfo = AppDomain.CurrentDomain.BaseDirectory;
+                        _logger.LogError(
+                            "Tesseract tessdata folder not found in any of the checked locations. " +
+                            "CurrentDirectory: {CurrentDir}, BaseDirectory: {BaseDir}, " +
+                            "Checked paths: {Paths}. " +
+                            "Please ensure tessdata files are included in the build output.",
+                            currentDir, baseDirInfo, string.Join(", ", possiblePaths));
+                        throw new InvalidOperationException(
+                            "Tesseract OCR is not properly configured. " +
+                            "Tessdata folder not found. Please ensure tessdata files are included in the build output.");
                     }
 
                     // Try to use Tesseract.NET with direct references
