@@ -1,15 +1,18 @@
-﻿using SendGrid;
-using SendGrid.Helpers.Mail;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace QuickClinique.Services
 {
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
+            _httpClient = httpClientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("https://api.resend.com");
         }
 
         public async Task SendVerificationEmail(string toEmail, string name, string verificationLink)
@@ -386,9 +389,9 @@ namespace QuickClinique.Services
                 Console.WriteLine($"[EMAIL] SendEmailAsync called for: {toEmail}");
                 Console.WriteLine($"[EMAIL] Subject: {subject}");
                 
-                // Read SendGrid API key from environment variable or configuration
-                // Support both SENDGRID_API_KEY (new) and SMTP_PASSWORD (legacy) for backward compatibility
-                var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY") 
+                // Read Resend API key from environment variable or configuration
+                // Support both RESEND_API_KEY (new) and SMTP_PASSWORD (legacy) for backward compatibility
+                var apiKey = Environment.GetEnvironmentVariable("RESEND_API_KEY") 
                     ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD") 
                     ?? _configuration["EmailSettings:SmtpPassword"];
 
@@ -405,25 +408,16 @@ namespace QuickClinique.Services
                 // Validate configuration
                 if (string.IsNullOrEmpty(apiKey))
                 {
-                    Console.WriteLine("[EMAIL ERROR] SendGrid API key is not configured");
-                    Console.WriteLine("[EMAIL ERROR] For Railway: Set SENDGRID_API_KEY or SMTP_PASSWORD environment variable");
-                    Console.WriteLine("[EMAIL ERROR] For Local: Set SENDGRID_API_KEY env var or use appsettings.Development.json");
+                    Console.WriteLine("[EMAIL ERROR] Resend API key is not configured");
+                    Console.WriteLine("[EMAIL ERROR] For Railway: Set RESEND_API_KEY or SMTP_PASSWORD environment variable");
+                    Console.WriteLine("[EMAIL ERROR] For Local: Set RESEND_API_KEY env var or use appsettings.Development.json");
                     Console.WriteLine("[EMAIL ERROR] Current environment: " + (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Not set"));
                     Console.WriteLine("[EMAIL ERROR] Checking configuration keys:");
-                    Console.WriteLine($"[EMAIL ERROR]   SENDGRID_API_KEY: {Environment.GetEnvironmentVariable("SENDGRID_API_KEY") != null}");
+                    Console.WriteLine($"[EMAIL ERROR]   RESEND_API_KEY: {Environment.GetEnvironmentVariable("RESEND_API_KEY") != null}");
                     Console.WriteLine($"[EMAIL ERROR]   SMTP_PASSWORD: {Environment.GetEnvironmentVariable("SMTP_PASSWORD") != null}");
                     Console.WriteLine($"[EMAIL ERROR]   EmailSettings:SmtpPassword: {_configuration["EmailSettings:SmtpPassword"] != null}");
                     Console.WriteLine($"[EMAIL ERROR]   EmailSettings:SmtpPassword value length: {(_configuration["EmailSettings:SmtpPassword"]?.Length ?? 0)}");
                     return; // Return instead of throwing to avoid breaking the application
-                }
-
-                // Validate API key format (SendGrid API keys start with "SG.")
-                if (!apiKey.StartsWith("SG.", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("[EMAIL WARNING] API key format may be incorrect!");
-                    Console.WriteLine("[EMAIL WARNING] SendGrid API keys typically start with 'SG.'");
-                    Console.WriteLine("[EMAIL WARNING] Current API key prefix: " + (apiKey.Length > 10 ? apiKey.Substring(0, 10) + "..." : apiKey));
-                    Console.WriteLine("[EMAIL WARNING] Please verify your API key is correct");
                 }
 
                 if (string.IsNullOrEmpty(fromEmail))
@@ -434,111 +428,92 @@ namespace QuickClinique.Services
                 }
 
                 Console.WriteLine($"[EMAIL] Attempting to send email to: {toEmail}");
-                Console.WriteLine($"[EMAIL] Using SendGrid Web API");
+                Console.WriteLine($"[EMAIL] Using Resend API");
                 Console.WriteLine($"[EMAIL] From: {fromEmail} ({fromName})");
                 Console.WriteLine($"[EMAIL] API Key length: {(apiKey?.Length ?? 0)} characters");
-                Console.WriteLine($"[EMAIL] API Key prefix: {(apiKey?.Length > 3 ? apiKey.Substring(0, 3) : "N/A")}...");
-                Console.WriteLine($"[EMAIL] API Key source: {(Environment.GetEnvironmentVariable("SENDGRID_API_KEY") != null ? "SENDGRID_API_KEY env var" : Environment.GetEnvironmentVariable("SMTP_PASSWORD") != null ? "SMTP_PASSWORD env var" : "appsettings.json")}");
-
-                // Create SendGrid client
-                var client = new SendGridClient(apiKey);
+                Console.WriteLine($"[EMAIL] API Key prefix: {(apiKey?.Length > 3 ? apiKey.Substring(0, 3) + "..." : "N/A")}");
+                Console.WriteLine($"[EMAIL] API Key source: {(Environment.GetEnvironmentVariable("RESEND_API_KEY") != null ? "RESEND_API_KEY env var" : Environment.GetEnvironmentVariable("SMTP_PASSWORD") != null ? "SMTP_PASSWORD env var" : "appsettings.json")}");
 
                 // Convert HTML to plain text for better deliverability
                 var plainTextBody = ConvertHtmlToPlainText(body);
 
-                // Create email message with both HTML and plain text
-                var msg = new SendGridMessage
+                // Format from address with name if provided
+                var fromAddress = !string.IsNullOrEmpty(fromName) 
+                    ? $"{fromName} <{fromEmail}>" 
+                    : fromEmail;
+
+                // Prepare Resend API request
+                var requestBody = new
                 {
-                    From = new EmailAddress(fromEmail, fromName),
-                    Subject = subject,
-                    HtmlContent = body,
-                    PlainTextContent = plainTextBody
+                    from = fromAddress,
+                    to = new[] { toEmail },
+                    subject = subject,
+                    html = body,
+                    text = plainTextBody,
+                    reply_to = replyToEmail
                 };
-                msg.AddTo(new EmailAddress(toEmail));
 
-                // Set Reply-To header
-                msg.SetReplyTo(new EmailAddress(replyToEmail, fromName));
+                var jsonContent = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                // Add important headers to improve deliverability and reduce spam
-                msg.AddHeader("X-Entity-Ref-ID", Guid.NewGuid().ToString());
-                msg.SetClickTracking(false, false); // Disable click tracking to avoid spam filters
-                msg.SetOpenTracking(false); // Disable open tracking
-                
-                // Set email category for better tracking in SendGrid
-                msg.AddCategory("transactional");
+                // Set authorization header
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
-                // Add List-Unsubscribe header (best practice even for transactional emails)
-                var baseUrl = Environment.GetEnvironmentVariable("BASE_URL") 
-                    ?? _configuration["BaseUrl"] 
-                    ?? "https://your-app-name.up.railway.app";
-                msg.AddHeader("List-Unsubscribe", $"<{baseUrl}/unsubscribe?email={Uri.EscapeDataString(toEmail)}>");
-                msg.AddHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
-
-                // Send email
+                // Send email via Resend API
                 var startTime = DateTime.Now;
-                Console.WriteLine($"[EMAIL] Sending via SendGrid API...");
+                Console.WriteLine($"[EMAIL] Sending via Resend API...");
                 
-                var response = await client.SendEmailAsync(msg);
+                var response = await _httpClient.PostAsync("/emails", content);
                 
                 var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"[EMAIL SUCCESS] Email sent successfully to {toEmail} in {elapsed:F2} seconds");
                     Console.WriteLine($"[EMAIL SUCCESS] Status Code: {response.StatusCode}");
+                    Console.WriteLine($"[EMAIL SUCCESS] Response: {responseBody}");
                 }
                 else
                 {
-                    var responseBody = await response.Body.ReadAsStringAsync();
-                    Console.WriteLine($"[EMAIL ERROR] SendGrid API Error: Status Code {response.StatusCode}");
+                    Console.WriteLine($"[EMAIL ERROR] Resend API Error: Status Code {response.StatusCode}");
                     Console.WriteLine($"[EMAIL ERROR] Response: {responseBody}");
                     
                     // Parse error message for better diagnostics
                     try
                     {
-                        var errorJson = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(responseBody);
-                        if (errorJson.TryGetProperty("errors", out var errors) && errors.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        var errorJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                        if (errorJson.TryGetProperty("message", out var message))
                         {
-                            foreach (var error in errors.EnumerateArray())
+                            var errorMsg = message.GetString();
+                            Console.WriteLine($"[EMAIL ERROR] Resend Error Message: {errorMsg}");
+                            
+                            // Provide specific guidance based on error type
+                            if (errorMsg?.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) == true || 
+                                response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                             {
-                                if (error.TryGetProperty("message", out var message))
-                                {
-                                    var errorMsg = message.GetString();
-                                    Console.WriteLine($"[EMAIL ERROR] SendGrid Error Message: {errorMsg}");
-                                    
-                                    // Provide specific guidance based on error type
-                                    if (errorMsg?.Contains("Maximum credits exceeded", StringComparison.OrdinalIgnoreCase) == true)
-                                    {
-                                        Console.WriteLine("[EMAIL ERROR] ========================================");
-                                        Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: 'Maximum credits exceeded' with 401 Unauthorized");
-                                        Console.WriteLine("[EMAIL ERROR] This is LIKELY an API KEY AUTHENTICATION issue, not a credit issue!");
-                                        Console.WriteLine("[EMAIL ERROR] ========================================");
-                                        Console.WriteLine("[EMAIL ERROR] Possible causes:");
-                                        Console.WriteLine("[EMAIL ERROR]   1. API key is INVALID or EXPIRED");
-                                        Console.WriteLine("[EMAIL ERROR]   2. API key belongs to a DIFFERENT SendGrid account");
-                                        Console.WriteLine("[EMAIL ERROR]   3. API key was REVOKED or DELETED");
-                                        Console.WriteLine("[EMAIL ERROR]   4. API key lacks 'Mail Send' permissions");
-                                        Console.WriteLine("[EMAIL ERROR]   5. Account is SUSPENDED or RESTRICTED");
-                                        Console.WriteLine("[EMAIL ERROR] ========================================");
-                                        Console.WriteLine("[EMAIL ERROR] ACTION REQUIRED:");
-                                        Console.WriteLine("[EMAIL ERROR]   1. Go to https://app.sendgrid.com → Settings → API Keys");
-                                        Console.WriteLine("[EMAIL ERROR]   2. Verify the API key exists and is ACTIVE");
-                                        Console.WriteLine("[EMAIL ERROR]   3. Check API key has 'Mail Send' permission enabled");
-                                        Console.WriteLine("[EMAIL ERROR]   4. Compare the API key in your app with SendGrid dashboard");
-                                        Console.WriteLine("[EMAIL ERROR]   5. If key is wrong, create a NEW API key and update your config");
-                                        Console.WriteLine("[EMAIL ERROR]   6. Verify sender email is verified in SendGrid");
-                                        Console.WriteLine("[EMAIL ERROR] ========================================");
-                                    }
-                                    else if (errorMsg?.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) == true || 
-                                             response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                                    {
-                                        Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: API key authentication failed");
-                                        Console.WriteLine("[EMAIL ERROR] ACTION: Verify:");
-                                        Console.WriteLine("[EMAIL ERROR]   1. API key is correct and not expired");
-                                        Console.WriteLine("[EMAIL ERROR]   2. API key belongs to the correct SendGrid account");
-                                        Console.WriteLine("[EMAIL ERROR]   3. API key has 'Mail Send' permissions enabled");
-                                    }
-                                }
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
+                                Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: API key authentication failed");
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
+                                Console.WriteLine("[EMAIL ERROR] ACTION REQUIRED:");
+                                Console.WriteLine("[EMAIL ERROR]   1. Go to https://resend.com/api-keys");
+                                Console.WriteLine("[EMAIL ERROR]   2. Verify the API key exists and is ACTIVE");
+                                Console.WriteLine("[EMAIL ERROR]   3. Compare the API key in your app with Resend dashboard");
+                                Console.WriteLine("[EMAIL ERROR]   4. If key is wrong, create a NEW API key and update your config");
+                                Console.WriteLine("[EMAIL ERROR]   5. Verify sender email/domain is verified in Resend");
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
+                            }
+                            else if (errorMsg?.Contains("domain", StringComparison.OrdinalIgnoreCase) == true)
+                            {
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
+                                Console.WriteLine("[EMAIL ERROR] DIAGNOSIS: Domain verification issue");
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
+                                Console.WriteLine("[EMAIL ERROR] ACTION REQUIRED:");
+                                Console.WriteLine("[EMAIL ERROR]   1. Go to https://resend.com/domains");
+                                Console.WriteLine("[EMAIL ERROR]   2. Verify your sender domain is verified");
+                                Console.WriteLine("[EMAIL ERROR]   3. For testing, you can use the Resend test domain");
+                                Console.WriteLine("[EMAIL ERROR] ========================================");
                             }
                         }
                     }
@@ -547,7 +522,7 @@ namespace QuickClinique.Services
                         // If JSON parsing fails, just log the raw response
                     }
                     
-                    throw new Exception($"SendGrid API returned status code {response.StatusCode}: {responseBody}");
+                    throw new Exception($"Resend API returned status code {response.StatusCode}: {responseBody}");
                 }
             }
             catch (Exception ex)

@@ -1,17 +1,18 @@
 # Fix Email Not Working on Railway
 
 ## Problem
-Email works fine on localhost but not on Railway. This is because Railway doesn't have the `SMTP_PASSWORD` environment variable set.
+Email works fine on localhost but not on Railway. This is because Railway doesn't have the `RESEND_API_KEY` environment variable set.
 
-## Solution: Add SMTP_PASSWORD to Railway
+## Solution: Add RESEND_API_KEY to Railway
 
-### Step 1: Get Your SendGrid API Key
+### Step 1: Get Your Resend API Key
 
 If you don't have it:
-1. Go to https://app.sendgrid.com
-2. Settings → API Keys
-3. Create a new API key or copy an existing one
-4. The key should start with `SG.`
+1. Go to https://resend.com
+2. Sign up or log in to your account
+3. Navigate to API Keys section
+4. Create a new API key or copy an existing one
+5. The key should start with `re_`
 
 ### Step 2: Add Environment Variable in Railway
 
@@ -24,20 +25,21 @@ If you don't have it:
    - Click on **"Variables"** tab
    - Click **"+ New Variable"** or **"Raw Editor"**
 
-3. **Add the SMTP Password:**
+3. **Add the Resend API Key:**
    ```
-   Variable Name: SMTP_PASSWORD
-   Value: SG.your-sendgrid-api-key-here
+   Variable Name: RESEND_API_KEY
+   Value: re_your-resend-api-key-here
    ```
    
-   **Important:** Replace `SG.your-sendgrid-api-key-here` with your actual SendGrid API key!
+   **Important:** Replace `re_your-resend-api-key-here` with your actual Resend API key!
+   
+   **Note:** For backward compatibility, you can also use `SMTP_PASSWORD` instead of `RESEND_API_KEY`.
 
 4. **Optional - Add Other Email Settings (if needed):**
    ```
    EMAIL_FROM=quickclinique25@gmail.com
-   SMTP_SERVER=smtp.sendgrid.net
-   SMTP_PORT=587
-   SMTP_USERNAME=apikey
+   EMAIL_FROM_NAME=QuickClinique
+   EMAIL_REPLY_TO=quickclinique25@gmail.com
    ```
    
    **Note:** These are optional because they're already in `appsettings.json`, but you can override them if needed.
@@ -68,11 +70,10 @@ After Railway redeploys:
 
 Make sure these are set in Railway Variables:
 
-- [ ] `SMTP_PASSWORD` = `SG.your-actual-api-key` (REQUIRED)
+- [ ] `RESEND_API_KEY` = `re_your-actual-api-key` (REQUIRED)
 - [ ] `EMAIL_FROM` = `quickclinique25@gmail.com` (optional)
-- [ ] `SMTP_SERVER` = `smtp.sendgrid.net` (optional)
-- [ ] `SMTP_PORT` = `587` (optional)
-- [ ] `SMTP_USERNAME` = `apikey` (optional)
+- [ ] `EMAIL_FROM_NAME` = `QuickClinique` (optional)
+- [ ] `EMAIL_REPLY_TO` = `quickclinique25@gmail.com` (optional)
 
 ## Why It Works Locally But Not on Railway
 
@@ -86,35 +87,37 @@ Make sure these are set in Railway Variables:
 1. **Check Railway Logs:**
    - Look for `[EMAIL ERROR]` messages
    - Common errors:
-     - `SmtpPassword is not configured` → Variable not set correctly
-     - `Authentication failed` → Wrong API key
-     - `The from address does not match` → Sender email not verified in SendGrid
+     - `Resend API key is not configured` → Variable not set correctly
+     - `Unauthorized` → Wrong API key
+     - `Domain verification issue` → Sender email/domain not verified in Resend
 
 2. **Verify Environment Variable:**
    - In Railway → Your Service → Variables
-   - Make sure `SMTP_PASSWORD` exists and has the correct value
-   - The value should start with `SG.`
+   - Make sure `RESEND_API_KEY` exists and has the correct value
+   - The value should start with `re_`
 
 3. **Redeploy:**
    - After adding/changing variables, Railway should auto-redeploy
    - If not, manually trigger a redeploy
 
-4. **Check SendGrid:**
-   - Ensure your sender email (`quickclinique25@gmail.com`) is verified
-   - Verify the API key has "Mail Send" permissions
-   - Check SendGrid Activity Feed for email attempts
+4. **Check Resend:**
+   - Ensure your sender email/domain is verified in Resend Dashboard → Domains
+   - Verify the API key is active
+   - Check Resend dashboard for email attempts and logs
 
 ### Common Errors
 
-**Error: `[EMAIL ERROR] SmtpPassword is not configured`**
-- **Fix:** Add `SMTP_PASSWORD` environment variable in Railway
+**Error: `[EMAIL ERROR] Resend API key is not configured`**
+- **Fix:** Add `RESEND_API_KEY` environment variable in Railway
 
-**Error: `Authentication failed`**
-- **Fix:** Check that `SMTP_USERNAME` is exactly `"apikey"` (lowercase)
-- **Fix:** Verify the API key is correct
+**Error: `Unauthorized` or `401`**
+- **Fix:** Verify the API key is correct and active
+- **Fix:** Check that the API key starts with `re_`
 
-**Error: `The from address does not match a verified Sender Identity`**
-- **Fix:** Verify `quickclinique25@gmail.com` in SendGrid Dashboard → Settings → Sender Authentication
+**Error: `Domain verification issue`**
+- **Fix:** Verify your sender email/domain in Resend Dashboard → Domains
+- **Fix:** For testing, you can use Resend's test domain
+- **Fix:** For production, add and verify your own domain
 
 ## Using Railway CLI (Alternative)
 
@@ -130,8 +133,8 @@ railway login
 # Link your project
 railway link
 
-# Set SMTP password
-railway variables set SMTP_PASSWORD="SG.your-api-key-here"
+# Set Resend API key
+railway variables set RESEND_API_KEY="re_your-api-key-here"
 
 # Verify
 railway variables
@@ -142,4 +145,5 @@ railway variables
 - ✅ Environment variables in Railway are secure and encrypted
 - ✅ Never commit API keys to Git (you've already protected `appsettings.Development.json`)
 - ✅ Railway variables are only visible to project members
+- ✅ Resend API keys should be kept secret and rotated if compromised
 

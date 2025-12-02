@@ -26,6 +26,9 @@ builder.Services.AddControllersWithViews()
 // Add SignalR
 builder.Services.AddSignalR();
 
+// Add HttpClient for email service
+builder.Services.AddHttpClient();
+
 // Add services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();

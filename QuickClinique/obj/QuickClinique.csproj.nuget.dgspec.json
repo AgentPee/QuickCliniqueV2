@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj": {}
+    "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj": {
+    "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
+        "projectUniqueName": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
+        "projectPath": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\bamboo-PC\\.nuget\\packages\\",
-        "outputPath": "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\quickclinique\\obj\\",
+        "outputPath": "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\quickclinique\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "D:\\documents\\CAPSTONE 2\\Branch-Main\\quickcliniquev2\\NuGet.Config",
+          "D:\\documents\\CAPSTONE 2\\Branch-Ayan_2\\quickcliniquev2\\NuGet.Config",
           "C:\\Users\\bamboo-PC\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
@@ -66,10 +66,6 @@
             "Pomelo.EntityFrameworkCore.MySql": {
               "target": "Package",
               "version": "[9.0.0, )"
-            },
-            "SendGrid": {
-              "target": "Package",
-              "version": "[9.29.3, )"
             }
           },
           "imports": [
