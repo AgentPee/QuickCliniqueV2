@@ -17,13 +17,15 @@ namespace QuickClinique.Controllers
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IIdValidationService _idValidationService;
 
-        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService)
+        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, IIdValidationService idValidationService)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
             _fileStorageService = fileStorageService;
+            _idValidationService = idValidationService;
         }
 
         // Helper method to get the base URL for absolute links (for email verification, etc.)
@@ -408,10 +410,38 @@ namespace QuickClinique.Controllers
             {
                 ModelState.AddModelError("StudentIdImageFront", "Student ID Front image is required. Please upload a photo of the front of your ID.");
             }
+            else if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
+            {
+                // Validate the front ID image
+                var frontValidation = await _idValidationService.ValidateIdImageAsync(model.StudentIdImageFront, model.Idnumber, isFrontImage: true);
+                if (!frontValidation.IsValid)
+                {
+                    ModelState.AddModelError("StudentIdImageFront", frontValidation.ErrorMessage ?? "Invalid ID front image. Please ensure the image is clear and matches your ID number.");
+                }
+                else if (!string.IsNullOrEmpty(frontValidation.WarningMessage))
+                {
+                    // Add warning as a model error (non-blocking, but visible to user)
+                    ModelState.AddModelError("StudentIdImageFront", frontValidation.WarningMessage);
+                }
+            }
 
             if (model.StudentIdImageBack == null || model.StudentIdImageBack.Length == 0)
             {
                 ModelState.AddModelError("StudentIdImageBack", "Student ID Back image is required. Please upload a photo of the back of your ID.");
+            }
+            else if (model.StudentIdImageBack != null && model.StudentIdImageBack.Length > 0)
+            {
+                // Validate the back ID image
+                var backValidation = await _idValidationService.ValidateIdImageAsync(model.StudentIdImageBack, model.Idnumber, isFrontImage: false);
+                if (!backValidation.IsValid)
+                {
+                    ModelState.AddModelError("StudentIdImageBack", backValidation.ErrorMessage ?? "Invalid ID back image. Please ensure the image is clear and matches your ID number.");
+                }
+                else if (!string.IsNullOrEmpty(backValidation.WarningMessage))
+                {
+                    // Add warning as a model error (non-blocking, but visible to user)
+                    ModelState.AddModelError("StudentIdImageBack", backValidation.WarningMessage);
+                }
             }
 
             if (string.IsNullOrWhiteSpace(model.Password))
