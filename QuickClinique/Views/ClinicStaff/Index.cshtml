@@ -594,7 +594,20 @@
 
             const toggleModal = document.getElementById('toggleModal');
             const modalBody = toggleModal.querySelector('.modal-body');
-            modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Updating...</div>';
+            const toggleConfirmButton = document.getElementById('toggleConfirmButton');
+            const toggleMessage = document.getElementById('toggleMessage');
+            const cancelButton = modalBody.querySelector('.toggle-modal-button[onclick*="closeModal"]');
+            
+            // Store original content
+            const originalMessage = toggleMessage.textContent;
+            const originalButtonHtml = toggleConfirmButton.innerHTML;
+            const originalButtonDisabled = toggleConfirmButton.disabled;
+            
+            // Show loading state without destroying structure
+            toggleMessage.textContent = 'Updating...';
+            toggleConfirmButton.disabled = true;
+            toggleConfirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            if (cancelButton) cancelButton.disabled = true;
 
             try {
                 const formData = new FormData();
@@ -615,6 +628,12 @@
                     showNotification(result.message || 'Staff status updated successfully!', 'success');
                     closeModal('toggleModal');
                     
+                    // Restore modal content
+                    toggleMessage.textContent = originalMessage;
+                    toggleConfirmButton.innerHTML = originalButtonHtml;
+                    toggleConfirmButton.disabled = originalButtonDisabled;
+                    if (cancelButton) cancelButton.disabled = false;
+                    
                     // Update UI dynamically without reloading
                     updateStaffStatusUI(currentToggleId, result.isActive);
                 } else {
@@ -623,6 +642,13 @@
             } catch (error) {
                 console.error('Error:', error);
                 showNotification('Error updating staff status. Please try again.', 'error');
+                
+                // Restore modal content
+                toggleMessage.textContent = originalMessage;
+                toggleConfirmButton.innerHTML = originalButtonHtml;
+                toggleConfirmButton.disabled = originalButtonDisabled;
+                if (cancelButton) cancelButton.disabled = false;
+                
                 closeModal('toggleModal');
             }
         }
