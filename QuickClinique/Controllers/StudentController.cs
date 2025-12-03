@@ -484,198 +484,164 @@ namespace QuickClinique.Controllers
 
             if (ModelState.IsValid)
             {
-                // Use a database transaction to ensure atomicity
+                // Use execution strategy to support retry logic with transactions
                 // This prevents partial registrations and connection pool exhaustion
-                using var transaction = await _context.Database.BeginTransactionAsync();
+                var strategy = _context.Database.CreateExecutionStrategy();
+                
                 try
                 {
-                    // Check if ID number already exists
-                    if (await _context.Students.AnyAsync(x => x.Idnumber == model.Idnumber))
-                    {
-                        await transaction.RollbackAsync();
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.",
-                                field = "Idnumber"
-                            });
-
-                        ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.");
-                        return View(model);
-                    }
-
-                    // Check if email already exists
-                    if (await _context.Students.AnyAsync(x => x.Email.ToLower() == model.Email.ToLower()))
-                    {
-                        await transaction.RollbackAsync();
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "This email address is already registered. Please use a different email or try logging in instead.",
-                                field = "Email"
-                            });
-
-                        ModelState.AddModelError("Email", "This email address is already registered. Please use a different email or try logging in instead.");
-                        return View(model);
-                    }
-
-                    // Create and save the Usertype first
-                    var usertype = new Usertype
-                    {
-                        Name = model.FirstName + " " + model.LastName,
-                        Role = "Student"
-                    };
-
-                    _context.Usertypes.Add(usertype);
-                    await _context.SaveChangesAsync();
-
-                    // Generate email verification token
-                    var emailToken = GenerateToken();
-
-                    // Handle image uploads (Front and Back)
-                    var imagePaths = new List<string>();
-                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-                    const long maxFileSize = 5 * 1024 * 1024; // 5MB
-
-                    // Process Front Image
-                    if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
-                    {
-                        try
-                        {
-                            var fileExtension = Path.GetExtension(model.StudentIdImageFront.FileName).ToLowerInvariant();
-                            if (!allowedExtensions.Contains(fileExtension))
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "Invalid file type for ID front image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
-                                        field = "StudentIdImageFront"
-                                    });
-
-                                ModelState.AddModelError("StudentIdImageFront", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
-                                return View(model);
-                            }
-
-                            if (model.StudentIdImageFront.Length > maxFileSize)
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "ID front image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
-                                        field = "StudentIdImageFront"
-                                    });
-
-                                ModelState.AddModelError("StudentIdImageFront", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
-                                return View(model);
-                            }
-
-                            var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}";
-                            var frontImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageFront, "student-ids", frontFileName);
-                            imagePaths.Add(frontImagePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error uploading front image: {ex.Message}");
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Error saving ID front image. Please try again or contact support.",
-                                    field = "StudentIdImageFront"
-                                });
-
-                            ModelState.AddModelError("StudentIdImageFront", "Error saving file. Please try again.");
-                            return View(model);
-                        }
-                    }
-
-                    // Process Back Image
-                    if (model.StudentIdImageBack != null && model.StudentIdImageBack.Length > 0)
-                    {
-                        try
-                        {
-                            var fileExtension = Path.GetExtension(model.StudentIdImageBack.FileName).ToLowerInvariant();
-                            if (!allowedExtensions.Contains(fileExtension))
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "Invalid file type for ID back image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
-                                        field = "StudentIdImageBack"
-                                    });
-
-                                ModelState.AddModelError("StudentIdImageBack", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
-                                return View(model);
-                            }
-
-                            if (model.StudentIdImageBack.Length > maxFileSize)
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "ID back image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
-                                        field = "StudentIdImageBack"
-                                    });
-
-                                ModelState.AddModelError("StudentIdImageBack", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
-                                return View(model);
-                            }
-
-                            var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}";
-                            var backImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageBack, "student-ids", backFileName);
-                            imagePaths.Add(backImagePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error uploading back image: {ex.Message}");
-                            if (IsAjaxRequest())
-                                return Json(new { 
-                                    success = false, 
-                                    error = "Error saving ID back image. Please try again or contact support.",
-                                    field = "StudentIdImageBack"
-                                });
-
-                            ModelState.AddModelError("StudentIdImageBack", "Error saving file. Please try again.");
-                            return View(model);
-                        }
-                    }
-
-                    // Combine image paths (comma-separated) or use first image if only one provided
-                    string imagePath = imagePaths.Count > 0 ? string.Join(",", imagePaths) : null;
-
-                    // Create the Student
-                    var student = new Student
-                    {
-                        UserId = usertype.UserId,
-                        Idnumber = model.Idnumber,
-                        FirstName = model.FirstName,
-                        LastName = model.LastName,
-                        Email = model.Email,
-                        PhoneNumber = model.PhoneNumber,
-                        Gender = model.Gender,
-                        Birthdate = model.Birthdate,
-                        Image = imagePath,
-                        Password = _passwordService.HashPassword(model.Password), // Hash the password
-                        IsEmailVerified = false,
-                        EmailVerificationToken = emailToken,
-                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
-                        IsActive = false, // Account starts as inactive until activated by administrator
-                        EmergencyContactName = model.EmergencyContactName,
-                        EmergencyContactRelationship = model.EmergencyContactRelationship,
-                        EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
-                    };
-
-                    // Add and save the Student within the same transaction
-                    _context.Students.Add(student);
-                    await _context.SaveChangesAsync();
+                    Student? student = null;
+                    string? emailToken = null;
                     
-                    // Commit the transaction - both Usertype and Student are saved atomically
-                    await transaction.CommitAsync();
+                    await strategy.ExecuteAsync(async () =>
+                    {
+                        using var transaction = await _context.Database.BeginTransactionAsync();
+                        try
+                        {
+                            // Check if ID number already exists
+                            if (await _context.Students.AnyAsync(x => x.Idnumber == model.Idnumber))
+                            {
+                                await transaction.RollbackAsync();
+                                throw new InvalidOperationException("ID_NUMBER_EXISTS");
+                            }
 
+                            // Check if email already exists
+                            if (await _context.Students.AnyAsync(x => x.Email.ToLower() == model.Email.ToLower()))
+                            {
+                                await transaction.RollbackAsync();
+                                throw new InvalidOperationException("EMAIL_EXISTS");
+                            }
+
+                            // Create and save the Usertype first
+                            var usertype = new Usertype
+                            {
+                                Name = model.FirstName + " " + model.LastName,
+                                Role = "Student"
+                            };
+
+                            _context.Usertypes.Add(usertype);
+                            await _context.SaveChangesAsync();
+
+                            // Generate email verification token
+                            emailToken = GenerateToken();
+
+                            // Handle image uploads (Front and Back)
+                            var imagePaths = new List<string>();
+                            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+                            const long maxFileSize = 5 * 1024 * 1024; // 5MB
+
+                            // Process Front Image
+                            if (model.StudentIdImageFront != null && model.StudentIdImageFront.Length > 0)
+                            {
+                                var fileExtension = Path.GetExtension(model.StudentIdImageFront.FileName).ToLowerInvariant();
+                                if (!allowedExtensions.Contains(fileExtension))
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("INVALID_FRONT_IMAGE_TYPE");
+                                }
+
+                                if (model.StudentIdImageFront.Length > maxFileSize)
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("FRONT_IMAGE_TOO_LARGE");
+                                }
+
+                                try
+                                {
+                                    var frontFileName = $"{model.Idnumber}_front_{Guid.NewGuid()}";
+                                    var frontImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageFront, "student-ids", frontFileName);
+                                    imagePaths.Add(frontImagePath);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error uploading front image: {ex.Message}");
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("FRONT_IMAGE_UPLOAD_ERROR");
+                                }
+                            }
+
+                            // Process Back Image
+                            if (model.StudentIdImageBack != null && model.StudentIdImageBack.Length > 0)
+                            {
+                                var fileExtension = Path.GetExtension(model.StudentIdImageBack.FileName).ToLowerInvariant();
+                                if (!allowedExtensions.Contains(fileExtension))
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("INVALID_BACK_IMAGE_TYPE");
+                                }
+
+                                if (model.StudentIdImageBack.Length > maxFileSize)
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("BACK_IMAGE_TOO_LARGE");
+                                }
+
+                                try
+                                {
+                                    var backFileName = $"{model.Idnumber}_back_{Guid.NewGuid()}";
+                                    var backImagePath = await _fileStorageService.UploadFileAsync(model.StudentIdImageBack, "student-ids", backFileName);
+                                    imagePaths.Add(backImagePath);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error uploading back image: {ex.Message}");
+                                    await transaction.RollbackAsync();
+                                    throw new InvalidOperationException("BACK_IMAGE_UPLOAD_ERROR");
+                                }
+                            }
+
+                            // Combine image paths (comma-separated) or use first image if only one provided
+                            string imagePath = imagePaths.Count > 0 ? string.Join(",", imagePaths) : null;
+
+                            // Create the Student
+                            student = new Student
+                            {
+                                UserId = usertype.UserId,
+                                Idnumber = model.Idnumber,
+                                FirstName = model.FirstName,
+                                LastName = model.LastName,
+                                Email = model.Email,
+                                PhoneNumber = model.PhoneNumber,
+                                Gender = model.Gender,
+                                Birthdate = model.Birthdate,
+                                Image = imagePath,
+                                Password = _passwordService.HashPassword(model.Password), // Hash the password
+                                IsEmailVerified = false,
+                                EmailVerificationToken = emailToken,
+                                EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                                IsActive = false, // Account starts as inactive until activated by administrator
+                                EmergencyContactName = model.EmergencyContactName,
+                                EmergencyContactRelationship = model.EmergencyContactRelationship,
+                                EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
+                            };
+
+                            // Add and save the Student within the same transaction
+                            _context.Students.Add(student);
+                            await _context.SaveChangesAsync();
+                            
+                            // Commit the transaction - both Usertype and Student are saved atomically
+                            await transaction.CommitAsync();
+                        }
+                        catch (Exception)
+                        {
+                            try
+                            {
+                                await transaction.RollbackAsync();
+                            }
+                            catch (Exception rollbackEx)
+                            {
+                                Console.WriteLine($"Error rolling back transaction: {rollbackEx.Message}");
+                            }
+                            throw;
+                        }
+                    });
+
+                    // If we get here, registration was successful
                     // Send verification email (fire-and-forget)
                     try
                     {
                         var baseUrl = GetBaseUrl();
-                        var verificationLink = $"{baseUrl}{Url.Action("VerifyEmail", "Student", new { token = emailToken, email = student.Email })}";
+                        var verificationLink = $"{baseUrl}{Url.Action("VerifyEmail", "Student", new { token = emailToken, email = student!.Email })}";
 
                         // Fire-and-forget: don't await, let it run in background
                         _ = Task.Run(async () =>
@@ -702,28 +668,128 @@ namespace QuickClinique.Controllers
                         return Json(new { 
                             success = true, 
                             message = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.",
-                            redirectUrl = Url.Action("verificationE", "Student", new { email = student.Email }),
+                            redirectUrl = Url.Action("verificationE", "Student", new { email = student!.Email }),
                             studentEmail = student.Email,
                             studentIdNumber = student.Idnumber
                         });
 
                     TempData["SuccessMessage"] = "Registration successful! Please check your email to verify your account. Your account will be activated by an administrator after verification. You will receive an email once your account is activated.";
-                    TempData["StudentEmail"] = student.Email;
+                    TempData["StudentEmail"] = student!.Email;
                     TempData["StudentIdNumber"] = student.Idnumber;
                     return RedirectToAction("verificationE", "Student", new { email = student.Email });
                 }
+                catch (InvalidOperationException ioEx)
+                {
+                    // Handle specific validation errors
+                    if (ioEx.Message == "ID_NUMBER_EXISTS")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.",
+                                field = "Idnumber"
+                            });
+
+                        ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number or contact support if you believe this is an error.");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "EMAIL_EXISTS")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "This email address is already registered. Please use a different email or try logging in instead.",
+                                field = "Email"
+                            });
+
+                        ModelState.AddModelError("Email", "This email address is already registered. Please use a different email or try logging in instead.");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "INVALID_FRONT_IMAGE_TYPE")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Invalid file type for ID front image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                field = "StudentIdImageFront"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageFront", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "FRONT_IMAGE_TOO_LARGE")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "ID front image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                field = "StudentIdImageFront"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageFront", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "FRONT_IMAGE_UPLOAD_ERROR")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Error saving ID front image. Please try again or contact support.",
+                                field = "StudentIdImageFront"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageFront", "Error saving file. Please try again.");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "INVALID_BACK_IMAGE_TYPE")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Invalid file type for ID back image. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).",
+                                field = "StudentIdImageBack"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageBack", "Invalid file type. Please upload a valid image file (JPG, JPEG, PNG, GIF, BMP, or WEBP).");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "BACK_IMAGE_TOO_LARGE")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "ID back image file size is too large. Maximum file size is 5MB. Please compress or resize your image.",
+                                field = "StudentIdImageBack"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageBack", "File size exceeds the maximum limit of 5MB. Please compress or resize your image.");
+                        return View(model);
+                    }
+                    else if (ioEx.Message == "BACK_IMAGE_UPLOAD_ERROR")
+                    {
+                        if (IsAjaxRequest())
+                            return Json(new { 
+                                success = false, 
+                                error = "Error saving ID back image. Please try again or contact support.",
+                                field = "StudentIdImageBack"
+                            });
+
+                        ModelState.AddModelError("StudentIdImageBack", "Error saving file. Please try again.");
+                        return View(model);
+                    }
+                    
+                    // Unknown InvalidOperationException
+                    Console.WriteLine($"Unexpected InvalidOperationException during registration: {ioEx.Message}");
+                    if (IsAjaxRequest())
+                        return Json(new { 
+                            success = false, 
+                            error = "An unexpected error occurred during registration. Please try again. If the problem persists, contact support."
+                        });
+
+                    ModelState.AddModelError("", "An unexpected error occurred during registration. Please try again.");
+                }
                 catch (DbUpdateException dbEx)
                 {
-                    // Rollback transaction on database error
-                    try
-                    {
-                        await transaction.RollbackAsync();
-                    }
-                    catch (Exception rollbackEx)
-                    {
-                        Console.WriteLine($"Error rolling back transaction: {rollbackEx.Message}");
-                    }
-
                     // Check for unique constraint violations
                     if (dbEx.InnerException != null && 
                         (dbEx.InnerException.Message.Contains("Duplicate entry") || 
@@ -768,16 +834,6 @@ namespace QuickClinique.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // Rollback transaction on any error
-                    try
-                    {
-                        await transaction.RollbackAsync();
-                    }
-                    catch (Exception rollbackEx)
-                    {
-                        Console.WriteLine($"Error rolling back transaction: {rollbackEx.Message}");
-                    }
-
                     Console.WriteLine($"Unexpected error during registration: {ex.Message}");
                     Console.WriteLine($"Stack trace: {ex.StackTrace}");
                     if (IsAjaxRequest())
