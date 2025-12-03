@@ -83,6 +83,21 @@ if (!connectionString.Contains("SslMode", StringComparison.OrdinalIgnoreCase))
     connectionString += (connectionString.EndsWith(";") ? "" : ";") + "SslMode=Preferred;";
 }
 
+// Add connection pool settings to prevent connection exhaustion during concurrent registrations
+// These settings help handle multiple simultaneous registrations
+if (!connectionString.Contains("MaximumPoolSize", StringComparison.OrdinalIgnoreCase))
+{
+    connectionString += (connectionString.EndsWith(";") ? "" : ";") + "MaximumPoolSize=100;";
+}
+if (!connectionString.Contains("MinimumPoolSize", StringComparison.OrdinalIgnoreCase))
+{
+    connectionString += (connectionString.EndsWith(";") ? "" : ";") + "MinimumPoolSize=5;";
+}
+if (!connectionString.Contains("ConnectionTimeout", StringComparison.OrdinalIgnoreCase))
+{
+    connectionString += (connectionString.EndsWith(";") ? "" : ";") + "ConnectionTimeout=30;";
+}
+
 // Check for unresolved template variables first
 if (connectionString.Contains("${{") || connectionString.Contains("${"))
 {

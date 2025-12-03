@@ -17,6 +17,9 @@ namespace QuickClinique.Services
         private readonly long _minImageSizeBytes;
         private readonly long _maxImageSizeBytes;
         private readonly string? _googleCloudApiKey;
+        private readonly int _maxOcrRetries;
+        private readonly TimeSpan _ocrTimeout;
+        private readonly TimeSpan _initialRetryDelay;
 
         public IdValidationService(
             ILogger<IdValidationService> logger,
@@ -30,6 +33,11 @@ namespace QuickClinique.Services
             _minImageSizeBytes = configuration.GetValue<long>("IdValidation:MinImageSizeBytes", 5000); // 5KB minimum
             _maxImageSizeBytes = configuration.GetValue<long>("IdValidation:MaxImageSizeBytes", 5 * 1024 * 1024); // 5MB maximum
             _googleCloudApiKey = configuration.GetValue<string>("IdValidation:GoogleCloudApiKey");
+            
+            // Retry configuration for OCR calls
+            _maxOcrRetries = configuration.GetValue<int>("IdValidation:MaxOcrRetries", 3); // Retry up to 3 times
+            _ocrTimeout = TimeSpan.FromSeconds(configuration.GetValue<int>("IdValidation:OcrTimeoutSeconds", 15)); // 15 seconds per attempt
+            _initialRetryDelay = TimeSpan.FromSeconds(configuration.GetValue<int>("IdValidation:InitialRetryDelaySeconds", 2)); // 2 seconds initial delay
         }
 
         public async Task<IdValidationResult> ValidateIdImageAsync(IFormFile idImage, int expectedIdNumber, bool isFrontImage = true)
@@ -93,25 +101,27 @@ namespace QuickClinique.Services
                 // This validates:
                 // - Front image: Must contain "university of cebu" text
                 // - Back image: Must contain academic year "2025-2026"
+                // Copy image to byte array first so we can retry if needed
+                byte[] imageBytes;
                 using (var imageStream = new MemoryStream())
                 {
                     await idImage.CopyToAsync(imageStream);
-                    imageStream.Position = 0;
-                    
-                    var ocrResult = await ValidateIdContentWithOcrAsync(imageStream, expectedIdNumber, isFrontImage);
-                    result.Details.IdNumberMatched = ocrResult.IdNumberMatched;
-                    result.Details.ExtractedIdNumber = ocrResult.ExtractedIdNumber;
+                    imageBytes = imageStream.ToArray();
+                }
+                
+                var ocrResult = await ValidateIdContentWithOcrAsyncWithRetry(imageBytes, expectedIdNumber, isFrontImage);
+                result.Details.IdNumberMatched = ocrResult.IdNumberMatched;
+                result.Details.ExtractedIdNumber = ocrResult.ExtractedIdNumber;
 
-                    // OCR validation is required - failures block registration
-                    if (!ocrResult.IsValid)
-                    {
-                        result.IsValid = false;
-                        result.ErrorMessage = ocrResult.ErrorMessage ?? "ID validation failed. Please ensure you uploaded a valid University of Cebu student ID.";
-                    }
-                    else if (!string.IsNullOrEmpty(ocrResult.WarningMessage))
-                    {
-                        result.WarningMessage = ocrResult.WarningMessage;
-                    }
+                // OCR validation is required - failures block registration
+                if (!ocrResult.IsValid)
+                {
+                    result.IsValid = false;
+                    result.ErrorMessage = ocrResult.ErrorMessage ?? "ID validation failed. Please ensure you uploaded a valid University of Cebu student ID.";
+                }
+                else if (!string.IsNullOrEmpty(ocrResult.WarningMessage))
+                {
+                    result.WarningMessage = ocrResult.WarningMessage;
                 }
             }
             catch (Exception ex)
@@ -224,11 +234,11 @@ namespace QuickClinique.Services
         }
 
         /// <summary>
-        /// Validates ID content using OCR
+        /// Validates ID content using OCR with retry logic
         /// Front image: Must contain "university of cebu" text
         /// Back image: Must contain academic year "2025-2026"
         /// </summary>
-        private async Task<OcrContentValidationResult> ValidateIdContentWithOcrAsync(Stream imageStream, int expectedIdNumber, bool isFrontImage)
+        private async Task<OcrContentValidationResult> ValidateIdContentWithOcrAsyncWithRetry(byte[] imageBytes, int expectedIdNumber, bool isFrontImage)
         {
             var result = new OcrContentValidationResult
             {
@@ -247,18 +257,69 @@ namespace QuickClinique.Services
                     return result;
                 }
 
-                // Perform OCR using Google Cloud Vision API
+                // Perform OCR with retry logic to handle transient failures and timeouts
+                // Retries up to _maxOcrRetries times (default: 3 retries = 4 total attempts)
+                // Uses exponential backoff between retries (2s, 4s, 8s delays)
+                // Each attempt has a timeout of _ocrTimeout (default: 15 seconds)
+                // If all retries fail, registration proceeds with a warning instead of blocking
                 string? extractedText = null;
-                try
+                Exception? lastException = null;
+                
+                for (int attempt = 0; attempt <= _maxOcrRetries; attempt++)
                 {
-                    extractedText = await PerformOcrAsync(imageStream);
-                }
-                catch (Exception ex)
-                {
-                    // OCR failed - log warning but allow registration to proceed
-                    _logger.LogWarning(ex, "OCR validation failed - Google Cloud Vision API error: {Error}", ex.Message);
-                    result.WarningMessage = "OCR validation is currently unavailable. ID content validation was skipped. Please ensure your ID images are valid.";
-                    return result; // Return with IsValid = true, but with a warning
+                    try
+                    {
+                        if (attempt > 0)
+                        {
+                            // Exponential backoff: 2s, 4s, 8s delays
+                            var delay = TimeSpan.FromMilliseconds(_initialRetryDelay.TotalMilliseconds * Math.Pow(2, attempt - 1));
+                            _logger.LogInformation("OCR attempt {Attempt} failed. Retrying after {Delay}ms delay...", attempt, delay.TotalMilliseconds);
+                            await Task.Delay(delay);
+                        }
+
+                        // Create a new stream from the byte array for each attempt
+                        using var imageStream = new MemoryStream(imageBytes);
+                        
+                        // Perform OCR with timeout
+                        using var cts = new CancellationTokenSource(_ocrTimeout);
+                        extractedText = await PerformOcrAsync(imageStream, cts.Token);
+                        
+                        // If we got text, break out of retry loop
+                        if (!string.IsNullOrWhiteSpace(extractedText))
+                        {
+                            if (attempt > 0)
+                            {
+                                _logger.LogInformation("OCR succeeded on attempt {Attempt}", attempt + 1);
+                            }
+                            break;
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        lastException = new TimeoutException($"OCR timed out after {_ocrTimeout.TotalSeconds} seconds");
+                        _logger.LogWarning("OCR attempt {Attempt} timed out after {Timeout}s", attempt + 1, _ocrTimeout.TotalSeconds);
+                        
+                        // If this was the last attempt, we'll handle it below
+                        if (attempt == _maxOcrRetries)
+                        {
+                            _logger.LogWarning("OCR validation timed out after {MaxRetries} retries. ID content validation was skipped.", _maxOcrRetries + 1);
+                            result.WarningMessage = $"OCR validation timed out after {_maxOcrRetries + 1} attempts. ID content validation was skipped. Please ensure your ID images are valid.";
+                            return result; // Return with IsValid = true, but with a warning
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
+                        _logger.LogWarning(ex, "OCR attempt {Attempt} failed: {Error}", attempt + 1, ex.Message);
+                        
+                        // If this was the last attempt, we'll handle it below
+                        if (attempt == _maxOcrRetries)
+                        {
+                            _logger.LogWarning("OCR validation failed after {MaxRetries} retries. ID content validation was skipped.", _maxOcrRetries + 1);
+                            result.WarningMessage = "OCR validation is currently unavailable after multiple attempts. ID content validation was skipped. Please ensure your ID images are valid.";
+                            return result; // Return with IsValid = true, but with a warning
+                        }
+                    }
                 }
                 
                 if (string.IsNullOrWhiteSpace(extractedText))
@@ -352,7 +413,7 @@ namespace QuickClinique.Services
         /// <summary>
         /// Performs OCR on the image stream using Google Cloud Vision API
         /// </summary>
-        private async Task<string> PerformOcrAsync(Stream imageStream)
+        private async Task<string> PerformOcrAsync(Stream imageStream, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -398,8 +459,44 @@ namespace QuickClinique.Services
                 // Create image object - Image.FromBytes expects byte[] directly
                 var image = Image.FromBytes(imageBytes);
 
-                // Perform text detection
-                var response = await client.DetectTextAsync(image);
+                // Perform text detection with timeout (15 seconds max)
+                // This prevents hanging when Google Cloud Vision is slow or unresponsive
+                // Wrap the call in a timeout task since DetectTextAsync doesn't support cancellation tokens directly
+                CancellationTokenSource timeoutCts;
+                if (cancellationToken != default)
+                {
+                    timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+                }
+                else
+                {
+                    timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                }
+                
+                using (timeoutCts)
+                {
+                    // Use Task.WhenAny to implement timeout since DetectTextAsync doesn't support cancellation tokens
+                    var detectTask = client.DetectTextAsync(image);
+                    var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15), timeoutCts.Token);
+                    
+                    var completedTask = await Task.WhenAny(detectTask, timeoutTask);
+                    if (completedTask == timeoutTask)
+                    {
+                        timeoutCts.Cancel();
+                        throw new OperationCanceledException("OCR operation timed out after 15 seconds");
+                    }
+                    
+                    var response = await detectTask;
+                    
+                    // Extract all text from annotations
+                    // The first annotation contains the full text, others are individual words
+                    var fullTextAnnotation = response.FirstOrDefault();
+                    var extractedText = fullTextAnnotation?.Description ?? string.Empty;
+
+                    _logger.LogDebug("Google Cloud Vision OCR extracted {Length} characters", extractedText.Length);
+
+                    return extractedText;
+                }
 
                 // Extract all text from annotations
                 // The first annotation contains the full text, others are individual words
