@@ -484,11 +484,15 @@ namespace QuickClinique.Controllers
 
             if (ModelState.IsValid)
             {
+                // Use a database transaction to ensure atomicity
+                // This prevents partial registrations and connection pool exhaustion
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
                     // Check if ID number already exists
                     if (await _context.Students.AnyAsync(x => x.Idnumber == model.Idnumber))
                     {
+                        await transaction.RollbackAsync();
                         if (IsAjaxRequest())
                             return Json(new { 
                                 success = false, 
@@ -503,6 +507,7 @@ namespace QuickClinique.Controllers
                     // Check if email already exists
                     if (await _context.Students.AnyAsync(x => x.Email.ToLower() == model.Email.ToLower()))
                     {
+                        await transaction.RollbackAsync();
                         if (IsAjaxRequest())
                             return Json(new { 
                                 success = false, 
@@ -521,23 +526,8 @@ namespace QuickClinique.Controllers
                         Role = "Student"
                     };
 
-                    try
-                    {
-                        _context.Usertypes.Add(usertype);
-                        await _context.SaveChangesAsync();
-                    }
-                    catch (DbUpdateException dbEx)
-                    {
-                        Console.WriteLine($"Database error creating user type: {dbEx.Message}");
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "An error occurred while creating your account. Please try again. If the problem persists, contact support."
-                            });
-
-                        ModelState.AddModelError("", "An error occurred while creating your account. Please try again.");
-                        return View(model);
-                    }
+                    _context.Usertypes.Add(usertype);
+                    await _context.SaveChangesAsync();
 
                     // Generate email verification token
                     var emailToken = GenerateToken();
@@ -674,56 +664,12 @@ namespace QuickClinique.Controllers
                         EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
                     };
 
-                    try
-                    {
-                        _context.Students.Add(student);
-                        await _context.SaveChangesAsync();
-                    }
-                    catch (DbUpdateException dbEx)
-                    {
-                        // Check for unique constraint violations
-                        if (dbEx.InnerException != null && 
-                            (dbEx.InnerException.Message.Contains("Duplicate entry") || 
-                             dbEx.InnerException.Message.Contains("UNIQUE constraint") ||
-                             dbEx.InnerException.Message.Contains("duplicate key")))
-                        {
-                            // Check which field caused the violation
-                            if (dbEx.InnerException.Message.Contains("Idnumber") || dbEx.InnerException.Message.Contains("idnumber"))
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "This ID number is already registered. Please use a different ID number.",
-                                        field = "Idnumber"
-                                    });
-
-                                ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number.");
-                                return View(model);
-                            }
-                            else if (dbEx.InnerException.Message.Contains("Email") || dbEx.InnerException.Message.Contains("email"))
-                            {
-                                if (IsAjaxRequest())
-                                    return Json(new { 
-                                        success = false, 
-                                        error = "This email address is already registered. Please use a different email.",
-                                        field = "Email"
-                                    });
-
-                                ModelState.AddModelError("Email", "This email address is already registered. Please use a different email.");
-                                return View(model);
-                            }
-                        }
-
-                        Console.WriteLine($"Database error saving student: {dbEx.Message}");
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "An error occurred while saving your registration. Please try again. If the problem persists, contact support."
-                            });
-
-                        ModelState.AddModelError("", "An error occurred while saving your registration. Please try again.");
-                        return View(model);
-                    }
+                    // Add and save the Student within the same transaction
+                    _context.Students.Add(student);
+                    await _context.SaveChangesAsync();
+                    
+                    // Commit the transaction - both Usertype and Student are saved atomically
+                    await transaction.CommitAsync();
 
                     // Send verification email (fire-and-forget)
                     try
@@ -768,6 +714,49 @@ namespace QuickClinique.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
+                    // Rollback transaction on database error
+                    try
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        Console.WriteLine($"Error rolling back transaction: {rollbackEx.Message}");
+                    }
+
+                    // Check for unique constraint violations
+                    if (dbEx.InnerException != null && 
+                        (dbEx.InnerException.Message.Contains("Duplicate entry") || 
+                         dbEx.InnerException.Message.Contains("UNIQUE constraint") ||
+                         dbEx.InnerException.Message.Contains("duplicate key")))
+                    {
+                        // Check which field caused the violation
+                        if (dbEx.InnerException.Message.Contains("Idnumber") || dbEx.InnerException.Message.Contains("idnumber"))
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "This ID number is already registered. Please use a different ID number.",
+                                    field = "Idnumber"
+                                });
+
+                            ModelState.AddModelError("Idnumber", "This ID number is already registered. Please use a different ID number.");
+                            return View(model);
+                        }
+                        else if (dbEx.InnerException.Message.Contains("Email") || dbEx.InnerException.Message.Contains("email"))
+                        {
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "This email address is already registered. Please use a different email.",
+                                    field = "Email"
+                                });
+
+                            ModelState.AddModelError("Email", "This email address is already registered. Please use a different email.");
+                            return View(model);
+                        }
+                    }
+
                     Console.WriteLine($"Database error during registration: {dbEx.Message}");
                     if (IsAjaxRequest())
                         return Json(new { 
@@ -779,6 +768,16 @@ namespace QuickClinique.Controllers
                 }
                 catch (Exception ex)
                 {
+                    // Rollback transaction on any error
+                    try
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        Console.WriteLine($"Error rolling back transaction: {rollbackEx.Message}");
+                    }
+
                     Console.WriteLine($"Unexpected error during registration: {ex.Message}");
                     Console.WriteLine($"Stack trace: {ex.StackTrace}");
                     if (IsAjaxRequest())
