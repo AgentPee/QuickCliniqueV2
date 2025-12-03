@@ -497,15 +497,6 @@ namespace QuickClinique.Services
 
                     return extractedText;
                 }
-
-                // Extract all text from annotations
-                // The first annotation contains the full text, others are individual words
-                var fullTextAnnotation = response.FirstOrDefault();
-                var extractedText = fullTextAnnotation?.Description ?? string.Empty;
-
-                _logger.LogDebug("Google Cloud Vision OCR extracted {Length} characters", extractedText.Length);
-
-                return extractedText;
             }
             catch (Exception ex)
             {
