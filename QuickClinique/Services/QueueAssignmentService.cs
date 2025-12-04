@@ -48,9 +48,10 @@ namespace QuickClinique.Services
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-            var now = DateTime.Now;
-            var today = DateOnly.FromDateTime(now);
-            var currentTime = TimeOnly.FromDateTime(now);
+            // Use Philippine Time (UTC+8) for consistent timezone handling across environments
+            var now = TimeZoneHelper.GetPhilippineTime();
+            var today = TimeZoneHelper.GetPhilippineDate();
+            var currentTime = TimeZoneHelper.GetPhilippineTimeOnly();
             
             // Check appointments where current time is within the selected time slot
             // (between StartTime and EndTime) and appointment is confirmed but doesn't have a queue number yet

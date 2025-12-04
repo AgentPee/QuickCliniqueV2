@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
 using QuickClinique.Services;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers
 {
@@ -105,8 +106,9 @@ namespace QuickClinique.Controllers
                 }
 
                 // Validate: Prevent booking if within 5 minutes before the start of a time slot
-                var now = DateTime.Now;
-                var today = DateOnly.FromDateTime(now);
+                // Use Philippine Time for consistent timezone handling
+                var now = TimeZoneHelper.GetPhilippineTime();
+                var today = TimeZoneHelper.GetPhilippineDate();
                 var timeSelected = schedule.Date.ToDateTime(schedule.StartTime);
                 
                 // Check if the appointment is for today and if it's within 5 minutes of the start time
@@ -131,11 +133,11 @@ namespace QuickClinique.Controllers
                     ScheduleId = model.ScheduleId,
                     ReasonForVisit = model.ReasonForVisit,
                     Symptoms = string.IsNullOrWhiteSpace(model.Symptoms) ? "No symptoms provided" : model.Symptoms,
-                    DateBooked = DateOnly.FromDateTime(now),
+                    DateBooked = today,
                     AppointmentStatus = "Pending",
                     QueueStatus = "Pending", // Will be set to "Waiting" when queue number is assigned
                     TimeSelected = timeSelected, // Date and time selected for the appointment
-                    CreatedAt = now, // When appointment was submitted
+                    CreatedAt = now, // When appointment was submitted (Philippine Time)
                     QueueNumber = 0 // Will be assigned when TimeSelected matches current time and appointment is confirmed
                 };
 
@@ -352,8 +354,9 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
-                var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+                // Use Philippine Time (UTC+8) for consistent timezone handling across environments
+                var today = TimeZoneHelper.GetPhilippineDate();
+                var currentTime = TimeZoneHelper.GetPhilippineTimeOnly();
                 var fiveMinutesFromNow = currentTime.AddMinutes(5);
                 
                 var query = _context.Schedules
@@ -443,8 +446,9 @@ namespace QuickClinique.Controllers
         {
             try
             {
+                var today = TimeZoneHelper.GetPhilippineDate();
                 var availableDates = await _context.Schedules
-                    .Where(s => s.IsAvailable == "Yes" && s.Date >= DateOnly.FromDateTime(DateTime.Now))
+                    .Where(s => s.IsAvailable == "Yes" && s.Date >= today)
                     .Select(s => s.Date)
                     .Distinct()
                     .OrderBy(d => d)
@@ -720,7 +724,7 @@ namespace QuickClinique.Controllers
         [ClinicStaffOnly]
         public async Task<IActionResult> Queue()
         {
-            var today = DateOnly.FromDateTime(DateTime.Now);
+            var today = TimeZoneHelper.GetPhilippineDate();
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
@@ -742,7 +746,7 @@ namespace QuickClinique.Controllers
         [ClinicStaffOnly]
         public async Task<IActionResult> GetQueueData()
         {
-            var today = DateOnly.FromDateTime(DateTime.Now);
+            var today = TimeZoneHelper.GetPhilippineDate();
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
@@ -872,7 +876,7 @@ namespace QuickClinique.Controllers
                         totalAppointments = appointments.Count,
                         pendingAppointments = appointments.Count(a => a.AppointmentStatus == "Pending"),
                         confirmedAppointments = appointments.Count(a => a.AppointmentStatus == "Confirmed"),
-                        todayAppointments = appointments.Count(a => a.Schedule.Date == DateOnly.FromDateTime(DateTime.Now))
+                        todayAppointments = appointments.Count(a => a.Schedule.Date == TimeZoneHelper.GetPhilippineDate())
                     },
                     appointments = appointments.Select(a => new {
                         appointmentId = a.AppointmentId,
@@ -904,7 +908,7 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
+                var today = TimeZoneHelper.GetPhilippineDate();
                 
                 // First, move any current "In Progress" appointment to "Done" status
                 var currentAppointment = await _context.Appointments
@@ -1599,7 +1603,7 @@ namespace QuickClinique.Controllers
                     ScheduleId = appointment.ScheduleId,
                     VisitReason = appointment.ReasonForVisit,
                     Idnumber = appointment.Patient?.Idnumber ?? 0,
-                    Date = DateOnly.FromDateTime(DateTime.Now)
+                    Date = TimeZoneHelper.GetPhilippineDate()
                 };
 
                 _context.Histories.Add(historyRecord);
@@ -1670,7 +1674,7 @@ namespace QuickClinique.Controllers
         {
             try
             {
-                var today = DateOnly.FromDateTime(DateTime.Now);
+                var today = TimeZoneHelper.GetPhilippineDate();
                 
                 // Get all today's appointments in queue (only those with queue numbers)
                 var todayAppointments = await _context.Appointments
@@ -1744,7 +1748,7 @@ namespace QuickClinique.Controllers
                         userQueueStatus = userQueueStatus,
                         userPosition = userPosition,
                         estimatedWaitTime = estimatedWaitTime,
-                        lastUpdated = DateTime.Now
+                        lastUpdated = TimeZoneHelper.GetPhilippineTime()
                     }
                 });
             }

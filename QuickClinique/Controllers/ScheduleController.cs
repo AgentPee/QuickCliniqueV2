@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
+using QuickClinique.Services;
 
 namespace QuickClinique.Controllers
 {
@@ -421,8 +422,9 @@ namespace QuickClinique.Controllers
             ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
             ViewData["ShowPast"] = showPast;
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+            // Use Philippine Time (UTC+8) for consistent timezone handling across environments
+            var today = TimeZoneHelper.GetPhilippineDate();
+            var currentTime = TimeZoneHelper.GetPhilippineTimeOnly();
 
             var schedules = _context.Schedules.AsQueryable();
 
