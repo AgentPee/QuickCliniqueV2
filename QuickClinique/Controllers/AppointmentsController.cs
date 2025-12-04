@@ -359,16 +359,25 @@ namespace QuickClinique.Controllers
                 var query = _context.Schedules
                     .Where(s => s.IsAvailable == "Yes" && s.Date >= today);
 
-                // Always filter out past time slots for today (even when no specific date is selected)
-                // For future dates, show all available slots
-                query = query.Where(s => 
-                    s.Date > today || 
-                    (s.Date == today && s.StartTime > fiveMinutesFromNow)
-                );
-
                 if (date.HasValue)
                 {
+                    // Filter to the selected date
                     query = query.Where(s => s.Date == date.Value);
+                    
+                    // If the selected date is today, filter out past time slots
+                    if (date.Value == today)
+                    {
+                        query = query.Where(s => s.StartTime > fiveMinutesFromNow);
+                    }
+                }
+                else
+                {
+                    // No specific date selected: filter out past time slots for today
+                    // For future dates, show all available slots
+                    query = query.Where(s => 
+                        s.Date > today || 
+                        (s.Date == today && s.StartTime > fiveMinutesFromNow)
+                    );
                 }
 
                 var availableSlots = await query
@@ -388,11 +397,28 @@ namespace QuickClinique.Controllers
                     })
                     .ToListAsync();
 
+                // Additional in-memory filtering to ensure past slots are removed (safety check)
+                availableSlots = availableSlots.Where(slot =>
+                {
+                    if (slot.Date > today)
+                        return true; // Future dates are always valid
+                    
+                    if (slot.Date == today)
+                    {
+                        // For today, only show slots that start after 5 minutes from now
+                        return slot.StartTime > fiveMinutesFromNow;
+                    }
+                    
+                    return false; // Past dates should not appear
+                }).ToList();
+
                 // Debug logging
-                Console.WriteLine($"Found {availableSlots.Count} available slots");
+                Console.WriteLine($"Found {availableSlots.Count} available slots after filtering");
+                Console.WriteLine($"Current time: {currentTime}, Five minutes from now: {fiveMinutesFromNow}");
+                Console.WriteLine($"Today's date: {today}");
                 foreach (var slot in availableSlots)
                 {
-                    Console.WriteLine($"Slot: {slot.ScheduleId}, Start: {slot.StartTime}, End: {slot.EndTime}, Formatted: {slot.StartTimeFormatted} - {slot.EndTimeFormatted}");
+                    Console.WriteLine($"Slot: {slot.ScheduleId}, Date: {slot.Date}, Start: {slot.StartTime}, Formatted: {slot.StartTimeFormatted}");
                 }
 
                 if (IsAjaxRequest())
