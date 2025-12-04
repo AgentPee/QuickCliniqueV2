@@ -394,25 +394,67 @@ using (var scope = app.Services.CreateScope())
             // Don't throw - Railway MySQL already creates the database, so we can continue
         }
 
-        // STEP 2: Run migrations to create tables
-        Console.WriteLine("[INIT] Checking for pending migrations...");
-        var pendingMigrations = context.Database.GetPendingMigrations().ToList();
-        if (pendingMigrations.Any())
-        {
-            Console.WriteLine($"Applying {pendingMigrations.Count} pending migration(s):");
-            foreach (var migration in pendingMigrations)
-            {
-                Console.WriteLine($"  - {migration}");
-            }
-        }
-
+        // STEP 2: Run migrations to create tables (AUTO-MIGRATION FOR RAILWAY)
+        Console.WriteLine("========================================");
+        Console.WriteLine("[INIT] AUTO-MIGRATION: Checking for pending migrations...");
+        Console.WriteLine("========================================");
+        
         try
         {
-            context.Database.Migrate();
-            Console.WriteLine("[SUCCESS] Migrations applied successfully!");
+            // Ensure database connection is open for migrations
+            var connection = context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                Console.WriteLine("[INIT] Opening database connection for migrations...");
+                await connection.OpenAsync();
+            }
+            
+            // Get list of pending migrations before applying
+            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+            var appliedMigrations = context.Database.GetAppliedMigrations().ToList();
+            
+            Console.WriteLine($"[INIT] Currently applied migrations: {appliedMigrations.Count}");
+            foreach (var applied in appliedMigrations)
+            {
+                Console.WriteLine($"  ✓ {applied}");
+            }
+            
+            if (pendingMigrations.Any())
+            {
+                Console.WriteLine($"[INIT] Found {pendingMigrations.Count} pending migration(s) to apply:");
+                foreach (var migration in pendingMigrations)
+                {
+                    Console.WriteLine($"  → {migration}");
+                }
+                
+                Console.WriteLine("[INIT] Applying migrations automatically...");
+                context.Database.Migrate();
+                Console.WriteLine("[SUCCESS] All migrations applied successfully!");
+                
+                // Verify migrations were applied
+                var newAppliedMigrations = context.Database.GetAppliedMigrations().ToList();
+                Console.WriteLine($"[VERIFY] Total applied migrations after: {newAppliedMigrations.Count}");
+            }
+            else
+            {
+                Console.WriteLine("[INFO] No pending migrations. Database is up to date.");
+            }
+            
+            Console.WriteLine("========================================");
         }
         catch (Exception migrateEx)
         {
+            Console.WriteLine("========================================");
+            Console.WriteLine("[ERROR] AUTO-MIGRATION FAILED!");
+            Console.WriteLine("========================================");
+            Console.WriteLine($"[ERROR] Error: {migrateEx.Message}");
+            Console.WriteLine($"[ERROR] Type: {migrateEx.GetType().Name}");
+            
+            if (migrateEx.InnerException != null)
+            {
+                Console.WriteLine($"[ERROR] Inner Exception: {migrateEx.InnerException.Message}");
+            }
+            
             // Check if the error is about pending model changes (which we handle manually)
             if (migrateEx.Message.Contains("pending changes", StringComparison.OrdinalIgnoreCase) ||
                 migrateEx.Message.Contains("The model for context", StringComparison.OrdinalIgnoreCase))
@@ -420,13 +462,15 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[INFO] Migration system detected model changes.");
                 Console.WriteLine("[INFO] These will be handled automatically via column checks in STEP 3.");
                 Console.WriteLine("[INFO] Continuing with initialization...");
+                Console.WriteLine("========================================");
                 // Don't throw - we'll handle the columns manually
             }
             else
             {
-                Console.WriteLine($"[ERROR] Migration failed: {migrateEx.Message}");
                 Console.WriteLine($"[ERROR] Stack trace: {migrateEx.StackTrace}");
-                throw; // Re-throw other migration errors
+                Console.WriteLine("[ERROR] Migration errors must be resolved before the application can start.");
+                Console.WriteLine("========================================");
+                throw; // Re-throw other migration errors - app should not start with failed migrations
             }
         }
 
