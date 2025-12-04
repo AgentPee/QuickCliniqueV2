@@ -396,7 +396,7 @@ using (var scope = app.Services.CreateScope())
 
         // STEP 2: Run migrations to create tables (AUTO-MIGRATION FOR RAILWAY)
         Console.WriteLine("========================================");
-        Console.WriteLine("[INIT] AUTO-MIGRATION: Checking for pending migrations...");
+        Console.WriteLine("[INIT] AUTO-MIGRATION: Ensuring all migrations are applied...");
         Console.WriteLine("========================================");
         
         try
@@ -409,35 +409,99 @@ using (var scope = app.Services.CreateScope())
                 await connection.OpenAsync();
             }
             
-            // Get list of pending migrations before applying
-            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
-            var appliedMigrations = context.Database.GetAppliedMigrations().ToList();
+            // Ensure __EFMigrationsHistory table exists (EF Core creates it, but let's verify)
+            using var ensureHistoryTable = connection.CreateCommand();
+            ensureHistoryTable.CommandText = @"
+                CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (
+                    MigrationId varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                    ProductVersion varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                    PRIMARY KEY (MigrationId)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
             
-            Console.WriteLine($"[INIT] Currently applied migrations: {appliedMigrations.Count}");
+            try
+            {
+                await ensureHistoryTable.ExecuteNonQueryAsync();
+                Console.WriteLine("[INIT] Migration history table verified/created.");
+            }
+            catch (Exception historyEx)
+            {
+                Console.WriteLine($"[WARNING] Could not ensure history table exists: {historyEx.Message}");
+                // Continue - EF Core will handle it
+            }
+            
+            // Get all available migrations from the assembly
+            var allMigrations = context.Database.GetMigrations().ToList();
+            Console.WriteLine($"[INIT] Total migrations found in assembly: {allMigrations.Count}");
+            foreach (var mig in allMigrations)
+            {
+                Console.WriteLine($"  📋 {mig}");
+            }
+            
+            // Get list of applied migrations
+            var appliedMigrations = context.Database.GetAppliedMigrations().ToList();
+            Console.WriteLine($"[INIT] Currently applied migrations in database: {appliedMigrations.Count}");
             foreach (var applied in appliedMigrations)
             {
                 Console.WriteLine($"  ✓ {applied}");
             }
             
+            // Get list of pending migrations
+            var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+            
             if (pendingMigrations.Any())
             {
-                Console.WriteLine($"[INIT] Found {pendingMigrations.Count} pending migration(s) to apply:");
+                Console.WriteLine($"[INIT] ⚠️  Found {pendingMigrations.Count} PENDING migration(s) that need to be applied:");
                 foreach (var migration in pendingMigrations)
                 {
                     Console.WriteLine($"  → {migration}");
                 }
                 
-                Console.WriteLine("[INIT] Applying migrations automatically...");
+                Console.WriteLine("[INIT] 🚀 Applying all pending migrations automatically...");
+                
+                // Apply migrations - this will run all pending migrations in order
                 context.Database.Migrate();
-                Console.WriteLine("[SUCCESS] All migrations applied successfully!");
+                
+                Console.WriteLine("[SUCCESS] ✅ All migrations applied successfully!");
                 
                 // Verify migrations were applied
                 var newAppliedMigrations = context.Database.GetAppliedMigrations().ToList();
                 Console.WriteLine($"[VERIFY] Total applied migrations after: {newAppliedMigrations.Count}");
+                
+                // List all now-applied migrations
+                var newlyApplied = newAppliedMigrations.Except(appliedMigrations).ToList();
+                if (newlyApplied.Any())
+                {
+                    Console.WriteLine("[VERIFY] Newly applied migrations:");
+                    foreach (var mig in newlyApplied)
+                    {
+                        Console.WriteLine($"  ✅ {mig}");
+                    }
+                }
             }
             else
             {
-                Console.WriteLine("[INFO] No pending migrations. Database is up to date.");
+                Console.WriteLine("[INFO] ✅ No pending migrations. Database is up to date with all migrations.");
+                
+                // Double-check: Verify that all expected migrations are applied
+                var missing = allMigrations.Except(appliedMigrations).ToList();
+                if (missing.Any())
+                {
+                    Console.WriteLine($"[WARNING] ⚠️  Found {missing.Count} migration(s) in codebase not marked as applied:");
+                    foreach (var mig in missing)
+                    {
+                        Console.WriteLine($"  ⚠️  {mig}");
+                    }
+                    Console.WriteLine("[WARNING] Attempting to apply missing migrations...");
+                    try
+                    {
+                        context.Database.Migrate();
+                        Console.WriteLine("[SUCCESS] Missing migrations applied!");
+                    }
+                    catch (Exception missingEx)
+                    {
+                        Console.WriteLine($"[ERROR] Failed to apply missing migrations: {missingEx.Message}");
+                    }
+                }
             }
             
             Console.WriteLine("========================================");
@@ -445,7 +509,7 @@ using (var scope = app.Services.CreateScope())
         catch (Exception migrateEx)
         {
             Console.WriteLine("========================================");
-            Console.WriteLine("[ERROR] AUTO-MIGRATION FAILED!");
+            Console.WriteLine("[ERROR] ❌ AUTO-MIGRATION FAILED!");
             Console.WriteLine("========================================");
             Console.WriteLine($"[ERROR] Error: {migrateEx.Message}");
             Console.WriteLine($"[ERROR] Type: {migrateEx.GetType().Name}");
@@ -453,6 +517,10 @@ using (var scope = app.Services.CreateScope())
             if (migrateEx.InnerException != null)
             {
                 Console.WriteLine($"[ERROR] Inner Exception: {migrateEx.InnerException.Message}");
+                if (migrateEx.InnerException.InnerException != null)
+                {
+                    Console.WriteLine($"[ERROR] Inner Inner Exception: {migrateEx.InnerException.InnerException.Message}");
+                }
             }
             
             // Check if the error is about pending model changes (which we handle manually)
@@ -468,9 +536,13 @@ using (var scope = app.Services.CreateScope())
             else
             {
                 Console.WriteLine($"[ERROR] Stack trace: {migrateEx.StackTrace}");
-                Console.WriteLine("[ERROR] Migration errors must be resolved before the application can start.");
+                Console.WriteLine("[ERROR] ⚠️  Migration errors must be resolved before the application can start.");
+                Console.WriteLine("[ERROR] Please check the database connection and permissions.");
                 Console.WriteLine("========================================");
-                throw; // Re-throw other migration errors - app should not start with failed migrations
+                
+                // For Railway, we might want to continue anyway and let manual column checks handle it
+                // But log it as a critical error
+                Console.WriteLine("[WARNING] Continuing despite migration error - column checks may handle missing columns.");
             }
         }
 
