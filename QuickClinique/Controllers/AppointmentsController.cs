@@ -354,20 +354,21 @@ namespace QuickClinique.Controllers
             {
                 var today = DateOnly.FromDateTime(DateTime.Now);
                 var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+                var fiveMinutesFromNow = currentTime.AddMinutes(5);
                 
                 var query = _context.Schedules
                     .Where(s => s.IsAvailable == "Yes" && s.Date >= today);
 
+                // Always filter out past time slots for today (even when no specific date is selected)
+                // For future dates, show all available slots
+                query = query.Where(s => 
+                    s.Date > today || 
+                    (s.Date == today && s.StartTime > fiveMinutesFromNow)
+                );
+
                 if (date.HasValue)
                 {
                     query = query.Where(s => s.Date == date.Value);
-                    
-                    // If the selected date is today, filter out past time slots and slots within 5 minutes
-                    if (date.Value == today)
-                    {
-                        var fiveMinutesFromNow = currentTime.AddMinutes(5);
-                        query = query.Where(s => s.StartTime > fiveMinutesFromNow);
-                    }
                 }
 
                 var availableSlots = await query
@@ -381,7 +382,7 @@ namespace QuickClinique.Controllers
                         EndTime = s.EndTime,     // Keep as TimeOnly
                         StartTimeFormatted = s.StartTime.ToString("h:mm tt"), // Add formatted version
                         EndTimeFormatted = s.EndTime.ToString("h:mm tt"),     // Add formatted version
-                        DisplayText = $"{s.StartTime:h:mm tt} to {s.EndTime:h:mm tt}",
+                        DisplayText = s.StartTime.ToString("h:mm tt"), // Show only start time
                         AvailableAppointments = _context.Appointments.Count(a => a.ScheduleId == s.ScheduleId &&
                             (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed"))
                     })

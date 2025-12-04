@@ -781,17 +781,16 @@
                             if (slot.displayText || slot.DisplayText) {
                                 // Use DisplayText if available (handle both cases)
                                 displayText = slot.displayText || slot.DisplayText;
-                            } else if (slot.startTimeFormatted && slot.endTimeFormatted) {
-                                // Use the pre-formatted times (camelCase from JSON)
-                                displayText = `${slot.startTimeFormatted} - ${slot.endTimeFormatted}`;
-                            } else if (slot.StartTimeFormatted && slot.EndTimeFormatted) {
-                                // Use the pre-formatted times (PascalCase)
-                                displayText = `${slot.StartTimeFormatted} - ${slot.EndTimeFormatted}`;
+                            } else if (slot.startTimeFormatted) {
+                                // Use the pre-formatted start time (camelCase from JSON)
+                                displayText = slot.startTimeFormatted;
+                            } else if (slot.StartTimeFormatted) {
+                                // Use the pre-formatted start time (PascalCase)
+                                displayText = slot.StartTimeFormatted;
                             } else {
-                                // Fallback: format the time strings ourselves
+                                // Fallback: format the start time ourselves
                                 const startTime = formatTimeString(slot.startTime || slot.StartTime);
-                                const endTime = formatTimeString(slot.endTime || slot.EndTime);
-                                displayText = `${startTime} - ${endTime}`;
+                                displayText = startTime;
                             }
 
                             option.textContent = displayText;
