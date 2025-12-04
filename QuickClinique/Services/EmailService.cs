@@ -140,7 +140,7 @@ namespace QuickClinique.Services
                     title: "Account Activated",
                     greeting: $"Hello {System.Net.WebUtility.HtmlEncode(name)},",
                     content: $@"
-                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Great news! Your account has been activated by an administrator. You can now log in and start using QuickClinique.</p>
+                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Great news! Your account has been activated by the clinic staff. You can now log in and start using QuickClinique.</p>
                         <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
                             <p style='margin: 0 0 12px 0; color: #2D3748; line-height: 1.6;'>Your account is now active and ready to use. You can log in to access all features of QuickClinique.</p>
                         </div>
@@ -190,7 +190,7 @@ namespace QuickClinique.Services
                             <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
                             <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
                         </div>
-                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please arrive on time for your appointment. You will be notified when it's your turn.</p>
+                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please arrive on time for your appointment.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>If you need to reschedule or cancel, please contact us as soon as possible.</p>",
                     primaryColor: "#06B6D4"
                 );
@@ -232,7 +232,7 @@ namespace QuickClinique.Services
                             <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Your New Position:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{newPosition} in line</span></p>
                             <p style='margin: 0; color: #2D3748;'><strong style='color: #059669;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
                         </div>
-                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please be ready for your appointment. You will be notified when it's your turn to be seen.</p>
+                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please be ready for your appointment.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>If you're not at the clinic yet, please make your way to the clinic as soon as possible.</p>",
                     primaryColor: "#10B981"
                 );
@@ -276,7 +276,7 @@ namespace QuickClinique.Services
                             <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
                             <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Your Position in Line:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{positionInLine}</span></p>
                         </div>
-                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please proceed to the clinic and wait for your queue number to be called. You will be notified when it's your turn.</p>
+                        <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please proceed to the clinic and wait for your queue number to be called.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>Thank you for your patience!</p>",
                     primaryColor: "#06B6D4"
                 );

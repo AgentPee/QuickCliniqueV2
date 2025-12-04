@@ -407,6 +407,7 @@
 
         $(document).ready(function() {
             initializeMessaging();
+            loadDashboardStatistics();
         });
 
         // Initialize messaging with SignalR
@@ -658,6 +659,29 @@
                 connection.stop();
             }
         });
+
+        // ===== DASHBOARD STATISTICS =====
+        // Load dashboard statistics (appointment counts)
+        async function loadDashboardStatistics() {
+            try {
+                const response = await fetch('/Student/GetDashboardStatistics');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    // Update the statistics cards
+                    document.getElementById('totalAppointments').textContent = result.data.totalAppointments || 0;
+                    document.getElementById('completedAppointments').textContent = result.data.completedAppointments || 0;
+                    document.getElementById('pendingAppointments').textContent = result.data.pendingAppointments || 0;
+                    document.getElementById('upcomingAppointments').textContent = result.data.upcomingAppointments || 0;
+                } else {
+                    console.error('Failed to load dashboard statistics:', result.error);
+                    // Keep default values (0) if loading fails
+                }
+            } catch (error) {
+                console.error('Error loading dashboard statistics:', error);
+                // Keep default values (0) if loading fails
+            }
+        }
     </script>
 
     <script>
