@@ -104,9 +104,26 @@ namespace QuickClinique.Controllers
                     return View(model);
                 }
 
-                // Create the appointment entity
+                // Validate: Prevent booking if within 5 minutes before the start of a time slot
                 var now = DateTime.Now;
+                var today = DateOnly.FromDateTime(now);
                 var timeSelected = schedule.Date.ToDateTime(schedule.StartTime);
+                
+                // Check if the appointment is for today and if it's within 5 minutes of the start time
+                if (schedule.Date == today && timeSelected > now)
+                {
+                    var timeUntilStart = timeSelected - now;
+                    if (timeUntilStart.TotalMinutes <= 5)
+                    {
+                        var errorMessage = $"Cannot book an appointment within 5 minutes of the start time. The time slot starts at {schedule.StartTime:h:mm tt}.";
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = errorMessage });
+                        ModelState.AddModelError("ScheduleId", errorMessage);
+                        ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", model.PatientId);
+                        ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", model.ScheduleId);
+                        return View(model);
+                    }
+                }
                 
                 var appointment = new Appointment
                 {
@@ -345,10 +362,11 @@ namespace QuickClinique.Controllers
                 {
                     query = query.Where(s => s.Date == date.Value);
                     
-                    // If the selected date is today, filter out past time slots
+                    // If the selected date is today, filter out past time slots and slots within 5 minutes
                     if (date.Value == today)
                     {
-                        query = query.Where(s => s.StartTime > currentTime);
+                        var fiveMinutesFromNow = currentTime.AddMinutes(5);
+                        query = query.Where(s => s.StartTime > fiveMinutesFromNow);
                     }
                 }
 

@@ -1,4 +1,4 @@
-﻿{
+﻿ {
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
@@ -16,7 +16,7 @@
       "applicationUrl": "https://localhost:5097",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "D:\\documents\\CAPSTONE 2\\pelagic-gist-480010-a5-04859c168621.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\pelagic-gist-480010-a5-04859c168621.json"
       }
     },
     "https": {
@@ -26,7 +26,7 @@
       "applicationUrl": "https://localhost:7002",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "D:\\documents\\CAPSTONE 2\\pelagic-gist-480010-a5-04859c168621.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\pelagic-gist-480010-a5-04859c168621.json"
       }
     },
     "IIS Express": {
@@ -34,7 +34,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "D:\\documents\\CAPSTONE 2\\pelagic-gist-480010-a5-04859c168621.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Ayan\\Documents\\CAPSTONE_2\\pelagic-gist-480010-a5-04859c168621.json"
       }
     }
   }

@@ -941,11 +941,11 @@ namespace QuickClinique.Controllers
                         if (IsAjaxRequest())
                             return Json(new { 
                                 success = false, 
-                                error = "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.",
+                                error = "Your account is pending activation by the clinic staff. You will receive an email notification once your account has been activated.",
                                 pendingActivation = true
                             });
 
-                        ModelState.AddModelError("", "Your account is pending activation by an administrator. You will receive an email notification once your account has been activated.");
+                        ModelState.AddModelError("", "Your account is pending activation by the clinic staff. You will receive an email notification once your account has been activated.");
                         return View(model);
                     }
 
@@ -999,6 +999,57 @@ namespace QuickClinique.Controllers
             }
 
             return View(student);
+        }
+
+        // GET: Student/GetDashboardStatistics - Get appointment statistics for dashboard
+        [HttpGet]
+        [StudentOnly]
+        public async Task<IActionResult> GetDashboardStatistics()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            try
+            {
+                var today = DateOnly.FromDateTime(DateTime.Today);
+
+                // Get all appointments for this student
+                var allAppointments = await _context.Appointments
+                    .Include(a => a.Schedule)
+                    .Where(a => a.PatientId == studentId.Value)
+                    .ToListAsync();
+
+                // Calculate statistics
+                var totalAppointments = allAppointments.Count;
+                var completedAppointments = allAppointments.Count(a => a.AppointmentStatus == "Completed");
+                var pendingAppointments = allAppointments.Count(a => a.AppointmentStatus == "Pending");
+                
+                // Upcoming: Confirmed or In Progress appointments with schedule date >= today
+                var upcomingAppointments = allAppointments.Count(a => 
+                    (a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress") &&
+                    a.Schedule != null &&
+                    a.Schedule.Date >= today);
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        totalAppointments = totalAppointments,
+                        completedAppointments = completedAppointments,
+                        pendingAppointments = pendingAppointments,
+                        upcomingAppointments = upcomingAppointments
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting dashboard statistics: {ex.Message}");
+                return Json(new { success = false, error = "Failed to load statistics" });
+            }
         }
 
         // GET: Student/Profile
