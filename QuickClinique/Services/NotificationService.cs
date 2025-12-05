@@ -36,7 +36,7 @@ namespace QuickClinique.Services
                 ClinicStaffId = clinicStaffId,
                 PatientId = patientId ?? 0, // Use 0 or a default patient if no patient specified
                 Content = content,
-                NotifDateTime = DateTime.Now,
+                NotifDateTime = TimeZoneHelper.GetPhilippineTime(),
                 IsRead = "No"
             }).ToList();
 
@@ -57,7 +57,7 @@ namespace QuickClinique.Services
                 ClinicStaffId = clinicStaffId,
                 PatientId = patientId ?? 0,
                 Content = content,
-                NotifDateTime = DateTime.Now,
+                NotifDateTime = TimeZoneHelper.GetPhilippineTime(),
                 IsRead = "No"
             };
 
@@ -130,7 +130,7 @@ namespace QuickClinique.Services
                 ClinicStaffId = clinicStaffId,
                 PatientId = 0, // No patient associated with staff registration
                 Content = content,
-                NotifDateTime = DateTime.Now,
+                NotifDateTime = TimeZoneHelper.GetPhilippineTime(),
                 IsRead = "No"
             }).ToList();
 
