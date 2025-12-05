@@ -4,6 +4,51 @@
     Layout = "_Layout";
 }
 
+@functions {
+    private string GetNotificationRedirectUrl(QuickClinique.Models.Notification notification)
+    {
+        var content = notification.Content ?? "";
+        var patientId = notification.PatientId;
+
+        // Check notification content to determine type and redirect URL
+        if (content.Contains("appointment booked", StringComparison.OrdinalIgnoreCase) ||
+            content.Contains("appointment set", StringComparison.OrdinalIgnoreCase))
+        {
+            // For appointment notifications, redirect to appointments management
+            if (patientId > 0)
+            {
+                return Url.Action("Manage", "Appointments");
+            }
+            return Url.Action("Manage", "Appointments");
+        }
+        else if (content.Contains("patient email verified", StringComparison.OrdinalIgnoreCase) ||
+                 content.Contains("patient registered", StringComparison.OrdinalIgnoreCase))
+        {
+            // For patient notifications, redirect to patient management
+            if (patientId > 0)
+            {
+                return Url.Action("Details", "Precord", new { id = patientId });
+            }
+            return Url.Action("Index", "Precord");
+        }
+        else if (content.Contains("clinic staff email verified", StringComparison.OrdinalIgnoreCase) ||
+                 content.Contains("clinic staff registered", StringComparison.OrdinalIgnoreCase))
+        {
+            // For staff notifications, redirect to clinic staff management
+            return Url.Action("Index", "Clinicstaff");
+        }
+        else if (patientId > 0)
+        {
+            // If notification has a patient ID but content doesn't match known patterns,
+            // redirect to patient details as default
+            return Url.Action("Details", "Precord", new { id = patientId });
+        }
+
+        // Default: stay on dashboard
+        return Url.Action("Index", "Dashboard");
+    }
+}
+
 @section Styles {
     <link rel="stylesheet" href="~/css/dashboard-index.css" asp-append-version="true" />
 }
@@ -163,29 +208,58 @@
             </div>
 
             @* Recent Notifications *@
-            @*<div class="notifications-panel">
-                <h4 class="section-title"><i class="fas fa-bell"></i> Recent Notifications</h4>
+            <div class="notifications-panel">
+                <div class="notifications-header">
+                    <h4 class="section-title">
+                        <i class="fas fa-bell"></i> Recent Notifications
+                        <span class="notification-badge" id="unreadNotificationBadge" style="display: none;">0</span>
+                    </h4>
+                    <button type="button" class="mark-all-read-btn" id="markAllReadBtn" style="display: none;" onclick="markAllNotificationsAsRead()">
+                        <i class="fas fa-check-double"></i> Mark all read
+                    </button>
+                </div>
 
-                @if (Model.RecentNotifications.Any())
-                {
-                    @foreach (var notification in Model.RecentNotifications)
+                <div id="notificationsContainer">
+                    @if (Model.RecentNotifications.Any())
                     {
-                        <div class="notification-item">
-                            <div>@notification.Content</div>
-                            <div class="notification-time">
-                                @notification.NotifDateTime.ToString("MMM dd, HH:mm")
+                        @foreach (var notification in Model.RecentNotifications)
+                        {
+                            var isUnread = notification.IsRead != "Yes";
+                            var notificationClass = isUnread ? "notification-item unread" : "notification-item";
+                            var redirectUrl = GetNotificationRedirectUrl(notification);
+                            <div class="@notificationClass" data-notification-id="@notification.NotificationId" data-redirect-url="@Html.Raw(redirectUrl)" onclick="handleNotificationClick(@notification.NotificationId, this)">
+                                <div class="notification-content">
+                                    @if (notification.Patient != null)
+                                    {
+                                        <div class="notification-patient">
+                                            <i class="fas fa-user"></i> @notification.Patient.FirstName @notification.Patient.LastName
+                                        </div>
+                                    }
+                                    <div class="notification-text">@notification.Content</div>
+                                </div>
+                                <div class="notification-footer">
+                                    <div class="notification-time">
+                                        @notification.NotifDateTime.ToString("MMM dd, HH:mm")
+                                    </div>
+                                    @if (isUnread)
+                                    {
+                                        <span class="notification-unread-indicator">
+                                            <i class="fas fa-circle"></i>
+                                        </span>
+                                    }
+                                </div>
                             </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                            <p>No recent notifications</p>
                         </div>
                     }
-                }
-                else
-                {
-                    <div class="text-center text-muted py-3">
-                        <i class="fas fa-bell-slash fa-2x mb-2"></i>
-                        <p>No recent notifications</p>
-                    </div>
-                }
-            </div>*@
+                </div>
+            </div>
         </div>
     </div>
 
@@ -341,6 +415,9 @@
                     // Update recent notifications
                     updateRecentNotifications(result.data.recentNotifications);
                     
+                    // Update unread count badge
+                    updateUnreadNotificationBadge(result.data.unreadNotificationCount || 0);
+                    
                     return true;
                 } else {
                     console.error('Failed to refresh dashboard data:', result.error);
@@ -479,14 +556,11 @@
 
         // Update recent notifications
         function updateRecentNotifications(notifications) {
-            const notificationsPanel = document.querySelector('.notifications-panel');
-            if (!notificationsPanel) return;
+            const notificationsContainer = document.getElementById('notificationsContainer');
+            if (!notificationsContainer) return;
 
-            const notificationsContainer = notificationsPanel.querySelector('.notification-item')?.parentElement || notificationsPanel;
-            
-            // Clear existing notifications (but keep the header)
-            const existingItems = notificationsContainer.querySelectorAll('.notification-item');
-            existingItems.forEach(item => item.remove());
+            // Clear existing notifications
+            notificationsContainer.innerHTML = '';
 
             if (notifications.length === 0) {
                 notificationsContainer.innerHTML = `
@@ -498,16 +572,152 @@
                 return;
             }
 
-            // Add new notifications
-            notifications.forEach(notification => {
-                const notificationHtml = `
-                    <div class="notification-item">
-                        <div>${escapeHtml(notification.content)}</div>
-                        <div class="notification-time">${notification.dateTime}</div>
-                    </div>
-                `;
-                notificationsContainer.insertAdjacentHTML('beforeend', notificationHtml);
-            });
+            // Separate unread and read notifications
+            const unreadNotifications = notifications.filter(n => !n.isRead);
+            const readNotifications = notifications.filter(n => n.isRead);
+
+            // Add unread notifications section
+            if (unreadNotifications.length > 0) {
+                unreadNotifications.forEach(notification => {
+                    const patientNameHtml = notification.patientName 
+                        ? `<div class="notification-patient"><i class="fas fa-user"></i> ${escapeHtml(notification.patientName)}</div>`
+                        : '';
+                    const redirectUrl = notification.redirectUrl || '#';
+                    const notificationHtml = `
+                        <div class="notification-item unread" data-notification-id="${notification.notificationId}" data-redirect-url="${redirectUrl}" onclick="handleNotificationClick(${notification.notificationId}, this)">
+                            <div class="notification-content">
+                                ${patientNameHtml}
+                                <div class="notification-text">${escapeHtml(notification.content)}</div>
+                            </div>
+                            <div class="notification-footer">
+                                <div class="notification-time">${notification.dateTime}</div>
+                                <span class="notification-unread-indicator"><i class="fas fa-circle"></i></span>
+                            </div>
+                        </div>
+                    `;
+                    notificationsContainer.insertAdjacentHTML('beforeend', notificationHtml);
+                });
+            }
+
+            // Add read notifications section
+            if (readNotifications.length > 0) {
+                readNotifications.forEach(notification => {
+                    const patientNameHtml = notification.patientName 
+                        ? `<div class="notification-patient"><i class="fas fa-user"></i> ${escapeHtml(notification.patientName)}</div>`
+                        : '';
+                    const redirectUrl = notification.redirectUrl || '#';
+                    const notificationHtml = `
+                        <div class="notification-item" data-notification-id="${notification.notificationId}" data-redirect-url="${redirectUrl}" onclick="handleNotificationClick(${notification.notificationId}, this)">
+                            <div class="notification-content">
+                                ${patientNameHtml}
+                                <div class="notification-text">${escapeHtml(notification.content)}</div>
+                            </div>
+                            <div class="notification-footer">
+                                <div class="notification-time">${notification.dateTime}</div>
+                            </div>
+                        </div>
+                    `;
+                    notificationsContainer.insertAdjacentHTML('beforeend', notificationHtml);
+                });
+            }
+        }
+
+        // Update unread notification badge
+        function updateUnreadNotificationBadge(count) {
+            const badge = document.getElementById('unreadNotificationBadge');
+            const markAllBtn = document.getElementById('markAllReadBtn');
+            
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    if (markAllBtn) markAllBtn.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                    if (markAllBtn) markAllBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Handle notification click - mark as read and redirect
+        async function handleNotificationClick(notificationId, element) {
+            // Get redirect URL from data attribute
+            const redirectUrl = element?.getAttribute('data-redirect-url') || '';
+            
+            // Mark as read first (fire-and-forget, don't wait for completion)
+            markNotificationAsRead(notificationId, element);
+            
+            // Redirect to the appropriate page
+            if (redirectUrl && redirectUrl !== '#' && redirectUrl !== '') {
+                // Small delay to allow mark as read request to be sent before redirect
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 200);
+            }
+        }
+
+        // Mark notification as read
+        async function markNotificationAsRead(notificationId, element) {
+            try {
+                const response = await fetch('/Dashboard/MarkNotificationAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ notificationId: notificationId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Remove unread class and indicator
+                    if (element) {
+                        element.classList.remove('unread');
+                        const indicator = element.querySelector('.notification-unread-indicator');
+                        if (indicator) indicator.remove();
+                    }
+
+                    // Update unread count badge
+                    updateUnreadNotificationBadge(result.unreadCount || 0);
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Mark all notifications as read
+        async function markAllNotificationsAsRead() {
+            try {
+                const response = await fetch('/Dashboard/MarkAllNotificationsAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Remove unread class from all notifications
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                        const indicator = item.querySelector('.notification-unread-indicator');
+                        if (indicator) indicator.remove();
+                    });
+
+                    // Update unread count badge
+                    updateUnreadNotificationBadge(0);
+
+                    // Refresh dashboard data to update the list
+                    setTimeout(() => {
+                        refreshDashboardData();
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
         }
 
         // Get status class for badge styling
@@ -656,7 +866,30 @@
                     sendReplyToPatient();
                 }
             });
+
+            // Initialize unread notification count from server-rendered notifications
+            initializeUnreadNotificationCountFromServer();
         });
+
+        // Initialize unread notification count from server-rendered notifications
+        function initializeUnreadNotificationCountFromServer() {
+            const unreadNotifications = document.querySelectorAll('.notification-item.unread');
+            const unreadCount = unreadNotifications.length;
+            updateUnreadNotificationBadge(unreadCount);
+        }
+
+        // Initialize unread notification count on page load (via API)
+        async function initializeUnreadNotificationCount() {
+            try {
+                const response = await fetch('/Dashboard/GetUnreadNotificationCount');
+                const result = await response.json();
+                if (result.success) {
+                    updateUnreadNotificationBadge(result.unreadCount || 0);
+                }
+            } catch (error) {
+                console.error('Error getting unread notification count:', error);
+            }
+        }
 
         // Initialize SignalR connection
         async function initializeSignalR() {

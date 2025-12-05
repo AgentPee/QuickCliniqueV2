@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
@@ -17,13 +17,17 @@ namespace QuickClinique.Controllers
         private readonly IEmailService _emailService;
         private readonly IPasswordService _passwordService;
         private readonly IFileStorageService _fileStorageService;
+        private readonly INotificationService _notificationService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, INotificationService notificationService, IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
             _fileStorageService = fileStorageService;
+            _notificationService = notificationService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         // Helper method to get the base URL for absolute links (for email verification, etc.)
@@ -377,6 +381,15 @@ namespace QuickClinique.Controllers
             try
             {
                 var wasInactive = !clinicstaff.IsActive;
+                
+                // If trying to activate an account, check if email is verified first
+                if (wasInactive && !clinicstaff.IsEmailVerified)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Cannot activate account. Staff member's email has not been verified yet. Please verify the email first before activating the account." 
+                    });
+                }
                 
                 // Toggle the IsActive status
                 clinicstaff.IsActive = !clinicstaff.IsActive;
@@ -974,6 +987,22 @@ namespace QuickClinique.Controllers
             clinicstaff.EmailVerificationTokenExpiry = null;
 
             await _context.SaveChangesAsync();
+
+            // Send notifications to all existing clinic staff about new staff with verified email (fire-and-forget)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Create a new scope for the background task
+                    using var scope = _serviceScopeFactory.CreateScope();
+                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    await notificationService.NotifyNewClinicStaffAsync(clinicstaff);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[NOTIFICATION ERROR] Failed to send notification for verified clinic staff {clinicstaff.ClinicStaffId}: {ex.Message}");
+                }
+            });
 
             if (IsAjaxRequest())
                 return Json(new { success = true, message = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });

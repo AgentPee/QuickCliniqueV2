@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,12 +15,14 @@ namespace QuickClinique.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly INotificationService _notificationService;
 
-        public AppointmentsController(ApplicationDbContext context, IEmailService emailService, IServiceScopeFactory serviceScopeFactory)
+        public AppointmentsController(ApplicationDbContext context, IEmailService emailService, IServiceScopeFactory serviceScopeFactory, INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
             _serviceScopeFactory = serviceScopeFactory;
+            _notificationService = notificationService;
         }
 
         // GET: Appointments/Details/5
@@ -143,6 +145,22 @@ namespace QuickClinique.Controllers
 
                 _context.Add(appointment);
                 await _context.SaveChangesAsync();
+
+                // Send notifications to all clinic staff about the new appointment (fire-and-forget)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        // Create a new scope for the background task
+                        using var scope = _serviceScopeFactory.CreateScope();
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                        await notificationService.NotifyNewAppointmentAsync(appointment);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[NOTIFICATION ERROR] Failed to send notification for appointment {appointment.AppointmentId}: {ex.Message}");
+                    }
+                });
 
                 if (IsAjaxRequest())
                     return Json(new

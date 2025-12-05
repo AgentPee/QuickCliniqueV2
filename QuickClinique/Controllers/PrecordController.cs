@@ -473,6 +473,15 @@ namespace QuickClinique.Controllers
             {
                 var wasInactive = !student.IsActive;
                 
+                // If trying to activate an account, check if email is verified first
+                if (wasInactive && !student.IsEmailVerified)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Cannot activate account. Patient's email has not been verified yet. Please verify the email first before activating the account." 
+                    });
+                }
+                
                 // Toggle the IsActive status
                 student.IsActive = !student.IsActive;
                 await _context.SaveChangesAsync();

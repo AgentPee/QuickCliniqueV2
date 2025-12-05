@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Attributes;
 using QuickClinique.Hubs;
+using QuickClinique.Services;
 
 namespace QuickClinique.Controllers
 {
@@ -12,11 +13,13 @@ namespace QuickClinique.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<MessageHub> _hubContext;
+        private readonly INotificationService _notificationService;
 
-        public DashboardController(ApplicationDbContext context, IHubContext<MessageHub> hubContext)
+        public DashboardController(ApplicationDbContext context, IHubContext<MessageHub> hubContext, INotificationService notificationService)
         {
             _context = context;
             _hubContext = hubContext;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -47,12 +50,13 @@ namespace QuickClinique.Controllers
                     .Take(10)
                     .ToListAsync(),
 
-                // Get recent notifications
+                // Get recent notifications - unread first, then read
                 RecentNotifications = await _context.Notifications
                     .Include(n => n.Patient)
                     .Where(n => n.ClinicStaffId == clinicStaffId)
-                    .OrderByDescending(n => n.NotifDateTime)
-                    .Take(5)
+                    .OrderByDescending(n => n.IsRead == "No")
+                    .ThenByDescending(n => n.NotifDateTime)
+                    .Take(10)
                     .ToListAsync(),
 
                 // Get statistics
@@ -231,21 +235,102 @@ namespace QuickClinique.Controllers
                         reason = a.ReasonForVisit
                     })
                     .ToListAsync(),
-                // Recent notifications
-                recentNotifications = await _context.Notifications
+                // Recent notifications - unread first, then read with redirect URLs
+                recentNotifications = (await _context.Notifications
                     .Include(n => n.Patient)
                     .Where(n => n.ClinicStaffId == clinicStaffId)
-                    .OrderByDescending(n => n.NotifDateTime)
-                    .Take(5)
+                    .OrderByDescending(n => n.IsRead == "No")
+                    .ThenByDescending(n => n.NotifDateTime)
+                    .Take(10)
+                    .ToListAsync())
                     .Select(n => new
                     {
+                        notificationId = n.NotificationId,
                         content = n.Content,
-                        dateTime = n.NotifDateTime.ToString("MMM dd, HH:mm")
+                        dateTime = n.NotifDateTime.ToString("MMM dd, HH:mm"),
+                        isRead = n.IsRead == "Yes",
+                        patientName = n.Patient != null ? $"{n.Patient.FirstName} {n.Patient.LastName}" : null,
+                        patientId = n.PatientId,
+                        redirectUrl = GetNotificationRedirectUrl(n)
                     })
-                    .ToListAsync()
+                    .ToList(),
+                // Unread notification count
+                unreadNotificationCount = await _context.Notifications
+                    .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "No")
+                    .CountAsync()
             };
 
             return Json(new { success = true, data = dashboardData });
+        }
+
+        // POST: Dashboard/MarkNotificationAsRead - Mark a notification as read
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationAsRead([FromBody] MarkNotificationReadRequest request)
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.NotificationId == request.NotificationId && n.ClinicStaffId == clinicStaffId);
+
+            if (notification == null)
+            {
+                return Json(new { success = false, error = "Notification not found" });
+            }
+
+            notification.IsRead = "Yes";
+            await _context.SaveChangesAsync();
+
+            // Get updated unread count
+            var unreadCount = await _context.Notifications
+                .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "No")
+                .CountAsync();
+
+            return Json(new { success = true, message = "Notification marked as read", unreadCount });
+        }
+
+        // POST: Dashboard/MarkAllNotificationsAsRead - Mark all notifications as read
+        [HttpPost]
+        public async Task<IActionResult> MarkAllNotificationsAsRead()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var unreadNotifications = await _context.Notifications
+                .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "No")
+                .ToListAsync();
+
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = "Yes";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "All notifications marked as read", unreadCount = 0 });
+        }
+
+        // GET: Dashboard/GetUnreadNotificationCount - Get count of unread notifications
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadNotificationCount()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var unreadCount = await _context.Notifications
+                .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "No")
+                .CountAsync();
+
+            return Json(new { success = true, unreadCount });
         }
 
         // GET: Dashboard/GetMessages - Get ALL messages between students and clinic staff (shared inbox)
@@ -765,6 +850,19 @@ namespace QuickClinique.Controllers
                 _context.Appointments.Add(appointment);
                 await _context.SaveChangesAsync();
 
+                // Send notifications to all clinic staff about the new walk-in appointment (fire-and-forget)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _notificationService.NotifyNewAppointmentAsync(appointment);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[NOTIFICATION ERROR] Failed to send notification for walk-in appointment {appointment.AppointmentId}: {ex.Message}");
+                    }
+                });
+
                 return Json(new { 
                     success = true, 
                     message = "Appointment successfully added.",
@@ -781,6 +879,57 @@ namespace QuickClinique.Controllers
                     error = "An error occurred while creating the appointment. Please try again." 
                 });
             }
+        }
+
+        /// <summary>
+        /// Determines the redirect URL based on notification content and type
+        /// </summary>
+        private string GetNotificationRedirectUrl(Notification notification)
+        {
+            var content = notification.Content ?? "";
+            var patientId = notification.PatientId;
+
+            // Check notification content to determine type and redirect URL
+            if (content.Contains("appointment booked", StringComparison.OrdinalIgnoreCase) ||
+                content.Contains("appointment set", StringComparison.OrdinalIgnoreCase))
+            {
+                // For appointment notifications, redirect to appointments management
+                // If patient ID is available and valid, we could filter by patient
+                if (patientId > 0)
+                {
+                    // Option 1: Redirect to appointments page (general)
+                    return Url.Action("Manage", "Appointments");
+                    // Option 2: Could redirect to patient details to see all their appointments
+                    // return Url.Action("Details", "Precord", new { id = patientId });
+                }
+                return Url.Action("Manage", "Appointments");
+            }
+            else if (content.Contains("patient email verified", StringComparison.OrdinalIgnoreCase) ||
+                     content.Contains("patient registered", StringComparison.OrdinalIgnoreCase))
+            {
+                // For patient notifications, redirect to patient management
+                // If patient ID is available, go directly to patient details
+                if (patientId > 0)
+                {
+                    return Url.Action("Details", "Precord", new { id = patientId });
+                }
+                return Url.Action("Index", "Precord");
+            }
+            else if (content.Contains("clinic staff email verified", StringComparison.OrdinalIgnoreCase) ||
+                     content.Contains("clinic staff registered", StringComparison.OrdinalIgnoreCase))
+            {
+                // For staff notifications, redirect to clinic staff management
+                return Url.Action("Index", "Clinicstaff");
+            }
+            else if (patientId > 0)
+            {
+                // If notification has a patient ID but content doesn't match known patterns,
+                // redirect to patient details as default
+                return Url.Action("Details", "Precord", new { id = patientId });
+            }
+
+            // Default: stay on dashboard
+            return Url.Action("Index", "Dashboard");
         }
     }
 
@@ -822,5 +971,10 @@ namespace QuickClinique.Controllers
         public string AppointmentTime { get; set; } = string.Empty;
         public string ReasonForVisit { get; set; } = string.Empty;
         public string PriorityLevel { get; set; } = string.Empty;
+    }
+
+    public class MarkNotificationReadRequest
+    {
+        public int NotificationId { get; set; }
     }
 }

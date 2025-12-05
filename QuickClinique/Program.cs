@@ -34,6 +34,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IDataSeedingService, DataSeedingService>();
 builder.Services.AddScoped<IIdValidationService, IdValidationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Add background service for queue assignment
 builder.Services.AddHostedService<QueueAssignmentService>();

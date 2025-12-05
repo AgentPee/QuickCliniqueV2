@@ -1,4 +1,4 @@
-﻿/* CSS Variables */
+/* CSS Variables */
 :root {
     --primary-teal: #179C8E;
     --primary-cyan: #4FC4D3;
@@ -612,6 +612,70 @@
         margin-bottom: 1.5rem;
     }
 
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+    .notifications-header .section-title {
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+.notification-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.mark-all-read-btn {
+    background: transparent;
+    border: 2px solid var(--primary-teal);
+    color: var(--primary-teal);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .mark-all-read-btn:hover {
+        background: var(--primary-teal);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+    }
+
+    .mark-all-read-btn i {
+        font-size: 0.8rem;
+    }
+
 .notification-item {
     padding: 1rem;
     border-left: 3px solid var(--primary-teal);
@@ -620,18 +684,66 @@
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
 }
+
+    .notification-item.unread {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        border-left-color: #F59E0B;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+    }
 
     .notification-item:hover {
         background: linear-gradient(135deg, rgba(78, 205, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
         transform: translateX(5px);
     }
 
+    .notification-item.unread:hover {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+.notification-content {
+    margin-bottom: 0.5rem;
+}
+
+.notification-patient {
+    font-size: 0.8rem;
+    color: var(--primary-teal);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .notification-patient i {
+        font-size: 0.75rem;
+    }
+
+.notification-text {
+    line-height: 1.5;
+    color: var(--text-dark);
+}
+
+.notification-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
 .notification-time {
     color: var(--text-muted);
     font-size: 0.8rem;
-    margin-top: 0.5rem;
     font-weight: 600;
+}
+
+.notification-unread-indicator {
+    color: #F59E0B;
+    font-size: 0.6rem;
+    animation: pulse 2s infinite;
 }
 
 /* Alert Messages */
