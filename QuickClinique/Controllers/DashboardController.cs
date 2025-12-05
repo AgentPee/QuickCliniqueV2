@@ -144,7 +144,7 @@ namespace QuickClinique.Controllers
                     ClinicStaffId = clinicStaffId.Value,
                     PatientId = patientId,
                     Content = content,
-                    NotifDateTime = DateTime.Now,
+                    NotifDateTime = TimeZoneHelper.GetPhilippineTime(),
                     IsRead = "No"
                 };
 
