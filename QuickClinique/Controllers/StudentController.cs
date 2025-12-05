@@ -18,14 +18,18 @@ namespace QuickClinique.Controllers
         private readonly IPasswordService _passwordService;
         private readonly IFileStorageService _fileStorageService;
         private readonly IIdValidationService _idValidationService;
+        private readonly INotificationService _notificationService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, IIdValidationService idValidationService)
+        public StudentController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, IIdValidationService idValidationService, INotificationService notificationService, IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
             _emailService = emailService;
             _passwordService = passwordService;
             _fileStorageService = fileStorageService;
             _idValidationService = idValidationService;
+            _notificationService = notificationService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         // Helper method to get the base URL for absolute links (for email verification, etc.)
@@ -1353,6 +1357,22 @@ namespace QuickClinique.Controllers
             student.EmailVerificationTokenExpiry = null;
 
             await _context.SaveChangesAsync();
+
+            // Send notifications to all clinic staff about new patient with verified email (fire-and-forget)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Create a new scope for the background task
+                    using var scope = _serviceScopeFactory.CreateScope();
+                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    await notificationService.NotifyNewPatientAsync(student);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[NOTIFICATION ERROR] Failed to send notification for verified patient {student.StudentId}: {ex.Message}");
+                }
+            });
 
             if (IsAjaxRequest())
                 return Json(new { success = true, message = "Email verified successfully! Your account is pending activation by an administrator. You will receive an email once your account is activated.", redirectUrl = Url.Action(nameof(Login)) });
