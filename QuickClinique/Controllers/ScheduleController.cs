@@ -634,6 +634,57 @@ namespace QuickClinique.Controllers
             return RedirectToAction(nameof(Availability));
         }
 
+        // POST: Schedule/BulkDelete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkDelete(int[] scheduleIds)
+        {
+            if (scheduleIds == null || !scheduleIds.Any())
+            {
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "No schedules selected for deletion." });
+
+                TempData["ErrorMessage"] = "No schedules selected for deletion.";
+                return RedirectToAction(nameof(Availability));
+            }
+
+            try
+            {
+                var schedules = await _context.Schedules
+                    .Include(s => s.Appointments)
+                    .Where(s => scheduleIds.Contains(s.ScheduleId))
+                    .ToListAsync();
+
+                // Get appointment count before deletion
+                var totalAppointments = schedules.Sum(s => s.Appointments?.Count ?? 0);
+
+                // Remove all schedules
+                _context.Schedules.RemoveRange(schedules);
+                await _context.SaveChangesAsync();
+
+                var message = totalAppointments > 0
+                    ? $"Successfully deleted {schedules.Count} schedule(s) and {totalAppointments} associated appointment(s)."
+                    : $"Successfully deleted {schedules.Count} schedule(s).";
+
+                if (IsAjaxRequest())
+                    return Json(new { success = true, message = message });
+
+                TempData["SuccessMessage"] = message;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting schedules: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = "An error occurred while deleting schedules." });
+
+                TempData["ErrorMessage"] = "An error occurred while deleting schedules.";
+            }
+
+            return RedirectToAction(nameof(Availability));
+        }
+
         private bool IsAjaxRequest()
         {
             return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||

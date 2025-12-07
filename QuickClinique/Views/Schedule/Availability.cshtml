@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuickClinique.Models.Schedule>
+@model IEnumerable<QuickClinique.Models.Schedule>
 
 @{
     ViewData["Title"] = "Schedule Availability";
@@ -156,6 +156,9 @@
                     <button type="button" class="btn btn-danger btn-sm" onclick="bulkUpdate('No')">
                         <i class="fas fa-times"></i> Mark as Unavailable
                     </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="showBulkDeleteModal()">
+                        <i class="fas fa-trash"></i> Delete Selected
+                    </button>
                 </div>
             </div>
         </div>
@@ -245,6 +248,48 @@
 </div>
 
 @await Html.PartialAsync("_EmergencyPolling")
+
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header danger-header">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Bulk Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-banner">
+                    <i class="fas fa-radiation"></i>
+                    <div>
+                        <h6>Delete Multiple Schedules</h6>
+                        <p class="mb-0">Are you sure you want to delete <strong id="selectedCount">0</strong> schedule(s)? This action cannot be undone.</p>
+                    </div>
+                </div>
+
+                <div class="critical-warning">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <div>
+                        <strong>Critical Warning</strong>
+                        <p>Deleting these schedules will permanently remove all associated appointments. This action is irreversible.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form id="bulkDeleteForm" method="post" asp-action="BulkDelete">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Selected Schedules
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
@@ -349,6 +394,37 @@
             } else {
                 alert('Please select at least one schedule to update.');
             }
+        }
+
+        function showBulkDeleteModal() {
+            const checkedCheckboxes = document.querySelectorAll('.schedule-checkbox:checked');
+            const checkedCount = checkedCheckboxes.length;
+
+            if (checkedCount === 0) {
+                alert('Please select at least one schedule to delete.');
+                return;
+            }
+
+            // Update the selected count in the modal
+            document.getElementById('selectedCount').textContent = checkedCount;
+
+            // Clear existing hidden inputs from the form
+            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+            const existingInputs = bulkDeleteForm.querySelectorAll('input[name="scheduleIds"]');
+            existingInputs.forEach(input => input.remove());
+
+            // Add selected schedule IDs to the form
+            checkedCheckboxes.forEach(checkbox => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'scheduleIds';
+                input.value = checkbox.value;
+                bulkDeleteForm.appendChild(input);
+            });
+
+            // Show the modal
+            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+            bulkDeleteModal.show();
         }
 
     </script>
