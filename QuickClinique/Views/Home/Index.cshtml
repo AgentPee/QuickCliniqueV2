@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
     Layout = "_Layout";
 }
@@ -762,10 +762,23 @@
 
                 if (result.success) {
                     if (result.data && result.data.length > 0) {
-                        availableSlots = result.data;
+                        // Filter out past time slots on the client side (safety check)
+                        // Use the current Philippine time from the server response
+                        const serverTime = result.currentTime || null;
+                        const filteredSlots = filterPastTimeSlots(result.data, selectedDate, serverTime);
+                        
+                        if (filteredSlots.length === 0) {
+                            availableSlotsSelect.innerHTML = '<option value="">No available time slots for this date</option>';
+                            availableSlotsSelect.disabled = true;
+                            showSlotCountInfo(0);
+                            dateError.textContent = 'No available time slots found for the selected date (all slots are in the past).';
+                            return;
+                        }
+
+                        availableSlots = filteredSlots;
                         availableSlotsSelect.innerHTML = '<option value="">Select a time slot</option>';
 
-                        result.data.forEach(slot => {
+                        filteredSlots.forEach(slot => {
                             const option = document.createElement('option');
                             // Handle both camelCase (from JSON serialization) and PascalCase
                             const scheduleId = slot.scheduleId || slot.ScheduleId;
@@ -801,10 +814,13 @@
                         });
 
                         availableSlotsSelect.disabled = false;
-                        showSlotCountInfo(result.data.length);
+                        showSlotCountInfo(filteredSlots.length);
                         dateError.textContent = '';
 
-                        console.log(`Successfully loaded ${result.data.length} slots`);
+                        if (filteredSlots.length < result.data.length) {
+                            console.log(`Filtered out ${result.data.length - filteredSlots.length} past time slot(s)`);
+                        }
+                        console.log(`Successfully loaded ${filteredSlots.length} available slots`);
                     } else {
                         // No slots found for this date
                         availableSlotsSelect.innerHTML = '<option value="">No available time slots for this date</option>';
@@ -827,6 +843,129 @@
             } finally {
                 slotLoading.style.display = 'none';
             }
+        }
+
+        // Filter out past time slots on the client side (safety check)
+        // Uses server-provided Philippine time for accurate filtering
+        function filterPastTimeSlots(slots, selectedDate, serverTime) {
+            if (!slots || slots.length === 0) {
+                return [];
+            }
+
+            // Use server-provided Philippine time if available, otherwise fall back to client calculation
+            let todayStr, isToday, minimumTimeMinutes;
+            
+            if (serverTime && serverTime.date) {
+                // Use server-provided time (most accurate)
+                todayStr = serverTime.date;
+                isToday = selectedDate === todayStr;
+                
+                // Parse server time to get current time in minutes
+                let currentTimeStr = serverTime.timeOnly || serverTime.time || '00:00';
+                const [currentHours, currentMinutes] = currentTimeStr.split(':').map(Number);
+                const currentTimeMinutes = currentHours * 60 + (currentMinutes || 0);
+                
+                // Add 5 minutes buffer
+                minimumTimeMinutes = currentTimeMinutes + 5;
+                
+                console.log('[Client Filter] Using server-provided Philippine time');
+                console.log('[Client Filter] Server date:', todayStr);
+                console.log('[Client Filter] Server time:', currentTimeStr);
+            } else {
+                // Fallback: calculate Philippine time client-side (less accurate)
+                console.warn('[Client Filter] Server time not provided, using client-side calculation');
+                const nowUTC = new Date();
+                const philippineOffsetHours = 8;
+                const philippineTime = new Date(nowUTC.getTime() + (philippineOffsetHours * 60 * 60 * 1000));
+                
+                todayStr = philippineTime.getUTCFullYear() + '-' + 
+                          String(philippineTime.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                          String(philippineTime.getUTCDate()).padStart(2, '0');
+                
+                isToday = selectedDate === todayStr;
+                
+                const currentHours = philippineTime.getUTCHours();
+                const currentMinutes = philippineTime.getUTCMinutes();
+                const currentTimeMinutes = currentHours * 60 + currentMinutes;
+                minimumTimeMinutes = currentTimeMinutes + 5;
+            }
+
+            console.log('[Client Filter] Today (Philippine):', todayStr);
+            console.log('[Client Filter] Selected date:', selectedDate);
+            console.log('[Client Filter] Is today:', isToday);
+            console.log('[Client Filter] Minimum time (5 min buffer):', Math.floor(minimumTimeMinutes / 60) + ':' + String(minimumTimeMinutes % 60).padStart(2, '0'));
+
+            const filteredSlots = slots.filter(slot => {
+                try {
+                    // Get slot date (handle both camelCase and PascalCase)
+                    let slotDateStr = slot.date || slot.Date;
+                    if (!slotDateStr) {
+                        console.warn('[Client Filter] Slot missing date:', slot);
+                        return false;
+                    }
+
+                    // Normalize date format (remove time portion if present)
+                    slotDateStr = slotDateStr.split('T')[0];
+                    
+                    // Compare date strings directly
+                    if (slotDateStr < todayStr) {
+                        console.log('[Client Filter] Filtered out past date slot:', slotDateStr);
+                        return false;
+                    }
+
+                    // Future dates are always valid
+                    if (slotDateStr > todayStr) {
+                        return true;
+                    }
+
+                    // For today's slots, check if the time has passed
+                    if (isToday && slotDateStr === todayStr) {
+                        // Get slot start time (handle both camelCase and PascalCase)
+                        const startTime = slot.startTime || slot.StartTime;
+                        if (!startTime) {
+                            console.warn('[Client Filter] Slot missing startTime:', slot);
+                            return false;
+                        }
+
+                        // Parse time - could be string "HH:mm:ss" or object
+                        let slotHours, slotMinutes;
+                        if (typeof startTime === 'string') {
+                            // Time string format: "HH:mm:ss" or "HH:mm"
+                            const timeParts = startTime.split(':');
+                            slotHours = parseInt(timeParts[0], 10);
+                            slotMinutes = parseInt(timeParts[1] || '0', 10);
+                        } else if (typeof startTime === 'object' && startTime !== null) {
+                            // TimeOnly object from .NET serialization
+                            slotHours = startTime.hours || startTime.Hours || 0;
+                            slotMinutes = startTime.minutes || startTime.Minutes || 0;
+                        } else {
+                            console.warn('[Client Filter] Unable to parse startTime:', startTime, typeof startTime);
+                            return false;
+                        }
+
+                        // Convert slot time to minutes for easy comparison
+                        const slotTimeMinutes = slotHours * 60 + slotMinutes;
+
+                        // Check if slot time has passed (with 5 minute buffer)
+                        if (slotTimeMinutes < minimumTimeMinutes) {
+                            const timeStr = String(slotHours).padStart(2, '0') + ':' + String(slotMinutes).padStart(2, '0');
+                            const minutesAgo = minimumTimeMinutes - slotTimeMinutes;
+                            console.log(`[Client Filter] Filtered out past time slot: ${timeStr} (${minutesAgo} min ago)`);
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error('[Client Filter] Error filtering slot:', error, slot);
+                    return false;
+                }
+            });
+
+            console.log(`[Client Filter] Filtered ${slots.length} slots to ${filteredSlots.length} valid slots`);
+            return filteredSlots;
         }
 
         // Format time string from "09:00:00" to "9:00 AM"

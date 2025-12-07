@@ -462,10 +462,25 @@ namespace QuickClinique.Controllers
                     Console.WriteLine($"[GetAvailableSlots] Last slot: Date={availableSlots.Last().Date:yyyy-MM-dd}, StartTime={availableSlots.Last().StartTime:HH:mm}");
                 }
 
-                if (IsAjaxRequest())
-                    return Json(new { success = true, data = availableSlots });
+                // Include current Philippine time in response for frontend filtering
+                var responseData = new
+                {
+                    success = true,
+                    data = availableSlots,
+                    currentTime = new
+                    {
+                        dateTime = now.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        date = today.ToString("yyyy-MM-dd"),
+                        time = currentTime.ToString("HH:mm:ss"),
+                        timeOnly = currentTime.ToString("HH:mm"),
+                        fiveMinutesFromNow = fiveMinutesFromNow.ToString("HH:mm:ss")
+                    }
+                };
 
-                return Json(new { success = true, data = availableSlots });
+                if (IsAjaxRequest())
+                    return Json(responseData);
+
+                return Json(responseData);
             }
             catch (Exception ex)
             {
