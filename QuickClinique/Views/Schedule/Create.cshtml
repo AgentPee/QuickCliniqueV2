@@ -1,4 +1,4 @@
-﻿@model QuickClinique.Models.Schedule
+@model QuickClinique.Models.Schedule
 
 @{
     ViewData["Title"] = "Create Schedule";
@@ -18,25 +18,28 @@
                     <h4>Create New Schedule</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create">
+                    <form asp-action="Create" id="createScheduleForm">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="form-group mb-3">
                             <label asp-for="Date" class="control-label">Date</label>
-                            <input asp-for="Date" class="form-control" type="date" />
+                            <input asp-for="Date" class="form-control" type="date" id="Date" min="" />
                             <span asp-validation-for="Date" class="text-danger"></span>
+                            <span id="dateError" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
                             <label asp-for="StartTime" class="control-label">Start Time</label>
-                            <input asp-for="StartTime" class="form-control" type="time" />
+                            <input asp-for="StartTime" class="form-control" type="time" id="StartTime" />
                             <span asp-validation-for="StartTime" class="text-danger"></span>
+                            <span id="startTimeError" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
                             <label asp-for="EndTime" class="control-label">End Time</label>
-                            <input asp-for="EndTime" class="form-control" type="time" />
+                            <input asp-for="EndTime" class="form-control" type="time" id="EndTime" />
                             <span asp-validation-for="EndTime" class="text-danger"></span>
+                            <span id="endTimeError" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
@@ -64,4 +67,146 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        // Get current Philippine date and time (UTC+8)
+        function getPhilippineDate() {
+            const nowUTC = new Date();
+            const philippineOffsetHours = 8;
+            const philippineTime = new Date(nowUTC.getTime() + (philippineOffsetHours * 60 * 60 * 1000));
+            
+            const year = philippineTime.getUTCFullYear();
+            const month = String(philippineTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(philippineTime.getUTCDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Get current Philippine time (UTC+8)
+        function getPhilippineTime() {
+            const nowUTC = new Date();
+            const philippineOffsetHours = 8;
+            const philippineTime = new Date(nowUTC.getTime() + (philippineOffsetHours * 60 * 60 * 1000));
+            
+            const hours = String(philippineTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(philippineTime.getUTCMinutes()).padStart(2, '0');
+            
+            return `${hours}:${minutes}`;
+        }
+        
+        // Validate if date/time is in the past
+        function validatePastDateAndTime(dateValue, timeValue) {
+            if (!dateValue) return { isValid: true, error: null };
+            
+            const philippineToday = getPhilippineDate();
+            const selectedDate = dateValue;
+            
+            // Check if date is in the past
+            if (selectedDate < philippineToday) {
+                return {
+                    isValid: false,
+                    error: `Cannot select a past date. Today is ${philippineToday}. Please select today or a future date.`
+                };
+            }
+            
+            // If date is today, check if time is in the past
+            if (selectedDate === philippineToday && timeValue) {
+                const philippineNow = getPhilippineTime();
+                const [nowHours, nowMinutes] = philippineNow.split(':').map(Number);
+                const [selectedHours, selectedMinutes] = timeValue.split(':').map(Number);
+                
+                const nowTotalMinutes = nowHours * 60 + nowMinutes;
+                const selectedTotalMinutes = selectedHours * 60 + selectedMinutes;
+                
+                // Add 5 minutes buffer to prevent selecting times that just passed
+                if (selectedTotalMinutes < nowTotalMinutes + 5) {
+                    return {
+                        isValid: false,
+                        error: `Cannot select a past time. Current time is ${philippineNow}. Please select a time at least 5 minutes from now.`
+                    };
+                }
+            }
+            
+            return { isValid: true, error: null };
+        }
+        
+        // Set minimum date on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const philippineToday = getPhilippineDate();
+            const dateInput = document.getElementById('Date');
+            if (dateInput) {
+                dateInput.setAttribute('min', philippineToday);
+            }
+        });
+        
+        // Add real-time validation
+        document.getElementById('Date')?.addEventListener('change', function() {
+            const dateInput = document.getElementById('Date');
+            const timeInput = document.getElementById('StartTime');
+            const dateError = document.getElementById('dateError');
+            
+            if (dateError) dateError.textContent = '';
+            if (dateInput) dateInput.classList.remove('is-invalid');
+            
+            if (dateInput && dateInput.value) {
+                const validation = validatePastDateAndTime(dateInput.value, timeInput?.value);
+                if (!validation.isValid && dateError) {
+                    dateError.textContent = validation.error;
+                    dateInput.classList.add('is-invalid');
+                }
+            }
+        });
+        
+        document.getElementById('StartTime')?.addEventListener('change', function() {
+            const dateInput = document.getElementById('Date');
+            const timeInput = document.getElementById('StartTime');
+            const timeError = document.getElementById('startTimeError');
+            
+            if (timeError) timeError.textContent = '';
+            if (timeInput) timeInput.classList.remove('is-invalid');
+            
+            if (dateInput && dateInput.value && timeInput && timeInput.value) {
+                const validation = validatePastDateAndTime(dateInput.value, timeInput.value);
+                if (!validation.isValid && timeError) {
+                    timeError.textContent = validation.error;
+                    timeInput.classList.add('is-invalid');
+                }
+            }
+        });
+        
+        // Validate on form submission
+        document.getElementById('createScheduleForm')?.addEventListener('submit', function(e) {
+            const dateInput = document.getElementById('Date');
+            const startTimeInput = document.getElementById('StartTime');
+            const endTimeInput = document.getElementById('EndTime');
+            
+            if (!dateInput || !startTimeInput || !endTimeInput) {
+                return;
+            }
+            
+            if (!dateInput.value || !startTimeInput.value || !endTimeInput.value) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            // Validate past date and time
+            const dateValidation = validatePastDateAndTime(dateInput.value, startTimeInput.value);
+            if (!dateValidation.isValid) {
+                e.preventDefault();
+                alert(dateValidation.error);
+                return false;
+            }
+            
+            // Validate end time if date is today
+            if (dateInput.value === getPhilippineDate()) {
+                const endTimeValidation = validatePastDateAndTime(dateInput.value, endTimeInput.value);
+                if (!endTimeValidation.isValid) {
+                    e.preventDefault();
+                    alert(endTimeValidation.error);
+                    return false;
+                }
+            }
+        });
+    </script>
 }

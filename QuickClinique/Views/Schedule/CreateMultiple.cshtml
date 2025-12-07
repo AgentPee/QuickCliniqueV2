@@ -1,4 +1,4 @@
-﻿@model QuickClinique.Models.ScheduleBulkCreateViewModel
+@model QuickClinique.Models.ScheduleBulkCreateViewModel
 
 @{
     ViewData["Title"] = "Create Multiple Schedules";
@@ -25,25 +25,28 @@
             <div class="card">
                 <div class="card-header">
                     <h4>Create Multiple Schedules</h4>
-                    <p class="text-muted mb-0">Create schedules for a date range with specific days of the week.</p>
+                    <p class="text-muted mb-0">Create schedules for a date range or a single day with specific days of the week.</p>
                 </div>
                 <div class="card-body">
-                    <form asp-action="CreateMultiple">
+                    <form asp-action="CreateMultiple" id="createScheduleForm">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="StartDate" class="control-label">Start Date</label>
-                                    <input asp-for="StartDate" class="form-control" type="date" />
+                                    <input asp-for="StartDate" class="form-control" type="date" id="StartDate" min="" />
                                     <span asp-validation-for="StartDate" class="text-danger"></span>
+                                    <span id="startDateError" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label asp-for="EndDate" class="control-label">End Date</label>
-                                    <input asp-for="EndDate" class="form-control" type="date" />
+                                    <label asp-for="EndDate" class="control-label">End Date <small class="text-muted">(Optional - leave empty for single day)</small></label>
+                                    <input asp-for="EndDate" class="form-control" type="date" id="EndDate" min="" />
                                     <span asp-validation-for="EndDate" class="text-danger"></span>
+                                    <span id="endDateError" class="text-danger"></span>
+                                    <small class="form-text text-muted">If left empty, schedules will be created only for the start date.</small>
                                 </div>
                             </div>
                         </div>
@@ -52,15 +55,17 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="StartTime" class="control-label">Start Time</label>
-                                    <input asp-for="StartTime" class="form-control" type="time" />
+                                    <input asp-for="StartTime" class="form-control" type="time" id="StartTime" />
                                     <span asp-validation-for="StartTime" class="text-danger"></span>
+                                    <span id="startTimeError" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="EndTime" class="control-label">End Time</label>
-                                    <input asp-for="EndTime" class="form-control" type="time" />
+                                    <input asp-for="EndTime" class="form-control" type="time" id="EndTime" />
                                     <span asp-validation-for="EndTime" class="text-danger"></span>
+                                    <span id="endTimeError" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
@@ -75,10 +80,10 @@
                         </div>
 
                         <div class="form-group mb-4">
-                            <label class="control-label">Days of Week (Optional - select none for all days)</label>
+                            <label class="control-label">Days of Week to Exclude (Optional - select days to exclude from schedule creation)</label>
                             <div class="row mt-2">
                                 @{
-                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
                                 }
                                 @foreach (var day in daysOfWeek)
                                 {
@@ -128,6 +133,108 @@
     }
 
     <script>
+        // IMMEDIATELY hide loader when this page loads - run before anything else
+        (function() {
+            // Hide loader immediately - multiple attempts to ensure it works
+            const hideLoader = function() {
+                try {
+                    if (typeof syringeLoader !== 'undefined') {
+                        if (syringeLoader.overlay) {
+                            syringeLoader.hide();
+                        } else {
+                            // If overlay doesn't exist yet, try to initialize and hide
+                            syringeLoader.init();
+                            syringeLoader.hide();
+                        }
+                    }
+                } catch (e) {
+                    console.log('Loader hide error (non-critical):', e);
+                }
+            };
+            
+            // Try immediately
+            hideLoader();
+            
+            // Also try multiple times with delays to catch all scenarios
+            setTimeout(hideLoader, 50);
+            setTimeout(hideLoader, 100);
+            setTimeout(hideLoader, 200);
+            setTimeout(hideLoader, 500);
+            
+            // Maximum timeout - force hide after 5 seconds no matter what
+            setTimeout(function() {
+                hideLoader();
+                // Also try to remove the overlay directly if it still exists
+                const overlay = document.getElementById('syringe-loader-overlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            }, 5000);
+        })();
+        
+        // Get current Philippine date and time (UTC+8)
+        function getPhilippineDate() {
+            const nowUTC = new Date();
+            const philippineOffsetHours = 8;
+            const philippineTime = new Date(nowUTC.getTime() + (philippineOffsetHours * 60 * 60 * 1000));
+            
+            const year = philippineTime.getUTCFullYear();
+            const month = String(philippineTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(philippineTime.getUTCDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Get current Philippine time (UTC+8)
+        function getPhilippineTime() {
+            const nowUTC = new Date();
+            const philippineOffsetHours = 8;
+            const philippineTime = new Date(nowUTC.getTime() + (philippineOffsetHours * 60 * 60 * 1000));
+            
+            const hours = String(philippineTime.getUTCHours()).padStart(2, '0');
+            const minutes = String(philippineTime.getUTCMinutes()).padStart(2, '0');
+            
+            return `${hours}:${minutes}`;
+        }
+        
+        // Validate if date/time is in the past
+        function validatePastDateAndTime(dateValue, timeValue) {
+            if (!dateValue) return { isValid: true, error: null };
+            
+            const philippineToday = getPhilippineDate();
+            const selectedDate = dateValue;
+            
+            // Check if date is in the past
+            if (selectedDate < philippineToday) {
+                return {
+                    isValid: false,
+                    error: `Cannot select a past date. Today is ${philippineToday}. Please select today or a future date.`
+                };
+            }
+            
+            // If date is today, check if time is in the past
+            if (selectedDate === philippineToday && timeValue) {
+                const philippineNow = getPhilippineTime();
+                const [nowHours, nowMinutes] = philippineNow.split(':').map(Number);
+                const [selectedHours, selectedMinutes] = timeValue.split(':').map(Number);
+                
+                const nowTotalMinutes = nowHours * 60 + nowMinutes;
+                const selectedTotalMinutes = selectedHours * 60 + selectedMinutes;
+                
+                // Add 5 minutes buffer to prevent selecting times that just passed
+                if (selectedTotalMinutes < nowTotalMinutes + 5) {
+                    return {
+                        isValid: false,
+                        error: `Cannot select a past time. Current time is ${philippineNow}. Please select a time at least 5 minutes from now.`
+                    };
+                }
+            }
+            
+            return { isValid: true, error: null };
+        }
+        
         function updatePreview() {
             const startDateInput = document.getElementById('StartDate');
             const endDateInput = document.getElementById('EndDate');
@@ -139,13 +246,15 @@
             }
 
             const startDate = new Date(startDateInput.value);
-            const endDate = new Date(endDateInput.value);
+            // If EndDate is not set, use StartDate for single day
+            const endDateValue = endDateInput.value || startDateInput.value;
+            const endDate = new Date(endDateValue);
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
 
-            if (!startDateInput.value || !endDateInput.value || !startTime || !endTime) {
+            if (!startDateInput.value || !startTime || !endTime) {
                 document.getElementById('previewText').textContent =
-                    'Select dates and times to see a preview.';
+                    'Select start date and times to see a preview.';
                 document.getElementById('schedulePreview').innerHTML = '';
                 return;
             }
@@ -161,45 +270,51 @@
             const currentDate = new Date(startDate);
             while (currentDate <= endDate) {
                 const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-                // Always exclude Sunday
-                if (dayName !== 'Sunday') {
-                    if (selectedDays.length === 0 || selectedDays.includes(dayName)) {
-                        // Generate 1-hour time slots
-                        const [startHour, startMin] = startTime.split(':').map(Number);
-                        const [endHour, endMin] = endTime.split(':').map(Number);
-                        const startMinutes = startHour * 60 + startMin;
-                        const endMinutes = endHour * 60 + endMin;
+                // If no days selected, include all days. If days selected, exclude those days.
+                if (selectedDays.length === 0 || !selectedDays.includes(dayName)) {
+                    // Generate 1-hour time slots
+                    const [startHour, startMin] = startTime.split(':').map(Number);
+                    const [endHour, endMin] = endTime.split(':').map(Number);
+                    const startMinutes = startHour * 60 + startMin;
+                    const endMinutes = endHour * 60 + endMin;
+                    
+                    let currentMinutes = startMinutes;
+                    while (currentMinutes < endMinutes) {
+                        const slotStartMinutes = currentMinutes;
+                        const slotEndMinutes = Math.min(currentMinutes + 60, endMinutes);
                         
-                        let currentMinutes = startMinutes;
-                        while (currentMinutes < endMinutes) {
-                            const slotStartMinutes = currentMinutes;
-                            const slotEndMinutes = Math.min(currentMinutes + 60, endMinutes);
-                            
-                            const slotStartHour = Math.floor(slotStartMinutes / 60);
-                            const slotStartMin = slotStartMinutes % 60;
-                            const slotEndHour = Math.floor(slotEndMinutes / 60);
-                            const slotEndMin = slotEndMinutes % 60;
-                            
-                            const slotStartTime = `${String(slotStartHour).padStart(2, '0')}:${String(slotStartMin).padStart(2, '0')}`;
-                            const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMin).padStart(2, '0')}`;
-                            
-                            schedules.push({
-                                date: currentDate.toISOString().split('T')[0],
-                                day: dayName,
-                                startTime: slotStartTime,
-                                endTime: slotEndTime
-                            });
-                            
-                            currentMinutes += 60;
-                        }
+                        const slotStartHour = Math.floor(slotStartMinutes / 60);
+                        const slotStartMin = slotStartMinutes % 60;
+                        const slotEndHour = Math.floor(slotEndMinutes / 60);
+                        const slotEndMin = slotEndMinutes % 60;
+                        
+                        const slotStartTime = `${String(slotStartHour).padStart(2, '0')}:${String(slotStartMin).padStart(2, '0')}`;
+                        const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMin).padStart(2, '0')}`;
+                        
+                        schedules.push({
+                            date: currentDate.toISOString().split('T')[0],
+                            day: dayName,
+                            startTime: slotStartTime,
+                            endTime: slotEndTime
+                        });
+                        
+                        currentMinutes += 60;
                     }
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
 
-            // Update preview
-            document.getElementById('previewText').textContent =
-                `Will create ${schedules.length} schedule(s):`;
+            // Update preview with warning if too many schedules
+            const MAX_SCHEDULES = 1000;
+            let previewMessage = `Will create ${schedules.length} schedule(s)`;
+            
+            if (schedules.length > MAX_SCHEDULES) {
+                previewMessage += ` ⚠️ EXCEEDS MAXIMUM (${MAX_SCHEDULES})`;
+            } else if (schedules.length > 500) {
+                previewMessage += ` ⚠️ Large batch - may take time`;
+            }
+            
+            document.getElementById('previewText').textContent = previewMessage + ':';
 
             let previewHtml = '<div class="list-group">';
             schedules.slice(0, 10).forEach(schedule => {
@@ -224,16 +339,331 @@
             document.getElementById('schedulePreview').innerHTML = previewHtml;
         }
 
+        // Set minimum date on date inputs (today in Philippine time)
+        function setMinDates() {
+            const philippineToday = getPhilippineDate();
+            const startDateInput = document.getElementById('StartDate');
+            const endDateInput = document.getElementById('EndDate');
+            
+            if (startDateInput) {
+                startDateInput.setAttribute('min', philippineToday);
+            }
+            if (endDateInput) {
+                endDateInput.setAttribute('min', philippineToday);
+            }
+        }
+        
+        // Validate date and time inputs in real-time
+        function validateDateAndTimeInputs() {
+            const startDateInput = document.getElementById('StartDate');
+            const endDateInput = document.getElementById('EndDate');
+            const startTimeInput = document.getElementById('StartTime');
+            const endTimeInput = document.getElementById('EndTime');
+            
+            const startDateError = document.getElementById('startDateError');
+            const endDateError = document.getElementById('endDateError');
+            const startTimeError = document.getElementById('startTimeError');
+            const endTimeError = document.getElementById('endTimeError');
+            
+            // Clear previous errors
+            if (startDateError) startDateError.textContent = '';
+            if (endDateError) endDateError.textContent = '';
+            if (startTimeError) startTimeError.textContent = '';
+            if (endTimeError) endTimeError.textContent = '';
+            
+            // Validate start date
+            if (startDateInput && startDateInput.value) {
+                const validation = validatePastDateAndTime(startDateInput.value, startTimeInput?.value);
+                if (!validation.isValid && startDateError) {
+                    startDateError.textContent = validation.error;
+                    startDateInput.classList.add('is-invalid');
+                    return false;
+                } else if (startDateInput) {
+                    startDateInput.classList.remove('is-invalid');
+                }
+            }
+            
+            // Validate start time if date is today
+            if (startDateInput && startDateInput.value && startTimeInput && startTimeInput.value) {
+                const validation = validatePastDateAndTime(startDateInput.value, startTimeInput.value);
+                if (!validation.isValid && startTimeError) {
+                    startTimeError.textContent = validation.error;
+                    startTimeInput.classList.add('is-invalid');
+                    return false;
+                } else if (startTimeInput) {
+                    startTimeInput.classList.remove('is-invalid');
+                }
+            }
+            
+            // Validate end date if provided
+            if (endDateInput && endDateInput.value) {
+                if (startDateInput && startDateInput.value && endDateInput.value < startDateInput.value) {
+                    if (endDateError) {
+                        endDateError.textContent = 'End date cannot be before start date.';
+                        endDateInput.classList.add('is-invalid');
+                        return false;
+                    }
+                } else {
+                    const validation = validatePastDateAndTime(endDateInput.value, null);
+                    if (!validation.isValid && endDateError) {
+                        endDateError.textContent = validation.error;
+                        endDateInput.classList.add('is-invalid');
+                        return false;
+                    } else if (endDateInput) {
+                        endDateInput.classList.remove('is-invalid');
+                    }
+                }
+            }
+            
+            // Validate end time if end date is today
+            if (endDateInput && endDateInput.value && endTimeInput && endTimeInput.value) {
+                const validation = validatePastDateAndTime(endDateInput.value, endTimeInput.value);
+                if (!validation.isValid && endTimeError) {
+                    endTimeError.textContent = validation.error;
+                    endTimeInput.classList.add('is-invalid');
+                    return false;
+                } else if (endTimeInput) {
+                    endTimeInput.classList.remove('is-invalid');
+                }
+            }
+            
+            return true;
+        }
+        
+        // Set minimum dates on page load
+        setMinDates();
+        
         // Add event listeners
-        document.getElementById('StartDate')?.addEventListener('change', updatePreview);
-        document.getElementById('EndDate')?.addEventListener('change', updatePreview);
-        document.getElementById('StartTime')?.addEventListener('change', updatePreview);
-        document.getElementById('EndTime')?.addEventListener('change', updatePreview);
+        const startDateInput = document.getElementById('StartDate');
+        const endDateInput = document.getElementById('EndDate');
+        const startTimeInput = document.getElementById('StartTime');
+        const endTimeInput = document.getElementById('EndTime');
+        
+        startDateInput?.addEventListener('change', function() {
+            validateDateAndTimeInputs();
+            // Update end date minimum to be at least start date
+            if (endDateInput && startDateInput.value) {
+                endDateInput.setAttribute('min', startDateInput.value);
+            }
+            updatePreview();
+        });
+        
+        endDateInput?.addEventListener('change', function() {
+            validateDateAndTimeInputs();
+            updatePreview();
+        });
+        
+        startTimeInput?.addEventListener('change', function() {
+            validateDateAndTimeInputs();
+            updatePreview();
+        });
+        
+        endTimeInput?.addEventListener('change', function() {
+            validateDateAndTimeInputs();
+            updatePreview();
+        });
+        
         document.querySelectorAll('input[name="SelectedDays"]').forEach(checkbox => {
             checkbox.addEventListener('change', updatePreview);
         });
 
         // Initial preview
         updatePreview();
+
+        // Track if form was submitted to detect return to same page
+        let formSubmitted = false;
+        const formElement = document.getElementById('createScheduleForm');
+        
+        // Handle form submission to prevent loader stuck issue and validate schedule count
+        formElement?.addEventListener('submit', function(e) {
+            const startDateInput = document.getElementById('StartDate');
+            const endDateInput = document.getElementById('EndDate');
+            const startTimeInput = document.getElementById('StartTime');
+            const endTimeInput = document.getElementById('EndTime');
+
+            if (!startDateInput.value || !startTimeInput.value || !endTimeInput.value) {
+                e.preventDefault();
+                // Hide loader if it was shown
+                if (typeof syringeLoader !== 'undefined') {
+                    syringeLoader.hide();
+                }
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            // Validate past date and time
+            const startDateValidation = validatePastDateAndTime(startDateInput.value, startTimeInput.value);
+            if (!startDateValidation.isValid) {
+                e.preventDefault();
+                if (typeof syringeLoader !== 'undefined') {
+                    syringeLoader.hide();
+                }
+                alert(startDateValidation.error);
+                return false;
+            }
+            
+            // Validate end date if provided
+            if (endDateInput.value) {
+                const endDateValidation = validatePastDateAndTime(endDateInput.value, endTimeInput.value);
+                if (!endDateValidation.isValid) {
+                    e.preventDefault();
+                    if (typeof syringeLoader !== 'undefined') {
+                        syringeLoader.hide();
+                    }
+                    alert(endDateValidation.error);
+                    return false;
+                }
+                
+                // Check if end date is before start date
+                if (endDateInput.value < startDateInput.value) {
+                    e.preventDefault();
+                    if (typeof syringeLoader !== 'undefined') {
+                        syringeLoader.hide();
+                    }
+                    alert('End date cannot be before start date.');
+                    return false;
+                }
+            }
+
+            // Check if any schedules will be created and calculate count
+            const startDate = new Date(startDateInput.value);
+            const endDateValue = endDateInput.value || startDateInput.value;
+            const endDate = new Date(endDateValue);
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+
+            // Get selected days to exclude
+            const selectedDays = [];
+            document.querySelectorAll('input[name="SelectedDays"]:checked').forEach(checkbox => {
+                selectedDays.push(checkbox.value);
+            });
+
+            // Calculate how many schedules will be created
+            let scheduleCount = 0;
+            let willCreateSchedules = false;
+            const currentDate = new Date(startDate);
+            
+            // Parse times
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            const startMinutes = startHour * 60 + startMin;
+            const endMinutes = endHour * 60 + endMin;
+            const hoursDiff = (endMinutes - startMinutes) / 60;
+            const slotsPerDay = Math.ceil(hoursDiff);
+            
+            while (currentDate <= endDate) {
+                const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                if (selectedDays.length === 0 || !selectedDays.includes(dayName)) {
+                    // This day will be included
+                    willCreateSchedules = true;
+                    scheduleCount += slotsPerDay;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            if (!willCreateSchedules) {
+                e.preventDefault();
+                // Hide loader if it was shown
+                if (typeof syringeLoader !== 'undefined') {
+                    syringeLoader.hide();
+                }
+                alert('No schedules will be created. The selected date(s) are excluded by the selected days to exclude. Please adjust your selection.');
+                return false;
+            }
+            
+            // Check if too many schedules (server limit is 1000)
+            const MAX_SCHEDULES = 1000;
+            if (scheduleCount > MAX_SCHEDULES) {
+                e.preventDefault();
+                // Hide loader if it was shown
+                if (typeof syringeLoader !== 'undefined') {
+                    syringeLoader.hide();
+                }
+                alert(`Too many schedules to create at once (${scheduleCount}). Maximum allowed is ${MAX_SCHEDULES}. Please reduce the date range or create schedules in smaller batches (e.g., 1-2 weeks at a time).`);
+                return false;
+            }
+            
+            // Warn if approaching the limit
+            if (scheduleCount > 500) {
+                const confirmMessage = `You are about to create ${scheduleCount} schedules. This may take a while. Continue?`;
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                    if (typeof syringeLoader !== 'undefined') {
+                        syringeLoader.hide();
+                    }
+                    return false;
+                }
+            }
+            
+            // Mark that form was submitted - if we return to this page, we'll hide the loader
+            formSubmitted = true;
+            sessionStorage.setItem('scheduleFormSubmitted', 'true');
+        });
+
+        // Hide loader immediately when page loads if we're on CreateMultiple
+        // This handles cases where form submission returned to the same page (validation errors)
+        function hideLoaderImmediately() {
+            if (window.location.pathname.includes('/CreateMultiple')) {
+                // Check if form was just submitted (returned to same page)
+                const wasSubmitted = sessionStorage.getItem('scheduleFormSubmitted') === 'true';
+                
+                // Hide loader immediately
+                if (typeof syringeLoader !== 'undefined' && syringeLoader.overlay) {
+                    const overlay = syringeLoader.overlay;
+                    if (overlay.classList.contains('active')) {
+                        syringeLoader.hide();
+                    }
+                }
+                
+                // Clear the flag
+                if (wasSubmitted) {
+                    sessionStorage.removeItem('scheduleFormSubmitted');
+                }
+            }
+        }
+
+        // Hide loader multiple times to ensure it gets hidden
+        // This is important because the global loader might try to show it again
+        function hideLoaderRepeatedly() {
+            if (window.location.pathname.includes('/CreateMultiple')) {
+                // Hide immediately
+                hideLoaderImmediately();
+                
+                // Also hide after short delays in case global loader tries to show it
+                setTimeout(hideLoaderImmediately, 100);
+                setTimeout(hideLoaderImmediately, 500);
+                setTimeout(hideLoaderImmediately, 1000);
+                setTimeout(hideLoaderImmediately, 2000);
+                setTimeout(hideLoaderImmediately, 3000);
+                
+                // Prevent global loader from showing on this page
+                const originalShow = typeof syringeLoader !== 'undefined' ? syringeLoader.show : null;
+                if (originalShow && window.location.pathname.includes('/CreateMultiple')) {
+                    // Override show method temporarily to prevent auto-show
+                    setTimeout(() => {
+                        if (typeof syringeLoader !== 'undefined') {
+                            syringeLoader.hide();
+                        }
+                    }, 100);
+                }
+            }
+        }
+
+        // Hide loader as soon as DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideLoaderRepeatedly);
+        } else {
+            hideLoaderRepeatedly();
+        }
+        
+        // Also hide loader on window load
+        window.addEventListener('load', hideLoaderRepeatedly);
+        
+        // Hide loader when page becomes visible (handles back button, etc.)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                hideLoaderImmediately();
+            }
+        });
     </script>
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
@@ -367,6 +367,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("varchar(10)")
                 .HasColumnName("isAvailable");
             entity.Property(e => e.StartTime).HasMaxLength(6);
+
+            // Add indexes for better query performance
+            entity.HasIndex(e => e.Date, "IX_Schedules_Date");
+            entity.HasIndex(e => e.IsAvailable, "IX_Schedules_IsAvailable");
+            entity.HasIndex(e => new { e.Date, e.IsAvailable }, "IX_Schedules_Date_IsAvailable");
+            entity.HasIndex(e => new { e.Date, e.StartTime }, "IX_Schedules_Date_StartTime");
         });
 
         modelBuilder.Entity<Student>(entity =>
