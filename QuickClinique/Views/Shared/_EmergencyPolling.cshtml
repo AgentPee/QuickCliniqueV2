@@ -225,102 +225,158 @@
             }, 500);
         }
 
-        // Start continuous beeping sound
+        // Ambulance Siren Sound - "Hi-Lo" Pattern
+        let audioContext = null;
+        let sirenOscillator = null;
+        let sirenGainNode = null;
+        let sirenInterval = null;
+        let isHighTone = true;
+
         function startEmergencyBeep() {
-            // Stop any existing beep
+            // Stop any existing sound
             stopEmergencyBeep();
 
-            // Create a beep sound using Web Audio API for better control
+            // Create ambulance siren "Hi-Lo" pattern using Web Audio API
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Create a beep function - louder and more urgent
-                function playBeep() {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
+                // Create main oscillator for siren tone
+                sirenOscillator = audioContext.createOscillator();
+                sirenGainNode = audioContext.createGain();
+                
+                sirenOscillator.connect(sirenGainNode);
+                sirenGainNode.connect(audioContext.destination);
+                
+                // Use square wave for more piercing siren sound
+                sirenOscillator.type = 'square';
+                
+                // Set volume
+                sirenGainNode.gain.setValueAtTime(0.45, audioContext.currentTime);
+                
+                // Start the oscillator
+                sirenOscillator.start(audioContext.currentTime);
+                
+                // Hi-Lo pattern frequencies
+                const highFreq = 1100;  // High tone (Hz) - "HIII"
+                const lowFreq = 700;    // Low tone (Hz) - "LOOO"
+                const toneDuration = 0.35; // Duration for each tone (350ms)
+                
+                // Start with high tone
+                isHighTone = true;
+                sirenOscillator.frequency.setValueAtTime(highFreq, audioContext.currentTime);
+                
+                // Function to alternate between high and low tones
+                function alternateTone() {
+                    if (!sirenOscillator || !audioContext) return;
                     
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
+                    const currentTime = audioContext.currentTime;
                     
-                    // Higher frequency for more urgent beep (800Hz)
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'sine';
-                    
-                    // Louder beep
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-                    
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.15);
+                    if (isHighTone) {
+                        // Switch to low tone
+                        sirenOscillator.frequency.setValueAtTime(lowFreq, currentTime);
+                        isHighTone = false;
+                    } else {
+                        // Switch to high tone
+                        sirenOscillator.frequency.setValueAtTime(highFreq, currentTime);
+                        isHighTone = true;
+                    }
                 }
-
-                // Play beep every 0.4 seconds (continuous urgent beeping)
-                audioInterval = setInterval(() => {
-                    playBeep();
-                }, 400);
-
-                // Also try fallback audio if Web Audio API fails
-                try {
-                    // Create a simple beep tone using data URI
-                    const beepData = generateBeepTone();
-                    alertAudio = new Audio(beepData);
-                    alertAudio.loop = true;
-                    alertAudio.volume = 0.6;
-                    alertAudio.play().catch(() => {
-                        // If autoplay is blocked, user interaction will be needed
-                        console.log('Audio autoplay blocked - beep will start on user interaction');
-                    });
-                } catch (e) {
-                    console.log('Fallback audio not available');
-                }
+                
+                // Alternate tones every toneDuration seconds
+                // This creates: HIII... (350ms) -> LOOO... (350ms) -> HIII... -> LOOO...
+                sirenInterval = setInterval(alternateTone, toneDuration * 1000);
+                
             } catch (e) {
-                console.error('Web Audio API not available, using fallback:', e);
-                // Fallback: Use simple audio with loop
+                console.error('Web Audio API not available:', e);
+                // Fallback: Use Audio element with loop
                 try {
-                    const beepData = generateBeepTone();
-                    alertAudio = new Audio(beepData);
+                    const sirenData = generateHiLoTone();
+                    alertAudio = new Audio(sirenData);
                     alertAudio.loop = true;
-                    alertAudio.volume = 0.6;
-                    alertAudio.play().catch(() => {});
+                    alertAudio.volume = 0.5;
+                    alertAudio.play().catch(() => {
+                        console.log('Audio autoplay blocked - siren will start on user interaction');
+                    });
                 } catch (err) {
-                    console.error('Could not play alert sound:', err);
+                    console.error('Could not play siren sound:', err);
                 }
             }
         }
 
-        // Generate a beep tone using Web Audio API and convert to data URI
-        function generateBeepTone() {
+        // Generate Hi-Lo siren tone pattern
+        function generateHiLoTone() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const sampleRate = audioContext.sampleRate;
-                const duration = 0.2; // 200ms beep
-                const frequency = 800; // 800Hz tone
-                const numSamples = Math.floor(sampleRate * duration);
-                const buffer = audioContext.createBuffer(1, numSamples, sampleRate);
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const sampleRate = ctx.sampleRate;
+                const highFreq = 1100;
+                const lowFreq = 700;
+                const toneDuration = 0.35; // 350ms per tone
+                const cycleDuration = toneDuration * 2; // Full cycle: high + low
+                
+                const numSamples = Math.floor(sampleRate * cycleDuration);
+                const buffer = ctx.createBuffer(1, numSamples, sampleRate);
                 const data = buffer.getChannelData(0);
                 
-                for (let i = 0; i < numSamples; i++) {
-                    data[i] = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.5;
+                const highSamples = Math.floor(sampleRate * toneDuration);
+                
+                // Create high tone portion (HIII)
+                for (let i = 0; i < highSamples; i++) {
+                    const t = i / sampleRate;
+                    const phase = (t * highFreq) % 1;
+                    data[i] = (phase < 0.5 ? 1 : -1) * 0.45; // Square wave
                 }
                 
-                // For simplicity, use a base64 encoded beep sound
-                // This is a simple 800Hz sine wave beep
+                // Create low tone portion (LOOO)
+                for (let i = highSamples; i < numSamples; i++) {
+                    const t = (i - highSamples) / sampleRate;
+                    const phase = (t * lowFreq) % 1;
+                    data[i] = (phase < 0.5 ? 1 : -1) * 0.45; // Square wave
+                }
+                
+                // Return a simple fallback data URI
                 return 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQQ';
             } catch (e) {
-                // Fallback to simple beep data
+                // Return a simple fallback
                 return 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQQ';
             }
         }
 
-        // Stop the beeping sound
+        // Stop the siren sound
         function stopEmergencyBeep() {
-            if (audioInterval) {
-                clearInterval(audioInterval);
-                audioInterval = null;
+            // Clear the siren interval
+            if (sirenInterval) {
+                clearInterval(sirenInterval);
+                sirenInterval = null;
             }
+            
+            // Stop Web Audio API oscillator
+            if (sirenOscillator) {
+                try {
+                    sirenOscillator.stop();
+                } catch (e) {
+                    // Oscillator might already be stopped
+                }
+                sirenOscillator = null;
+            }
+            
+            if (sirenGainNode) {
+                try {
+                    sirenGainNode.disconnect();
+                } catch (e) {
+                    // Already disconnected
+                }
+                sirenGainNode = null;
+            }
+            
+            // Reset tone state
+            isHighTone = true;
+            
+            // Stop Audio element fallback
             if (alertAudio) {
-                alertAudio.pause();
-                alertAudio.currentTime = 0;
+                if (alertAudio.pause) {
+                    alertAudio.pause();
+                    alertAudio.currentTime = 0;
+                }
                 alertAudio = null;
             }
         }
@@ -440,51 +496,36 @@
         z-index: 9999 !important;
     }
 
+    #emergencyModal .modal-dialog {
+        z-index: 10001 !important;
+        pointer-events: auto !important;
+        max-height: 90vh;
+        margin: 1rem auto;
+    }
+
     .emergency-modal-content {
-        border: 4px solid #dc3545;
-        border-radius: 20px;
-        box-shadow: 0 0 40px rgba(220, 53, 69, 0.6), 0 0 80px rgba(220, 53, 69, 0.4), inset 0 0 20px rgba(220, 53, 69, 0.1);
+        border: 3px solid #dc3545;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(220, 53, 69, 0.5);
         z-index: 10000 !important;
         position: relative;
         pointer-events: auto !important;
         overflow: hidden;
-        animation: emergencyModalEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        animation: emergencyModalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     @@keyframes emergencyModalEntrance {
         0% {
             opacity: 0;
-            transform: scale(0.7) translateY(-50px);
-        }
-        50% {
-            transform: scale(1.05) translateY(0);
+            transform: scale(0.9) translateY(-20px);
         }
         100% {
             opacity: 1;
             transform: scale(1) translateY(0);
         }
-    }
-
-    .emergency-modal-content::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(220, 53, 69, 0.15) 0%, transparent 70%);
-        animation: emergencyRotate 20s linear infinite;
-        pointer-events: none;
-    }
-
-    @@keyframes emergencyRotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    #emergencyModal .modal-dialog {
-        z-index: 10001 !important;
-        pointer-events: auto !important;
     }
 
     #emergencyModal .modal-content,
@@ -495,7 +536,6 @@
         pointer-events: auto !important;
     }
 
-    /* Ensure emergency modal is above all other modals */
     body.modal-open #emergencyModal {
         z-index: 10000 !important;
     }
@@ -508,9 +548,10 @@
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         color: white;
         border-bottom: none;
-        padding: 2rem;
+        padding: 1rem 1.25rem;
         position: relative;
         overflow: hidden;
+        flex-shrink: 0;
     }
 
     .emergency-header::after {
@@ -520,96 +561,72 @@
         right: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
         pointer-events: none;
         animation: emergencyPulse 3s ease-in-out infinite;
     }
 
     @@keyframes emergencyPulse {
-        0%, 100% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 0.6; transform: scale(1.1); }
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(1.05); }
     }
 
     .emergency-header .modal-title {
-        font-weight: 900;
-        font-size: 1.75rem;
+        font-weight: 700;
+        font-size: 1.25rem;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
         position: relative;
         z-index: 1;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        margin: 0;
     }
 
     .emergency-header .modal-title i {
-        font-size: 2rem;
-        animation: emergencyIconFlash 1s ease-in-out infinite;
+        font-size: 1.5rem;
+        animation: emergencyIconFlash 1.5s ease-in-out infinite;
     }
 
     @@keyframes emergencyIconFlash {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.7; transform: scale(1.2); }
+        50% { opacity: 0.8; transform: scale(1.1); }
     }
 
     .emergency-body {
-        padding: 2rem;
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        padding: 1.25rem;
+        background: #ffffff;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
     }
 
     .emergency-alert {
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
         border: none;
-        border-left: 6px solid #dc3545;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
-        animation: emergencyAlertSlide 0.6s ease-out;
+        border-left: 4px solid #dc3545;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        padding: 0.875rem 1rem;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
         position: relative;
         overflow: hidden;
-    }
-
-    @@keyframes emergencyAlertSlide {
-        from {
-            opacity: 0;
-            transform: translateX(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    .emergency-alert::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        animation: emergencyShimmer 2s infinite;
-    }
-
-    @@keyframes emergencyShimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
     }
 
     .emergency-alert-content {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
         position: relative;
         z-index: 1;
     }
 
     .emergency-alert-icon {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         display: flex;
@@ -617,18 +634,18 @@
         justify-content: center;
         flex-shrink: 0;
         animation: emergencyBellRing 1s ease-in-out infinite;
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
     }
 
     @@keyframes emergencyBellRing {
         0%, 100% { transform: rotate(0deg); }
-        25% { transform: rotate(-15deg); }
-        75% { transform: rotate(15deg); }
+        25% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
     }
 
     .emergency-alert-icon i {
         color: white;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 
     .emergency-alert-text {
@@ -637,28 +654,27 @@
 
     .emergency-alert-text strong {
         color: #991b1b;
-        font-size: 1.15rem;
+        font-size: 1rem;
     }
 
     .emergency-info {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 2px solid #e2e8f0;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .info-row {
         display: flex;
         align-items: center;
-        padding: 1.25rem;
-        border-bottom: 2px solid #e2e8f0;
-        transition: all 0.3s ease;
-        border-radius: 10px;
-        margin-bottom: 0.75rem;
-        background: white;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background-color 0.2s ease;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
         position: relative;
-        overflow: hidden;
     }
 
     .info-row::before {
@@ -666,20 +682,14 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 4px;
+        width: 3px;
         height: 100%;
         background: linear-gradient(180deg, #dc3545 0%, #c82333 100%);
-        transition: width 0.3s ease;
+        border-radius: 6px 0 0 6px;
     }
 
     .info-row:hover {
-        background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
-        transform: translateX(8px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
-    }
-
-    .info-row:hover::before {
-        width: 6px;
+        background: #fff5f5;
     }
 
     .info-row:last-child {
@@ -688,160 +698,175 @@
     }
 
     .info-label {
-        font-weight: 700;
-        min-width: 180px;
+        font-weight: 600;
+        min-width: 140px;
         color: #2D3748;
-        font-size: 1rem;
+        font-size: 0.9rem;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
     .info-icon-wrapper {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        box-shadow: 0 1px 4px rgba(220, 53, 69, 0.15);
     }
 
     .info-icon-wrapper i {
         color: #dc3545;
-        font-size: 1.25rem;
+        font-size: 1rem;
     }
 
     .info-value {
         color: #212529;
         flex: 1;
-        font-weight: 600;
-        font-size: 1.05rem;
+        font-weight: 500;
+        font-size: 0.95rem;
         display: flex;
         align-items: center;
     }
 
     .emergency-footer {
-        border-top: 3px solid #e2e8f0;
-        padding: 1.5rem 2rem;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-top: 2px solid #e2e8f0;
+        padding: 1rem 1.25rem;
+        background: #f8f9fa;
         display: flex;
         justify-content: flex-end;
-        gap: 1rem;
+        gap: 0.75rem;
+        flex-shrink: 0;
     }
 
     .emergency-cancel-btn {
-        padding: 1rem 2rem;
+        padding: 0.625rem 1.5rem;
         font-weight: 600;
-        border-radius: 12px;
+        border-radius: 8px;
         background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
         border: none;
         color: white;
-        box-shadow: 0 4px 14px rgba(108, 117, 125, 0.3);
-        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.25);
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 0.9rem;
     }
 
     .emergency-cancel-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.35);
         background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
     }
 
     .emergency-resolve-btn {
-        padding: 1rem 2.5rem;
+        padding: 0.625rem 1.75rem;
         font-weight: 700;
-        font-size: 1.1rem;
-        border-radius: 12px;
+        font-size: 0.95rem;
+        border-radius: 8px;
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         border: none;
         color: white;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+        transition: all 0.2s ease;
         position: relative;
         overflow: hidden;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .emergency-resolve-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .emergency-resolve-btn:hover::before {
-        width: 300px;
-        height: 300px;
-    }
-
     .emergency-resolve-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
     }
 
     .emergency-resolve-btn:active {
-        transform: translateY(-1px);
-    }
-
-    .emergency-resolve-btn i {
-        position: relative;
-        z-index: 1;
+        transform: translateY(0);
     }
 
     @@media (max-width: 768px) {
+        #emergencyModal .modal-dialog {
+            max-height: 95vh;
+            margin: 0.5rem;
+        }
+
         .emergency-header {
-            padding: 1.5rem;
+            padding: 0.875rem 1rem;
         }
 
         .emergency-header .modal-title {
-            font-size: 1.25rem;
-            flex-direction: column;
+            font-size: 1.1rem;
             gap: 0.5rem;
         }
 
+        .emergency-header .modal-title i {
+            font-size: 1.25rem;
+        }
+
         .emergency-body {
-            padding: 1.5rem;
+            padding: 1rem;
+        }
+
+        .emergency-alert {
+            padding: 0.75rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .emergency-alert-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .emergency-alert-icon i {
+            font-size: 1.1rem;
+        }
+
+        .emergency-info {
+            padding: 0.5rem;
         }
 
         .info-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.75rem;
+            padding: 0.625rem;
+            margin-bottom: 0.375rem;
         }
 
         .info-label {
-            min-width: auto;
-            width: 100%;
+            min-width: 120px;
+            font-size: 0.85rem;
+        }
+
+        .info-icon-wrapper {
+            width: 28px;
+            height: 28px;
+        }
+
+        .info-icon-wrapper i {
+            font-size: 0.9rem;
         }
 
         .info-value {
-            width: 100%;
+            font-size: 0.9rem;
         }
 
         .emergency-footer {
             flex-direction: column-reverse;
-            padding: 1.25rem;
+            padding: 0.875rem;
+            gap: 0.625rem;
         }
 
         .emergency-cancel-btn,
         .emergency-resolve-btn {
             width: 100%;
             justify-content: center;
+            padding: 0.75rem 1.5rem;
         }
     }
 </style>
