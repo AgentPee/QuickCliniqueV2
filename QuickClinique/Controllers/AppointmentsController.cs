@@ -373,6 +373,7 @@ namespace QuickClinique.Controllers
             try
             {
                 // Use Philippine Time (UTC+8) for consistent timezone handling across environments
+                var now = TimeZoneHelper.GetPhilippineTime();
                 var today = TimeZoneHelper.GetPhilippineDate();
                 var currentTime = TimeZoneHelper.GetPhilippineTimeOnly();
                 var fiveMinutesFromNow = currentTime.AddMinutes(5);
@@ -382,6 +383,15 @@ namespace QuickClinique.Controllers
 
                 if (date.HasValue)
                 {
+                    // Reject past dates entirely - they should not have any available slots
+                    if (date.Value < today)
+                    {
+                        // Past date selected - return empty results
+                        if (IsAjaxRequest())
+                            return Json(new { success = true, data = new List<object>() });
+                        return Json(new { success = true, data = new List<object>() });
+                    }
+                    
                     // Filter to the selected date
                     query = query.Where(s => s.Date == date.Value);
                     
@@ -419,27 +429,37 @@ namespace QuickClinique.Controllers
                     .ToListAsync();
 
                 // Additional in-memory filtering to ensure past slots are removed (safety check)
+                // This is critical for Railway where timezone handling might differ
                 availableSlots = availableSlots.Where(slot =>
                 {
+                    // Past dates should never appear
+                    if (slot.Date < today)
+                        return false;
+                    
+                    // Future dates are always valid
                     if (slot.Date > today)
-                        return true; // Future dates are always valid
+                        return true;
                     
-                    if (slot.Date == today)
-                    {
-                        // For today, only show slots that start after 5 minutes from now
-                        return slot.StartTime > fiveMinutesFromNow;
-                    }
+                    // For today, we need to check if the slot time has already passed
+                    // Combine date and time to create a full DateTime for accurate comparison
+                    var slotDateTime = slot.Date.ToDateTime(slot.StartTime);
+                    var nowDateTime = now;
                     
-                    return false; // Past dates should not appear
+                    // Only show slots that start at least 5 minutes from now
+                    var timeUntilStart = slotDateTime - nowDateTime;
+                    return timeUntilStart.TotalMinutes > 5;
                 }).ToList();
 
                 // Debug logging
-                Console.WriteLine($"Found {availableSlots.Count} available slots after filtering");
-                Console.WriteLine($"Current time: {currentTime}, Five minutes from now: {fiveMinutesFromNow}");
-                Console.WriteLine($"Today's date: {today}");
-                foreach (var slot in availableSlots)
+                Console.WriteLine($"[GetAvailableSlots] Found {availableSlots.Count} available slots after filtering");
+                Console.WriteLine($"[GetAvailableSlots] Current Philippine time: {now:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"[GetAvailableSlots] Today's date: {today:yyyy-MM-dd}");
+                Console.WriteLine($"[GetAvailableSlots] Current time: {currentTime:HH:mm}, Five minutes from now: {fiveMinutesFromNow:HH:mm}");
+                
+                if (availableSlots.Count > 0)
                 {
-                    Console.WriteLine($"Slot: {slot.ScheduleId}, Date: {slot.Date}, Start: {slot.StartTime}, Formatted: {slot.StartTimeFormatted}");
+                    Console.WriteLine($"[GetAvailableSlots] First slot: Date={availableSlots.First().Date:yyyy-MM-dd}, StartTime={availableSlots.First().StartTime:HH:mm}");
+                    Console.WriteLine($"[GetAvailableSlots] Last slot: Date={availableSlots.Last().Date:yyyy-MM-dd}, StartTime={availableSlots.Last().StartTime:HH:mm}");
                 }
 
                 if (IsAjaxRequest())
@@ -449,8 +469,8 @@ namespace QuickClinique.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetAvailableSlots: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"[GetAvailableSlots ERROR] {ex.Message}");
+                Console.WriteLine($"[GetAvailableSlots ERROR] Stack trace: {ex.StackTrace}");
                 if (IsAjaxRequest())
                     return Json(new { success = false, error = "Error retrieving available slots" });
 
