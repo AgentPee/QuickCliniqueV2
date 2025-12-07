@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuickClinique.Models.Schedule>
+@model IEnumerable<QuickClinique.Models.Schedule>
 
 @{
     ViewData["Title"] = "Schedules";
@@ -52,11 +52,27 @@
     }
 
     <div class="schedules-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h5 class="card-title">
+                    <i class="fas fa-table"></i> All Schedules
+                    <span class="badge count-badge">@Model.Count()</span>
+                </h5>
+                <div class="bulk-actions" id="bulkActions" style="display: none;">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="showBulkDeleteModal()">
+                        <i class="fas fa-trash"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="card-body">
             <div class="table-container">
                 <table class="schedules-table">
                     <thead>
                         <tr>
+                            <th class="checkbox-column">
+                                <input type="checkbox" id="selectAll" />
+                            </th>
                             <th>Date</th>
                             <th>Start Time</th>
                             <th>End Time</th>
@@ -68,6 +84,9 @@
                         @foreach (var item in Model)
                         {
                             <tr class="schedule-row">
+                                <td class="checkbox-column">
+                                    <input type="checkbox" name="scheduleIds" value="@item.ScheduleId" class="schedule-checkbox" />
+                                </td>
                                 <td class="date-cell">
                                     <div class="date-info">
                                         <span class="date">@item.Date.ToString("yyyy-MM-dd")</span>
@@ -117,6 +136,48 @@
                     </a>
                 </div>
             }
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header danger-header">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Bulk Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-banner">
+                    <i class="fas fa-radiation"></i>
+                    <div>
+                        <h6>Delete Multiple Schedules</h6>
+                        <p class="mb-0">Are you sure you want to delete <strong id="selectedCount">0</strong> schedule(s)? This action cannot be undone.</p>
+                    </div>
+                </div>
+
+                <div class="critical-warning">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <div>
+                        <strong>Critical Warning</strong>
+                        <p>Deleting these schedules will permanently remove all associated appointments. This action is irreversible.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <form id="bulkDeleteForm" method="post" asp-action="BulkDelete">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Selected Schedules
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -187,6 +248,89 @@
 
 @section Scripts {
     <script>
+        // Wait for the document to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCheckboxHandlers();
+            initializeRowHoverEffects();
+        });
+
+        function initializeCheckboxHandlers() {
+            const selectAll = document.getElementById('selectAll');
+            const scheduleCheckboxes = document.querySelectorAll('.schedule-checkbox');
+
+            // Select All functionality
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    scheduleCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    toggleBulkActions();
+                });
+            }
+
+            // Individual checkbox change
+            scheduleCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Update select all checkbox state
+                    if (selectAll) {
+                        const allChecked = document.querySelectorAll('.schedule-checkbox:checked').length === scheduleCheckboxes.length;
+                        const someChecked = document.querySelectorAll('.schedule-checkbox:checked').length > 0;
+
+                        selectAll.checked = allChecked;
+                        selectAll.indeterminate = someChecked && !allChecked;
+                    }
+                    toggleBulkActions();
+                });
+            });
+
+            // Initial toggle
+            toggleBulkActions();
+        }
+
+        function toggleBulkActions() {
+            const checkedCount = document.querySelectorAll('.schedule-checkbox:checked').length;
+            const bulkActions = document.getElementById('bulkActions');
+
+            if (bulkActions) {
+                if (checkedCount > 0) {
+                    bulkActions.style.display = 'flex';
+                } else {
+                    bulkActions.style.display = 'none';
+                }
+            }
+        }
+
+        function showBulkDeleteModal() {
+            const checkedCheckboxes = document.querySelectorAll('.schedule-checkbox:checked');
+            const checkedCount = checkedCheckboxes.length;
+
+            if (checkedCount === 0) {
+                alert('Please select at least one schedule to delete.');
+                return;
+            }
+
+            // Update the selected count in the modal
+            document.getElementById('selectedCount').textContent = checkedCount;
+
+            // Clear existing hidden inputs from the form
+            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+            const existingInputs = bulkDeleteForm.querySelectorAll('input[name="scheduleIds"]');
+            existingInputs.forEach(input => input.remove());
+
+            // Add selected schedule IDs to the form
+            checkedCheckboxes.forEach(checkbox => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'scheduleIds';
+                input.value = checkbox.value;
+                bulkDeleteForm.appendChild(input);
+            });
+
+            // Show the modal
+            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+            bulkDeleteModal.show();
+        }
+
         function setDeleteSchedule(scheduleId, date, time, appointmentCount) {
             // Set the values in the modal
             document.getElementById('deleteScheduleId').value = scheduleId;
@@ -215,8 +359,7 @@
             deleteModal.show();
         }
 
-        // Add row hover effects
-        document.addEventListener('DOMContentLoaded', function() {
+        function initializeRowHoverEffects() {
             const scheduleRows = document.querySelectorAll('.schedule-row');
             scheduleRows.forEach(row => {
                 row.addEventListener('mouseenter', function() {
@@ -227,7 +370,7 @@
                     this.style.transform = 'translateX(0)';
                 });
             });
-        });
+        }
 
     </script>
 }

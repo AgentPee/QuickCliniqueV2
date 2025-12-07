@@ -294,6 +294,31 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var seedingService = services.GetRequiredService<IDataSeedingService>();
 
+        // STEP 0: Create database if it doesn't exist based on DbContext model
+        Console.WriteLine("[INIT] Ensuring database exists based on DbContext model...");
+        try
+        {
+            // EnsureCreatedAsync will:
+            // - Create the database if it doesn't exist
+            // - Create all tables based on the DbContext model if they don't exist
+            // - Return true if database/tables were created, false if they already existed
+            var created = await context.Database.EnsureCreatedAsync();
+            if (created)
+            {
+                Console.WriteLine("[SUCCESS] ✅ Database and tables created successfully based on DbContext model!");
+            }
+            else
+            {
+                Console.WriteLine("[INFO] ✅ Database and tables already exist.");
+            }
+        }
+        catch (Exception ensureCreatedEx)
+        {
+            Console.WriteLine($"[WARNING] EnsureCreated failed: {ensureCreatedEx.Message}");
+            Console.WriteLine("[WARNING] This may be expected if the database exists but schema differs.");
+            Console.WriteLine("[WARNING] Will continue with migrations...");
+        }
+
         // STEP 1: Ensure database exists (optional - Railway MySQL already creates the database)
         Console.WriteLine("[INIT] Checking if database exists...");
         try
