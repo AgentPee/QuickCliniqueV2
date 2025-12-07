@@ -395,18 +395,25 @@ using (var scope = app.Services.CreateScope())
             // Don't throw - Railway MySQL already creates the database, so we can continue
         }
 
-        // STEP 2: Create/Update database schema directly from model (NO MIGRATIONS)
-        // This approach automatically creates/updates the database schema from your DbContext model
-        // No need to create or manage migration files - schema is always synced with model
+        // STEP 2: Apply automatic migrations
+        // This will automatically apply any pending migrations including new index migrations
         Console.WriteLine("========================================");
-        Console.WriteLine("[INIT] MODEL-BASED SCHEMA: Creating/updating database from model...");
+        Console.WriteLine("[INIT] AUTOMATIC MIGRATIONS: Applying pending migrations...");
         Console.WriteLine("========================================");
         
         bool schemaCreated = false;
+        bool migrationsApplied = false;
         
         try
         {
-            // Check if database is empty (no tables exist)
+            // Check if we can connect to the database first
+            var canConnect = await context.Database.CanConnectAsync();
+            if (!canConnect)
+            {
+                Console.WriteLine("[WARNING] Cannot connect to database. Will try to create it.");
+            }
+            
+            // Check if migrations history table exists (indicates migrations are being used)
             var connection = context.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open)
             {
@@ -414,7 +421,17 @@ using (var scope = app.Services.CreateScope())
                 await connection.OpenAsync();
             }
             
-            // Check if any tables exist (excluding migration history table if it exists)
+            using var checkMigrationTable = connection.CreateCommand();
+            checkMigrationTable.CommandText = @"
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = '__EFMigrationsHistory'";
+            
+            var migrationTableExists = Convert.ToInt32(await checkMigrationTable.ExecuteScalarAsync()) > 0;
+            Console.WriteLine($"[INIT] Migration history table exists: {migrationTableExists}");
+            
+            // Check if any tables exist
             using var checkTables = connection.CreateCommand();
             checkTables.CommandText = @"
                 SELECT COUNT(*) 
@@ -425,69 +442,96 @@ using (var scope = app.Services.CreateScope())
             var existingTableCount = Convert.ToInt32(await checkTables.ExecuteScalarAsync());
             Console.WriteLine($"[INIT] Existing tables in database: {existingTableCount}");
             
-            if (existingTableCount == 0)
+            // Close connection before migration (MigrateAsync will open its own connection)
+            await connection.CloseAsync();
+            
+            // Always try to apply migrations first (they work even on empty databases)
+            Console.WriteLine("[INIT] 📦 Applying automatic migrations...");
+            Console.WriteLine("[INIT] This will apply any pending migrations, including index updates.");
+            
+            try
             {
-                // Database is empty - create schema directly from model
-                Console.WriteLine("[INIT] 📦 Database is empty. Creating schema directly from model...");
-                Console.WriteLine("[INIT] This will create ALL tables based on your ApplicationDbContext model.");
-                Console.WriteLine("[INIT] No migrations needed - schema is created directly from model definition.");
-                
-                // EnsureCreated creates the database schema from the model
-                // It only works if the database doesn't exist or is empty
-                await context.Database.EnsureCreatedAsync();
-                schemaCreated = true;
-                
-                Console.WriteLine("[SUCCESS] ✅ Database schema created successfully from model!");
-                
-                // Verify tables were created
-                checkTables.CommandText = @"
-                    SELECT COUNT(*) 
-                    FROM INFORMATION_SCHEMA.TABLES 
-                    WHERE TABLE_SCHEMA = DATABASE() 
-                    AND TABLE_NAME NOT IN ('__EFMigrationsHistory')";
-                var newTableCount = Convert.ToInt32(await checkTables.ExecuteScalarAsync());
-                Console.WriteLine($"[VERIFY] Tables created: {newTableCount}");
-                
-                if (newTableCount > 0)
+                // MigrateAsync will:
+                // - Create the __EFMigrationsHistory table if it doesn't exist
+                // - Apply all pending migrations that haven't been applied yet
+                // - This includes the new index migration for Schedule table
+                await context.Database.MigrateAsync();
+                migrationsApplied = true;
+                Console.WriteLine("[SUCCESS] ✅ All migrations applied successfully!");
+            }
+            catch (Exception migrateEx)
+            {
+                Console.WriteLine($"[WARNING] Migration failed: {migrateEx.Message}");
+                Console.WriteLine($"[WARNING] Type: {migrateEx.GetType().Name}");
+                if (migrateEx.InnerException != null)
                 {
-                    Console.WriteLine("[VERIFY] ✅ Schema created successfully from model!");
+                    Console.WriteLine($"[WARNING] Inner Exception: {migrateEx.InnerException.Message}");
+                }
+                
+                // Check for pending model changes error
+                bool hasPendingChanges = migrateEx.Message.Contains("pending changes", StringComparison.OrdinalIgnoreCase) ||
+                                        migrateEx.Message.Contains("Add a new migration", StringComparison.OrdinalIgnoreCase);
+                
+                if (hasPendingChanges)
+                {
+                    Console.WriteLine("========================================");
+                    Console.WriteLine("[ERROR] ❌ PENDING MODEL CHANGES DETECTED!");
+                    Console.WriteLine("========================================");
+                    Console.WriteLine("[ERROR] Your DbContext model has changes that don't have a migration yet.");
+                    Console.WriteLine("[ERROR] To fix this:");
+                    Console.WriteLine("[ERROR]   1. Run: dotnet ef migrations add <MigrationName>");
+                    Console.WriteLine("[ERROR]   2. Commit the new migration files");
+                    Console.WriteLine("[ERROR]   3. Deploy again");
+                    Console.WriteLine("[ERROR]");
+                    Console.WriteLine("[ERROR] For Railway deployments, ensure all migrations are created");
+                    Console.WriteLine("[ERROR] and committed before deploying.");
+                    Console.WriteLine("========================================");
                     
-                    // List created tables
-                    checkTables.CommandText = @"
-                        SELECT TABLE_NAME 
-                        FROM INFORMATION_SCHEMA.TABLES 
-                        WHERE TABLE_SCHEMA = DATABASE() 
-                        AND TABLE_NAME NOT IN ('__EFMigrationsHistory')
-                        ORDER BY TABLE_NAME";
-                    
-                    var tables = new List<string>();
-                    using (var reader = await checkTables.ExecuteReaderAsync())
+                    // In production/Railway, we should fail fast if migrations are out of sync
+                    // This prevents applying migrations that don't match the model
+                    var environment = builder.Environment;
+                    if (!environment.IsDevelopment())
                     {
-                        while (await reader.ReadAsync())
-                        {
-                            tables.Add(reader.GetString(0));
-                        }
+                        Console.WriteLine("[ERROR] Failing in production - migrations must be in sync with model.");
+                        throw new InvalidOperationException(
+                            "Cannot apply migrations: DbContext model has pending changes. " +
+                            "Please create a migration for these changes before deploying. " +
+                            "Run 'dotnet ef migrations add <MigrationName>' locally, then deploy.",
+                            migrateEx);
                     }
-                    
-                    Console.WriteLine("[VERIFY] Created tables:");
-                    foreach (var table in tables)
+                    else
                     {
-                        Console.WriteLine($"  ✅ {table}");
+                        Console.WriteLine("[WARNING] Continuing in development mode, but migrations may fail...");
                     }
                 }
-            }
-            else
-            {
-                Console.WriteLine("[INFO] ℹ️  Database already has tables.");
-                Console.WriteLine("[INFO] STEP 3 column checks will verify and create missing columns.");
-                Console.WriteLine("[INFO] Schema will be updated to match your model automatically.");
+                
+                // If migrations fail and database is empty, fall back to EnsureCreated
+                if (existingTableCount == 0 && !hasPendingChanges)
+                {
+                    Console.WriteLine("[WARNING] Database is empty and migrations failed. Falling back to EnsureCreated...");
+                    try
+                    {
+                        await context.Database.EnsureCreatedAsync();
+                        schemaCreated = true;
+                        Console.WriteLine("[SUCCESS] ✅ Database schema created using EnsureCreated!");
+                    }
+                    catch (Exception ensureEx)
+                    {
+                        Console.WriteLine($"[ERROR] EnsureCreated also failed: {ensureEx.Message}");
+                        throw; // Re-throw to be caught by outer catch
+                    }
+                }
+                else if (!hasPendingChanges)
+                {
+                    Console.WriteLine("[WARNING] Will continue with existing schema...");
+                }
             }
             
-            // Verify we can connect to the database
-            var canConnect = await context.Database.CanConnectAsync();
+            // Verify connection
+            canConnect = await context.Database.CanConnectAsync();
             if (!canConnect)
             {
-                throw new Exception("Cannot connect to database after schema creation");
+                throw new Exception("Cannot connect to database after schema creation/migration");
             }
             Console.WriteLine("[VERIFY] ✅ Database connection verified.");
             
@@ -496,7 +540,7 @@ using (var scope = app.Services.CreateScope())
         catch (Exception schemaEx)
         {
             Console.WriteLine("========================================");
-            Console.WriteLine("[ERROR] ❌ SCHEMA CREATION FAILED!");
+            Console.WriteLine("[ERROR] ❌ SCHEMA CREATION/MIGRATION FAILED!");
             Console.WriteLine("========================================");
             Console.WriteLine($"[ERROR] Error: {schemaEx.Message}");
             Console.WriteLine($"[ERROR] Type: {schemaEx.GetType().Name}");
@@ -574,7 +618,8 @@ using (var scope = app.Services.CreateScope())
         // Final summary
         Console.WriteLine("========================================");
         Console.WriteLine("[INIT] Schema creation summary:");
-        Console.WriteLine($"  - Schema created from model: {(schemaCreated ? "✅ YES" : "⚠️  ALREADY EXISTS/UPDATING")}");
+        Console.WriteLine($"  - Migrations applied: {(migrationsApplied ? "✅ YES" : "⚠️  NOT APPLIED/EMPTY DB")}");
+        Console.WriteLine($"  - Schema created from model: {(schemaCreated ? "✅ YES" : "⚠️  ALREADY EXISTS")}");
         Console.WriteLine("  - Schema validation: ✅ COMPLETED");
         Console.WriteLine("  - Next: Column checks will ensure all model properties have columns");
         Console.WriteLine("========================================");

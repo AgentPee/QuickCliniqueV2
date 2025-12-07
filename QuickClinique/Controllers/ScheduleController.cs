@@ -243,11 +243,44 @@ namespace QuickClinique.Controllers
             {
                 try
                 {
-                    var schedules = new List<Schedule>();
-                    var currentDate = model.StartDate;
+                    // If EndDate is not provided or equals StartDate, create for single day only
+                    var endDate = model.EndDate ?? model.StartDate;
+                    
+                    // Calculate how many schedules will be created (before generating them)
+                    int estimatedCount = 0;
+                    var currentDateForEstimate = model.StartDate;
+                    while (currentDateForEstimate <= endDate)
+                    {
+                        if (ShouldCreateForDay(currentDateForEstimate, model.SelectedDays))
+                        {
+                            // Calculate number of time slots
+                            var hoursDiff = (model.EndTime - model.StartTime).TotalHours;
+                            estimatedCount += (int)Math.Ceiling(hoursDiff);
+                        }
+                        currentDateForEstimate = currentDateForEstimate.AddDays(1);
+                    }
 
-                    // Generate schedules for each day in the range
-                    while (currentDate <= model.EndDate)
+                    // Maximum limit to prevent OutOfMemoryException (e.g., 1000 schedules per request)
+                    const int MAX_SCHEDULES_PER_REQUEST = 1000;
+                    if (estimatedCount > MAX_SCHEDULES_PER_REQUEST)
+                    {
+                        var errorMessage = $"Too many schedules to create at once ({estimatedCount}). Maximum allowed is {MAX_SCHEDULES_PER_REQUEST}. Please reduce the date range or create schedules in smaller batches.";
+                        
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = errorMessage });
+
+                        ModelState.AddModelError("", errorMessage);
+                        return View(model);
+                    }
+
+                    // Process schedules in batches to avoid memory issues
+                    const int BATCH_SIZE = 500;
+                    int totalCreated = 0;
+                    var currentDate = model.StartDate;
+                    var batch = new List<Schedule>();
+
+                    // Generate and save schedules in batches
+                    while (currentDate <= endDate)
                     {
                         // Check if we should create schedule for this day of week
                         if (ShouldCreateForDay(currentDate, model.SelectedDays))
@@ -270,7 +303,16 @@ namespace QuickClinique.Controllers
                                     EndTime = slotEndTime,
                                     IsAvailable = model.IsAvailable
                                 };
-                                schedules.Add(schedule);
+                                batch.Add(schedule);
+
+                                // If batch is full, save it and clear
+                                if (batch.Count >= BATCH_SIZE)
+                                {
+                                    _context.Schedules.AddRange(batch);
+                                    await _context.SaveChangesAsync().ConfigureAwait(false);
+                                    totalCreated += batch.Count;
+                                    batch.Clear();
+                                }
 
                                 // Move to next hour slot
                                 currentTime = currentTime.AddHours(1);
@@ -279,16 +321,20 @@ namespace QuickClinique.Controllers
                         currentDate = currentDate.AddDays(1);
                     }
 
-                    if (schedules.Count > 0)
+                    // Save any remaining schedules in the batch
+                    if (batch.Count > 0)
                     {
-                        // Add all schedules to context
-                        _context.Schedules.AddRange(schedules);
-                        await _context.SaveChangesAsync();
+                        _context.Schedules.AddRange(batch);
+                        await _context.SaveChangesAsync().ConfigureAwait(false);
+                        totalCreated += batch.Count;
+                    }
 
+                    if (totalCreated > 0)
+                    {
                         if (IsAjaxRequest())
-                            return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
+                            return Json(new { success = true, message = $"Successfully created {totalCreated} schedule(s)!" });
 
-                        TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
+                        TempData["SuccessMessage"] = $"Successfully created {totalCreated} schedule(s)!";
                         return RedirectToAction(nameof(Availability));
                     }
                     else
@@ -299,14 +345,33 @@ namespace QuickClinique.Controllers
                         ModelState.AddModelError("", "No schedules were created. Please check your date range and selected days.");
                     }
                 }
+                catch (OutOfMemoryException ex)
+                {
+                    Console.WriteLine($"OutOfMemoryException creating schedules: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                    var errorMessage = "Too many schedules to create at once. The server ran out of memory. Please reduce the date range and create schedules in smaller batches (e.g., 1-2 weeks at a time).";
+
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = errorMessage });
+
+                    ModelState.AddModelError("", errorMessage);
+                }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error creating multiple schedules: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    }
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                    var errorMessage = "An error occurred while creating schedules. Please try again with a smaller date range.";
 
                     if (IsAjaxRequest())
-                        return Json(new { success = false, error = "An error occurred while creating schedules. Please try again." });
+                        return Json(new { success = false, error = errorMessage });
 
-                    ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
+                    ModelState.AddModelError("", errorMessage);
                 }
             }
 
@@ -403,15 +468,13 @@ namespace QuickClinique.Controllers
         // Helper method to check if schedule should be created for specific day
         private bool ShouldCreateForDay(DateOnly date, List<string>? selectedDays)
         {
-            // Always exclude Sunday
-            if (date.DayOfWeek == DayOfWeek.Sunday)
-                return false;
-
+            // If no days are selected, create for all days
             if (selectedDays == null || !selectedDays.Any())
                 return true;
 
+            // If days are selected, exclude those days (create for all other days)
             var dayOfWeek = date.DayOfWeek.ToString();
-            return selectedDays.Contains(dayOfWeek);
+            return !selectedDays.Contains(dayOfWeek);
         }
 
         // GET: Schedule/Availability
@@ -458,18 +521,22 @@ namespace QuickClinique.Controllers
             schedules = schedules.OrderBy(s => s.Date)
                                 .ThenBy(s => s.StartTime);
 
-            var model = await schedules.ToListAsync();
+            var model = await schedules.ToListAsync().ConfigureAwait(false);
 
-            // Calculate statistics (always include all schedules for stats)
-            ViewBag.TotalSchedules = await _context.Schedules.CountAsync();
-            ViewBag.AvailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes");
-            ViewBag.UnavailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "No");
-            
-            // Calculate past schedules count
+            // Clear change tracker to ensure clean state for statistics queries
+            // This prevents "concurrent operation" errors when executing multiple queries
+            _context.ChangeTracker.Clear();
+
+            // Calculate statistics sequentially - EF Core doesn't support concurrent operations on same DbContext
+            // Must await each query completely before starting the next one
+            // These queries are now optimized with indexes, so sequential execution should be fast
+            ViewBag.TotalSchedules = await _context.Schedules.CountAsync().ConfigureAwait(false);
+            ViewBag.AvailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "Yes").ConfigureAwait(false);
+            ViewBag.UnavailableSchedules = await _context.Schedules.CountAsync(s => s.IsAvailable == "No").ConfigureAwait(false);
             ViewBag.PastSchedules = await _context.Schedules.CountAsync(s => 
                 s.Date < today || 
                 (s.Date == today && s.EndTime < currentTime)
-            );
+            ).ConfigureAwait(false);
 
             if (IsAjaxRequest())
                 return Json(new

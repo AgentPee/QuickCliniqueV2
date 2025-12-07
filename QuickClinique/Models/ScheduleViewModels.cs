@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace QuickClinique.Models
 {
@@ -8,9 +8,8 @@ namespace QuickClinique.Models
         [Display(Name = "Start Date")]
         public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-        [Required(ErrorMessage = "End date is required")]
-        [Display(Name = "End Date")]
-        public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(7));
+        [Display(Name = "End Date (Optional - leave empty for single day)")]
+        public DateOnly? EndDate { get; set; }
 
         [Required(ErrorMessage = "Start time is required")]
         [Display(Name = "Start Time")]
