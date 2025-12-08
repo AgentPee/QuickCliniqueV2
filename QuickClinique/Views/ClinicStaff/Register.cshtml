@@ -1,4 +1,4 @@
-﻿@model QuickClinique.Models.ClinicStaffRegisterViewModel
+@model QuickClinique.Models.ClinicStaffRegisterViewModel
 @{
     ViewData["Title"] = "Clinic Staff Registration";
     Layout = null;
@@ -105,9 +105,14 @@
                     <div class="input-group">
                         <label class="control-label">Staff ID Image (Front)</label>
                         <div class="file-input-container">
-                            <input asp-for="StaffIdImageFront" id="StaffIdImageFront" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <!-- Hidden main input for form submission -->
+                            <input asp-for="StaffIdImageFront" id="StaffIdImageFront" class="form-control file-input" type="file" accept="image/*" required style="display: none;" />
+                            <!-- Hidden input for file upload (no capture) -->
+                            <input type="file" id="StaffIdImageFrontUpload" accept="image/*" style="display: none;" />
+                            <!-- Hidden input for camera (with capture) -->
+                            <input type="file" id="StaffIdImageFrontCamera" accept="image/*" capture="environment" style="display: none;" />
                             <div class="file-input-buttons">
-                                <button type="button" class="btn-upload" onclick="document.getElementById('StaffIdImageFront').click()">
+                                <button type="button" class="btn-upload" onclick="openFileUpload('StaffIdImageFront')">
                                     📤 Upload File
                                 </button>
                                 <button type="button" class="btn-camera" onclick="openCamera('StaffIdImageFront')">
@@ -123,9 +128,14 @@
                     <div class="input-group">
                         <label class="control-label">Staff ID Image (Back)</label>
                         <div class="file-input-container">
-                            <input asp-for="StaffIdImageBack" id="StaffIdImageBack" class="form-control file-input" type="file" accept="image/*" capture="environment" required style="display: none;" />
+                            <!-- Hidden main input for form submission -->
+                            <input asp-for="StaffIdImageBack" id="StaffIdImageBack" class="form-control file-input" type="file" accept="image/*" required style="display: none;" />
+                            <!-- Hidden input for file upload (no capture) -->
+                            <input type="file" id="StaffIdImageBackUpload" accept="image/*" style="display: none;" />
+                            <!-- Hidden input for camera (with capture) -->
+                            <input type="file" id="StaffIdImageBackCamera" accept="image/*" capture="environment" style="display: none;" />
                             <div class="file-input-buttons">
-                                <button type="button" class="btn-upload" onclick="document.getElementById('StaffIdImageBack').click()">
+                                <button type="button" class="btn-upload" onclick="openFileUpload('StaffIdImageBack')">
                                     📤 Upload File
                                 </button>
                                 <button type="button" class="btn-camera" onclick="openCamera('StaffIdImageBack')">

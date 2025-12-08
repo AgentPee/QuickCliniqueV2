@@ -107,6 +107,34 @@ namespace QuickClinique.Controllers
                     return View(model);
                 }
 
+                // Check if schedule is available
+                if (schedule.IsAvailable != "Yes")
+                {
+                    var errorMessage = "This time slot is no longer available. Please select another time slot.";
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = errorMessage });
+                    ModelState.AddModelError("ScheduleId", errorMessage);
+                    ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", model.PatientId);
+                    ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", model.ScheduleId);
+                    return View(model);
+                }
+
+                // Check if this time slot is already booked by another patient (only one patient per slot)
+                var existingAppointment = await _context.Appointments
+                    .FirstOrDefaultAsync(a => a.ScheduleId == model.ScheduleId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                if (existingAppointment != null)
+                {
+                    var errorMessage = "This time slot has already been booked by another patient. Please select another time slot.";
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = errorMessage });
+                    ModelState.AddModelError("ScheduleId", errorMessage);
+                    ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", model.PatientId);
+                    ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", model.ScheduleId);
+                    return View(model);
+                }
+
                 // Validate: Prevent booking if within 5 minutes before the start of a time slot
                 // Use Philippine Time for consistent timezone handling
                 var now = TimeZoneHelper.GetPhilippineTime();
@@ -144,6 +172,10 @@ namespace QuickClinique.Controllers
                 };
 
                 _context.Add(appointment);
+                
+                // Mark the schedule as unavailable since it's now booked (only one patient per slot)
+                schedule.IsAvailable = "No";
+                
                 await _context.SaveChangesAsync();
 
                 // Send notifications to all clinic staff about the new appointment (fire-and-forget)
@@ -236,7 +268,51 @@ namespace QuickClinique.Controllers
             {
                 try
                 {
-                    _context.Update(appointment);
+                    // Get the original appointment to check status changes
+                    var originalAppointment = await _context.Appointments
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(a => a.AppointmentId == appointment.AppointmentId);
+                    
+                    if (originalAppointment != null)
+                    {
+                        // Load schedule to potentially update availability
+                        var schedule = await _context.Schedules.FindAsync(appointment.ScheduleId);
+                        
+                        // Check if status changed to Cancelled
+                        bool statusChangedToCancelled = originalAppointment.AppointmentStatus != "Cancelled" && 
+                                                       appointment.AppointmentStatus == "Cancelled";
+                        
+                        // Check if status changed from Cancelled to something else
+                        bool statusChangedFromCancelled = originalAppointment.AppointmentStatus == "Cancelled" && 
+                                                        appointment.AppointmentStatus != "Cancelled";
+                        
+                        _context.Update(appointment);
+                        
+                        // If status changed to Cancelled, check if schedule should be made available
+                        if (statusChangedToCancelled && schedule != null)
+                        {
+                            var hasOtherActiveAppointments = await _context.Appointments
+                                .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                    a.AppointmentId != appointment.AppointmentId &&
+                                    (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                            
+                            if (!hasOtherActiveAppointments)
+                            {
+                                schedule.IsAvailable = "Yes";
+                            }
+                        }
+                        // If status changed from Cancelled to active, mark schedule as unavailable
+                        else if (statusChangedFromCancelled && schedule != null && 
+                                (appointment.AppointmentStatus == "Pending" || appointment.AppointmentStatus == "Confirmed" || appointment.AppointmentStatus == "In Progress"))
+                        {
+                            schedule.IsAvailable = "No";
+                        }
+                    }
+                    else
+                    {
+                        _context.Update(appointment);
+                    }
+                    
                     await _context.SaveChangesAsync();
 
                     if (IsAjaxRequest())
@@ -311,10 +387,31 @@ namespace QuickClinique.Controllers
         [ClinicStaffOnly] // Only clinic staff can delete appointments
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var appointment = await _context.Appointments
+                .Include(a => a.Schedule)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+            
             if (appointment != null)
             {
+                var scheduleId = appointment.ScheduleId;
+                
                 _context.Appointments.Remove(appointment);
+                
+                // Check if there are any other active appointments for this schedule
+                if (appointment.Schedule != null)
+                {
+                    var hasOtherActiveAppointments = await _context.Appointments
+                        .AnyAsync(a => a.ScheduleId == scheduleId &&
+                            a.AppointmentId != id &&
+                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                    
+                    // If no other active appointments exist for this schedule, make it available again
+                    if (!hasOtherActiveAppointments)
+                    {
+                        appointment.Schedule.IsAvailable = "Yes";
+                    }
+                }
+                
                 await _context.SaveChangesAsync();
 
                 if (IsAjaxRequest())
@@ -423,12 +520,12 @@ namespace QuickClinique.Controllers
                         StartTimeFormatted = s.StartTime.ToString("h:mm tt"), // Add formatted version
                         EndTimeFormatted = s.EndTime.ToString("h:mm tt"),     // Add formatted version
                         DisplayText = s.StartTime.ToString("h:mm tt"), // Show only start time
-                        AvailableAppointments = _context.Appointments.Count(a => a.ScheduleId == s.ScheduleId &&
-                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed"))
+                        AppointmentCount = _context.Appointments.Count(a => a.ScheduleId == s.ScheduleId &&
+                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"))
                     })
                     .ToListAsync();
 
-                // Additional in-memory filtering to ensure past slots are removed (safety check)
+                // Additional in-memory filtering to ensure past slots are removed and exclude booked slots
                 // This is critical for Railway where timezone handling might differ
                 availableSlots = availableSlots.Where(slot =>
                 {
@@ -436,7 +533,11 @@ namespace QuickClinique.Controllers
                     if (slot.Date < today)
                         return false;
                     
-                    // Future dates are always valid
+                    // Exclude slots that already have appointments (only one patient per slot)
+                    if (slot.AppointmentCount > 0)
+                        return false;
+                    
+                    // Future dates are always valid (if not booked)
                     if (slot.Date > today)
                         return true;
                     
@@ -528,10 +629,10 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
-                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
-                .ThenByDescending(a => a.QueueNumber)
+                .OrderByDescending(a => a.CreatedAt)
                 .ThenByDescending(a => a.DateBooked)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
                 .ToListAsync();
 
             var emergencies = await _context.Emergencies
@@ -568,6 +669,9 @@ namespace QuickClinique.Controllers
                     return Json(new { success = false, error = "Appointment not found" });
                 }
 
+                // Store original status to check for changes
+                var originalStatus = appointment.AppointmentStatus;
+
                 // Validate status
                 var validStatuses = new[] { "Pending", "Confirmed", "In Progress", "Completed", "Cancelled" };
                 if (!validStatuses.Contains(request.Status))
@@ -580,6 +684,38 @@ namespace QuickClinique.Controllers
                 // Load related data for email notifications and triage
                 await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
                 await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+                
+                // Handle schedule availability based on status changes
+                if (appointment.Schedule != null)
+                {
+                    // Check if status changed to Cancelled
+                    bool statusChangedToCancelled = originalStatus != "Cancelled" && request.Status == "Cancelled";
+                    
+                    // Check if status changed from Cancelled to active
+                    bool statusChangedFromCancelled = originalStatus == "Cancelled" && 
+                                                     request.Status != "Cancelled" &&
+                                                     (request.Status == "Pending" || request.Status == "Confirmed" || request.Status == "In Progress");
+                    
+                    if (statusChangedToCancelled)
+                    {
+                        // Check if there are any other active appointments for this schedule
+                        var hasOtherActiveAppointments = await _context.Appointments
+                            .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                a.AppointmentId != appointment.AppointmentId &&
+                                (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                        
+                        // If no other active appointments exist, make schedule available again
+                        if (!hasOtherActiveAppointments)
+                        {
+                            appointment.Schedule.IsAvailable = "Yes";
+                        }
+                    }
+                    else if (statusChangedFromCancelled)
+                    {
+                        // If status changed from Cancelled to active, mark schedule as unavailable
+                        appointment.Schedule.IsAvailable = "No";
+                    }
+                }
 
                 // If starting appointment (In Progress), create Precord with triage data
                 if (request.Status == "In Progress")
@@ -877,10 +1013,10 @@ namespace QuickClinique.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Patient)
                 .Include(a => a.Schedule)
-                .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
-                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
-                .ThenByDescending(a => a.QueueNumber)
+                .OrderByDescending(a => a.CreatedAt)
                 .ThenByDescending(a => a.DateBooked)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                .ThenByDescending(a => a.Schedule != null ? a.Schedule.StartTime : TimeOnly.MinValue)
                 .ToListAsync();
 
             // Get today's appointments sorted by queue number descending, then by time descending
@@ -945,7 +1081,8 @@ namespace QuickClinique.Controllers
                         queueStatus = a.QueueStatus,
                         reasonForVisit = a.ReasonForVisit,
                         symptoms = a.Symptoms,
-                        dateBooked = a.DateBooked.ToString("MM/dd/yyyy")
+                        dateBooked = a.DateBooked.ToString("MM/dd/yyyy"),
+                        createdAt = a.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")
                     }).ToList(),
                     todaysAppointments = todaysAppointments,
                     emergencies = emergencies
@@ -1200,10 +1337,22 @@ namespace QuickClinique.Controllers
                     ? request.Reason 
                     : "Cancelled by patient";
 
-                await _context.SaveChangesAsync();
-
-                // Load schedule for email notification
+                // Load schedule before saving to check if we need to make it available again
                 await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+                
+                // Check if there are any other active appointments for this schedule
+                var hasOtherActiveAppointments = await _context.Appointments
+                    .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                        a.AppointmentId != appointment.AppointmentId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                // If no other active appointments exist for this schedule, make it available again
+                if (appointment.Schedule != null && !hasOtherActiveAppointments)
+                {
+                    appointment.Schedule.IsAvailable = "Yes";
+                }
+
+                await _context.SaveChangesAsync();
 
                 // Send cancellation email (fire-and-forget to avoid blocking response)
                 Console.WriteLine($"[EMAIL DEBUG] PatientCancelAppointment - Checking if email should be sent for appointment {request.AppointmentId}");
@@ -1497,11 +1646,25 @@ namespace QuickClinique.Controllers
                 // Store the cancellation reason in the dedicated field
                 appointment.CancellationReason = !string.IsNullOrEmpty(reason) ? reason : "Cancelled by clinic staff";
                 
+                // Load schedule before saving to check if we need to make it available again
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+                
+                // Check if there are any other active appointments for this schedule
+                var hasOtherActiveAppointments = await _context.Appointments
+                    .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                        a.AppointmentId != appointment.AppointmentId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                // If no other active appointments exist for this schedule, make it available again
+                if (appointment.Schedule != null && !hasOtherActiveAppointments)
+                {
+                    appointment.Schedule.IsAvailable = "Yes";
+                }
+                
                 await _context.SaveChangesAsync();
 
                 // Load related data for email notification
                 await _context.Entry(appointment).Reference(a => a.Patient).LoadAsync();
-                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
 
                 // Send cancellation email (fire-and-forget to avoid blocking response)
                 if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))

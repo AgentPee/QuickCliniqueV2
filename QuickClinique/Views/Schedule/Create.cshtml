@@ -198,6 +198,14 @@
                 return false;
             }
             
+            // Check if date is Sunday
+            const selectedDate = new Date(dateInput.value + 'T00:00:00');
+            if (selectedDate.getDay() === 0) {
+                e.preventDefault();
+                alert('Sunday scheduling is disabled. Please select a different date.');
+                return false;
+            }
+            
             // Validate end time if date is today
             if (dateInput.value === getPhilippineDate()) {
                 const endTimeValidation = validatePastDateAndTime(dateInput.value, endTimeInput.value);

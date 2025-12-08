@@ -627,6 +627,12 @@
         position: relative;
     }
 
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .notification-badge {
     display: inline-block;
     background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
@@ -650,7 +656,8 @@
     }
 }
 
-.mark-all-read-btn {
+.mark-all-read-btn,
+.clear-read-btn {
     background: transparent;
     border: 2px solid var(--primary-teal);
     color: var(--primary-teal);
@@ -673,6 +680,22 @@
     }
 
     .mark-all-read-btn i {
+        font-size: 0.8rem;
+    }
+
+.clear-read-btn {
+    border-color: #EF4444;
+    color: #EF4444;
+}
+
+    .clear-read-btn:hover {
+        background: #EF4444;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .clear-read-btn i {
         font-size: 0.8rem;
     }
 
@@ -745,6 +768,31 @@
     font-size: 0.6rem;
     animation: pulse 2s infinite;
 }
+
+.notifications-scrollable {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+}
+
+    .notifications-scrollable::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .notifications-scrollable::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .notifications-scrollable::-webkit-scrollbar-thumb {
+        background: var(--primary-teal);
+        border-radius: 10px;
+    }
+
+        .notifications-scrollable::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-teal);
+        }
 
 /* Alert Messages */
 .alert {

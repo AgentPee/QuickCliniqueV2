@@ -67,6 +67,17 @@ namespace QuickClinique.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Date,StartTime,EndTime,IsAvailable")] Schedule schedule)
         {
+            // Check if date is Sunday - scheduling is disabled on Sundays
+            if (schedule.Date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                var errorMessage = "Sunday scheduling is disabled. Please select a different date.";
+                
+                if (IsAjaxRequest())
+                    return Json(new { success = false, error = errorMessage });
+                
+                ModelState.AddModelError("Date", errorMessage);
+            }
+            
             if (ModelState.IsValid)
             {
                 _context.Add(schedule);
@@ -253,9 +264,9 @@ namespace QuickClinique.Controllers
                     {
                         if (ShouldCreateForDay(currentDateForEstimate, model.SelectedDays))
                         {
-                            // Calculate number of time slots
-                            var hoursDiff = (model.EndTime - model.StartTime).TotalHours;
-                            estimatedCount += (int)Math.Ceiling(hoursDiff);
+                            // Calculate number of time slots (15-minute intervals)
+                            var timeDiff = (model.EndTime - model.StartTime).TotalMinutes;
+                            estimatedCount += (int)Math.Ceiling(timeDiff / 15);
                         }
                         currentDateForEstimate = currentDateForEstimate.AddDays(1);
                     }
@@ -285,11 +296,11 @@ namespace QuickClinique.Controllers
                         // Check if we should create schedule for this day of week
                         if (ShouldCreateForDay(currentDate, model.SelectedDays))
                         {
-                            // Generate 1-hour time slots from StartTime to EndTime
+                            // Generate 15-minute time slots from StartTime to EndTime
                             var currentTime = model.StartTime;
                             while (currentTime < model.EndTime)
                             {
-                                var slotEndTime = currentTime.AddHours(1);
+                                var slotEndTime = currentTime.AddMinutes(15);
                                 // Ensure we don't exceed the end time
                                 if (slotEndTime > model.EndTime)
                                 {
@@ -314,8 +325,8 @@ namespace QuickClinique.Controllers
                                     batch.Clear();
                                 }
 
-                                // Move to next hour slot
-                                currentTime = currentTime.AddHours(1);
+                                // Move to next 15-minute slot
+                                currentTime = currentTime.AddMinutes(15);
                             }
                         }
                         currentDate = currentDate.AddDays(1);
@@ -408,39 +419,59 @@ namespace QuickClinique.Controllers
         {
             if (ModelState.IsValid && model.SelectedDates != null && model.SelectedDates.Any())
             {
-                try
+                // Check if any Sunday dates are selected
+                var sundayDates = model.SelectedDates.Where(d => d.DayOfWeek == DayOfWeek.Sunday).ToList();
+                if (sundayDates.Any())
                 {
-                    var schedules = new List<Schedule>();
-
-                    foreach (var date in model.SelectedDates)
-                    {
-                        var schedule = new Schedule
-                        {
-                            Date = date,
-                            StartTime = model.StartTime,
-                            EndTime = model.EndTime,
-                            IsAvailable = model.IsAvailable
-                        };
-                        schedules.Add(schedule);
-                    }
-
-                    _context.Schedules.AddRange(schedules);
-                    await _context.SaveChangesAsync();
-
+                    var errorMessage = $"Sunday scheduling is disabled. Please remove the following date(s): {string.Join(", ", sundayDates.Select(d => d.ToString("yyyy-MM-dd")))}";
+                    
                     if (IsAjaxRequest())
-                        return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
-
-                    TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
-                    return RedirectToAction(nameof(Index));
+                        return Json(new { success = false, error = errorMessage });
+                    
+                    ModelState.AddModelError("SelectedDates", errorMessage);
                 }
-                catch (Exception ex)
+                
+                // Only proceed if there are no Sunday dates
+                if (!sundayDates.Any())
                 {
-                    Console.WriteLine($"Error creating quick schedules: {ex.Message}");
+                    try
+                    {
+                        var schedules = new List<Schedule>();
 
-                    if (IsAjaxRequest())
-                        return Json(new { success = false, error = "An error occurred while creating schedules. Please try again." });
+                        foreach (var date in model.SelectedDates)
+                        {
+                            // Double-check: skip Sunday dates
+                            if (date.DayOfWeek == DayOfWeek.Sunday)
+                                continue;
+                                
+                            var schedule = new Schedule
+                            {
+                                Date = date,
+                                StartTime = model.StartTime,
+                                EndTime = model.EndTime,
+                                IsAvailable = model.IsAvailable
+                            };
+                            schedules.Add(schedule);
+                        }
 
-                    ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
+                        _context.Schedules.AddRange(schedules);
+                        await _context.SaveChangesAsync();
+
+                        if (IsAjaxRequest())
+                            return Json(new { success = true, message = $"Successfully created {schedules.Count} schedule(s)!" });
+
+                        TempData["SuccessMessage"] = $"Successfully created {schedules.Count} schedule(s)!";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error creating quick schedules: {ex.Message}");
+
+                        if (IsAjaxRequest())
+                            return Json(new { success = false, error = "An error occurred while creating schedules. Please try again." });
+
+                        ModelState.AddModelError("", "An error occurred while creating schedules. Please try again.");
+                    }
                 }
             }
             else if (model.SelectedDates == null || !model.SelectedDates.Any())
@@ -468,7 +499,11 @@ namespace QuickClinique.Controllers
         // Helper method to check if schedule should be created for specific day
         private bool ShouldCreateForDay(DateOnly date, List<string>? selectedDays)
         {
-            // If no days are selected, create for all days
+            // Always exclude Sunday - scheduling is disabled on Sundays
+            if (date.DayOfWeek == DayOfWeek.Sunday)
+                return false;
+
+            // If no days are selected, create for all days (except Sunday)
             if (selectedDays == null || !selectedDays.Any())
                 return true;
 

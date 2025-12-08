@@ -1,4 +1,4 @@
-﻿// Filter functionality
+// Filter functionality
 document.addEventListener('DOMContentLoaded', function () {
     const statusFilter = document.getElementById('statusFilter');
     const dateFilter = document.getElementById('dateFilter');
@@ -155,30 +155,25 @@ function updateAppointmentsTable(appointments) {
         return;
     }
     
-    // Sort appointments by schedule date descending, then start time descending, then queue number descending
+    // Sort appointments by creation date descending (most recent first), then schedule date, then start time
     const sortedAppointments = appointments.sort((a, b) => {
-        // First, sort by schedule date (descending - latest first)
+        // First, sort by created date (descending - most recent first)
+        // Use createdAt if available (more precise with time), otherwise fall back to dateBooked
+        const createdA = a.createdAt ? new Date(a.createdAt) : (a.dateBooked ? new Date(a.dateBooked) : new Date(0));
+        const createdB = b.createdAt ? new Date(b.createdAt) : (b.dateBooked ? new Date(b.dateBooked) : new Date(0));
+        if (createdB.getTime() !== createdA.getTime()) {
+            return createdB.getTime() - createdA.getTime();
+        }
+        // If creation dates are equal, sort by schedule date (descending - latest first)
         const dateA = a.scheduleDate ? new Date(a.scheduleDate) : new Date(0);
         const dateB = b.scheduleDate ? new Date(b.scheduleDate) : new Date(0);
         if (dateB.getTime() !== dateA.getTime()) {
             return dateB.getTime() - dateA.getTime();
         }
-        // If dates are equal, sort by start time (descending - latest first)
+        // If schedule dates are equal, sort by start time (descending - latest first)
         const timeA = a.startTime || '';
         const timeB = b.startTime || '';
-        if (timeB !== timeA) {
-            return timeB.localeCompare(timeA);
-        }
-        // If times are equal, sort by queue number (descending - highest first)
-        const queueA = a.queueNumber || 0;
-        const queueB = b.queueNumber || 0;
-        if (queueB !== queueA) {
-            return queueB - queueA;
-        }
-        // If queue numbers are equal, sort by date booked (descending - latest first)
-        const bookedA = a.dateBooked ? new Date(a.dateBooked) : new Date(0);
-        const bookedB = b.dateBooked ? new Date(b.dateBooked) : new Date(0);
-        return bookedB.getTime() - bookedA.getTime();
+        return timeB.localeCompare(timeA);
     });
     
     // Update table count
