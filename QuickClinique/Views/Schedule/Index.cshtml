@@ -141,7 +141,7 @@
 </div>
 
 <!-- Bulk Delete Confirmation Modal -->
-<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header danger-header">
@@ -183,7 +183,7 @@
 </div>
 
 <!-- Single Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header danger-header">
@@ -327,7 +327,7 @@
             });
 
             // Show the modal
-            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'), { backdrop: false });
             bulkDeleteModal.show();
         }
 
@@ -355,7 +355,7 @@
             }
 
             // Show the modal
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'), { backdrop: false });
             deleteModal.show();
         }
 
