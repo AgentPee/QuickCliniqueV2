@@ -642,7 +642,7 @@ namespace QuickClinique.Controllers
                     // Create and save the Usertype first
                     var usertype = new Usertype
                     {
-                        Name = model.FirstName + " " + model.LastName,
+                        Name = model.FirstName.ToUpper() + " " + model.LastName.ToUpper(),
                         Role = "ClinicStaff"
                     };
 
@@ -781,11 +781,11 @@ namespace QuickClinique.Controllers
                     var clinicstaff = new Clinicstaff
                     {
                         UserId = usertype.UserId,
-                        FirstName = model.FirstName,
-                        LastName = model.LastName,
+                        FirstName = model.FirstName.ToUpper(),
+                        LastName = model.LastName.ToUpper(),
                         Email = model.Email,
                         PhoneNumber = model.PhoneNumber,
-                        Gender = model.Gender,
+                        Gender = model.Gender.ToUpper(),
                         Birthdate = model.Birthdate,
                         Image = imagePath,
                         Password = _passwordService.HashPassword(model.Password),
