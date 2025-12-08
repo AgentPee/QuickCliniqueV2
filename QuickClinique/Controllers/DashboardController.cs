@@ -115,22 +115,30 @@ namespace QuickClinique.Controllers
                     
                     if (statusChangedToCancelled)
                     {
-                        // Check if there are any other active appointments for this schedule
-                        var hasOtherActiveAppointments = await _context.Appointments
-                            .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                        // Check how many other active appointments exist for this schedule
+                        var activeAppointmentCount = await _context.Appointments
+                            .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
                                 a.AppointmentId != appointment.AppointmentId &&
                                 (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                         
-                        // If no other active appointments exist, make schedule available again
-                        if (!hasOtherActiveAppointments)
+                        // Make schedule available if there are less than 2 active appointments
+                        if (activeAppointmentCount < 2)
                         {
                             appointment.Schedule.IsAvailable = "Yes";
                         }
                     }
                     else if (statusChangedFromCancelled)
                     {
-                        // If status changed from Cancelled to active, mark schedule as unavailable
-                        appointment.Schedule.IsAvailable = "No";
+                        // Check total active appointments for this schedule
+                        var activeAppointmentCount = await _context.Appointments
+                            .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                        
+                        // Mark schedule as unavailable only when it reaches 2 patients
+                        if (activeAppointmentCount >= 2)
+                        {
+                            appointment.Schedule.IsAvailable = "No";
+                        }
                     }
                 }
                 
@@ -802,19 +810,25 @@ namespace QuickClinique.Controllers
                         Date = appointmentDate,
                         StartTime = appointmentTime,
                         EndTime = endTime,
-                        IsAvailable = "No" // Mark as unavailable since it's being used
+                        IsAvailable = "Yes" // Start as available, will be marked unavailable if needed
                     };
                     _context.Schedules.Add(schedule);
                     await _context.SaveChangesAsync();
                 }
-                else
+
+                // Check how many active appointments exist for this schedule BEFORE creating the appointment
+                var existingAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == schedule.ScheduleId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                // For non-priority appointments, enforce the 2-patient limit
+                // Priority appointments can bypass this limit
+                if (request.PriorityLevel != "Priority" && existingAppointmentCount >= 2)
                 {
-                    // Mark schedule as unavailable if it's available
-                    if (schedule.IsAvailable == "Yes")
-                    {
-                        schedule.IsAvailable = "No";
-                        await _context.SaveChangesAsync();
-                    }
+                    return Json(new { 
+                        success = false, 
+                        error = "This time slot is already fully booked (2 patients). Priority appointments can bypass this limit." 
+                    });
                 }
 
                 // Get today's date for queue calculation
@@ -915,6 +929,19 @@ namespace QuickClinique.Controllers
 
                 _context.Appointments.Add(appointment);
                 await _context.SaveChangesAsync();
+
+                // Check how many active appointments exist for this schedule after creating the appointment
+                var activeAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == schedule.ScheduleId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                // Mark schedule as unavailable when it reaches 2 patients (including priority appointments)
+                // Note: Priority appointments can still be added beyond this limit, but the slot is marked unavailable
+                if (activeAppointmentCount >= 2)
+                {
+                    schedule.IsAvailable = "No";
+                    await _context.SaveChangesAsync();
+                }
 
                 // Send notifications to all clinic staff about the new walk-in appointment (fire-and-forget)
                 _ = Task.Run(async () =>
