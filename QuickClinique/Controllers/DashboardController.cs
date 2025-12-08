@@ -93,8 +93,46 @@ namespace QuickClinique.Controllers
 
                 Console.WriteLine($"Found appointment: {appointment.AppointmentId}, Current status: {appointment.AppointmentStatus}");
 
+                // Store original status to check for changes
+                var originalStatus = appointment.AppointmentStatus;
+
                 // Update appointment status
                 appointment.AppointmentStatus = request.status;
+                
+                // Load schedule to potentially update availability
+                await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
+                
+                // Handle schedule availability based on status changes
+                if (appointment.Schedule != null)
+                {
+                    // Check if status changed to Cancelled
+                    bool statusChangedToCancelled = originalStatus != "Cancelled" && request.status == "Cancelled";
+                    
+                    // Check if status changed from Cancelled to active
+                    bool statusChangedFromCancelled = originalStatus == "Cancelled" && 
+                                                     request.status != "Cancelled" &&
+                                                     (request.status == "Pending" || request.status == "Confirmed" || request.status == "In Progress");
+                    
+                    if (statusChangedToCancelled)
+                    {
+                        // Check if there are any other active appointments for this schedule
+                        var hasOtherActiveAppointments = await _context.Appointments
+                            .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                a.AppointmentId != appointment.AppointmentId &&
+                                (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                        
+                        // If no other active appointments exist, make schedule available again
+                        if (!hasOtherActiveAppointments)
+                        {
+                            appointment.Schedule.IsAvailable = "Yes";
+                        }
+                    }
+                    else if (statusChangedFromCancelled)
+                    {
+                        // If status changed from Cancelled to active, mark schedule as unavailable
+                        appointment.Schedule.IsAvailable = "No";
+                    }
+                }
                 
                 // Update queue status based on appointment status
                 switch (request.status)
@@ -331,6 +369,34 @@ namespace QuickClinique.Controllers
                 .CountAsync();
 
             return Json(new { success = true, unreadCount });
+        }
+
+        // POST: Dashboard/ClearReadNotifications - Delete all read notifications
+        [HttpPost]
+        public async Task<IActionResult> ClearReadNotifications()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var readNotifications = await _context.Notifications
+                .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "Yes")
+                .ToListAsync();
+
+            if (readNotifications.Any())
+            {
+                _context.Notifications.RemoveRange(readNotifications);
+                await _context.SaveChangesAsync();
+            }
+
+            // Get updated unread count
+            var unreadCount = await _context.Notifications
+                .Where(n => n.ClinicStaffId == clinicStaffId && n.IsRead == "No")
+                .CountAsync();
+
+            return Json(new { success = true, message = "Read notifications cleared successfully", unreadCount });
         }
 
         // GET: Dashboard/GetMessages - Get ALL messages between students and clinic staff (shared inbox)

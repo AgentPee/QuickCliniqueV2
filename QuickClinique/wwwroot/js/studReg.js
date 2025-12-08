@@ -1,4 +1,4 @@
-﻿// Toggle password visibility
+// Toggle password visibility
 function togglePassword(inputId) {
     const passwordInput = document.getElementById(inputId) || document.querySelector(`input[name="${inputId}"]`);
     if (!passwordInput) return;
@@ -152,7 +152,7 @@ function openFileUpload(inputId) {
                 mainInput.dispatchEvent(changeEvent);
             } else {
                 // Fallback: use the upload input directly for preview
-                const previewId = inputId === 'StudentIdImageFront' ? 'preview-front' : 'preview-back';
+                const previewId = inputId.includes('Front') ? 'preview-front' : 'preview-back';
                 const preview = document.getElementById(previewId);
                 if (preview && file) {
                     const reader = new FileReader();
@@ -217,7 +217,7 @@ function openCamera(inputId) {
                 mainInput.dispatchEvent(changeEvent);
             } else {
                 // Fallback: use the camera input directly for preview
-                const previewId = inputId === 'StudentIdImageFront' ? 'preview-front' : 'preview-back';
+                const previewId = inputId.includes('Front') ? 'preview-front' : 'preview-back';
                 const preview = document.getElementById(previewId);
                 if (preview && file) {
                     const reader = new FileReader();

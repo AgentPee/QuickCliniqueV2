@@ -81,9 +81,10 @@
 
                         <div class="form-group mb-4">
                             <label class="control-label">Days of Week to Exclude (Optional - select days to exclude from schedule creation)</label>
+                            <small class="form-text text-muted d-block mb-2">Note: Sunday scheduling is automatically disabled.</small>
                             <div class="row mt-2">
                                 @{
-                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+                                    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
                                 }
                                 @foreach (var day in daysOfWeek)
                                 {
@@ -265,14 +266,19 @@
                 selectedDays.push(checkbox.value);
             });
 
-            // Calculate schedules with 1-hour time slots
+            // Calculate schedules with 15-minute time slots
             const schedules = [];
             const currentDate = new Date(startDate);
             while (currentDate <= endDate) {
                 const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                // Always exclude Sunday - scheduling is disabled on Sundays
+                if (dayName === 'Sunday') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    continue;
+                }
                 // If no days selected, include all days. If days selected, exclude those days.
                 if (selectedDays.length === 0 || !selectedDays.includes(dayName)) {
-                    // Generate 1-hour time slots
+                    // Generate 15-minute time slots
                     const [startHour, startMin] = startTime.split(':').map(Number);
                     const [endHour, endMin] = endTime.split(':').map(Number);
                     const startMinutes = startHour * 60 + startMin;
@@ -281,7 +287,7 @@
                     let currentMinutes = startMinutes;
                     while (currentMinutes < endMinutes) {
                         const slotStartMinutes = currentMinutes;
-                        const slotEndMinutes = Math.min(currentMinutes + 60, endMinutes);
+                        const slotEndMinutes = Math.min(currentMinutes + 15, endMinutes);
                         
                         const slotStartHour = Math.floor(slotStartMinutes / 60);
                         const slotStartMin = slotStartMinutes % 60;
@@ -298,7 +304,7 @@
                             endTime: slotEndTime
                         });
                         
-                        currentMinutes += 60;
+                        currentMinutes += 15;
                     }
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
@@ -502,6 +508,17 @@
                 return false;
             }
             
+            // Check if start date is Sunday
+            const startDate = new Date(startDateInput.value + 'T00:00:00');
+            if (startDate.getDay() === 0) {
+                e.preventDefault();
+                if (typeof syringeLoader !== 'undefined') {
+                    syringeLoader.hide();
+                }
+                alert('Sunday scheduling is disabled. Please select a different date.');
+                return false;
+            }
+            
             // Validate end date if provided
             if (endDateInput.value) {
                 const endDateValidation = validatePastDateAndTime(endDateInput.value, endTimeInput.value);
@@ -511,6 +528,17 @@
                         syringeLoader.hide();
                     }
                     alert(endDateValidation.error);
+                    return false;
+                }
+                
+                // Check if end date is Sunday
+                const endDate = new Date(endDateInput.value + 'T00:00:00');
+                if (endDate.getDay() === 0) {
+                    e.preventDefault();
+                    if (typeof syringeLoader !== 'undefined') {
+                        syringeLoader.hide();
+                    }
+                    alert('Sunday scheduling is disabled. Please select a different end date.');
                     return false;
                 }
                 
@@ -548,11 +576,16 @@
             const [endHour, endMin] = endTime.split(':').map(Number);
             const startMinutes = startHour * 60 + startMin;
             const endMinutes = endHour * 60 + endMin;
-            const hoursDiff = (endMinutes - startMinutes) / 60;
-            const slotsPerDay = Math.ceil(hoursDiff);
+            const minutesDiff = endMinutes - startMinutes;
+            const slotsPerDay = Math.ceil(minutesDiff / 15);
             
             while (currentDate <= endDate) {
                 const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                // Always exclude Sunday - scheduling is disabled on Sundays
+                if (dayName === 'Sunday') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    continue;
+                }
                 if (selectedDays.length === 0 || !selectedDays.includes(dayName)) {
                     // This day will be included
                     willCreateSchedules = true;

@@ -214,12 +214,17 @@
                         <i class="fas fa-bell"></i> Recent Notifications
                         <span class="notification-badge" id="unreadNotificationBadge" style="display: none;">0</span>
                     </h4>
-                    <button type="button" class="mark-all-read-btn" id="markAllReadBtn" style="display: none;" onclick="markAllNotificationsAsRead()">
-                        <i class="fas fa-check-double"></i> Mark all read
-                    </button>
+                    <div class="notification-actions">
+                        <button type="button" class="mark-all-read-btn" id="markAllReadBtn" style="display: none;" onclick="markAllNotificationsAsRead()">
+                            <i class="fas fa-check-double"></i> Mark all read
+                        </button>
+                        <button type="button" class="clear-read-btn" id="clearReadBtn" style="display: none;" onclick="clearReadNotifications()">
+                            <i class="fas fa-trash-alt"></i> Clear read
+                        </button>
+                    </div>
                 </div>
 
-                <div id="notificationsContainer">
+                <div id="notificationsContainer" class="notifications-scrollable">
                     @if (Model.RecentNotifications.Any())
                     {
                         @foreach (var notification in Model.RecentNotifications)
@@ -620,12 +625,17 @@
                     notificationsContainer.insertAdjacentHTML('beforeend', notificationHtml);
                 });
             }
+
+            // Update clear read button visibility
+            updateUnreadNotificationBadge(0);
         }
 
         // Update unread notification badge
         function updateUnreadNotificationBadge(count) {
             const badge = document.getElementById('unreadNotificationBadge');
             const markAllBtn = document.getElementById('markAllReadBtn');
+            const clearReadBtn = document.getElementById('clearReadBtn');
+            const notificationsContainer = document.getElementById('notificationsContainer');
             
             if (badge) {
                 if (count > 0) {
@@ -635,6 +645,16 @@
                 } else {
                     badge.style.display = 'none';
                     if (markAllBtn) markAllBtn.style.display = 'none';
+                }
+            }
+
+            // Show/hide clear read button based on whether there are read notifications
+            if (clearReadBtn && notificationsContainer) {
+                const readNotifications = notificationsContainer.querySelectorAll('.notification-item:not(.unread)');
+                if (readNotifications.length > 0) {
+                    clearReadBtn.style.display = 'block';
+                } else {
+                    clearReadBtn.style.display = 'none';
                 }
             }
         }
@@ -710,6 +730,12 @@
                     // Update unread count badge
                     updateUnreadNotificationBadge(0);
 
+                    // Show clear read button since all are now read
+                    const clearReadBtn = document.getElementById('clearReadBtn');
+                    if (clearReadBtn) {
+                        clearReadBtn.style.display = 'block';
+                    }
+
                     // Refresh dashboard data to update the list
                     setTimeout(() => {
                         refreshDashboardData();
@@ -717,6 +743,61 @@
                 }
             } catch (error) {
                 console.error('Error marking all notifications as read:', error);
+            }
+        }
+
+        // Clear read notifications
+        async function clearReadNotifications() {
+            if (!confirm('Are you sure you want to clear all read notifications? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/Dashboard/ClearReadNotifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Remove all read notifications from the DOM
+                    const notificationsContainer = document.getElementById('notificationsContainer');
+                    if (notificationsContainer) {
+                        const readNotifications = notificationsContainer.querySelectorAll('.notification-item:not(.unread)');
+                        readNotifications.forEach(item => item.remove());
+
+                        // If no notifications remain, show empty state
+                        if (notificationsContainer.querySelectorAll('.notification-item').length === 0) {
+                            notificationsContainer.innerHTML = `
+                                <div class="text-center text-muted py-3">
+                                    <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                    <p>No recent notifications</p>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    // Hide clear read button
+                    const clearReadBtn = document.getElementById('clearReadBtn');
+                    if (clearReadBtn) {
+                        clearReadBtn.style.display = 'none';
+                    }
+
+                    // Update unread count badge
+                    updateUnreadNotificationBadge(result.unreadCount || 0);
+
+                    // Show success message
+                    showMessage('Read notifications cleared successfully', 'success');
+                } else {
+                    showMessage(result.error || 'Failed to clear read notifications', 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing read notifications:', error);
+                showMessage('An error occurred while clearing read notifications', 'error');
             }
         }
 
@@ -876,6 +957,13 @@
             const unreadNotifications = document.querySelectorAll('.notification-item.unread');
             const unreadCount = unreadNotifications.length;
             updateUnreadNotificationBadge(unreadCount);
+            
+            // Check for read notifications and show clear button if any exist
+            const readNotifications = document.querySelectorAll('.notification-item:not(.unread)');
+            const clearReadBtn = document.getElementById('clearReadBtn');
+            if (clearReadBtn && readNotifications.length > 0) {
+                clearReadBtn.style.display = 'block';
+            }
         }
 
         // Initialize unread notification count on page load (via API)
