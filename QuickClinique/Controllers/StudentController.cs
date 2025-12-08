@@ -519,7 +519,7 @@ namespace QuickClinique.Controllers
                             // Create and save the Usertype first
                             var usertype = new Usertype
                             {
-                                Name = model.FirstName + " " + model.LastName,
+                                Name = model.FirstName.ToUpper() + " " + model.LastName.ToUpper(),
                                 Role = "Student"
                             };
 
@@ -602,11 +602,11 @@ namespace QuickClinique.Controllers
                             {
                                 UserId = usertype.UserId,
                                 Idnumber = model.Idnumber,
-                                FirstName = model.FirstName,
-                                LastName = model.LastName,
+                                FirstName = model.FirstName.ToUpper(),
+                                LastName = model.LastName.ToUpper(),
                                 Email = model.Email,
                                 PhoneNumber = model.PhoneNumber,
-                                Gender = model.Gender,
+                                Gender = model.Gender.ToUpper(),
                                 Birthdate = model.Birthdate,
                                 Image = imagePath,
                                 Password = _passwordService.HashPassword(model.Password), // Hash the password
@@ -614,8 +614,8 @@ namespace QuickClinique.Controllers
                                 EmailVerificationToken = emailToken,
                                 EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
                                 IsActive = false, // Account starts as inactive until activated by administrator
-                                EmergencyContactName = model.EmergencyContactName,
-                                EmergencyContactRelationship = model.EmergencyContactRelationship,
+                                EmergencyContactName = model.EmergencyContactName.ToUpper(),
+                                EmergencyContactRelationship = model.EmergencyContactRelationship.ToUpper(),
                                 EmergencyContactPhoneNumber = model.EmergencyContactPhoneNumber
                             };
 
