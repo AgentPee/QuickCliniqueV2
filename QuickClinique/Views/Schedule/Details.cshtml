@@ -215,15 +215,21 @@
                 item.style.animationDelay = `${index * 0.1}s`;
             });
 
-            // Modal enhancement
+            // Modal enhancement - remove backdrop
             const deleteModal = document.getElementById('deleteModal');
             if (deleteModal) {
                 deleteModal.addEventListener('show.bs.modal', function() {
-                    document.body.classList.add('modal-open');
+                    // Remove any backdrop that might be created
+                    setTimeout(() => {
+                        const backdrops = document.querySelectorAll('.modal-backdrop');
+                        backdrops.forEach(backdrop => backdrop.remove());
+                    }, 10);
                 });
 
                 deleteModal.addEventListener('hidden.bs.modal', function() {
-                    document.body.classList.remove('modal-open');
+                    // Ensure backdrop is removed when modal is hidden
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
                 });
             }
         });

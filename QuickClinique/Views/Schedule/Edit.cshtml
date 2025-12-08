@@ -295,6 +295,24 @@
             if (availabilitySelect) {
                 availabilitySelect.value = '@Model.IsAvailable';
             }
+
+            // Remove backdrop from delete modal
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function() {
+                    // Remove any backdrop that might be created
+                    setTimeout(() => {
+                        const backdrops = document.querySelectorAll('.modal-backdrop');
+                        backdrops.forEach(backdrop => backdrop.remove());
+                    }, 10);
+                });
+
+                deleteModal.addEventListener('hidden.bs.modal', function() {
+                    // Ensure backdrop is removed when modal is hidden
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                });
+            }
         });
     </script>
 }

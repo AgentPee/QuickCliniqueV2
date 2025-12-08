@@ -1,4 +1,4 @@
-﻿/* Schedule Details Styles */
+/* Schedule Details Styles */
 /* Clean Teal Medical Dashboard Theme */
 
 .schedule-details-container {
@@ -651,3 +651,14 @@
     .appointments-list::-webkit-scrollbar-thumb:hover {
         background: #44A08D;
     }
+
+/* Hide backdrop for delete modal */
+#deleteModal.show ~ .modal-backdrop,
+.modal-backdrop.show {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+body:has(#deleteModal.show) .modal-backdrop {
+    display: none !important;
+}

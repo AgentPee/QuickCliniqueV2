@@ -326,9 +326,18 @@
                 bulkDeleteForm.appendChild(input);
             });
 
-            // Show the modal
-            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'), { backdrop: false });
+            // Show the modal without backdrop
+            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'), { 
+                backdrop: false,
+                keyboard: true
+            });
             bulkDeleteModal.show();
+            
+            // Remove any backdrop that might have been created
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+            }, 10);
         }
 
         function setDeleteSchedule(scheduleId, date, time, appointmentCount) {
@@ -354,9 +363,18 @@
                 appointmentsWarning.style.display = 'none';
             }
 
-            // Show the modal
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'), { backdrop: false });
+            // Show the modal without backdrop
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'), { 
+                backdrop: false,
+                keyboard: true
+            });
             deleteModal.show();
+            
+            // Remove any backdrop that might have been created
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+            }, 10);
         }
 
         function initializeRowHoverEffects() {

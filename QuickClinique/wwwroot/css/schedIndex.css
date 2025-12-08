@@ -1,4 +1,4 @@
-﻿/* SchedCM.css - Styles for Create Multiple Schedules Page - Fixed */
+/* SchedCM.css - Styles for Create Multiple Schedules Page - Fixed */
 /* Enhanced Modern Medical Dashboard Theme */
 
 /* CSS Variables */
@@ -731,6 +731,20 @@ select.form-control {
 .form-check-input:focus-visible {
     outline: 3px solid rgba(78, 205, 196, 0.5);
     outline-offset: 2px;
+}
+
+/* Hide backdrop for delete modals */
+#deleteModal.show ~ .modal-backdrop,
+#bulkDeleteModal.show ~ .modal-backdrop,
+.modal-backdrop.show {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Ensure no backdrop is created for delete modals */
+body:has(#deleteModal.show) .modal-backdrop,
+body:has(#bulkDeleteModal.show) .modal-backdrop {
+    display: none !important;
 }
 
 /* Enhanced checkbox animations */

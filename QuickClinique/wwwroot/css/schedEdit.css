@@ -1,4 +1,4 @@
-﻿/* Schedule Edit Styles */
+/* Schedule Edit Styles */
 /* Clean Teal Medical Dashboard Theme */
 
 .schedule-edit-container {
@@ -727,4 +727,15 @@
 .availability-select:focus {
     outline: 3px solid rgba(78, 205, 196, 0.5);
     outline-offset: 2px;
+}
+
+/* Hide backdrop for delete modal */
+#deleteModal.show ~ .modal-backdrop,
+.modal-backdrop.show {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+body:has(#deleteModal.show) .modal-backdrop {
+    display: none !important;
 }
