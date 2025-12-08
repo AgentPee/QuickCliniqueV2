@@ -1617,6 +1617,18 @@
     text-align: right;
 }
 
+.message-sender-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    padding: 0 0.5rem;
+}
+
+.message-staff.sent .message-sender-name {
+    text-align: right;
+}
+
 .no-messages {
     flex: 1;
     display: flex;
