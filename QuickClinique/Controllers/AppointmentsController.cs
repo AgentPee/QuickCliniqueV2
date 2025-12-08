@@ -107,10 +107,15 @@ namespace QuickClinique.Controllers
                     return View(model);
                 }
 
-                // Check if schedule is available
-                if (schedule.IsAvailable != "Yes")
+                // Check if this time slot is already booked by 2 patients (allow up to 2 patients per slot)
+                // This is the primary check - availability is determined by actual appointment count
+                var existingAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == model.ScheduleId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                if (existingAppointmentCount >= 2)
                 {
-                    var errorMessage = "This time slot is no longer available. Please select another time slot.";
+                    var errorMessage = "This time slot is already fully booked (2 patients). Please select another time slot.";
                     if (IsAjaxRequest())
                         return Json(new { success = false, error = errorMessage });
                     ModelState.AddModelError("ScheduleId", errorMessage);
@@ -119,20 +124,11 @@ namespace QuickClinique.Controllers
                     return View(model);
                 }
 
-                // Check if this time slot is already booked by another patient (only one patient per slot)
-                var existingAppointment = await _context.Appointments
-                    .FirstOrDefaultAsync(a => a.ScheduleId == model.ScheduleId &&
-                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
-                
-                if (existingAppointment != null)
+                // Update schedule availability based on actual appointment count
+                // If there's room for at least one more patient, ensure it's marked as available
+                if (existingAppointmentCount < 2 && schedule.IsAvailable != "Yes")
                 {
-                    var errorMessage = "This time slot has already been booked by another patient. Please select another time slot.";
-                    if (IsAjaxRequest())
-                        return Json(new { success = false, error = errorMessage });
-                    ModelState.AddModelError("ScheduleId", errorMessage);
-                    ViewData["PatientId"] = new SelectList(_context.Students, "StudentId", "FullName", model.PatientId);
-                    ViewData["ScheduleId"] = new SelectList(_context.Schedules, "ScheduleId", "Date", model.ScheduleId);
-                    return View(model);
+                    schedule.IsAvailable = "Yes";
                 }
 
                 // Validate: Prevent booking if within 5 minutes before the start of a time slot
@@ -173,8 +169,12 @@ namespace QuickClinique.Controllers
 
                 _context.Add(appointment);
                 
-                // Mark the schedule as unavailable since it's now booked (only one patient per slot)
-                schedule.IsAvailable = "No";
+                // Mark the schedule as unavailable only when it reaches 2 patients (fully booked)
+                var appointmentCountAfterAdd = existingAppointmentCount + 1;
+                if (appointmentCountAfterAdd >= 2)
+                {
+                    schedule.IsAvailable = "No";
+                }
                 
                 await _context.SaveChangesAsync();
 
@@ -291,21 +291,30 @@ namespace QuickClinique.Controllers
                         // If status changed to Cancelled, check if schedule should be made available
                         if (statusChangedToCancelled && schedule != null)
                         {
-                            var hasOtherActiveAppointments = await _context.Appointments
-                                .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                            var activeAppointmentCount = await _context.Appointments
+                                .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
                                     a.AppointmentId != appointment.AppointmentId &&
                                     (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                             
-                            if (!hasOtherActiveAppointments)
+                            // Make schedule available if there are less than 2 active appointments
+                            if (activeAppointmentCount < 2)
                             {
                                 schedule.IsAvailable = "Yes";
                             }
                         }
-                        // If status changed from Cancelled to active, mark schedule as unavailable
+                        // If status changed from Cancelled to active, check if schedule should be marked unavailable
                         else if (statusChangedFromCancelled && schedule != null && 
                                 (appointment.AppointmentStatus == "Pending" || appointment.AppointmentStatus == "Confirmed" || appointment.AppointmentStatus == "In Progress"))
                         {
-                            schedule.IsAvailable = "No";
+                            var activeAppointmentCount = await _context.Appointments
+                                .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                    (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                            
+                            // Mark schedule as unavailable only when it reaches 2 patients
+                            if (activeAppointmentCount >= 2)
+                            {
+                                schedule.IsAvailable = "No";
+                            }
                         }
                     }
                     else
@@ -397,16 +406,16 @@ namespace QuickClinique.Controllers
                 
                 _context.Appointments.Remove(appointment);
                 
-                // Check if there are any other active appointments for this schedule
+                // Check how many other active appointments exist for this schedule
                 if (appointment.Schedule != null)
                 {
-                    var hasOtherActiveAppointments = await _context.Appointments
-                        .AnyAsync(a => a.ScheduleId == scheduleId &&
+                    var activeAppointmentCount = await _context.Appointments
+                        .CountAsync(a => a.ScheduleId == scheduleId &&
                             a.AppointmentId != id &&
                             (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                     
-                    // If no other active appointments exist for this schedule, make it available again
-                    if (!hasOtherActiveAppointments)
+                    // Make schedule available if there are less than 2 active appointments
+                    if (activeAppointmentCount < 2)
                     {
                         appointment.Schedule.IsAvailable = "Yes";
                     }
@@ -475,8 +484,10 @@ namespace QuickClinique.Controllers
                 var currentTime = TimeZoneHelper.GetPhilippineTimeOnly();
                 var fiveMinutesFromNow = currentTime.AddMinutes(5);
                 
+                // Query all schedules for today and future dates
+                // Availability will be determined by actual appointment count (allow up to 2 patients per slot)
                 var query = _context.Schedules
-                    .Where(s => s.IsAvailable == "Yes" && s.Date >= today);
+                    .Where(s => s.Date >= today);
 
                 if (date.HasValue)
                 {
@@ -533,8 +544,8 @@ namespace QuickClinique.Controllers
                     if (slot.Date < today)
                         return false;
                     
-                    // Exclude slots that already have appointments (only one patient per slot)
-                    if (slot.AppointmentCount > 0)
+                    // Exclude slots that already have 2 appointments (fully booked)
+                    if (slot.AppointmentCount >= 2)
                         return false;
                     
                     // Future dates are always valid (if not booked)
@@ -601,12 +612,28 @@ namespace QuickClinique.Controllers
             try
             {
                 var today = TimeZoneHelper.GetPhilippineDate();
-                var availableDates = await _context.Schedules
-                    .Where(s => s.IsAvailable == "Yes" && s.Date >= today)
+                
+                // Get all schedules for today and future dates
+                var allSchedules = await _context.Schedules
+                    .Where(s => s.Date >= today)
+                    .ToListAsync();
+                
+                // Get appointment counts for each schedule
+                var scheduleIds = allSchedules.Select(s => s.ScheduleId).ToList();
+                var appointmentCounts = await _context.Appointments
+                    .Where(a => scheduleIds.Contains(a.ScheduleId) &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"))
+                    .GroupBy(a => a.ScheduleId)
+                    .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.ScheduleId, x => x.Count);
+                
+                // Filter schedules that have less than 2 appointments
+                var availableDates = allSchedules
+                    .Where(s => !appointmentCounts.ContainsKey(s.ScheduleId) || appointmentCounts[s.ScheduleId] < 2)
                     .Select(s => s.Date)
                     .Distinct()
                     .OrderBy(d => d)
-                    .ToListAsync();
+                    .ToList();
 
                 if (IsAjaxRequest())
                     return Json(new { success = true, data = availableDates });
@@ -698,22 +725,30 @@ namespace QuickClinique.Controllers
                     
                     if (statusChangedToCancelled)
                     {
-                        // Check if there are any other active appointments for this schedule
-                        var hasOtherActiveAppointments = await _context.Appointments
-                            .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                        // Check how many other active appointments exist for this schedule
+                        var activeAppointmentCount = await _context.Appointments
+                            .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
                                 a.AppointmentId != appointment.AppointmentId &&
                                 (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                         
-                        // If no other active appointments exist, make schedule available again
-                        if (!hasOtherActiveAppointments)
+                        // Make schedule available if there are less than 2 active appointments
+                        if (activeAppointmentCount < 2)
                         {
                             appointment.Schedule.IsAvailable = "Yes";
                         }
                     }
                     else if (statusChangedFromCancelled)
                     {
-                        // If status changed from Cancelled to active, mark schedule as unavailable
-                        appointment.Schedule.IsAvailable = "No";
+                        // Check total active appointments for this schedule
+                        var activeAppointmentCount = await _context.Appointments
+                            .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                                (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                        
+                        // Mark schedule as unavailable only when it reaches 2 patients
+                        if (activeAppointmentCount >= 2)
+                        {
+                            appointment.Schedule.IsAvailable = "No";
+                        }
                     }
                 }
 
@@ -1340,14 +1375,14 @@ namespace QuickClinique.Controllers
                 // Load schedule before saving to check if we need to make it available again
                 await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
                 
-                // Check if there are any other active appointments for this schedule
-                var hasOtherActiveAppointments = await _context.Appointments
-                    .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                // Check how many other active appointments exist for this schedule
+                var activeAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
                         a.AppointmentId != appointment.AppointmentId &&
                         (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                 
-                // If no other active appointments exist for this schedule, make it available again
-                if (appointment.Schedule != null && !hasOtherActiveAppointments)
+                // Make schedule available if there are less than 2 active appointments
+                if (appointment.Schedule != null && activeAppointmentCount < 2)
                 {
                     appointment.Schedule.IsAvailable = "Yes";
                 }
@@ -1463,13 +1498,28 @@ namespace QuickClinique.Controllers
                     return Json(new { success = false, error = "Please select a future date" });
                 }
 
-                // Find available schedule for the new date
+                // Find available schedule for the new date (including slots with 1 appointment)
                 var availableSchedule = await _context.Schedules
-                    .Where(s => s.Date == newDate && s.IsAvailable == "Yes")
+                    .Where(s => s.Date == newDate)
                     .OrderBy(s => s.StartTime)
-                    .FirstOrDefaultAsync();
+                    .ToListAsync();
 
-                if (availableSchedule == null)
+                // Filter to find slots with less than 2 appointments
+                Schedule? selectedSchedule = null;
+                foreach (var schedule in availableSchedule)
+                {
+                    var appointmentCount = await _context.Appointments
+                        .CountAsync(a => a.ScheduleId == schedule.ScheduleId &&
+                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                    
+                    if (appointmentCount < 2)
+                    {
+                        selectedSchedule = schedule;
+                        break;
+                    }
+                }
+
+                if (selectedSchedule == null)
                 {
                     return Json(new { success = false, error = "No available slots for the selected date. Please choose another date." });
                 }
@@ -1477,17 +1527,32 @@ namespace QuickClinique.Controllers
                 // Update appointment to pending status and assign new schedule
                 appointment.AppointmentStatus = "Pending";
                 appointment.QueueStatus = "Pending";
-                appointment.ScheduleId = availableSchedule.ScheduleId;
+                appointment.ScheduleId = selectedSchedule.ScheduleId;
                 appointment.QueueNumber = 0; // Reset queue number
 
-                // Mark old schedule as available
+                // Check old schedule and make it available if it has less than 2 appointments
                 if (appointment.Schedule != null)
                 {
-                    appointment.Schedule.IsAvailable = "Yes";
+                    var oldScheduleAppointmentCount = await _context.Appointments
+                        .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                            a.AppointmentId != appointment.AppointmentId &&
+                            (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                    
+                    if (oldScheduleAppointmentCount < 2)
+                    {
+                        appointment.Schedule.IsAvailable = "Yes";
+                    }
                 }
 
-                // Mark new schedule as unavailable
-                availableSchedule.IsAvailable = "No";
+                // Check new schedule and mark as unavailable only if it reaches 2 appointments
+                var newScheduleAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == selectedSchedule.ScheduleId &&
+                        (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
+                
+                if (newScheduleAppointmentCount >= 2)
+                {
+                    selectedSchedule.IsAvailable = "No";
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -1649,14 +1714,14 @@ namespace QuickClinique.Controllers
                 // Load schedule before saving to check if we need to make it available again
                 await _context.Entry(appointment).Reference(a => a.Schedule).LoadAsync();
                 
-                // Check if there are any other active appointments for this schedule
-                var hasOtherActiveAppointments = await _context.Appointments
-                    .AnyAsync(a => a.ScheduleId == appointment.ScheduleId &&
+                // Check how many other active appointments exist for this schedule
+                var activeAppointmentCount = await _context.Appointments
+                    .CountAsync(a => a.ScheduleId == appointment.ScheduleId &&
                         a.AppointmentId != appointment.AppointmentId &&
                         (a.AppointmentStatus == "Pending" || a.AppointmentStatus == "Confirmed" || a.AppointmentStatus == "In Progress"));
                 
-                // If no other active appointments exist for this schedule, make it available again
-                if (appointment.Schedule != null && !hasOtherActiveAppointments)
+                // Make schedule available if there are less than 2 active appointments
+                if (appointment.Schedule != null && activeAppointmentCount < 2)
                 {
                     appointment.Schedule.IsAvailable = "Yes";
                 }
