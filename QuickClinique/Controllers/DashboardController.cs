@@ -432,25 +432,40 @@ namespace QuickClinique.Controllers
                 .Select(c => c.UserId)
                 .ToListAsync();
 
+            // Get all clinic staff with their user IDs for name lookup
+            var clinicStaffLookup = await _context.Clinicstaffs
+                .Select(c => new { c.UserId, c.FirstName, c.LastName })
+                .ToListAsync();
+
             // Get ALL messages involving any clinic staff (shared inbox for all staff)
             var messages = await _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
                 .Where(m => allClinicStaffUserIds.Contains(m.SenderId) || allClinicStaffUserIds.Contains(m.ReceiverId))
                 .OrderBy(m => m.CreatedAt)
-                .Select(m => new {
+                .ToListAsync();
+
+            // Project messages with clinic staff full name if sender is clinic staff
+            var messageData = messages.Select(m => {
+                var senderStaff = clinicStaffLookup.FirstOrDefault(c => c.UserId == m.SenderId);
+                var senderFullName = senderStaff != null 
+                    ? $"{senderStaff.FirstName} {senderStaff.LastName}" 
+                    : null;
+
+                return new {
                     messageId = m.MessageId,
                     senderId = m.SenderId,
                     receiverId = m.ReceiverId,
                     senderName = m.Sender.Name,
+                    senderFullName = senderFullName,
                     receiverName = m.Receiver.Name,
                     message = m.Message1,
                     createdAt = m.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                     isSent = m.SenderId == clinicStaff.UserId
-                })
-                .ToListAsync();
+                };
+            }).ToList();
 
-            return Json(new { success = true, data = messages, currentUserId = clinicStaff.UserId });
+            return Json(new { success = true, data = messageData, currentUserId = clinicStaff.UserId });
         }
 
         // POST: Dashboard/SendMessage - Send a reply message to student
@@ -501,12 +516,16 @@ namespace QuickClinique.Controllers
                 .Include(m => m.Receiver)
                 .FirstOrDefaultAsync(m => m.MessageId == message.MessageId);
 
+            // Get clinic staff full name
+            var senderFullName = $"{clinicStaff.FirstName} {clinicStaff.LastName}";
+
             var messageData = new
             {
                 messageId = savedMessage.MessageId,
                 senderId = savedMessage.SenderId,
                 receiverId = savedMessage.ReceiverId,
                 senderName = savedMessage.Sender.Name,
+                senderFullName = senderFullName,
                 receiverName = savedMessage.Receiver.Name,
                 message = savedMessage.Message1,
                 createdAt = savedMessage.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),

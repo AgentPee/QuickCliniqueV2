@@ -1368,9 +1368,14 @@
             chatMessagesStaff.innerHTML = messages.map(msg => {
                 const messageClass = msg.isSent ? 'sent' : 'received';
                 const messageTime = formatMessageTime(msg.createdAt);
+                // Show sender full name for messages sent by clinic staff (when senderFullName exists)
+                const senderFullName = msg.senderFullName 
+                    ? `<div class="message-sender-name">${escapeHtml(msg.senderFullName)}</div>` 
+                    : '';
                 
                 return `
                     <div class="message-staff ${messageClass}" data-message-id="${msg.messageId}">
+                        ${senderFullName}
                         <div class="message-content">${escapeHtml(msg.message)}</div>
                         <div class="message-time">${messageTime}</div>
                     </div>
@@ -1394,11 +1399,16 @@
 
             const messageClass = message.isSent ? 'sent' : 'received';
             const messageTime = formatMessageTime(message.createdAt);
+            // Show sender full name for messages sent by clinic staff (when senderFullName exists)
+            const senderFullName = message.senderFullName 
+                ? `<div class="message-sender-name">${escapeHtml(message.senderFullName)}</div>` 
+                : '';
             
             const messageElement = document.createElement('div');
             messageElement.className = `message-staff ${messageClass}`;
             messageElement.setAttribute('data-message-id', message.messageId);
             messageElement.innerHTML = `
+                ${senderFullName}
                 <div class="message-content">${escapeHtml(message.message)}</div>
                 <div class="message-time">${messageTime}</div>
             `;
