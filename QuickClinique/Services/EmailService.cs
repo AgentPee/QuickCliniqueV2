@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 
 namespace QuickClinique.Services
@@ -45,12 +45,12 @@ namespace QuickClinique.Services
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Welcome to QuickClinique! Please verify your email address by clicking the button below:</p>
                         <div style='text-align: center; margin: 30px 0;'>
-                            <a href='{System.Net.WebUtility.HtmlEncode(verificationLink)}' style='display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);'>Verify Email</a>
+                            <a href='{System.Net.WebUtility.HtmlEncode(verificationLink)}' style='display: inline-block; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);'>Verify Email</a>
                         </div>
                         <p style='margin: 20px 0; color: #718096; font-size: 14px;'>Or copy this link to your browser:</p>
-                        <p style='margin: 0 0 20px 0; color: #06B6D4; word-break: break-all; font-size: 14px;'>{System.Net.WebUtility.HtmlEncode(verificationLink)}</p>
+                        <p style='margin: 0 0 20px 0; color: #10B981; word-break: break-all; font-size: 14px;'>{System.Net.WebUtility.HtmlEncode(verificationLink)}</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>This link will expire in 24 hours.</p>",
-                    primaryColor: "#06B6D4"
+                    primaryColor: "#10B981"
                 );
 
                 await SendEmailAsync(toEmail, subject, body);
@@ -185,14 +185,14 @@ namespace QuickClinique.Services
                     greeting: $"Hello {patientName},",
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Your appointment has been confirmed. Here are the details:</p>
-                        <div style='background-color: #F0F4F8; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #06B6D4;'>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
-                            <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
+                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
+                            <p style='margin: 0; color: #2D3748;'><strong style='color: #059669;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
                         </div>
                         <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please arrive on time for your appointment.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>If you need to reschedule or cancel, please contact us as soon as possible.</p>",
-                    primaryColor: "#06B6D4"
+                    primaryColor: "#10B981"
                 );
 
                 await SendEmailAsync(toEmail, subject, body);
@@ -228,13 +228,13 @@ namespace QuickClinique.Services
                     greeting: $"Hello {patientName},",
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Good news! Your position in the queue has moved up.</p>
-                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Your New Position:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{newPosition} in line</span></p>
-                            <p style='margin: 0; color: #2D3748;'><strong style='color: #059669;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
+                        <div style='background-color: #FEF3C7; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #F59E0B;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #D97706;'>Your New Position:</strong> <span style='background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{newPosition} in line</span></p>
+                            <p style='margin: 0; color: #2D3748;'><strong style='color: #D97706;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
                         </div>
                         <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please be ready for your appointment.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>If you're not at the clinic yet, please make your way to the clinic as soon as possible.</p>",
-                    primaryColor: "#10B981"
+                    primaryColor: "#F59E0B"
                 );
 
                 await SendEmailAsync(toEmail, subject, body);
@@ -270,15 +270,15 @@ namespace QuickClinique.Services
                     greeting: $"Hello {patientName},",
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Your appointment time has arrived! Your queue number has been assigned.</p>
-                        <div style='background-color: #F0F4F8; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #06B6D4;'>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
-                            <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Your Position in Line:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{positionInLine}</span></p>
+                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #059669;'>Queue Number:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{queueNumber}</span></p>
+                            <p style='margin: 0; color: #2D3748;'><strong style='color: #059669;'>Your Position in Line:</strong> <span style='background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; padding: 4px 12px; border-radius: 6px; font-weight: 600;'>#{positionInLine}</span></p>
                         </div>
                         <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>Please proceed to the clinic and wait for your queue number to be called.</p>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>Thank you for your patience!</p>",
-                    primaryColor: "#06B6D4"
+                    primaryColor: "#10B981"
                 );
 
                 await SendEmailAsync(toEmail, subject, body);
@@ -313,13 +313,13 @@ namespace QuickClinique.Services
                     title: "Appointment Completed",
                     greeting: $"Hello {patientName},",
                     content: $@"
-                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Your appointment on <strong style='color: #0891B2;'>{System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</strong> has been completed.</p>
-                        <div style='background-color: #F0F4F8; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #06B6D4;'>
+                        <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>Your appointment on <strong style='color: #059669;'>{System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</strong> has been completed.</p>
+                        <div style='background-color: #D1FAE5; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #10B981;'>
                             <p style='margin: 0 0 12px 0; color: #2D3748; line-height: 1.6;'>Thank you for visiting QuickClinique. We hope you had a positive experience.</p>
                             <p style='margin: 0; color: #2D3748; line-height: 1.6;'>If you have any questions or concerns about your visit, please don't hesitate to contact us.</p>
                         </div>
                         <p style='margin: 0; color: #718096; font-size: 14px;'>We look forward to serving you again in the future.</p>",
-                    primaryColor: "#06B6D4"
+                    primaryColor: "#10B981"
                 );
 
                 await SendEmailAsync(toEmail, subject, body);
@@ -362,9 +362,9 @@ namespace QuickClinique.Services
                     greeting: $"Hello {patientName},",
                     content: $@"
                         <p style='margin: 0 0 20px 0; color: #2D3748; line-height: 1.6;'>We regret to inform you that your appointment has been cancelled.</p>
-                        <div style='background-color: #F0F4F8; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #DC2626;'>
-                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #0891B2;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
-                            <p style='margin: 0; color: #2D3748;'><strong style='color: #0891B2;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
+                        <div style='background-color: #FEE2E2; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #DC2626;'>
+                            <p style='margin: 0 0 12px 0; color: #2D3748;'><strong style='color: #B91C1C;'>Date:</strong> {System.Net.WebUtility.HtmlEncode(appointmentDate ?? "N/A")}</p>
+                            <p style='margin: 0; color: #2D3748;'><strong style='color: #B91C1C;'>Time:</strong> {System.Net.WebUtility.HtmlEncode(appointmentTime ?? "N/A")}</p>
                         </div>
                         {reasonSection}
                         <p style='margin: 20px 0; color: #2D3748; line-height: 1.6;'>If you need to reschedule your appointment, please log in to your account and book a new appointment, or contact us for assistance.</p>
