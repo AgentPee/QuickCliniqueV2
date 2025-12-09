@@ -1,4 +1,4 @@
-﻿﻿/* Body Structure for Sticky Footer */
+/* Body Structure for Sticky Footer */
 html {
     height: 100%;
 }
@@ -703,4 +703,19 @@ body {
 /* Icon size utilities */
 .icon-4x {
     font-size: 4rem;
+}
+
+/* ===== GLOBAL MODAL BACKDROP REMOVAL ===== */
+/* Hide ALL modal-backdrop elements globally - prevents gray overlay on modals */
+.modal-backdrop,
+.modal-backdrop.show,
+.modal-backdrop.fade,
+.modal-backdrop.fade.show {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
