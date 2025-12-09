@@ -733,18 +733,48 @@ select.form-control {
     outline-offset: 2px;
 }
 
-/* Hide backdrop for delete modals */
-#deleteModal.show ~ .modal-backdrop,
-#bulkDeleteModal.show ~ .modal-backdrop,
-.modal-backdrop.show {
+/* Hide backdrop for delete modals - Aggressive */
+.modal-backdrop {
     display: none !important;
     opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-/* Ensure no backdrop is created for delete modals */
-body:has(#deleteModal.show) .modal-backdrop,
-body:has(#bulkDeleteModal.show) .modal-backdrop {
+.modal-backdrop.show,
+.modal-backdrop.fade,
+.modal-backdrop.fade.show {
     display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Ensure modals are interactive */
+#deleteModal,
+#bulkDeleteModal {
+    z-index: 1060 !important;
+    pointer-events: auto !important;
+}
+
+#deleteModal .modal-dialog,
+#bulkDeleteModal .modal-dialog {
+    pointer-events: auto !important;
+    z-index: 1061 !important;
+}
+
+#deleteModal .modal-content,
+#bulkDeleteModal .modal-content {
+    pointer-events: auto !important;
+}
+
+#deleteModal button,
+#bulkDeleteModal button,
+#deleteModal .btn,
+#bulkDeleteModal .btn {
+    pointer-events: auto !important;
+    z-index: 1062 !important;
+    position: relative;
 }
 
 /* Enhanced checkbox animations */
