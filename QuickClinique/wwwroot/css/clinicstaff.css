@@ -1,4 +1,4 @@
-﻿/* Enhanced Base Styles - Modern Medical Dashboard Theme */
+/* Enhanced Base Styles - Modern Medical Dashboard Theme */
 
 /* CSS Variables */
 :root {
@@ -743,7 +743,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    /* background removed to prevent gray overlay on modals without backdrop */
     z-index: 1001;
     align-items: center;
     justify-content: center;

@@ -764,6 +764,32 @@ body:has(#deleteModal.show) .modal-backdrop {
     background: transparent !important;
 }
 
+/* CRITICAL: Remove background from modal element itself (global CSS is adding it) */
+#bulkDeleteModal,
+#deleteModal {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+#bulkDeleteModal.show,
+#deleteModal.show {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Override any global modal styles that add background */
+#bulkDeleteModal.modal,
+#deleteModal.modal {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
 /* Ensure modals are interactive */
 #deleteModal,
 #bulkDeleteModal {
