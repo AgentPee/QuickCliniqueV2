@@ -739,6 +739,7 @@ select.form-control {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    z-index: -1 !important;
 }
 
 .modal-backdrop.show,
@@ -748,6 +749,19 @@ select.form-control {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    z-index: -1 !important;
+    background: transparent !important;
+}
+
+/* Make backdrop completely transparent and non-interactive if it somehow appears */
+body:has(#bulkDeleteModal.show) .modal-backdrop,
+body:has(#deleteModal.show) .modal-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    background: transparent !important;
 }
 
 /* Ensure modals are interactive */
@@ -791,34 +805,58 @@ select.form-control {
     position: relative;
 }
 
-/* Specifically target bulk delete modal */
+/* Specifically target bulk delete modal - Maximum z-index */
 #bulkDeleteModal {
-    z-index: 1060 !important;
+    z-index: 9999 !important;
 }
 
 #bulkDeleteModal.show {
-    z-index: 1060 !important;
+    z-index: 9999 !important;
     pointer-events: auto !important;
+    display: block !important;
 }
 
 #bulkDeleteModal .modal-dialog {
     pointer-events: auto !important;
-    z-index: 1061 !important;
+    z-index: 10000 !important;
+    position: relative;
 }
 
 #bulkDeleteModal .modal-content {
     pointer-events: auto !important;
-    z-index: 1062 !important;
+    z-index: 10001 !important;
+    position: relative;
 }
 
 #bulkDeleteModal button,
 #bulkDeleteModal .btn,
 #bulkDeleteModal form,
-#bulkDeleteModal input {
+#bulkDeleteModal input,
+#bulkDeleteModal select,
+#bulkDeleteModal textarea,
+#bulkDeleteModal a {
     pointer-events: auto !important;
-    z-index: 1063 !important;
+    z-index: 10002 !important;
     position: relative;
     cursor: pointer !important;
+}
+
+/* Ensure modal is always above backdrop */
+body.modal-open #bulkDeleteModal {
+    z-index: 9999 !important;
+}
+
+body.modal-open #bulkDeleteModal.show {
+    z-index: 9999 !important;
+}
+
+/* Make sure backdrop can't block the modal */
+body.modal-open .modal-backdrop {
+    z-index: 1050 !important;
+}
+
+body.modal-open #bulkDeleteModal {
+    z-index: 9999 !important;
 }
 
 /* Enhanced checkbox animations */

@@ -252,9 +252,14 @@
         function removeBackdrop() {
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(backdrop => {
-                backdrop.remove();
+                // Make it completely invisible and non-interactive
                 backdrop.style.display = 'none';
+                backdrop.style.visibility = 'hidden';
+                backdrop.style.opacity = '0';
                 backdrop.style.pointerEvents = 'none';
+                backdrop.style.zIndex = '-1';
+                backdrop.style.background = 'transparent';
+                backdrop.remove();
             });
             // Also remove modal-open class to prevent body scroll lock
             document.body.classList.remove('modal-open');
@@ -262,19 +267,22 @@
             document.body.style.paddingRight = '';
         }
 
-        // Override Bootstrap's backdrop creation for delete modals
+        // Override Bootstrap's backdrop methods for delete modals
         const originalShow = bootstrap.Modal.prototype.show;
-        const originalSetBackdrop = bootstrap.Modal.prototype._setBackdrop;
+        const originalShowBackdrop = bootstrap.Modal.prototype._showBackdrop;
         
-        // Override _setBackdrop to prevent backdrop creation for our modals
-        if (originalSetBackdrop) {
-            bootstrap.Modal.prototype._setBackdrop = function() {
+        // Override _showBackdrop to prevent backdrop from showing for our modals
+        if (originalShowBackdrop) {
+            bootstrap.Modal.prototype._showBackdrop = function(callback) {
                 const modalElement = this._element;
                 if (modalElement && (modalElement.id === 'deleteModal' || modalElement.id === 'bulkDeleteModal')) {
-                    // Don't create backdrop for these modals
+                    // Don't show backdrop, just call callback directly
+                    if (callback) {
+                        callback();
+                    }
                     return;
                 }
-                originalSetBackdrop.call(this);
+                originalShowBackdrop.call(this, callback);
             };
         }
         
@@ -283,8 +291,9 @@
             if (modalElement && (modalElement.id === 'deleteModal' || modalElement.id === 'bulkDeleteModal')) {
                 // Force backdrop to false
                 this._config.backdrop = false;
+                
+                // Remove any existing backdrop
                 if (this._backdrop) {
-                    // Remove existing backdrop if any
                     if (this._backdrop._element) {
                         this._backdrop._element.remove();
                     }
@@ -465,30 +474,48 @@
                 focus: true
             });
             
-            // Ensure the config is set correctly
+            // CRITICAL: Ensure the config is set correctly and backdrop is null
             bulkDeleteModal._config.backdrop = false;
+            if (bulkDeleteModal._backdrop) {
+                if (bulkDeleteModal._backdrop._element) {
+                    bulkDeleteModal._backdrop._element.remove();
+                }
+                bulkDeleteModal._backdrop = null;
+            }
             
             // Ensure modal has high z-index and is interactive BEFORE showing
-            modalElement.style.zIndex = '1060';
+            modalElement.style.zIndex = '9999';
             modalElement.style.pointerEvents = 'auto';
+            modalElement.style.position = 'fixed';
             modalElement.classList.add('no-backdrop');
             
             const modalDialog = modalElement.querySelector('.modal-dialog');
             if (modalDialog) {
                 modalDialog.style.pointerEvents = 'auto';
-                modalDialog.style.zIndex = '1061';
+                modalDialog.style.zIndex = '10000';
+                modalDialog.style.position = 'relative';
             }
             const modalContent = modalElement.querySelector('.modal-content');
             if (modalContent) {
                 modalContent.style.pointerEvents = 'auto';
-                modalContent.style.zIndex = '1062';
+                modalContent.style.zIndex = '10001';
+                modalContent.style.position = 'relative';
             }
+            
+            // Make all buttons and forms interactive
+            const allButtons = modalElement.querySelectorAll('button, .btn, form, input, select, textarea');
+            allButtons.forEach(btn => {
+                btn.style.pointerEvents = 'auto';
+                btn.style.zIndex = '10002';
+                btn.style.position = 'relative';
+            });
             
             // Remove backdrop immediately before showing
             removeBackdrop();
             
             // Hook into the show event to prevent backdrop
-            const showHandler = function() {
+            const showHandler = function(e) {
+                e.stopPropagation();
                 removeBackdrop();
                 // Prevent backdrop from being created
                 if (bulkDeleteModal._backdrop) {
@@ -497,11 +524,21 @@
                     }
                     bulkDeleteModal._backdrop = null;
                 }
+                // Force backdrop config to false
+                bulkDeleteModal._config.backdrop = false;
             };
             
             modalElement.addEventListener('show.bs.modal', showHandler, { once: true, capture: true });
             modalElement.addEventListener('shown.bs.modal', function() {
                 removeBackdrop();
+                // Ensure backdrop is still null
+                if (bulkDeleteModal._backdrop) {
+                    if (bulkDeleteModal._backdrop._element) {
+                        bulkDeleteModal._backdrop._element.remove();
+                    }
+                    bulkDeleteModal._backdrop = null;
+                }
+                bulkDeleteModal._config.backdrop = false;
                 setTimeout(removeBackdrop, 0);
                 setTimeout(removeBackdrop, 10);
                 setTimeout(removeBackdrop, 50);
@@ -511,6 +548,17 @@
             
             // Show the modal
             bulkDeleteModal.show();
+            
+            // Immediately after show, ensure backdrop is disabled
+            setTimeout(() => {
+                if (bulkDeleteModal._backdrop) {
+                    if (bulkDeleteModal._backdrop._element) {
+                        bulkDeleteModal._backdrop._element.remove();
+                    }
+                    bulkDeleteModal._backdrop = null;
+                }
+                bulkDeleteModal._config.backdrop = false;
+            }, 0);
             
             // Aggressively remove backdrop multiple times after showing
             setTimeout(removeBackdrop, 0);
@@ -523,15 +571,31 @@
             // Use requestAnimationFrame for immediate removal
             requestAnimationFrame(() => {
                 removeBackdrop();
-                requestAnimationFrame(() => removeBackdrop());
+                requestAnimationFrame(() => {
+                    removeBackdrop();
+                    // Double check backdrop is null
+                    if (bulkDeleteModal._backdrop) {
+                        if (bulkDeleteModal._backdrop._element) {
+                            bulkDeleteModal._backdrop._element.remove();
+                        }
+                        bulkDeleteModal._backdrop = null;
+                    }
+                });
             });
             
             // Continuous monitoring for a short period
             let checkCount = 0;
             const backdropChecker = setInterval(() => {
                 removeBackdrop();
+                // Also check and nullify backdrop object
+                if (bulkDeleteModal._backdrop) {
+                    if (bulkDeleteModal._backdrop._element) {
+                        bulkDeleteModal._backdrop._element.remove();
+                    }
+                    bulkDeleteModal._backdrop = null;
+                }
                 checkCount++;
-                if (checkCount > 20) { // Check for 2 seconds
+                if (checkCount > 30) { // Check for 3 seconds
                     clearInterval(backdropChecker);
                 }
             }, 100);
