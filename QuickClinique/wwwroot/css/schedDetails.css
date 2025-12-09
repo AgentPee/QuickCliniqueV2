@@ -652,13 +652,41 @@
         background: #44A08D;
     }
 
-/* Hide backdrop for delete modal */
-#deleteModal.show ~ .modal-backdrop,
-.modal-backdrop.show {
+/* Hide backdrop for delete modal - Aggressive */
+.modal-backdrop {
     display: none !important;
     opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-body:has(#deleteModal.show) .modal-backdrop {
+.modal-backdrop.show,
+.modal-backdrop.fade,
+.modal-backdrop.fade.show {
     display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Ensure modal is interactive */
+#deleteModal {
+    z-index: 1060 !important;
+    pointer-events: auto !important;
+}
+
+#deleteModal .modal-dialog {
+    pointer-events: auto !important;
+    z-index: 1061 !important;
+}
+
+#deleteModal .modal-content {
+    pointer-events: auto !important;
+}
+
+#deleteModal button,
+#deleteModal .btn {
+    pointer-events: auto !important;
+    z-index: 1062 !important;
+    position: relative;
 }

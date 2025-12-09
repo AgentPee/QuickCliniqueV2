@@ -248,6 +248,61 @@
 
 @section Scripts {
     <script>
+        // Aggressive backdrop removal function
+        function removeBackdrop() {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                backdrop.remove();
+                backdrop.style.display = 'none';
+                backdrop.style.pointerEvents = 'none';
+            });
+            // Also remove modal-open class to prevent body scroll lock
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+
+        // Override Bootstrap's backdrop creation for delete modals
+        const originalShow = bootstrap.Modal.prototype.show;
+        bootstrap.Modal.prototype.show = function() {
+            const modalElement = this._element;
+            if (modalElement && (modalElement.id === 'deleteModal' || modalElement.id === 'bulkDeleteModal')) {
+                // Temporarily override backdrop config
+                const originalBackdrop = this._config.backdrop;
+                this._config.backdrop = false;
+                
+                // Call original show
+                originalShow.call(this);
+                
+                // Restore original config
+                this._config.backdrop = originalBackdrop;
+                
+                // Immediately remove any backdrop
+                setTimeout(removeBackdrop, 0);
+            } else {
+                originalShow.call(this);
+            }
+        };
+
+        // MutationObserver to watch for backdrop creation
+        const backdropObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1 && (node.classList.contains('modal-backdrop') || node.classList.contains('fade'))) {
+                        if (node.classList.contains('modal-backdrop')) {
+                            node.remove();
+                        }
+                    }
+                });
+            });
+        });
+
+        // Start observing the document body for backdrop additions
+        backdropObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
         // Wait for the document to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeCheckboxHandlers();
@@ -327,17 +382,27 @@
             });
 
             // Show the modal without backdrop
-            const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'), { 
+            const modalElement = document.getElementById('bulkDeleteModal');
+            const bulkDeleteModal = new bootstrap.Modal(modalElement, { 
                 backdrop: false,
                 keyboard: true
             });
+            
+            // Ensure modal has high z-index and is interactive
+            modalElement.style.zIndex = '1060';
+            const modalDialog = modalElement.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.pointerEvents = 'auto';
+            }
+            
             bulkDeleteModal.show();
             
-            // Remove any backdrop that might have been created
-            setTimeout(() => {
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-            }, 10);
+            // Aggressively remove backdrop multiple times
+            removeBackdrop();
+            setTimeout(removeBackdrop, 10);
+            setTimeout(removeBackdrop, 50);
+            setTimeout(removeBackdrop, 100);
+            setTimeout(removeBackdrop, 200);
         }
 
         function setDeleteSchedule(scheduleId, date, time, appointmentCount) {
@@ -364,17 +429,27 @@
             }
 
             // Show the modal without backdrop
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'), { 
+            const modalElement = document.getElementById('deleteModal');
+            const deleteModal = new bootstrap.Modal(modalElement, { 
                 backdrop: false,
                 keyboard: true
             });
+            
+            // Ensure modal has high z-index and is interactive
+            modalElement.style.zIndex = '1060';
+            const modalDialog = modalElement.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.pointerEvents = 'auto';
+            }
+            
             deleteModal.show();
             
-            // Remove any backdrop that might have been created
-            setTimeout(() => {
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-            }, 10);
+            // Aggressively remove backdrop multiple times
+            removeBackdrop();
+            setTimeout(removeBackdrop, 10);
+            setTimeout(removeBackdrop, 50);
+            setTimeout(removeBackdrop, 100);
+            setTimeout(removeBackdrop, 200);
         }
 
         function initializeRowHoverEffects() {

@@ -296,21 +296,75 @@
                 availabilitySelect.value = '@Model.IsAvailable';
             }
 
+            // Aggressive backdrop removal function
+            function removeBackdrop() {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => {
+                    backdrop.remove();
+                    backdrop.style.display = 'none';
+                    backdrop.style.pointerEvents = 'none';
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+
+            // Override Bootstrap's backdrop creation for delete modal
+            const originalShow = bootstrap.Modal.prototype.show;
+            bootstrap.Modal.prototype.show = function() {
+                const modalElement = this._element;
+                if (modalElement && modalElement.id === 'deleteModal') {
+                    const originalBackdrop = this._config.backdrop;
+                    this._config.backdrop = false;
+                    originalShow.call(this);
+                    this._config.backdrop = originalBackdrop;
+                    setTimeout(removeBackdrop, 0);
+                } else {
+                    originalShow.call(this);
+                }
+            };
+
+            // MutationObserver to watch for backdrop creation
+            const backdropObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList && node.classList.contains('modal-backdrop')) {
+                            node.remove();
+                        }
+                    });
+                });
+            });
+
+            backdropObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
             // Remove backdrop from delete modal
             const deleteModal = document.getElementById('deleteModal');
             if (deleteModal) {
+                // Ensure modal has high z-index
+                deleteModal.style.zIndex = '1060';
+                const modalDialog = deleteModal.querySelector('.modal-dialog');
+                if (modalDialog) {
+                    modalDialog.style.pointerEvents = 'auto';
+                }
+
                 deleteModal.addEventListener('show.bs.modal', function() {
-                    // Remove any backdrop that might be created
-                    setTimeout(() => {
-                        const backdrops = document.querySelectorAll('.modal-backdrop');
-                        backdrops.forEach(backdrop => backdrop.remove());
-                    }, 10);
+                    // Aggressively remove backdrop
+                    removeBackdrop();
+                    setTimeout(removeBackdrop, 10);
+                    setTimeout(removeBackdrop, 50);
+                    setTimeout(removeBackdrop, 100);
+                    setTimeout(removeBackdrop, 200);
+                });
+
+                deleteModal.addEventListener('shown.bs.modal', function() {
+                    removeBackdrop();
                 });
 
                 deleteModal.addEventListener('hidden.bs.modal', function() {
-                    // Ensure backdrop is removed when modal is hidden
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(backdrop => backdrop.remove());
+                    removeBackdrop();
                 });
             }
         });
