@@ -757,24 +757,68 @@ select.form-control {
     pointer-events: auto !important;
 }
 
+#deleteModal.show,
+#bulkDeleteModal.show {
+    z-index: 1060 !important;
+    pointer-events: auto !important;
+    display: block !important;
+}
+
 #deleteModal .modal-dialog,
 #bulkDeleteModal .modal-dialog {
     pointer-events: auto !important;
     z-index: 1061 !important;
+    position: relative;
 }
 
 #deleteModal .modal-content,
 #bulkDeleteModal .modal-content {
     pointer-events: auto !important;
+    z-index: 1062 !important;
+    position: relative;
 }
 
 #deleteModal button,
 #bulkDeleteModal button,
 #deleteModal .btn,
-#bulkDeleteModal .btn {
+#bulkDeleteModal .btn,
+#deleteModal form,
+#bulkDeleteModal form,
+#deleteModal input,
+#bulkDeleteModal input {
+    pointer-events: auto !important;
+    z-index: 1063 !important;
+    position: relative;
+}
+
+/* Specifically target bulk delete modal */
+#bulkDeleteModal {
+    z-index: 1060 !important;
+}
+
+#bulkDeleteModal.show {
+    z-index: 1060 !important;
+    pointer-events: auto !important;
+}
+
+#bulkDeleteModal .modal-dialog {
+    pointer-events: auto !important;
+    z-index: 1061 !important;
+}
+
+#bulkDeleteModal .modal-content {
     pointer-events: auto !important;
     z-index: 1062 !important;
+}
+
+#bulkDeleteModal button,
+#bulkDeleteModal .btn,
+#bulkDeleteModal form,
+#bulkDeleteModal input {
+    pointer-events: auto !important;
+    z-index: 1063 !important;
     position: relative;
+    cursor: pointer !important;
 }
 
 /* Enhanced checkbox animations */
