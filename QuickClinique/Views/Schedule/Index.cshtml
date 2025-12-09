@@ -7,6 +7,52 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/schedIndex.css" />
+    <style>
+        /* Force remove background from bulk delete modal - Override all global styles */
+        #bulkDeleteModal,
+        #bulkDeleteModal.modal,
+        #bulkDeleteModal.show,
+        #bulkDeleteModal.modal.show {
+            background: transparent !important;
+            background-color: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* Hide backdrop element completely */
+        .modal-backdrop,
+        .modal-backdrop.show,
+        .modal-backdrop.fade,
+        .modal-backdrop.fade.show {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: -1 !important;
+            background: transparent !important;
+        }
+        
+        /* Ensure modal is interactive */
+        #bulkDeleteModal {
+            z-index: 9999 !important;
+            pointer-events: auto !important;
+        }
+        
+        #bulkDeleteModal .modal-dialog {
+            pointer-events: auto !important;
+            z-index: 10000 !important;
+        }
+        
+        #bulkDeleteModal .modal-content,
+        #bulkDeleteModal button,
+        #bulkDeleteModal .btn,
+        #bulkDeleteModal form,
+        #bulkDeleteModal input {
+            pointer-events: auto !important;
+            z-index: 10001 !important;
+            cursor: pointer !important;
+        }
+    </style>
 }
 
 <div class="schedules-container">
@@ -141,7 +187,7 @@
 </div>
 
 <!-- Bulk Delete Confirmation Modal -->
-<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true" style="background: transparent !important; background-color: transparent !important; backdrop-filter: none !important;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header danger-header">
@@ -484,9 +530,14 @@
             }
             
             // Ensure modal has high z-index and is interactive BEFORE showing
+            // CRITICAL: Remove any background that global CSS might have added
             modalElement.style.zIndex = '9999';
             modalElement.style.pointerEvents = 'auto';
             modalElement.style.position = 'fixed';
+            modalElement.style.background = 'transparent';
+            modalElement.style.backgroundColor = 'transparent';
+            modalElement.style.backdropFilter = 'none';
+            modalElement.style.webkitBackdropFilter = 'none';
             modalElement.classList.add('no-backdrop');
             
             const modalDialog = modalElement.querySelector('.modal-dialog');
@@ -539,6 +590,11 @@
                     bulkDeleteModal._backdrop = null;
                 }
                 bulkDeleteModal._config.backdrop = false;
+                // Force remove background again
+                modalElement.style.background = 'transparent';
+                modalElement.style.backgroundColor = 'transparent';
+                modalElement.style.backdropFilter = 'none';
+                modalElement.style.webkitBackdropFilter = 'none';
                 setTimeout(removeBackdrop, 0);
                 setTimeout(removeBackdrop, 10);
                 setTimeout(removeBackdrop, 50);

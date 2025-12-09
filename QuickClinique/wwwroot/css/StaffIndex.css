@@ -1,4 +1,4 @@
-﻿/* Staff Management Styles - Enhanced Premium Medical Dashboard Theme */
+/* Staff Management Styles - Enhanced Premium Medical Dashboard Theme */
 
 /* CSS Variables */
 :root {
@@ -834,7 +834,7 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    /* background-color removed to prevent gray overlay on modals without backdrop */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     justify-content: center;
