@@ -1,4 +1,11 @@
-﻿/* Appointment Management Styles */
+﻿/* ============================================
+   Appointment Management Styles
+   Connected to: Views/Appointments/Manage.cshtml
+   This stylesheet provides comprehensive styling for:
+   - Appointment management interface
+   - Responsive design for all screen sizes
+   ============================================ */
+
 .appointment-management {
     padding: 2rem;
     background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
@@ -353,6 +360,23 @@
     font-size: 0.9rem;
     font-weight: 500;
 }
+
+/* Emergency table header wrapper */
+.emergency-header-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.emergency-search-wrapper {
+    flex: 0 0 auto;
+    min-width: 250px;
+}
+
+    .emergency-search-wrapper input {
+        width: 100%;
+    }
 
 /* Table Styles */
 .table-responsive {
@@ -911,6 +935,21 @@ textarea.form-control {
     }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .appointment-management {
+        padding: 1.5rem;
+    }
+
+    .management-header {
+        padding: 1.5rem;
+    }
+
+    .table-header {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}
+
 @media (max-width: 992px) {
     .stats-cards {
         grid-template-columns: repeat(2, 1fr);
@@ -918,6 +957,15 @@ textarea.form-control {
 
     .filter-item {
         min-width: 150px;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .table-count {
+        align-self: flex-start;
     }
 }
 
@@ -931,6 +979,10 @@ textarea.form-control {
         gap: 1.5rem;
         padding: 1.5rem;
         text-align: center;
+    }
+
+    .header-content {
+        width: 100%;
     }
 
     .header-actions {
@@ -950,6 +1002,7 @@ textarea.form-control {
 
     .filter-item {
         width: 100%;
+        min-width: 100%;
     }
 
     .filter-actions {
@@ -979,6 +1032,7 @@ textarea.form-control {
         font-size: 1.8em;
     }
 
+    /* Main appointments table responsive */
     .table-responsive {
         font-size: 0.85em;
         overflow-x: auto !important;
@@ -988,7 +1042,7 @@ textarea.form-control {
         display: block !important;
     }
     
-    /* Custom scrollbar */
+    /* Custom scrollbar for main table */
     .table-responsive::-webkit-scrollbar {
         height: 10px;
     }
@@ -1003,14 +1057,27 @@ textarea.form-control {
         border-radius: 5px;
     }
 
-    .table {
+    #appointmentsTable {
         min-width: 1000px !important;
         width: auto !important;
         display: table !important;
     }
 
-    .table th,
-    .table td {
+    #appointmentsTable th,
+    #appointmentsTable td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap !important;
+    }
+
+    /* Emergency table responsive - same as appointments table */
+    #emergenciesTable {
+        min-width: 800px !important;
+        width: auto !important;
+        display: table !important;
+    }
+
+    #emergenciesTable th,
+    #emergenciesTable td {
         padding: 0.75rem 0.5rem;
         white-space: nowrap !important;
     }
@@ -1018,10 +1085,34 @@ textarea.form-control {
     .action-buttons {
         flex-direction: row;
         justify-content: center;
+        flex-wrap: wrap;
     }
 
     .symptoms-text {
         max-width: 150px;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .table-count {
+        align-self: flex-start;
+    }
+
+    .emergency-header-wrapper {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .emergency-search-wrapper {
+        width: 100%;
+        min-width: 100%;
     }
 
     .modal-body {
@@ -1072,18 +1163,32 @@ textarea.form-control {
         font-size: 1.6em;
     }
 
+    /* Main appointments table */
     .table-responsive {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
     
-    .table {
+    #appointmentsTable {
         min-width: 1200px !important;
         font-size: 0.8em;
     }
     
-    .table th,
-    .table td {
+    #appointmentsTable th,
+    #appointmentsTable td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.8em;
+        white-space: nowrap !important;
+    }
+
+    /* Emergency table responsive */
+    #emergenciesTable {
+        min-width: 1000px !important;
+        font-size: 0.8em;
+    }
+    
+    #emergenciesTable th,
+    #emergenciesTable td {
         padding: 0.6rem 0.4rem;
         font-size: 0.8em;
         white-space: nowrap !important;
@@ -1103,6 +1208,10 @@ textarea.form-control {
     .patient-info {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    .action-buttons {
         gap: 0.3rem;
     }
 
@@ -1162,222 +1271,4 @@ textarea.form-control {
 /* BMI result modal hidden */
 .bmi-result-modal-hidden {
     display: none;
-}
-
-/* ===== EMERGENCY SCHEDULES TABLE STYLES ===== */
-
-/* Emergency table specific styling */
-#emergenciesTable {
-    margin-top: 0;
-}
-
-#emergenciesTable thead th {
-    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    color: #179C8E;
-    font-weight: 700;
-    border-bottom: 3px solid #4ECDC4;
-    position: relative;
-}
-
-    #emergenciesTable thead th i {
-        color: #179C8E;
-        margin-right: 0.4rem;
-        font-size: 1em;
-    }
-
-/* Emergency table rows */
-#emergenciesTable tbody tr {
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-}
-
-    #emergenciesTable tbody tr:hover {
-        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%);
-        transform: translateX(3px);
-        border-left-color: #4ECDC4;
-        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.2);
-    }
-
-    /* Active emergency row styling */
-    #emergenciesTable tbody tr[data-status="active"],
-    #emergenciesTable tbody tr:not([data-resolved="true"]) {
-        background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 50%);
-        border-left-color: #4ECDC4;
-        animation: emergencyPulse 2s ease-in-out infinite;
-    }
-
-    /* Resolved emergency row styling */
-    #emergenciesTable tbody tr[data-status="resolved"],
-    #emergenciesTable tbody tr[data-resolved="true"] {
-        background: linear-gradient(90deg, #e0f2fe 0%, #ffffff 50%);
-        border-left-color: #179C8E;
-        opacity: 0.85;
-    }
-
-        #emergenciesTable tbody tr[data-status="resolved"]:hover,
-        #emergenciesTable tbody tr[data-resolved="true"]:hover {
-            opacity: 1;
-            border-left-color: #179C8E;
-        }
-
-/* Emergency pulse animation for active emergencies */
-@keyframes emergencyPulse {
-    0%, 100% {
-        box-shadow: -2px 0 8px rgba(78, 205, 196, 0.1);
-    }
-    50% {
-        box-shadow: -2px 0 12px rgba(78, 205, 196, 0.3);
-    }
-}
-
-/* Emergency status badges */
-#emergenciesTable .status-badge.status-pending {
-    background: linear-gradient(135deg, #d1ecf1 0%, #4ECDC4 100%);
-    color: #0c5460;
-    border: 2px solid #4ECDC4;
-    font-weight: 700;
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-    animation: statusPulse 2s ease-in-out infinite;
-}
-
-#emergenciesTable .status-badge.status-completed {
-    background: linear-gradient(135deg, #d1ecf1 0%, #179C8E 100%);
-    color: #0c5460;
-    border: 2px solid #179C8E;
-    font-weight: 700;
-    padding: 0.5rem 1rem;
-    box-shadow: 0 2px 8px rgba(23, 156, 142, 0.3);
-}
-
-@keyframes statusPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-    }
-    50% {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.5);
-    }
-}
-
-/* Emergency icons styling */
-#emergenciesTable .patient-icon {
-    color: #179C8E;
-    font-size: 1.3rem;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .patient-icon {
-    color: #4ECDC4;
-    transform: scale(1.1) rotate(5deg);
-}
-
-#emergenciesTable .symptoms-text i {
-    color: #179C8E;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .symptoms-text i {
-    color: #4ECDC4;
-    transform: scale(1.1);
-}
-
-#emergenciesTable .date-booked i {
-    color: #179C8E;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .date-booked i {
-    color: #4ECDC4;
-    transform: scale(1.1) rotate(-5deg);
-}
-
-/* Emergency queue badge styling */
-#emergenciesTable .queue-badge {
-    background: linear-gradient(135deg, #179C8E 0%, #4FC4D3 100%);
-    color: white;
-    padding: 0.4rem 0.9rem;
-    border-radius: 20px;
-    font-size: 0.9em;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-#emergenciesTable tbody tr:hover .queue-badge {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.4);
-}
-
-/* Emergency table header enhancement */
-#emergenciesTable + .table-header {
-    background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
-    border-bottom: 3px solid #4ECDC4;
-}
-
-    #emergenciesTable + .table-header h5 {
-        color: #179C8E;
-        font-weight: 700;
-    }
-
-    #emergenciesTable + .table-header h5 i {
-        color: #179C8E;
-        animation: emergencyIconPulse 2s ease-in-out infinite;
-    }
-
-@keyframes emergencyIconPulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-/* Emergency table card styling - enhanced visual distinction */
-.emergency-table-card,
-.table-card:last-of-type {
-    margin-top: 2rem;
-    margin-bottom: 0;
-    border-top: 4px solid #4ECDC4;
-    box-shadow: 0 5px 20px rgba(78, 205, 196, 0.15);
-    position: relative;
-}
-
-    .emergency-table-card::before,
-    .table-card:last-of-type::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #179C8E 0%, #4FC4D3 100%);
-    }
-
-/* Emergency header actions */
-.emergency-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.emergency-search-item {
-    flex: 0 0 auto;
-    min-width: 250px;
-    margin: 0;
-}
-
-/* Responsive emergency table */
-@media (max-width: 768px) {
-    #emergenciesTable tbody tr:hover {
-        transform: none;
-    }
-
-    #emergenciesTable .status-badge {
-        font-size: 0.75em;
-        padding: 0.4rem 0.8rem;
-    }
 }
