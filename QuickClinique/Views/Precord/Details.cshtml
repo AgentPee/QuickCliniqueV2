@@ -339,7 +339,7 @@
                 @foreach (var appointment in Model.Appointments)
                 {
                     <div class="appointment-item">
-                        <div class="appointment-header-row">
+                        <div class="appointment-header-row" onclick="toggleAppointmentDetails(@appointment.AppointmentId)" style="cursor: pointer;">
                             <div class="appointment-date-time">
                                 <div class="date-badge">
                                     <i class="fas fa-calendar"></i>
@@ -350,15 +350,16 @@
                                     <span>@appointment.Schedule.StartTime.ToString("hh:mm tt") - @appointment.Schedule.EndTime.ToString("hh:mm tt")</span>
                                 </div>
                             </div>
-                            <div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 @{
                                     var statusClass = "status-" + appointment.AppointmentStatus.ToLower();
                                 }
                                 <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                                <i class="fas fa-chevron-down appointment-chevron" id="appt-detail-chevron-@appointment.AppointmentId"></i>
                             </div>
                         </div>
 
-                        <div class="appointment-details-row">
+                        <div class="appointment-details-row" id="appt-detail-content-@appointment.AppointmentId" style="display: none;">
                             <div class="detail-row">
                                 <i class="fas fa-notes-medical"></i>
                                 <strong>Reason for Visit:</strong>
@@ -413,14 +414,14 @@
                 @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
                 {
                     <div class="medical-record-item medical-record-item-style">
-                        <div class="medical-record-header">
+                        <div class="medical-record-header" onclick="toggleMedicalRecord(@record.RecordId)" style="cursor: pointer;">
                             <h4 class="medical-record-title">
                                 <i class="fas fa-file-medical-alt"></i> Record #@record.RecordId
                             </h4>
-                          
+                            <i class="fas fa-chevron-down medical-record-chevron" id="medical-chevron-@record.RecordId"></i>
                         </div>
                         
-                        <div class="medical-record-grid">
+                        <div class="medical-record-grid" id="medical-content-@record.RecordId" style="display: none;">
                             <div>
                                 <strong><i class="fas fa-stethoscope"></i> Diagnosis:</strong>
                                 <p class="medical-record-text">@record.Diagnosis</p>
@@ -674,6 +675,38 @@
                 notification.classList.remove('show');
                 setTimeout(() => notification.remove(), 300);
             }, 5000);
+        }
+
+        // Toggle Medical Record
+        function toggleMedicalRecord(recordId) {
+            const content = document.getElementById('medical-content-' + recordId);
+            const chevron = document.getElementById('medical-chevron-' + recordId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'grid';
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Toggle Appointment Details
+        function toggleAppointmentDetails(appointmentId) {
+            const content = document.getElementById('appt-detail-content-' + appointmentId);
+            const chevron = document.getElementById('appt-detail-chevron-' + appointmentId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'flex';
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
         }
     </script>
 }

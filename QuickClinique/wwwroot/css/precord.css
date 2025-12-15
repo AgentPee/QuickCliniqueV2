@@ -834,6 +834,20 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.appointment-header-row:hover {
+    background: rgba(0, 93, 101, 0.05);
+}
+
+.appointment-chevron {
+    color: rgb(0, 93, 101);
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 .appointment-date-time {
@@ -920,6 +934,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    animation: slideDown 0.3s ease;
 }
 
 .detail-row {
@@ -1925,13 +1940,30 @@
 .medical-record-header {
     display: flex;
     justify-content: space-between;
-    align-items: start;
+    align-items: center;
     margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.medical-record-header:hover {
+    background: rgba(0, 93, 101, 0.05);
 }
 
 .medical-record-title {
     margin: 0;
     color: rgb(0, 93, 101);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.medical-record-chevron {
+    color: rgb(0, 93, 101);
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 .medical-record-actions {
@@ -1948,6 +1980,18 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 2000px;
+    }
 }
 
 .medical-record-text {
