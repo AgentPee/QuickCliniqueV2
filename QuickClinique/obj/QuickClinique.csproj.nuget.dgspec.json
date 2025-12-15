@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\quickclinique\\QuickClinique.csproj": {}
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\quickclinique\\QuickClinique.csproj": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\quickclinique\\QuickClinique.csproj",
+        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\quickclinique\\QuickClinique.csproj",
+        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\quickclinique\\obj\\",
+        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\quickcliniqueV2\\NuGet.Config",
+          "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\NuGet.Config",
           "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"

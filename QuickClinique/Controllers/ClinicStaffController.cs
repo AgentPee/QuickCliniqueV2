@@ -1411,11 +1411,6 @@ namespace QuickClinique.Controllers
                     .Where(s => s.IsActive)
                     .ToListAsync();
 
-                // Get patient records for demographics
-                var patientRecords = await _context.Precords
-                    .Include(p => p.Patient)
-                    .ToListAsync();
-
                 // Calculate appointment volume by schedule date
                 var appointmentVolume = appointments
                     .Where(a => a.Schedule != null)
@@ -1429,15 +1424,95 @@ namespace QuickClinique.Controllers
                     .OrderBy(x => x.date)
                     .ToList();
 
-                // Calculate age distribution from patient records
-                var ageDistribution = patientRecords
-                    .GroupBy(p => GetAgeGroup(p.Age))
-                    .Select(g => new
+                // Get patient IDs who had appointments in the time range
+                var patientIdsInRange = appointments
+                    .Select(a => a.PatientId)
+                    .Distinct()
+                    .ToList();
+
+                // Get students directly from Students table (always fresh from database)
+                var students = await _context.Students
+                    .Where(s => patientIdsInRange.Contains(s.StudentId) && s.Birthdate.HasValue)
+                    .ToListAsync();
+
+                // Calculate age distribution from Students table (always fresh from database)
+                var ageDistribution = new Dictionary<string, int>();
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                
+                foreach (var student in students)
+                {
+                    if (!student.Birthdate.HasValue) continue;
+                    
+                    var birthdate = student.Birthdate.Value;
+                    
+                    // Skip if birthdate is in the future
+                    if (birthdate > today) continue;
+                    
+                    // Calculate age correctly
+                    var age = today.Year - birthdate.Year;
+                    
+                    // If birthday hasn't occurred this year yet, subtract 1
+                    if (birthdate > today.AddYears(-age))
+                        age--;
+                    
+                    // Ensure age is valid (0 or positive)
+                    age = Math.Max(0, age);
+                    
+                    // Only count valid ages and ensure age grouping is correct
+                    if (age > 0)
                     {
-                        ageGroup = g.Key,
-                        count = g.Count()
-                    })
-                    .ToDictionary(x => x.ageGroup, x => x.count);
+                        var ageGroup = GetAgeGroup(age);
+                        if (ageDistribution.ContainsKey(ageGroup))
+                        {
+                            ageDistribution[ageGroup]++;
+                        }
+                        else
+                        {
+                            ageDistribution[ageGroup] = 1;
+                        }
+                    }
+                }
+
+                // Calculate gender distribution from Students table (always fresh from database)
+                // Get gender directly from Students who had appointments in the time range
+                var genderDistribution = new Dictionary<string, int>();
+                
+                // Helper function to normalize gender values
+                string NormalizeGender(string? gender)
+                {
+                    if (string.IsNullOrWhiteSpace(gender))
+                        return null;
+                    
+                    var normalized = gender.Trim();
+                    return normalized.ToUpper() switch
+                    {
+                        "M" or "MALE" => "Male",
+                        "F" or "FEMALE" => "Female",
+                        "O" or "OTHER" => "Other",
+                        _ => normalized // Keep original if it doesn't match common patterns
+                    };
+                }
+                
+                // Get gender directly from Students table for patients who had appointments in the time range
+                var studentsWithGender = await _context.Students
+                    .Where(s => patientIdsInRange.Contains(s.StudentId) && !string.IsNullOrWhiteSpace(s.Gender))
+                    .ToListAsync();
+                
+                foreach (var student in studentsWithGender)
+                {
+                    var normalizedGender = NormalizeGender(student.Gender);
+                    if (!string.IsNullOrWhiteSpace(normalizedGender))
+                    {
+                        if (genderDistribution.ContainsKey(normalizedGender))
+                        {
+                            genderDistribution[normalizedGender]++;
+                        }
+                        else
+                        {
+                            genderDistribution[normalizedGender] = 1;
+                        }
+                    }
+                }
 
                 // Calculate visit frequency
                 var visitFrequency = appointments
@@ -1461,11 +1536,40 @@ namespace QuickClinique.Controllers
                 var cancellations = appointments.Count(a => a.AppointmentStatus == "Cancelled");
                 var completed = appointments.Count(a => a.AppointmentStatus == "Completed");
 
-                // Calculate demographics stats
-                var avgAge = patientRecords.Any() ? patientRecords.Average(p => (double)p.Age) : 0;
+                // Calculate demographics stats (always fresh from database)
                 var commonAgeGroup = ageDistribution.Any() 
                     ? ageDistribution.OrderByDescending(x => x.Value).First().Key 
                     : "N/A";
+                var commonGender = genderDistribution.Any() 
+                    ? genderDistribution.OrderByDescending(x => x.Value).First().Key 
+                    : "N/A";
+                
+                // Calculate additional age statistics from Students table
+                var ages = new List<int>();
+                
+                foreach (var student in students)
+                {
+                    if (!student.Birthdate.HasValue) continue;
+                    
+                    var birthdate = student.Birthdate.Value;
+                    if (birthdate > today) continue;
+                    
+                    var age = today.Year - birthdate.Year;
+                    if (birthdate > today.AddYears(-age))
+                        age--;
+                    
+                    age = Math.Max(0, age);
+                    if (age > 0)
+                    {
+                        ages.Add(age);
+                    }
+                }
+                    
+                var averageAge = ages.Any() ? Math.Round(ages.Average(), 1) : 0;
+                var minAge = ages.Any() ? ages.Min() : 0;
+                var maxAge = ages.Any() ? ages.Max() : 0;
+                var ageRange = ages.Any() ? $"{minAge} - {maxAge}" : "N/A";
+                var totalAgePatients = ages.Count;
 
                 // Calculate visit frequency stats
                 var avgVisits = appointments.Any() 
@@ -1544,10 +1648,14 @@ namespace QuickClinique.Controllers
                         // Appointment volume
                         appointmentVolume = appointmentVolume,
 
-                        // Demographics
+                        // Demographics (always fresh from database)
                         ageDistribution = ageDistribution,
-                        avgAge = avgAge,
+                        genderDistribution = genderDistribution,
                         commonAgeGroup = commonAgeGroup,
+                        commonGender = commonGender,
+                        averageAge = averageAge,
+                        ageRange = ageRange,
+                        totalAgePatients = totalAgePatients,
 
                         // Visit frequency
                         visitFrequency = visitFrequency,

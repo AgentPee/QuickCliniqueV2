@@ -124,19 +124,29 @@
                 </select>
             </div>
             <div class="card-body">
-                <div class="demographics-content">
-                    <div class="demographics-chart">
-                        <canvas id="ageDistributionChart"></canvas>
+                <canvas id="ageDistributionChart"></canvas>
+                <div class="demographics-stats">
+                    <div class="demographic-stat">
+                        <span class="stat-label">Most Common Age Group</span>
+                        <span class="stat-value" id="commonAgeGroup">-</span>
                     </div>
-                    <div class="demographics-stats">
-                        <div class="demographic-stat">
-                            <span class="stat-label">Average Age</span>
-                            <span class="stat-value" id="avgAge">-</span>
-                        </div>
-                        <div class="demographic-stat">
-                            <span class="stat-label">Most Common Age Group</span>
-                            <span class="stat-value" id="commonAgeGroup">-</span>
-                        </div>
+                    <div class="demographic-stat">
+                        <span class="stat-label">Average Age</span>
+                        <span class="stat-value" id="averageAge">-</span>
+                    </div>
+                    <div class="demographic-stat">
+                        <span class="stat-label">Age Range</span>
+                        <span class="stat-value" id="ageRange">-</span>
+                    </div>
+                    <div class="demographic-stat">
+                        <span class="stat-label">Total Patients</span>
+                        <span class="stat-value" id="totalAgePatients">-</span>
+                    </div>
+                </div>
+                <div class="age-groups-table" id="ageGroupsContainer">
+                    <h4>Breakdown by Age Group</h4>
+                    <div id="ageGroupsList" class="age-groups-list">
+                        <!-- Age group items will be rendered here by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -276,19 +286,34 @@
                 </div>
             </div>
         </div>
-        </div>
     </div>
 </div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/analytics.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/dashboard-index.css" asp-append-version="true" />
+ 
 }
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="~/js/analytics.js" asp-append-version="true"></script>
     <script>
+        // Make age groups table collapsible
+        document.addEventListener('DOMContentLoaded', function() {
+            const ageGroupsContainer = document.getElementById('ageGroupsContainer');
+            if (ageGroupsContainer) {
+                const h4 = ageGroupsContainer.querySelector('h4');
+                if (h4) {
+                    // Start collapsed
+                    ageGroupsContainer.setAttribute('data-collapsed', 'true');
+                    
+                    h4.addEventListener('click', function() {
+                        const isCollapsed = ageGroupsContainer.getAttribute('data-collapsed') === 'true';
+                        ageGroupsContainer.setAttribute('data-collapsed', isCollapsed ? 'false' : 'true');
+                    });
+                }
+            }
+        });
     </script>
 }
 

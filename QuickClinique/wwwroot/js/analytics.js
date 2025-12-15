@@ -73,12 +73,19 @@ renderAppointmentVolumeChart();
 updateVolumeStats();
 break;
 case 'demographics':
-analyticsData.ageDistribution = chartData.ageDistribution || analyticsData.ageDistribution;
-analyticsData.avgAge = chartData.avgAge || analyticsData.avgAge;
-analyticsData.commonAgeGroup = chartData.commonAgeGroup || analyticsData.commonAgeGroup;
-renderAgeDistributionChart();
-updateDemographicsStats();
-break;
+                // Always use fresh data from database
+                analyticsData.ageDistribution = chartData.ageDistribution || {};
+                analyticsData.genderDistribution = chartData.genderDistribution || {};
+                analyticsData.commonAgeGroup = chartData.commonAgeGroup || 'N/A';
+                analyticsData.commonGender = chartData.commonGender || 'N/A';
+                analyticsData.averageAge = chartData.averageAge || 0;
+                analyticsData.ageRange = chartData.ageRange || 'N/A';
+                analyticsData.totalAgePatients = chartData.totalAgePatients || 0;
+                renderAgeDistributionChart();
+                renderGenderDistributionChart();
+                updateDemographicsStats();
+                updateAgeGroupsList();
+                break;
 case 'visitFrequency':
 analyticsData.visitFrequency = chartData.visitFrequency || {};
 analyticsData.avgVisits = chartData.avgVisits || analyticsData.avgVisits;
@@ -140,11 +147,15 @@ switch(chartType) {
 case 'appointmentVolume':
 return { appointmentVolume: processedData.appointmentVolume };
 case 'demographics':
-return {
-ageDistribution: processedData.ageDistribution,
-avgAge: processedData.avgAge,
-commonAgeGroup: processedData.commonAgeGroup
-};
+                return {
+                    ageDistribution: processedData.ageDistribution,
+                    genderDistribution: processedData.genderDistribution,
+                    commonAgeGroup: processedData.commonAgeGroup,
+                    commonGender: processedData.commonGender,
+                    averageAge: processedData.averageAge,
+                    ageRange: processedData.ageRange,
+                    totalAgePatients: processedData.totalAgePatients
+                };
 case 'visitFrequency':
 return {
 visitFrequency: processedData.visitFrequency,
@@ -186,6 +197,9 @@ ageGroups.forEach(group => {
 ageDistribution[group] = data.ageDistribution[group] || 0;
 });
 
+// Process gender distribution - use data as-is from API
+const genderDistribution = data.genderDistribution || {};
+
 // Process visit frequency - group 5+ visits together
 const visitFrequency = {};
 Object.keys(data.visitFrequency || {}).forEach(key => {
@@ -211,10 +225,14 @@ totalPatients: data.totalPatients || 0,
 noShowRate: noShowRate,
 avgSatisfaction: data.avgSatisfaction || 0,
 
-appointmentVolume: appointmentVolume,
-ageDistribution: ageDistribution,
-avgAge: data.avgAge || 0,
-commonAgeGroup: data.commonAgeGroup || 'N/A',
+                appointmentVolume: appointmentVolume,
+                ageDistribution: ageDistribution,
+                genderDistribution: data.genderDistribution || {},
+                commonAgeGroup: data.commonAgeGroup || 'N/A',
+                commonGender: data.commonGender || 'N/A',
+                averageAge: data.averageAge || 0,
+                ageRange: data.ageRange || 'N/A',
+                totalAgePatients: data.totalAgePatients || 0,
 
 visitFrequency: visitFrequency,
 avgVisits: data.avgVisits || 0,
@@ -270,11 +288,15 @@ ageDistribution: {
 '26-35': 0,
 '36-45': 0,
 '46-55': 0,
-'56-65': 0,
-'65+': 0
-},
-avgAge: 0,
-commonAgeGroup: 'N/A',
+        '56-65': 0,
+        '65+': 0
+    },
+    genderDistribution: {},
+    commonAgeGroup: 'N/A',
+    commonGender: 'N/A',
+    averageAge: 0,
+    ageRange: 'N/A',
+    totalAgePatients: 0,
 visitFrequency: {},
 avgVisits: 0,
 returnPatients: 0,
@@ -322,18 +344,20 @@ document.getElementById('totalUniqueReasonsCard').textContent = (data.reasonsFor
 
 // Render all charts
 function renderCharts() {
-renderAppointmentVolumeChart();
-renderAgeDistributionChart();
-renderVisitFrequencyChart();
-renderNoShowCancellationChart();
-renderEmergencyTrendChart();
-renderReasonsForVisitChart();
-updateDemographicsStats();
-updateFrequencyStats();
-updateCancellationStats();
-updateVolumeStats();
-updateEmergencyStats();
-updateReasonsStats();
+    renderAppointmentVolumeChart();
+    renderAgeDistributionChart();
+    renderGenderDistributionChart();
+    renderVisitFrequencyChart();
+    renderNoShowCancellationChart();
+    renderEmergencyTrendChart();
+    renderReasonsForVisitChart();
+    updateDemographicsStats();
+    updateAgeGroupsList();
+    updateFrequencyStats();
+    updateCancellationStats();
+    updateVolumeStats();
+    updateEmergencyStats();
+    updateReasonsStats();
 }
 
 // Render Appointment Volume Trend Chart
@@ -439,80 +463,241 @@ display: false
 
 // Render Age Distribution Chart
 function renderAgeDistributionChart() {
-const ctx = document.getElementById('ageDistributionChart');
-if (!ctx) return;
+    const ctx = document.getElementById('ageDistributionChart');
+    if (!ctx) return;
 
-if (charts.ageDistribution) {
-charts.ageDistribution.destroy();
+    if (charts.ageDistribution) {
+        charts.ageDistribution.destroy();
+    }
+
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('demographicsTimeRange')?.value || 30;
+    const data = analyticsData.ageDistribution || {};
+    
+    // Filter to only show age groups with actual data (count > 0)
+    // Handle both object format and ensure we're checking numeric values correctly
+    const allKeys = Object.keys(data);
+    const labels = allKeys.filter(key => {
+        const value = data[key];
+        // Check if value is a valid number greater than 0
+        const numValue = typeof value === 'number' ? value : Number(value);
+        const isValid = !isNaN(numValue) && numValue > 0;
+        return isValid;
+    });
+    
+    const values = labels.map(key => {
+        const value = data[key];
+        return typeof value === 'number' ? value : Number(value) || 0;
+    });
+    const totalPatients = values.reduce((sum, val) => sum + val, 0);
+
+    // Ensure we have data before creating chart
+    if (labels.length === 0 || values.length === 0 || totalPatients === 0) {
+        // No data available - don't create chart
+        return;
+    }
+
+    // Define color mapping for each age group to ensure consistent colors
+    const ageGroupColors = {
+        'Under 18': '#4ECDC4',
+        '18-25': '#44A08D',
+        '26-35': '#3BA89F',
+        '36-45': '#10B981',
+        '46-55': '#F59E0B',
+        '56-65': '#DC2626',
+        '65+': '#8B5CF6'
+    };
+
+    // Map colors based on the actual labels (only for groups with data)
+    const backgroundColor = labels.map(label => ageGroupColors[label] || '#4ECDC4');
+
+    // Sort age groups in logical order
+    const ageGroupOrder = ['Under 18', '18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+    const sortedLabels = labels.sort((a, b) => {
+        const indexA = ageGroupOrder.indexOf(a);
+        const indexB = ageGroupOrder.indexOf(b);
+        return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    });
+    const sortedValues = sortedLabels.map(label => data[label]);
+    const sortedColors = sortedLabels.map(label => ageGroupColors[label] || '#4ECDC4');
+
+    charts.ageDistribution = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: sortedLabels,
+            datasets: [{
+                data: sortedValues,
+                backgroundColor: sortedColors,
+                borderWidth: 2,
+                borderColor: '#FFFFFF'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const percentage = totalPatients > 0
+                                        ? ((value / totalPatients) * 100).toFixed(1)
+                                        : '0.0';
+                                    return {
+                                        text: `${label} (${value} - ${percentage}%)`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        hidden: false,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalPatients > 0
+                                ? ((value / totalPatients) * 100).toFixed(1)
+                                : '0.0';
+                            return [
+                                `Age Group: ${label}`,
+                                `Patients: ${value}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
-// Get time range for this specific chart
-const timeRange = document.getElementById('demographicsTimeRange')?.value || 30;
-const data = analyticsData.ageDistribution || {};
-const labels = Object.keys(data).filter(key => data[key] > 0); // Only show groups with data
-const values = labels.map(key => data[key]);
-const totalPatients = values.reduce((sum, val) => sum + val, 0);
+// Render Gender Distribution Chart
+function renderGenderDistributionChart() {
+    const ctx = document.getElementById('genderDistributionChart');
+    if (!ctx) return;
 
-charts.ageDistribution = new Chart(ctx, {
-type: 'doughnut',
-data: {
-labels: labels,
-datasets: [{
-data: values,
-backgroundColor: [
-'#4ECDC4',
-'#44A08D',
-'#3BA89F',
-'#10B981',
-'#F59E0B',
-'#DC2626',
-'#8B5CF6'
-],
-borderWidth: 0
-}]
-},
-options: {
-responsive: true,
-maintainAspectRatio: true,
-plugins: {
-legend: {
-position: 'bottom',
-labels: {
-padding: 15,
-font: {
-size: 12,
-weight: '600'
-}
-}
-},
-tooltip: {
-backgroundColor: 'rgba(0, 0, 0, 0.9)',
-padding: 16,
-titleFont: {
-size: 15,
-weight: 'bold'
-},
-bodyFont: {
-size: 13
-},
-callbacks: {
-label: function(context) {
-const label = context.label || '';
-const value = context.parsed || 0;
-const percentage = totalPatients > 0
-? ((value / totalPatients) * 100).toFixed(1)
-: '0.0';
-return [
-`Age Group: ${label}`,
-`Patients: ${value}`,
-`Percentage: ${percentage}%`
-];
-}
-}
-}
-}
-}
-});
+    if (charts.genderDistribution) {
+        charts.genderDistribution.destroy();
+    }
+
+    // Get time range for this specific chart
+    const timeRange = document.getElementById('demographicsTimeRange')?.value || 30;
+    const data = analyticsData.genderDistribution || {};
+    
+    // Filter to only show genders with actual data (count > 0)
+    const allKeys = Object.keys(data);
+    const labels = allKeys.filter(key => {
+        const value = data[key];
+        const numValue = typeof value === 'number' ? value : Number(value);
+        return !isNaN(numValue) && numValue > 0;
+    });
+    
+    const values = labels.map(key => {
+        const value = data[key];
+        return typeof value === 'number' ? value : Number(value) || 0;
+    });
+    const totalPatients = values.reduce((sum, val) => sum + val, 0);
+
+    // Ensure we have data before creating chart
+    if (labels.length === 0 || values.length === 0 || totalPatients === 0) {
+        // No data available - don't create chart
+        return;
+    }
+
+    // Define color mapping for genders
+    const genderColors = {
+        'Male': '#4ECDC4',
+        'Female': '#EC4899',
+        'Other': '#8B5CF6',
+        'Not specified': '#9CA3AF'
+    };
+
+    // Map colors based on the actual labels
+    const backgroundColor = labels.map(label => genderColors[label] || '#4ECDC4');
+
+    charts.genderDistribution = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: backgroundColor,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        },
+                        filter: function(legendItem, chartData) {
+                            const index = legendItem.datasetIndex;
+                            const dataIndex = legendItem.index;
+                            const value = chartData.datasets[index].data[dataIndex];
+                            return value > 0;
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    padding: 16,
+                    titleFont: {
+                        size: 15,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const percentage = totalPatients > 0
+                                ? ((value / totalPatients) * 100).toFixed(1)
+                                : '0.0';
+                            return [
+                                `Gender: ${label}`,
+                                `Patients: ${value}`,
+                                `Percentage: ${percentage}%`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Render Visit Frequency Chart
@@ -674,10 +859,67 @@ return [
 
 // Update demographics statistics
 function updateDemographicsStats() {
-const data = analyticsData;
+    const data = analyticsData;
+    
+    // Age statistics
+    const commonAgeGroupElement = document.getElementById('commonAgeGroup');
+    const averageAgeElement = document.getElementById('averageAge');
+    const ageRangeElement = document.getElementById('ageRange');
+    const totalAgePatientsElement = document.getElementById('totalAgePatients');
+    
+    if (commonAgeGroupElement) {
+        commonAgeGroupElement.textContent = data.commonAgeGroup || 'N/A';
+    }
+    if (averageAgeElement) {
+        averageAgeElement.textContent = data.averageAge > 0 ? data.averageAge.toFixed(1) + ' years' : 'N/A';
+    }
+    if (ageRangeElement) {
+        ageRangeElement.textContent = data.ageRange || 'N/A';
+    }
+    if (totalAgePatientsElement) {
+        totalAgePatientsElement.textContent = (data.totalAgePatients || 0).toLocaleString();
+    }
+    
+    // Gender statistics
+    const commonGenderElement = document.getElementById('commonGender');
+    if (commonGenderElement) {
+        commonGenderElement.textContent = data.commonGender || 'N/A';
+    }
+}
 
-document.getElementById('avgAge').textContent = data.avgAge.toFixed(1) + ' years';
-document.getElementById('commonAgeGroup').textContent = data.commonAgeGroup + ' years';
+// Update age groups breakdown list
+function updateAgeGroupsList() {
+    const data = analyticsData.ageDistribution || {};
+    const ageGroupsList = document.getElementById('ageGroupsList');
+    if (!ageGroupsList) return;
+    
+    // Get all age groups in order
+    const ageGroupOrder = ['Under 18', '18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+    const totalPatients = Object.values(data).reduce((sum, val) => sum + (Number(val) || 0), 0);
+    
+    // Clear existing content
+    ageGroupsList.innerHTML = '';
+    
+    // Create list items for each age group
+    ageGroupOrder.forEach(group => {
+        const count = data[group] || 0;
+        if (count > 0) {
+            const percentage = totalPatients > 0 ? ((count / totalPatients) * 100).toFixed(1) : '0.0';
+            const listItem = document.createElement('div');
+            listItem.className = 'age-group-item';
+            listItem.innerHTML = `
+                <span class="age-group-label">${group}</span>
+                <span class="age-group-count">${count} patients</span>
+                <span class="age-group-percentage">${percentage}%</span>
+            `;
+            ageGroupsList.appendChild(listItem);
+        }
+    });
+    
+    // If no data, show message
+    if (ageGroupsList.children.length === 0) {
+        ageGroupsList.innerHTML = '<div class="no-data-message">No age data available</div>';
+    }
 }
 
 // Update frequency statistics
