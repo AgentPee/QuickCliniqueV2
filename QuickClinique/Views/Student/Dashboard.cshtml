@@ -364,7 +364,7 @@
 
 <!-- Help is on the Way Modal -->
 <div class="modal fade" id="helpOnTheWayModal" tabindex="-1" aria-labelledby="helpOnTheWayModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content help-on-the-way-modal-content">
             <div class="modal-header help-on-the-way-header">
                 <h5 class="modal-title" id="helpOnTheWayModalLabel">
@@ -388,8 +388,8 @@
                 </div>
             </div>
             <div class="modal-footer help-on-the-way-footer">
-                <button type="button" class="btn btn-primary" id="acknowledgeHelpBtn">
-                    <i class="fas fa-check"></i> Understood
+                <button type="button" class="btn btn-primary help-confirm-btn" id="acknowledgeHelpBtn">
+                    <i class="fas fa-check"></i> Confirm
                 </button>
             </div>
         </div>
@@ -1174,21 +1174,29 @@
         }
 
         /* Help is on the Way Modal Styles */
+        #helpOnTheWayModal .modal-dialog {
+            max-height: 95vh;
+            margin: 0.5rem auto;
+            display: flex;
+            align-items: center;
+        }
+
         .help-on-the-way-modal-content {
-            border: 4px solid #10b981;
-            border-radius: 20px;
-            box-shadow: 0 0 40px rgba(16, 185, 129, 0.4), 0 0 80px rgba(16, 185, 129, 0.2);
-            animation: helpModalEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 3px solid #10b981;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.5);
+            animation: helpModalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             overflow: hidden;
+            max-height: calc(95vh - 1rem);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
         }
 
         @@keyframes helpModalEntrance {
             0% {
                 opacity: 0;
-                transform: scale(0.7) translateY(-50px);
-            }
-            50% {
-                transform: scale(1.05) translateY(0);
+                transform: scale(0.9) translateY(-20px);
             }
             100% {
                 opacity: 1;
@@ -1200,9 +1208,10 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             border-bottom: none;
-            padding: 2rem;
+            padding: 0.875rem 1.25rem;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .help-on-the-way-header::after {
@@ -1224,29 +1233,36 @@
 
         .help-on-the-way-header .modal-title {
             font-weight: 700;
-            font-size: 1.75rem;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
             position: relative;
             z-index: 1;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            margin: 0;
         }
 
         .help-on-the-way-header .modal-title i {
-            font-size: 2rem;
-            animation: helpIconSpin 2s ease-in-out infinite;
+            font-size: 1.5rem;
+            animation: helpIconFlash 1.5s ease-in-out infinite;
         }
 
-        @@keyframes helpIconSpin {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(10deg) scale(1.1); }
+        @@keyframes helpIconFlash {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
         }
 
         .help-on-the-way-body {
-            padding: 3rem 2rem;
-            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+            padding: 1.5rem 1.25rem;
+            background: #ffffff;
             text-align: center;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            max-height: calc(95vh - 200px);
         }
 
         .help-message-container {
