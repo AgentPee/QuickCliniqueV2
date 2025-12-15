@@ -274,6 +274,28 @@
                     
                     modalBody.innerHTML = content.innerHTML;
                     
+                    // Extract and execute scripts from the loaded content
+                    const scripts = doc.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
+                        });
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        document.body.appendChild(newScript);
+                    });
+                    
+                    // Initialize collapsible sections after content is loaded
+                    // Wait a bit for scripts to execute
+                    setTimeout(() => {
+                        if (typeof window.initCollapsibles === 'function') {
+                            window.initCollapsibles();
+                        } else {
+                            // Fallback: manually initialize if function not available
+                            initializeModalCollapsibles(modalBody);
+                        }
+                    }, 200);
+                    
                     // Fix image paths - convert relative paths to absolute URLs
                     const images = modalBody.querySelectorAll('img[src]');
                     images.forEach(img => {
@@ -550,6 +572,58 @@
                 notification.classList.remove('show');
                 setTimeout(() => notification.remove(), 300);
             }, 5000);
+        }
+
+        // Fallback function to initialize collapsibles in modal
+        function initializeModalCollapsibles(container) {
+            // Toggle Appointment Details
+            function toggleAppointmentDetails(header) {
+                if (!header) return;
+                const appointmentItem = header.closest('.appointment-item');
+                if (!appointmentItem) return;
+                const detailsRow = appointmentItem.querySelector('.appointment-details-row');
+                const chevron = header.querySelector('.appointment-chevron');
+                if (!detailsRow) return;
+                
+                detailsRow.classList.toggle('appointment-details-collapsed');
+                if (chevron) {
+                    chevron.style.transform = detailsRow.classList.contains('appointment-details-collapsed') 
+                        ? 'rotate(0deg)' : 'rotate(180deg)';
+                }
+            }
+
+            // Toggle Medical Record Details
+            function toggleMedicalRecordDetails(header) {
+                if (!header) return;
+                const recordItem = header.closest('.medical-record-item');
+                if (!recordItem) return;
+                const recordGrid = recordItem.querySelector('.medical-record-grid');
+                const chevron = header.querySelector('.medical-record-chevron');
+                if (!recordGrid) return;
+                
+                recordGrid.classList.toggle('medical-record-details-collapsed');
+                if (chevron) {
+                    chevron.style.transform = recordGrid.classList.contains('medical-record-details-collapsed') 
+                        ? 'rotate(0deg)' : 'rotate(180deg)';
+                }
+            }
+
+            // Attach event listeners
+            container.querySelectorAll('[data-toggle="appointment"]').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleAppointmentDetails(this);
+                });
+            });
+
+            container.querySelectorAll('[data-toggle="medical-record"]').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMedicalRecordDetails(this);
+                });
+            });
         }
 
     </script>

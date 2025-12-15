@@ -59,13 +59,14 @@
                     @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
                     {
                         <div class="record-item">
-                            <div class="record-header">
+                            <div class="record-header" onclick="toggleRecord(@record.RecordId)" style="cursor: pointer;">
                                 <div class="record-title">
                                     <i class="fas fa-file-medical"></i>
                                     Record #@record.RecordId
                                 </div>
+                                <i class="fas fa-chevron-down record-chevron" id="chevron-@record.RecordId"></i>
                             </div>
-                            <div class="record-content">
+                            <div class="record-content" id="content-@record.RecordId" style="display: none;">
                                 <div class="info-card">
                                     <div class="info-card-header">
                                         <i class="fas fa-stethoscope"></i>
@@ -186,15 +187,18 @@
                     var formattedDate = date.ToString("MMM dd, yyyy");
 
                     <div class="appointment-item">
-                        <div class="appointment-header">
+                        <div class="appointment-header" onclick="toggleAppointment(@appointment.AppointmentId)" style="cursor: pointer;">
                             <span class="appointment-date">
                                 <i class="fas fa-calendar-day"></i>
                                 @formattedDate
                             </span>
-                            <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                                <i class="fas fa-chevron-down appointment-chevron" id="appt-chevron-@appointment.AppointmentId"></i>
+                            </div>
                         </div>
 
-                        <div class="appointment-details">
+                        <div class="appointment-details" id="appt-content-@appointment.AppointmentId" style="display: none;">
                             <div>
                                 <i class="fas fa-stethoscope"></i>
                                 <span><strong>Service:</strong> @appointment.ReasonForVisit</span>
@@ -248,4 +252,38 @@
 
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function toggleRecord(recordId) {
+            const content = document.getElementById('content-' + recordId);
+            const chevron = document.getElementById('chevron-' + recordId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+
+        function toggleAppointment(appointmentId) {
+            const content = document.getElementById('appt-content-' + appointmentId);
+            const chevron = document.getElementById('appt-chevron-' + appointmentId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'flex';
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+    </script>
+}
 
