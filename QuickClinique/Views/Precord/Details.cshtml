@@ -339,7 +339,7 @@
                 @foreach (var appointment in Model.Appointments)
                 {
                     <div class="appointment-item">
-                        <div class="appointment-header-row">
+                        <div class="appointment-header-row appointment-collapsible-header" data-toggle="appointment">
                             <div class="appointment-date-time">
                                 <div class="date-badge">
                                     <i class="fas fa-calendar"></i>
@@ -350,15 +350,16 @@
                                     <span>@appointment.Schedule.StartTime.ToString("hh:mm tt") - @appointment.Schedule.EndTime.ToString("hh:mm tt")</span>
                                 </div>
                             </div>
-                            <div>
+                            <div class="appointment-header-right">
                                 @{
                                     var statusClass = "status-" + appointment.AppointmentStatus.ToLower().Replace(" ", "-");
                                 }
                                 <span class="status-badge @statusClass">@appointment.AppointmentStatus</span>
+                                <i class="fas fa-chevron-down appointment-chevron"></i>
                             </div>
                         </div>
 
-                        <div class="appointment-details-row">
+                        <div class="appointment-details-row appointment-details-collapsed">
                             <div class="detail-row">
                                 <i class="fas fa-notes-medical"></i>
                                 <strong>Reason for Visit:</strong>
@@ -413,14 +414,14 @@
                 @foreach (var record in Model.Precords.OrderByDescending(r => r.RecordId))
                 {
                     <div class="medical-record-item medical-record-item-style">
-                        <div class="medical-record-header">
+                        <div class="medical-record-header medical-record-collapsible-header" data-toggle="medical-record">
                             <h4 class="medical-record-title">
                                 <i class="fas fa-file-medical-alt"></i> Record #@record.RecordId
                             </h4>
-                          
+                            <i class="fas fa-chevron-down medical-record-chevron"></i>
                         </div>
                         
-                        <div class="medical-record-grid">
+                        <div class="medical-record-grid medical-record-details-collapsed">
                             <div>
                                 <strong><i class="fas fa-stethoscope"></i> Diagnosis:</strong>
                                 <p class="medical-record-text">@record.Diagnosis</p>
@@ -672,6 +673,108 @@
                 setTimeout(() => notification.remove(), 300);
             }, 5000);
         }
+
+        // Toggle Appointment Details - Simple and reliable
+        function toggleAppointmentDetails(header) {
+            if (!header) return;
+            
+            const appointmentItem = header.closest('.appointment-item');
+            if (!appointmentItem) return;
+            
+            const detailsRow = appointmentItem.querySelector('.appointment-details-row');
+            const chevron = header.querySelector('.appointment-chevron');
+            
+            if (!detailsRow) return;
+            
+            // Toggle the collapsed class
+            detailsRow.classList.toggle('appointment-details-collapsed');
+            
+            // Rotate chevron
+            if (chevron) {
+                if (detailsRow.classList.contains('appointment-details-collapsed')) {
+                    chevron.style.transform = 'rotate(0deg)';
+                } else {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+
+        // Toggle Medical Record Details - Simple and reliable
+        function toggleMedicalRecordDetails(header) {
+            if (!header) return;
+            
+            const recordItem = header.closest('.medical-record-item');
+            if (!recordItem) return;
+            
+            const recordGrid = recordItem.querySelector('.medical-record-grid');
+            const chevron = header.querySelector('.medical-record-chevron');
+            
+            if (!recordGrid) return;
+            
+            // Toggle the collapsed class
+            recordGrid.classList.toggle('medical-record-details-collapsed');
+            
+            // Rotate chevron
+            if (chevron) {
+                if (recordGrid.classList.contains('medical-record-details-collapsed')) {
+                    chevron.style.transform = 'rotate(0deg)';
+                } else {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+
+        // Make functions globally accessible
+        window.toggleAppointmentDetails = toggleAppointmentDetails;
+        window.toggleMedicalRecordDetails = toggleMedicalRecordDetails;
+
+        // Initialize event listeners - Run immediately and on DOMContentLoaded
+        // Make it globally accessible so it can be called from modal context
+        window.initCollapsibles = function initCollapsibles() {
+            console.log('Initializing collapsibles...');
+            
+            // Add click listeners to appointment headers
+            const appointmentHeaders = document.querySelectorAll('[data-toggle="appointment"]');
+            console.log('Found', appointmentHeaders.length, 'appointment headers');
+            appointmentHeaders.forEach((header, index) => {
+                // Remove any existing listeners by cloning
+                const newHeader = header.cloneNode(true);
+                header.parentNode.replaceChild(newHeader, header);
+                
+                newHeader.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Appointment header clicked, index:', index);
+                    toggleAppointmentDetails(this);
+                });
+            });
+
+            // Add click listeners to medical record headers
+            const medicalRecordHeaders = document.querySelectorAll('[data-toggle="medical-record"]');
+            console.log('Found', medicalRecordHeaders.length, 'medical record headers');
+            medicalRecordHeaders.forEach((header, index) => {
+                // Remove any existing listeners by cloning
+                const newHeader = header.cloneNode(true);
+                header.parentNode.replaceChild(newHeader, header);
+                
+                newHeader.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Medical record header clicked, index:', index);
+                    toggleMedicalRecordDetails(this);
+                });
+            });
+        }
+
+        // Run immediately if DOM is ready, otherwise wait
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCollapsibles);
+        } else {
+            initCollapsibles();
+        }
+        
+        // Also run after a short delay to catch dynamically loaded content
+        setTimeout(initCollapsibles, 100);
     </script>
 }
 

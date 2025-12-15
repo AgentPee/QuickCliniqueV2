@@ -836,6 +836,54 @@
     margin-bottom: 1rem;
 }
 
+.appointment-collapsible-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.appointment-collapsible-header:hover {
+    background-color: rgba(23, 156, 142, 0.05);
+}
+
+.appointment-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.appointment-chevron {
+    color: var(--primary-teal);
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+}
+
+.appointment-details-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.4s ease, 
+                margin-top 0.4s ease;
+}
+
+.appointment-details-collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.appointment-details-row:not(.appointment-details-collapsed) {
+    max-height: 2000px !important;
+    opacity: 1 !important;
+    margin-top: 1rem !important;
+}
+
 .appointment-date-time {
     display: flex;
     align-items: center;
@@ -919,12 +967,6 @@
 .status-cancelled {
     background: #f8d7da;
     color: #721c24;
-}
-
-.appointment-details-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
 }
 
 .detail-row {
@@ -1934,6 +1976,50 @@
     margin-bottom: 1rem;
 }
 
+.medical-record-collapsible-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    border-radius: var(--radius-sm);
+    width: 100%;
+}
+
+.medical-record-collapsible-header:hover {
+    background-color: rgba(23, 156, 142, 0.05);
+}
+
+.medical-record-chevron {
+    color: var(--primary-teal);
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+    margin-top: 0.25rem;
+}
+
+.medical-record-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.4s ease, 
+                margin-top 0.4s ease;
+}
+
+.medical-record-details-collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.medical-record-grid:not(.medical-record-details-collapsed) {
+    max-height: 3000px !important;
+    opacity: 1 !important;
+    margin-top: 1rem !important;
+}
+
 .medical-record-title {
     margin: 0;
     color: rgb(0, 93, 101);
@@ -1949,11 +2035,7 @@
     font-size: 0.85rem;
 }
 
-.medical-record-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-}
+/* Medical record grid display properties are already defined above with transitions */
 
 .medical-record-text {
     margin: 0.5rem 0 0 0;
