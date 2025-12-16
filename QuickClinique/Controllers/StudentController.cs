@@ -8,6 +8,8 @@ using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.SignalR;
+using QuickClinique.Hubs;
 
 namespace QuickClinique.Controllers
 {
@@ -1782,9 +1784,78 @@ namespace QuickClinique.Controllers
             _context.Emergencies.Add(emergency);
             await _context.SaveChangesAsync();
 
+            // Send SignalR notification to all clinic staff immediately
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<MessageHub>>();
+            await hubContext.Clients.Group("clinic_staff").SendAsync("NewEmergency", new
+            {
+                emergencyId = emergency.EmergencyId,
+                studentId = emergency.StudentId,
+                studentName = emergency.StudentName,
+                studentIdNumber = emergency.StudentIdNumber,
+                location = emergency.Location,
+                needs = emergency.Needs,
+                createdAt = emergency.CreatedAt
+            });
+            Console.WriteLine($"[SignalR] Sent new emergency notification to clinic staff for emergency {emergency.EmergencyId}");
+
             return Json(new { 
                 success = true, 
                 message = "SOS emergency request sent successfully",
+                emergencyId = emergency.EmergencyId
+            });
+        }
+
+        // POST: Student/ResendSOS - Resend existing emergency SOS request (uses existing emergency ID)
+        [HttpPost]
+        [StudentOnly]
+        public async Task<IActionResult> ResendSOS([FromBody] ResendSOSRequest request)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null)
+            {
+                return Json(new { success = false, error = "Not logged in" });
+            }
+
+            if (request == null || request.EmergencyId <= 0)
+            {
+                return Json(new { success = false, error = "Invalid emergency ID provided" });
+            }
+
+            // Find the existing emergency
+            var emergency = await _context.Emergencies
+                .FirstOrDefaultAsync(e => e.EmergencyId == request.EmergencyId && e.StudentId == studentId.Value);
+
+            if (emergency == null)
+            {
+                return Json(new { success = false, error = "Emergency not found or does not belong to this student" });
+            }
+
+            // Reset acknowledgment status so staff can respond again
+            emergency.IsAcknowledged = false;
+
+            // Update the timestamp to show it was resent
+            emergency.CreatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            // Send SignalR notification to all clinic staff about the resend
+            var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<MessageHub>>();
+            await hubContext.Clients.Group("clinic_staff").SendAsync("NewEmergency", new
+            {
+                emergencyId = emergency.EmergencyId,
+                studentId = emergency.StudentId,
+                studentName = emergency.StudentName,
+                studentIdNumber = emergency.StudentIdNumber,
+                location = emergency.Location,
+                needs = emergency.Needs,
+                createdAt = emergency.CreatedAt,
+                isResent = true
+            });
+            Console.WriteLine($"[SignalR] Sent emergency resend notification to clinic staff for emergency {emergency.EmergencyId}");
+
+            return Json(new { 
+                success = true, 
+                message = "SOS emergency request resent successfully",
                 emergencyId = emergency.EmergencyId
             });
         }
@@ -1808,22 +1879,22 @@ namespace QuickClinique.Controllers
 
             if (emergency == null)
             {
-                // Check if there's a recently resolved emergency (within last 5 minutes)
-                var recentlyResolved = await _context.Emergencies
-                    .Where(e => e.StudentId == studentId.Value && e.IsResolved)
+                // Check if there's a recently acknowledged emergency (within last 10 minutes) - staff responded
+                var recentlyAcknowledged = await _context.Emergencies
+                    .Where(e => e.StudentId == studentId.Value && e.IsAcknowledged && !e.IsResolved)
                     .OrderByDescending(e => e.CreatedAt)
                     .FirstOrDefaultAsync();
 
-                if (recentlyResolved != null && recentlyResolved.CreatedAt.HasValue)
+                if (recentlyAcknowledged != null && recentlyAcknowledged.CreatedAt.HasValue)
                 {
-                    var timeSinceCreated = DateTime.Now - recentlyResolved.CreatedAt.Value;
-                    // If resolved within last 5 minutes, return it
-                    if (timeSinceCreated.TotalMinutes <= 5)
+                    var timeSinceCreated = DateTime.Now - recentlyAcknowledged.CreatedAt.Value;
+                    // If acknowledged within last 10 minutes, return it to show "Help is on the Way" modal
+                    if (timeSinceCreated.TotalMinutes <= 10)
                     {
                         return Json(new { 
                             success = true, 
-                            resolved = true,
-                            emergencyId = recentlyResolved.EmergencyId,
+                            resolved = true,  // resolved here means "acknowledged by staff"
+                            emergencyId = recentlyAcknowledged.EmergencyId,
                             message = "Your SOS alert has been received. Help is on the way."
                         });
                     }
@@ -1833,6 +1904,61 @@ namespace QuickClinique.Controllers
             }
 
             return Json(new { success = true, resolved = false, emergencyId = emergency.EmergencyId });
+        }
+
+        // POST: Student/MarkHelpReceived - Mark that help has been received
+        [HttpPost]
+        [StudentOnly]
+        public async Task<IActionResult> MarkHelpReceived([FromBody] MarkHelpReceivedRequest request)
+        {
+            try
+            {
+                var studentId = HttpContext.Session.GetInt32("StudentId");
+                if (studentId == null)
+                {
+                    return Json(new { success = false, error = "Not logged in" });
+                }
+
+                // If emergencyId is provided, try to find that specific emergency
+                // Otherwise, find the most recent emergency for this student
+                Emergency? emergency = null;
+                
+                if (request != null && request.EmergencyId > 0)
+                {
+                    // Try to find the specific emergency
+                    emergency = await _context.Emergencies
+                        .FirstOrDefaultAsync(e => e.EmergencyId == request.EmergencyId && e.StudentId == studentId.Value);
+                }
+                
+                // If not found or no ID provided, get the most recent emergency for this student
+                if (emergency == null)
+                {
+                    emergency = await _context.Emergencies
+                        .Where(e => e.StudentId == studentId.Value)
+                        .OrderByDescending(e => e.CreatedAt)
+                        .FirstOrDefaultAsync();
+                }
+
+                if (emergency == null)
+                {
+                    return Json(new { success = false, error = "No emergency found for this student" });
+                }
+
+                // Mark emergency as resolved automatically when student confirms help received
+                emergency.IsResolved = true;
+                emergency.IsHelpReceivedRequested = true; // Keep for tracking purposes
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[MarkHelpReceived] Emergency {emergency.EmergencyId} automatically marked as resolved by student {studentId.Value}.");
+
+                return Json(new { success = true, message = "Thank you for confirming! The emergency has been marked as resolved.", emergencyId = emergency.EmergencyId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in MarkHelpReceived: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, error = "An error occurred while processing your request" });
+            }
         }
 
         // POST: Student/Activate/{id}
@@ -1930,5 +2056,15 @@ namespace QuickClinique.Controllers
     {
         public string Location { get; set; } = string.Empty;
         public string Needs { get; set; } = string.Empty;
+    }
+
+    public class MarkHelpReceivedRequest
+    {
+        public int EmergencyId { get; set; }
+    }
+
+    public class ResendSOSRequest
+    {
+        public int EmergencyId { get; set; }
     }
 }

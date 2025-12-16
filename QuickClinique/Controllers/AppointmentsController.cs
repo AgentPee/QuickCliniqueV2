@@ -1078,7 +1078,7 @@ namespace QuickClinique.Controllers
                 })
                 .ToListAsync();
 
-            // Get all emergencies
+            // Get all emergencies (both resolved and unresolved)
             var emergencies = await _context.Emergencies
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new {
@@ -1089,6 +1089,8 @@ namespace QuickClinique.Controllers
                     location = e.Location,
                     needs = e.Needs,
                     isResolved = e.IsResolved,
+                    isAcknowledged = e.IsAcknowledged,
+                    isHelpReceivedRequested = e.IsHelpReceivedRequested,
                     createdAt = e.CreatedAt
                 })
                 .ToListAsync();

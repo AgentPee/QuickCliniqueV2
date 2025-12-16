@@ -146,13 +146,29 @@
                     <div class="info-value">@Model.Appointments.Count</div>
                 </div>
             </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Allergies:</div>
+                    <div class="info-value">
+                        @{
+                            var mostRecentRecord = Model.Precords?.OrderByDescending(r => r.RecordId).FirstOrDefault();
+                            var allergies = mostRecentRecord?.Allergies ?? "No allergies recorded";
+                        }
+                        @allergies
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Emergency Contact Information Section -->
     @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
     {
-        <div class="emergency-contact-section">
+        <div class="emergency-contact-section"> 
             <div class="section-header">
                 <h3 class="section-title">
                     <i class="fas fa-phone-alt"></i>
@@ -430,18 +446,8 @@
                                 <strong><i class="fas fa-pills"></i> Medications:</strong>
                                 <p class="medical-record-text">@record.Medications</p>
                             </div>
-                            <div>
-                                <strong><i class="fas fa-exclamation-triangle"></i> Allergies:</strong>
-                                <p class="medical-record-text">@record.Allergies</p>
-                            </div>
-                            <div>
-                                <strong><i class="fas fa-user"></i> Age:</strong>
-                                <p class="medical-record-text">@record.Age years</p>
-                            </div>
-                            <div>
-                                <strong><i class="fas fa-venus-mars"></i> Gender:</strong>
-                                <p class="medical-record-text">@record.Gender</p>
-                            </div>
+                          
+                            
                             <div>
                                 <strong><i class="fas fa-weight"></i> BMI:</strong>
                                 <p class="medical-record-text">@record.Bmi</p>

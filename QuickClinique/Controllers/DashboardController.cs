@@ -640,8 +640,9 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Not authenticated" });
             }
 
+            // Only show unresolved AND unacknowledged emergencies (staff hasn't responded yet)
             var emergencies = await _context.Emergencies
-                .Where(e => !e.IsResolved)
+                .Where(e => !e.IsResolved && !e.IsAcknowledged)
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new
                 {
@@ -651,14 +652,52 @@ namespace QuickClinique.Controllers
                     studentIdNumber = e.StudentIdNumber,
                     location = e.Location,
                     needs = e.Needs,
-                    createdAt = e.CreatedAt
+                    createdAt = e.CreatedAt,
+                    isAcknowledged = e.IsAcknowledged
                 })
                 .ToListAsync();
 
             return Json(new { success = true, data = emergencies });
         }
 
-        // POST: Dashboard/MarkEmergencyResolved - Mark an emergency as resolved
+        // POST: Dashboard/AcknowledgeEmergency - Acknowledge emergency (staff responds, doesn't mark as resolved)
+        [HttpPost]
+        public async Task<IActionResult> AcknowledgeEmergency([FromBody] MarkEmergencyResolvedRequest request)
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var emergency = await _context.Emergencies
+                .FirstOrDefaultAsync(e => e.EmergencyId == request.EmergencyId);
+
+            if (emergency == null)
+            {
+                return Json(new { success = false, error = "Emergency not found" });
+            }
+
+            // Mark as acknowledged (not resolved) - this triggers "Help is on the Way" modal for student
+            emergency.IsAcknowledged = true;
+            await _context.SaveChangesAsync();
+
+            // Send SignalR notification to student immediately
+            if (emergency.StudentId.HasValue)
+            {
+                await _hubContext.Clients.Group($"emergency_student_{emergency.StudentId.Value}").SendAsync("EmergencyAcknowledged", new
+                {
+                    emergencyId = emergency.EmergencyId,
+                    message = "Your SOS alert has been received. Help is on the way.",
+                    acknowledgedAt = DateTime.Now
+                });
+                Console.WriteLine($"[SignalR] Sent emergency acknowledgment to student {emergency.StudentId.Value} for emergency {emergency.EmergencyId}");
+            }
+
+            return Json(new { success = true, message = "Emergency acknowledged. Student will be notified that help is on the way." });
+        }
+
+        // POST: Dashboard/MarkEmergencyResolved - Mark an emergency as resolved (only when clinic staff confirms help was received)
         [HttpPost]
         public async Task<IActionResult> MarkEmergencyResolved([FromBody] MarkEmergencyResolvedRequest request)
         {
@@ -676,6 +715,60 @@ namespace QuickClinique.Controllers
                 return Json(new { success = false, error = "Emergency not found" });
             }
 
+            emergency.IsResolved = true;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Emergency marked as resolved" });
+        }
+
+        // GET: Dashboard/GetHelpReceivedNotifications - Get help received notifications
+        [HttpGet]
+        public async Task<IActionResult> GetHelpReceivedNotifications()
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            // Get emergencies where student has requested help received (IsHelpReceivedRequested = true) but not yet resolved
+            var helpReceivedRequests = await _context.Emergencies
+                .Where(e => e.IsHelpReceivedRequested && !e.IsResolved && e.CreatedAt.HasValue)
+                .OrderByDescending(e => e.CreatedAt)
+                .Select(e => new
+                {
+                    emergencyId = e.EmergencyId,
+                    studentId = e.StudentId,
+                    studentName = e.StudentName,
+                    studentIdNumber = e.StudentIdNumber,
+                    location = e.Location,
+                    needs = e.Needs,
+                    createdAt = e.CreatedAt
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = helpReceivedRequests });
+        }
+
+        // POST: Dashboard/MarkHelpReceivedAsResolved - Mark help received notification as resolved
+        [HttpPost]
+        public async Task<IActionResult> MarkHelpReceivedAsResolved([FromBody] MarkEmergencyResolvedRequest request)
+        {
+            var clinicStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (clinicStaffId == null)
+            {
+                return Json(new { success = false, error = "Not authenticated" });
+            }
+
+            var emergency = await _context.Emergencies
+                .FirstOrDefaultAsync(e => e.EmergencyId == request.EmergencyId);
+
+            if (emergency == null)
+            {
+                return Json(new { success = false, error = "Emergency not found" });
+            }
+
+            // Mark emergency as resolved (only clinic staff can do this)
             emergency.IsResolved = true;
             await _context.SaveChangesAsync();
 

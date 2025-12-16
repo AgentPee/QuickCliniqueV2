@@ -187,6 +187,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("tinyint(1)")
                 .HasDefaultValue(false)
                 .HasColumnName("IsResolved");
+            entity.Property(e => e.IsAcknowledged)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false)
+                .HasColumnName("IsAcknowledged");
+            entity.Property(e => e.IsHelpReceivedRequested)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false)
+                .HasColumnName("IsHelpReceivedRequested");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("current_timestamp(6)")
                 .HasColumnType("timestamp(6)")
