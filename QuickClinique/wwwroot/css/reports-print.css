@@ -1,0 +1,57 @@
+/* Print-specific styles for reports */
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+    }
+    
+    .no-print,
+    .print-button,
+    button,
+    .btn {
+        display: none !important;
+    }
+    
+    .report-header {
+        page-break-after: avoid;
+    }
+    
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    tfoot {
+        display: table-footer-group;
+    }
+    
+    .certificate-body {
+        page-break-inside: avoid;
+    }
+    
+    .signature-section {
+        page-break-inside: avoid;
+        margin-top: 40px;
+    }
+    
+    @page {
+        margin: 1.5cm;
+        size: A4;
+    }
+}
+

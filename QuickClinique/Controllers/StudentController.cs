@@ -10,6 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.SignalR;
 using QuickClinique.Hubs;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace QuickClinique.Controllers
 {
@@ -1290,6 +1293,371 @@ namespace QuickClinique.Controllers
 
             return View(student);
         }
+
+        // GET: Student/GenerateMedicalCertificate - Generate and download PDF medical certificate
+        [StudentOnly]
+        public async Task<IActionResult> GenerateMedicalCertificate()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (!studentId.HasValue)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var student = await _context.Students
+                .Include(s => s.Precords)
+                .Include(s => s.Appointments)
+                    .ThenInclude(a => a.Schedule)
+                .FirstOrDefaultAsync(s => s.StudentId == studentId.Value);
+
+            if (student == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Generate PDF
+            QuestPDF.Settings.License = LicenseType.Community;
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    page.Header()
+                        .Column(column =>
+                        {
+                            column.Item().AlignCenter().Text("MEDICAL CERTIFICATE")
+                                .FontSize(24)
+                                .Bold()
+                                .FontColor(Colors.Blue.Darken3);
+
+                            column.Item().PaddingTop(5).AlignCenter().Text("University of Cebu Medical-Dental Clinic")
+                                .FontSize(14)
+                                .SemiBold();
+
+                            column.Item().PaddingTop(2).AlignCenter().Text("Sanciangko St, Cebu City")
+                                .FontSize(11)
+                                .FontColor(Colors.Grey.Darken1);
+
+                            column.Item().PaddingTop(10).LineHorizontal(1).LineColor(Colors.Blue.Darken3);
+                        });
+
+                    page.Content()
+                        .PaddingVertical(15)
+                        .Column(column =>
+                        {
+                            // Certificate Statement
+                            column.Item().PaddingBottom(15).Text(text =>
+                            {
+                                text.Span("This is to certify that ").FontSize(11);
+                                text.Span($"{student.FirstName} {student.LastName}").Bold().FontSize(11);
+                                text.Span($" (ID Number: {student.Idnumber}) has been examined and treated at the University of Cebu Medical-Dental Clinic. The following information is provided based on the medical records available in our system.").FontSize(11);
+                            });
+
+                            // Student Information Section
+                            column.Item().PaddingBottom(10).Text("STUDENT INFORMATION").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                            column.Item().PaddingBottom(10).Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(3);
+                                });
+
+                                AddTableRow(table, "Full Name:", $"{student.FirstName} {student.LastName}");
+                                AddTableRow(table, "ID Number:", student.Idnumber.ToString());
+                                AddTableRow(table, "Email:", student.Email);
+                                AddTableRow(table, "Phone Number:", student.PhoneNumber);
+                                
+                                if (student.Birthdate.HasValue)
+                                {
+                                    AddTableRow(table, "Date of Birth:", student.Birthdate.Value.ToString("MMMM dd, yyyy"));
+                                }
+                                
+                                if (!string.IsNullOrEmpty(student.Gender))
+                                {
+                                    AddTableRow(table, "Gender:", student.Gender);
+                                }
+                            });
+
+                            // Medical Records Section
+                            if (student.Precords != null && student.Precords.Any())
+                            {
+                                column.Item().PaddingTop(10).PaddingBottom(10).Text("MEDICAL RECORDS").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                                
+                                var orderedRecords = student.Precords.OrderByDescending(r => r.RecordId).ToList();
+                                for (int i = 0; i < orderedRecords.Count; i++)
+                                {
+                                    var record = orderedRecords[i];
+                                    column.Item().PaddingBottom(10).Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Column(recordColumn =>
+                                    {
+                                        recordColumn.Item().Text($"Record #{record.RecordId}").FontSize(12).Bold().FontColor(Colors.Blue.Medium);
+                                        
+                                        recordColumn.Item().PaddingTop(5).Text(text =>
+                                        {
+                                            text.Span("Diagnosis: ").Bold();
+                                            text.Span(string.IsNullOrEmpty(record.Diagnosis) ? "No diagnosis recorded" : record.Diagnosis);
+                                        });
+                                        
+                                        recordColumn.Item().PaddingTop(3).Text(text =>
+                                        {
+                                            text.Span("Medications: ").Bold();
+                                            text.Span(string.IsNullOrEmpty(record.Medications) ? "No medications recorded" : record.Medications);
+                                        });
+                                        
+                                        recordColumn.Item().PaddingTop(3).Text(text =>
+                                        {
+                                            text.Span("Allergies: ").Bold();
+                                            text.Span(string.IsNullOrEmpty(record.Allergies) ? "No known allergies" : record.Allergies);
+                                        });
+
+                                        recordColumn.Item().PaddingTop(5).Row(row =>
+                                        {
+                                            row.RelativeItem().Text(text =>
+                                            {
+                                                text.Span("BMI: ").Bold();
+                                                text.Span(record.Bmi.ToString());
+                                            });
+                                            
+                                            if (record.PulseRate.HasValue)
+                                            {
+                                                row.RelativeItem().Text(text =>
+                                                {
+                                                    text.Span("Pulse Rate: ").Bold();
+                                                    text.Span($"{record.PulseRate.Value} bpm");
+                                                });
+                                            }
+                                        });
+
+                                        recordColumn.Item().PaddingTop(3).Row(row =>
+                                        {
+                                            if (!string.IsNullOrEmpty(record.BloodPressure))
+                                            {
+                                                row.RelativeItem().Text(text =>
+                                                {
+                                                    text.Span("Blood Pressure: ").Bold();
+                                                    text.Span(record.BloodPressure);
+                                                });
+                                            }
+                                            
+                                            if (record.Temperature.HasValue)
+                                            {
+                                                row.RelativeItem().Text(text =>
+                                                {
+                                                    text.Span("Temperature: ").Bold();
+                                                    text.Span($"{record.Temperature.Value:F1}°C");
+                                                });
+                                            }
+                                        });
+
+                                        if (record.RespiratoryRate.HasValue || record.OxygenSaturation.HasValue)
+                                        {
+                                            recordColumn.Item().PaddingTop(3).Row(row =>
+                                            {
+                                                if (record.RespiratoryRate.HasValue)
+                                                {
+                                                    row.RelativeItem().Text(text =>
+                                                    {
+                                                        text.Span("Respiratory Rate: ").Bold();
+                                                        text.Span($"{record.RespiratoryRate.Value} breaths/min");
+                                                    });
+                                                }
+                                                
+                                                if (record.OxygenSaturation.HasValue)
+                                                {
+                                                    row.RelativeItem().Text(text =>
+                                                    {
+                                                        text.Span("Oxygen Saturation: ").Bold();
+                                                        text.Span($"{record.OxygenSaturation.Value}%");
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+
+                            // Appointments Section
+                            if (student.Appointments != null && student.Appointments.Any())
+                            {
+                                column.Item().PaddingTop(10).PaddingBottom(10).Text("APPOINTMENT HISTORY").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                                
+                                column.Item().PaddingBottom(5).Text(text =>
+                                {
+                                    text.Span("Total Appointments: ").Bold();
+                                    text.Span(student.Appointments.Count.ToString());
+                                });
+                                
+                                column.Item().PaddingBottom(5).Text(text =>
+                                {
+                                    text.Span("Completed Appointments: ").Bold();
+                                    text.Span(student.Appointments.Count(a => a.AppointmentStatus == "Completed").ToString());
+                                });
+
+                                var orderedAppointments = student.Appointments
+                                    .OrderByDescending(a => a.Schedule != null ? a.Schedule.Date : DateOnly.MinValue)
+                                    .Take(10)
+                                    .ToList();
+
+                                column.Item().PaddingTop(5).Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(1);
+                                    });
+
+                                    // Header
+                                    table.Header(header =>
+                                    {
+                                        header.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(text => text.Span("Date").Bold());
+                                        });
+                                        header.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(text => text.Span("Service").Bold());
+                                        });
+                                        header.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(text => text.Span("Time").Bold());
+                                        });
+                                        header.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(text => text.Span("Status").Bold());
+                                        });
+                                    });
+
+                                    foreach (var appointment in orderedAppointments)
+                                    {
+                                        var date = appointment.Schedule?.Date ?? appointment.DateBooked;
+                                        var time = appointment.Schedule != null 
+                                            ? $"{appointment.Schedule.StartTime:hh\\:mm tt} - {appointment.Schedule.EndTime:hh\\:mm tt}"
+                                            : "N/A";
+
+                                        table.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(date.ToString("MMM dd, yyyy"));
+                                        });
+                                        table.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(appointment.ReasonForVisit);
+                                        });
+                                        table.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(time);
+                                        });
+                                        table.Cell().Element(container =>
+                                        {
+                                            CellStyle(container);
+                                            container.Text(appointment.AppointmentStatus);
+                                        });
+                                    }
+                                });
+                            }
+
+                            // Emergency Contact Information
+                            if (!string.IsNullOrEmpty(student.EmergencyContactName))
+                            {
+                                column.Item().PaddingTop(15).PaddingBottom(10).Text("EMERGENCY CONTACT INFORMATION").FontSize(14).Bold().FontColor(Colors.Blue.Darken3);
+                                column.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(3);
+                                    });
+
+                                    AddTableRow(table, "Contact Name:", student.EmergencyContactName);
+                                    
+                                    if (!string.IsNullOrEmpty(student.EmergencyContactRelationship))
+                                    {
+                                        AddTableRow(table, "Relationship:", student.EmergencyContactRelationship);
+                                    }
+                                    
+                                    if (!string.IsNullOrEmpty(student.EmergencyContactPhoneNumber))
+                                    {
+                                        AddTableRow(table, "Phone Number:", student.EmergencyContactPhoneNumber);
+                                    }
+                                });
+                            }
+
+                            // Note Section
+                            column.Item().PaddingTop(20).Padding(10).Background(Colors.Grey.Lighten4).Border(1).BorderColor(Colors.Grey.Lighten2).Text(text =>
+                            {
+                                text.Span("Note: ").Bold();
+                                text.Span($"This certification is based on the medical records available in the QuickClinique system as of {DateTime.Now:MMMM dd, yyyy}. For any inquiries or additional information, please contact the clinic directly.");
+                            });
+
+                            // Signature Section
+                            column.Item().PaddingTop(30).Row(row =>
+                            {
+                                row.RelativeItem().Column(sigColumn =>
+                                {
+                                    sigColumn.Item().PaddingTop(50).LineHorizontal(1);
+                                    sigColumn.Item().PaddingTop(5).AlignCenter().Text("Clinic Staff Signature").FontSize(10);
+                                });
+                                
+                                row.RelativeItem().Column(sigColumn =>
+                                {
+                                    sigColumn.Item().PaddingTop(50).LineHorizontal(1);
+                                    sigColumn.Item().PaddingTop(5).AlignCenter().Text("Date").FontSize(10);
+                                });
+                            });
+                        });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span($"Generated on {DateTime.Now:MMMM dd, yyyy 'at' hh:mm tt}").FontSize(8).FontColor(Colors.Grey.Medium);
+                            text.EmptyLine();
+                            text.Span($"© {DateTime.Now.Year} University of Cebu Medical-Dental Clinic. All rights reserved.").FontSize(8).FontColor(Colors.Grey.Medium);
+                        });
+                });
+            });
+
+            var stream = new MemoryStream();
+            document.GeneratePdf(stream);
+            stream.Position = 0;
+
+            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            return File(stream, "application/pdf", fileName);
+        }
+
+        // Helper method to add table rows
+        private void AddTableRow(TableDescriptor table, string label, string value)
+        {
+            table.Cell().Element(container =>
+            {
+                CellStyle(container);
+                container.Text(text => text.Span(label).Bold());
+            });
+            table.Cell().Element(container =>
+            {
+                CellStyle(container);
+                container.Text(value);
+            });
+        }
+
+        // Helper method for cell styling
+        private Action<IContainer> CellStyle => style => style
+            .BorderBottom(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .PaddingVertical(5)
+            .PaddingHorizontal(5);
 
         // GET: Student/GetCurrentStudentId - Get logged in student ID
         [HttpGet]

@@ -1,0 +1,144 @@
+.reports-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.reports-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #4ECDC4;
+}
+
+.reports-header h2 {
+    color: #4ECDC4;
+    margin-bottom: 10px;
+    font-size: 32px;
+}
+
+.reports-header .text-muted {
+    color: #666;
+    font-size: 16px;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.report-card {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.report-icon {
+    font-size: 48px;
+    color: #4ECDC4;
+    margin-bottom: 20px;
+}
+
+.report-card h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.report-card p {
+    color: #666;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.report-card .btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+.report-card .btn-primary {
+    background-color: #4ECDC4;
+    color: white;
+    border: none;
+}
+
+.report-card .btn-primary:hover {
+    background-color: #3a9d96;
+}
+
+.student-list-container {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.search-box input {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    display: block;
+}
+
+.table {
+    margin-top: 20px;
+}
+
+.table thead {
+    background-color: #4ECDC4;
+    color: white;
+}
+
+.table th {
+    padding: 15px;
+    font-weight: bold;
+}
+
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-card {
+        padding: 20px;
+    }
+    
+    .student-list-container {
+        padding: 15px;
+    }
+    
+    .table {
+        font-size: 14px;
+    }
+}
+

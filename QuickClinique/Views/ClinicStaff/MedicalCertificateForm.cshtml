@@ -1,0 +1,160 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "Generate Medical Certificate";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" />
+    <style>
+        .certificate-form {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #4ECDC4;
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-generate {
+            background: #4ECDC4;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-generate:hover {
+            background: #3a9d96;
+        }
+        .student-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h2><i class="fas fa-certificate"></i> Generate Medical Certificate</h2>
+        <p class="text-muted">Fill in the details to generate a medical certificate for the student</p>
+    </div>
+
+    <div class="certificate-form">
+        <div class="student-info">
+            <h4><i class="fas fa-user"></i> Student Information</h4>
+            <p><strong>Name:</strong> @Model.FirstName @Model.LastName</p>
+            <p><strong>ID Number:</strong> @Model.Idnumber</p>
+        </div>
+
+        <form method="post" action="@Url.Action("GenerateMedicalCertificate", "Clinicstaff")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="studentId" value="@Model.StudentId" />
+
+            <div class="form-group">
+                <label for="diagnosis">Diagnosis / Condition (as from):</label>
+                <input type="text" id="diagnosis" name="diagnosis" class="form-control" required 
+                       placeholder="e.g., Upper respiratory tract infection" />
+                <small class="text-muted">This will appear in the "as from" section</small>
+            </div>
+
+            <div class="form-group">
+                <label for="recommendedDaysToRest">Recommended Days to Rest:</label>
+                <input type="number" id="recommendedDaysToRest" name="recommendedDaysToRest" class="form-control" 
+                       min="1" max="365" required placeholder="e.g., 3" />
+                <small class="text-muted">Number of days the patient is recommended to rest</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fromDate">From Date:</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="untilDate">Until Date:</label>
+                    <input type="date" id="untilDate" name="untilDate" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="remarks">Remarks (Optional):</label>
+                <textarea id="remarks" name="remarks" class="form-control" rows="4" 
+                          placeholder="Additional notes or instructions..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-generate">
+                <i class="fas fa-file-pdf"></i> Generate Medical Certificate (PDF)
+            </button>
+        </form>
+
+        <div style="margin-top: 20px;">
+            <a href="@Url.Action("StudentCertificationReport", "Clinicstaff")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Student List
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const fromDateInput = document.getElementById('fromDate');
+            const untilDateInput = document.getElementById('untilDate');
+            
+            // Set default from date to today
+            fromDateInput.valueAsDate = today;
+            
+            // Set default until date to 3 days from today
+            const untilDate = new Date(today);
+            untilDate.setDate(untilDate.getDate() + 3);
+            untilDateInput.valueAsDate = untilDate;
+            
+            // Ensure until date is not before from date
+            fromDateInput.addEventListener('change', function() {
+                if (untilDateInput.valueAsDate < this.valueAsDate) {
+                    untilDateInput.valueAsDate = this.valueAsDate;
+                }
+            });
+            
+            untilDateInput.addEventListener('change', function() {
+                if (this.valueAsDate < fromDateInput.valueAsDate) {
+                    alert('Until date cannot be before from date');
+                    this.valueAsDate = fromDateInput.valueAsDate;
+                }
+            });
+        });
+    </script>
+}
+

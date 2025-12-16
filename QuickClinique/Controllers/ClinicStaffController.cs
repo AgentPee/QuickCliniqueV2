@@ -8,6 +8,9 @@ using System.Text;
 using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace QuickClinique.Controllers
 {
@@ -19,8 +22,9 @@ namespace QuickClinique.Controllers
         private readonly IFileStorageService _fileStorageService;
         private readonly INotificationService _notificationService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, INotificationService notificationService, IServiceScopeFactory serviceScopeFactory)
+        public ClinicstaffController(ApplicationDbContext context, IEmailService emailService, IPasswordService passwordService, IFileStorageService fileStorageService, INotificationService notificationService, IServiceScopeFactory serviceScopeFactory, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _emailService = emailService;
@@ -28,6 +32,7 @@ namespace QuickClinique.Controllers
             _fileStorageService = fileStorageService;
             _notificationService = notificationService;
             _serviceScopeFactory = serviceScopeFactory;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // Helper method to get the base URL for absolute links (for email verification, etc.)
@@ -1718,6 +1723,233 @@ namespace QuickClinique.Controllers
             if (age < 56) return "46-55";
             if (age < 66) return "56-65";
             return "65+";
+        }
+
+        // GET: Clinicstaff/Reports
+        [ClinicStaffOnly]
+        public IActionResult Reports()
+        {
+            if (IsAjaxRequest())
+                return Json(new { success = true });
+
+            return View();
+        }
+
+        // GET: Clinicstaff/DoctorsReport
+        [ClinicStaffOnly]
+        public async Task<IActionResult> DoctorsReport()
+        {
+            var doctors = await _context.Clinicstaffs
+                .Include(c => c.User)
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToListAsync();
+
+            ViewData["GeneratedDate"] = DateTime.Now.ToString("MMMM dd, yyyy 'at' hh:mm tt");
+            
+            return View(doctors);
+        }
+
+        // GET: Clinicstaff/StudentCertificationReport
+        [ClinicStaffOnly]
+        public async Task<IActionResult> StudentCertificationReport(int? studentId)
+        {
+            if (studentId == null)
+            {
+                // If no student ID provided, show list of students to select
+                var students = await _context.Students
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.LastName)
+                    .ThenBy(s => s.FirstName)
+                    .ToListAsync();
+                
+                return View("StudentCertificationReportList", students);
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.StudentId = studentId;
+            ViewBag.StudentName = $"{student.FirstName} {student.LastName}";
+            
+            return View("MedicalCertificateForm", student);
+        }
+
+        // POST: Clinicstaff/GenerateMedicalCertificate
+        [HttpPost]
+        [ClinicStaffOnly]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateMedicalCertificate(int studentId, string diagnosis, DateOnly fromDate, DateOnly untilDate, string? remarks, int recommendedDaysToRest)
+        {
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Get current clinic staff member
+            var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (!staffId.HasValue)
+            {
+                return Unauthorized();
+            }
+
+            var staff = await _context.Clinicstaffs
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+
+            if (staff == null)
+            {
+                return Unauthorized();
+            }
+
+            // Generate PDF
+            QuestPDF.Settings.License = LicenseType.Community;
+            
+            // QuickClinique theme colors - using Colors.Teal with modifiers for closest match
+            // #4ECDC4 is close to Teal, #179C8E is close to Teal Darken2
+            var primaryTeal = Colors.Teal.Lighten1; // Close to #4ECDC4
+            var darkTeal = Colors.Teal.Darken2; // Close to #179C8E
+            
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(11));
+
+                    // Header with QuickClinique Branding and Logo
+                    page.Header()
+                        .Height(80)
+                        .Background(primaryTeal)
+                        .Column(column =>
+                        {
+                            column.Item().Row(row =>
+                            {
+                                // Left side - QuickClinique text
+                                row.RelativeItem().PaddingLeft(20).PaddingTop(20).Column(leftColumn =>
+                                {
+                                    leftColumn.Item().Text("QuickClinique")
+                                        .FontSize(20)
+                                        .Bold()
+                                        .FontColor(Colors.White);
+                                });
+                                
+                                // Right side - Logo
+                                row.RelativeItem().AlignRight().PaddingRight(20).PaddingTop(10).Column(rightColumn =>
+                                {
+                                    var logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "logo.png");
+                                    if (System.IO.File.Exists(logoPath))
+                                    {
+                                        rightColumn.Item().Width(50).Height(50).Image(logoPath);
+                                    }
+                                    else
+                                    {
+                                        // Fallback if logo doesn't exist
+                                        rightColumn.Item().Text("QC")
+                                            .FontSize(24)
+                                            .Bold()
+                                            .FontColor(Colors.White);
+                                    }
+                                });
+                            });
+                        });
+
+                    page.Content()
+                        .PaddingVertical(30)
+                        .Column(column =>
+                        {
+                            // Hospital Name - Centered
+                            column.Item().AlignCenter().Text("University of Cebu Medical-Dental Clinic")
+                                .FontSize(16)
+                                .Bold()
+                                .FontColor(Colors.Black);
+
+                            // Title - Centered
+                            column.Item().PaddingTop(20).AlignCenter().Text("MEDICAL CERTIFICATE")
+                                .FontSize(28)
+                                .Bold()
+                                .FontColor(Colors.Black);
+
+                            // Introductory Text - Centered
+                            column.Item().PaddingTop(30).AlignCenter().Text("This is to confirm that")
+                                .FontSize(12)
+                                .FontColor(Colors.Black);
+
+                            // Patient Name - Centered, Theme Color, Bold
+                            column.Item().PaddingTop(15).AlignCenter().Text($"{student.FirstName} {student.LastName}")
+                                .FontSize(20)
+                                .Bold()
+                                .FontColor(primaryTeal);
+
+                            // Diagnosis and Recommendation - Centered
+                            var diagnosisText = !string.IsNullOrEmpty(diagnosis) ? diagnosis : "N/A";
+                            var recommendationText = $"is diagnosed with {diagnosisText}. ";
+                            recommendationText += $"He/She is advised bed rest for {recommendedDaysToRest} day{(recommendedDaysToRest > 1 ? "s" : "")}";
+                            recommendationText += $" from {fromDate.ToString("MMMM dd, yyyy")} until {untilDate.ToString("MMMM dd, yyyy")}.";
+
+                            column.Item().PaddingTop(20).AlignCenter().DefaultTextStyle(x => x.FontSize(12).FontColor(Colors.Black).LineHeight(1.6f)).Text(recommendationText);
+
+                            // Issuance Date - Centered
+                            column.Item().PaddingTop(25).AlignCenter().Text($"Issued on {DateTime.Now.ToString("MMMM dd, yyyy")}.")
+                                .FontSize(11)
+                                .FontColor(Colors.Black);
+
+                            // Doctor's Signature Block - Left Aligned
+                            column.Item().PaddingTop(50).Row(row =>
+                            {
+                                row.RelativeItem(2).Column(sigColumn =>
+                                {
+                                    // Signature line
+                                    sigColumn.Item().Width(150).LineHorizontal(1).LineColor(Colors.Black);
+                                    
+                                    // Doctor's name
+                                    sigColumn.Item().PaddingTop(8).Text($"{staff.FirstName} {staff.LastName}")
+                                        .FontSize(12)
+                                        .Bold()
+                                        .FontColor(Colors.Black);
+                                    
+                                    // Doctor's title
+                                    var role = staff.User?.Role ?? "Attending Physician";
+                                    sigColumn.Item().PaddingTop(2).Text(role)
+                                        .FontSize(11)
+                                        .FontColor(Colors.Black);
+                                });
+                            });
+                        });
+
+                    // Footer - Colored Band (Template Style)
+                    page.Footer()
+                        .Height(40)
+                        .Background(primaryTeal)
+                        .Column(column =>
+                        {
+                            // Optional: Add decorative elements or branding
+                            column.Item().PaddingTop(10).AlignCenter().Text(text =>
+                            {
+                                text.Span("QuickClinique").FontSize(10).Bold().FontColor(Colors.White);
+                                text.Span(" - ").FontSize(10).FontColor(Colors.White);
+                                text.Span("University of Cebu Medical-Dental Clinic").FontSize(9).FontColor(Colors.White);
+                            });
+                        });
+                });
+            });
+
+            var stream = new MemoryStream();
+            document.GeneratePdf(stream);
+            stream.Position = 0;
+
+            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            return File(stream, "application/pdf", fileName);
         }
 
         private bool IsAjaxRequest()

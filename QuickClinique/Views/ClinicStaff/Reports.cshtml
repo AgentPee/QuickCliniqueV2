@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Reports";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" />
+}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h2><i class="fas fa-file-alt"></i> Printable Reports</h2>
+        <p class="text-muted">Generate and print various reports for clinic management</p>
+    </div>
+
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <h3>Doctors Report</h3>
+            <p>Generate a comprehensive list of all clinic staff (doctors) with their contact information and status.</p>
+            <a href="@Url.Action("DoctorsReport", "Clinicstaff")" class="btn btn-primary" target="_blank">
+                <i class="fas fa-print"></i> Generate Report
+            </a>
+        </div>
+
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <h3>Medical Certificate</h3>
+            <p>Generate an official medical certificate for students with diagnosis, dates of absence, and remarks. Select a student and input the required information.</p>
+            <a href="@Url.Action("StudentCertificationReport", "Clinicstaff")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Select Student
+            </a>
+        </div>
+    </div>
+</div>
+

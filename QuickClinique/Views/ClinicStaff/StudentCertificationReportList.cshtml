@@ -1,0 +1,81 @@
+@model IEnumerable<QuickClinique.Models.Student>
+@{
+    ViewData["Title"] = "Select Student for Certification";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" />
+}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h2><i class="fas fa-certificate"></i> Student Certification Report</h2>
+        <p class="text-muted">Select a student to generate their medical certification report</p>
+    </div>
+
+    <div class="student-list-container">
+        <div class="search-box" style="margin-bottom: 20px;">
+            <input type="text" id="studentSearch" placeholder="Search by name, ID number, or email..." 
+                   class="form-control" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    @foreach (var student in Model)
+                    {
+                        <tr>
+                            <td>@student.Idnumber</td>
+                            <td><strong>@student.FirstName @student.LastName</strong></td>
+                            <td>@student.Email</td>
+                            <td>@student.PhoneNumber</td>
+                            <td>
+                                <a href="@Url.Action("StudentCertificationReport", "Clinicstaff", new { studentId = student.StudentId })" 
+                                   class="btn btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-file-alt"></i> Generate Report
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center" style="padding: 40px; color: #999;">
+                <i class="fas fa-info-circle" style="font-size: 48px;"></i>
+                <p style="margin-top: 20px; font-size: 18px;">No active students found.</p>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="@Url.Action("Reports", "Clinicstaff")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('studentSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#studentTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    </script>
+}
+
