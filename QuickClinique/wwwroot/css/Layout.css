@@ -11,6 +11,7 @@ body {
 
     body > .container {
         flex: 1;
+        margin-top: 80px; /* Add top margin to account for fixed navbar */
     }
 
 /* Header Styles */
@@ -20,8 +21,11 @@ body {
     -webkit-backdrop-filter: blur(20px);
     padding: 18px 0;
     box-shadow: 0 8px 32px rgba(255, 255, 255, 0.12);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     z-index: 1000;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border-bottom: 1px solid rgba(23, 156, 142, 0.1);
@@ -58,13 +62,59 @@ body {
     padding: 0 !important;
 }
 
+.navbar-collapse {
+    display: flex !important;
+    flex-basis: auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 1 !important;
+    overflow: visible !important;
+}
+
+/* Ensure navbar stays in one row on desktop */
+@media (min-width: 992px) {
+    .navbar .container-fluid {
+        flex-wrap: nowrap !important;
+    }
+    
+    .navbar-collapse {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .navbar-nav {
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+    }
+    
+    .navbar-nav .nav-item {
+        flex-shrink: 0 !important;
+    }
+    
+    .navbar-nav .nav-link {
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        display: none !important;
+    }
+    
+    .navbar-collapse.show {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
 .navbar .container-fluid {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     width: 100%;
     position: relative;
+    gap: 20px;
 }
 
 .navbar-brand {
@@ -83,6 +133,8 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: shimmer 3s linear infinite;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 @keyframes shimmer {
@@ -137,18 +189,22 @@ body {
 /* Navigation Links */
 .navbar-nav {
     display: flex;
+    flex-wrap: nowrap;
     list-style: none;
     align-items: center;
     gap: 4px;
     margin: 0;
     padding: 0;
+    white-space: nowrap;
 }
 
     .navbar-nav .nav-item {
         position: relative;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
-    .navbar-nav .nav-link {
+        .navbar-nav .nav-link {
         color: #ffffff !important;
         text-decoration: none;
         font-family: 'Inter', sans-serif;
@@ -162,6 +218,8 @@ body {
         border-radius: 12px;
         position: relative;
         overflow: hidden;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
         .navbar-nav .nav-link::before {
