@@ -89,11 +89,62 @@
             margin-top: 10px;
         }
         .surgery-fields {
-            display: grid;
-            grid-template-columns: 2fr 1fr 2fr;
-            gap: 10px;
             margin-top: 10px;
             margin-left: 30px;
+        }
+        .surgery-entry {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+        .surgery-entry:last-child {
+            margin-bottom: 0;
+        }
+        .input-with-add {
+            position: relative;
+        }
+        .btn-add-surgery {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+        }
+        .btn-add-surgery:hover {
+            background: #3a9d96;
+        }
+        .input-with-add input {
+            padding-right: 45px;
+        }
+        .btn-remove-surgery {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            height: fit-content;
+        }
+        .btn-remove-surgery:hover {
+            background: #c82333;
+        }
+        .surgery-list {
+            margin-top: 10px;
         }
         textarea.form-control {
             resize: vertical;
@@ -231,25 +282,43 @@
                     <input type="checkbox" id="noSurgeries" name="noSurgeries" value="true" />
                     <label for="noSurgeries">No surgeries</label>
                 </div>
-                <div class="surgery-fields" id="surgeryFields" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="surgeryHospital" style="font-size: 12px;">Hospital:</label>
-                        <input type="text" id="surgeryHospital" name="surgeryHospital" class="form-control" />
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="surgeryYear" style="font-size: 12px;">Year:</label>
-                        <input type="text" id="surgeryYear" name="surgeryYear" class="form-control" />
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="surgeryComplications" style="font-size: 12px;">Complications:</label>
-                        <input type="text" id="surgeryComplications" name="surgeryComplications" class="form-control" />
+                <div class="surgery-fields" id="surgeryFields">
+                    <div class="surgery-list" id="surgeryList">
+                        <div class="surgery-entry" data-surgery-index="0">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 12px;">Hospital:</label>
+                                <div class="input-with-add">
+                                    <input type="text" name="surgeryHospital[]" class="form-control" />
+                                    <button type="button" class="btn-add-surgery" onclick="addSurgery()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 12px;">Year:</label>
+                                <input type="text" name="surgeryYear[]" class="form-control" />
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 12px;">Complications:</label>
+                                <input type="text" name="surgeryComplications[]" class="form-control" />
+                            </div>
+                            <div>
+                                <button type="button" class="btn-remove-surgery" onclick="removeSurgery(this)" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="field-row">
                 <div class="form-group">
-                    <label for="allergies">Allergies (list down allergies you have):</label>
+                    <label>Allergies (list down allergies you have):</label>
+                    <div class="checkbox-item" style="margin-bottom: 10px;">
+                        <input type="checkbox" id="noAllergies" name="noAllergies" value="true" />
+                        <label for="noAllergies">No allergies</label>
+                    </div>
                     <textarea id="allergies" name="allergies" class="form-control" rows="4" 
                               placeholder="List any allergies..."></textarea>
                 </div>
@@ -309,18 +378,147 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle no surgeries checkbox
+            // Handle no surgeries checkbox - hide fields when checked
             const noSurgeriesCheckbox = document.getElementById('noSurgeries');
             const surgeryFields = document.getElementById('surgeryFields');
             
             noSurgeriesCheckbox.addEventListener('change', function() {
                 if (this.checked) {
                     surgeryFields.style.display = 'none';
-                    document.getElementById('surgeryHospital').value = '';
-                    document.getElementById('surgeryYear').value = '';
-                    document.getElementById('surgeryComplications').value = '';
+                    // Clear all surgery entries
+                    const surgeryEntries = document.querySelectorAll('.surgery-entry');
+                    surgeryEntries.forEach(entry => {
+                        entry.querySelector('input[name="surgeryHospital[]"]').value = '';
+                        entry.querySelector('input[name="surgeryYear[]"]').value = '';
+                        entry.querySelector('input[name="surgeryComplications[]"]').value = '';
+                    });
                 } else {
-                    surgeryFields.style.display = 'grid';
+                    surgeryFields.style.display = 'block';
+                }
+            });
+
+            // Function to add new surgery entry
+            window.addSurgery = function() {
+                const surgeryList = document.getElementById('surgeryList');
+                const existingEntries = surgeryList.querySelectorAll('.surgery-entry');
+                const index = existingEntries.length;
+                
+                const newEntry = document.createElement('div');
+                newEntry.className = 'surgery-entry';
+                newEntry.setAttribute('data-surgery-index', index);
+                
+                // Create hospital field with wrapper for plus button
+                const hospitalGroup = document.createElement('div');
+                hospitalGroup.className = 'form-group';
+                hospitalGroup.style.marginBottom = '0';
+                hospitalGroup.innerHTML = '<label style="font-size: 12px;">Hospital:</label>';
+                const hospitalWrapper = document.createElement('div');
+                hospitalWrapper.className = 'input-with-add';
+                const hospitalInput = document.createElement('input');
+                hospitalInput.type = 'text';
+                hospitalInput.name = 'surgeryHospital[]';
+                hospitalInput.className = 'form-control';
+                hospitalWrapper.appendChild(hospitalInput);
+                hospitalGroup.appendChild(hospitalWrapper);
+                newEntry.appendChild(hospitalGroup);
+                
+                // Create year field
+                const yearGroup = document.createElement('div');
+                yearGroup.className = 'form-group';
+                yearGroup.style.marginBottom = '0';
+                yearGroup.innerHTML = `
+                    <label style="font-size: 12px;">Year:</label>
+                    <input type="text" name="surgeryYear[]" class="form-control" />
+                `;
+                newEntry.appendChild(yearGroup);
+                
+                // Create complications field
+                const complicationsGroup = document.createElement('div');
+                complicationsGroup.className = 'form-group';
+                complicationsGroup.style.marginBottom = '0';
+                complicationsGroup.innerHTML = `
+                    <label style="font-size: 12px;">Complications:</label>
+                    <input type="text" name="surgeryComplications[]" class="form-control" />
+                `;
+                newEntry.appendChild(complicationsGroup);
+                
+                // Create remove button container
+                const removeContainer = document.createElement('div');
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn-remove-surgery';
+                removeBtn.onclick = function() { removeSurgery(this); };
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeContainer.appendChild(removeBtn);
+                newEntry.appendChild(removeContainer);
+                
+                surgeryList.appendChild(newEntry);
+                
+                // Hide plus button on previous entries, show remove buttons
+                existingEntries.forEach(entry => {
+                    const plusBtn = entry.querySelector('.btn-add-surgery');
+                    const removeBtn = entry.querySelector('.btn-remove-surgery');
+                    if (plusBtn) plusBtn.style.display = 'none';
+                    if (removeBtn) removeBtn.style.display = 'block';
+                });
+            };
+
+            // Function to remove surgery entry
+            window.removeSurgery = function(button) {
+                const entry = button.closest('.surgery-entry');
+                const surgeryList = document.getElementById('surgeryList');
+                const allEntries = surgeryList.querySelectorAll('.surgery-entry');
+                
+                if (allEntries.length > 1) {
+                    entry.remove();
+                    
+                    // Show plus button on last entry, hide if only one remains
+                    const remainingEntries = surgeryList.querySelectorAll('.surgery-entry');
+                    if (remainingEntries.length > 0) {
+                        const lastEntry = remainingEntries[remainingEntries.length - 1];
+                        const removeBtn = lastEntry.querySelector('.btn-remove-surgery');
+                        
+                        // If only one entry remains, hide remove button
+                        if (remainingEntries.length === 1 && removeBtn) {
+                            removeBtn.style.display = 'none';
+                        }
+                        
+                        // Ensure plus button is visible on last entry
+                        let hospitalContainer = lastEntry.querySelector('.input-with-add');
+                        if (!hospitalContainer) {
+                            // Wrap hospital input if not already wrapped
+                            const hospitalInput = lastEntry.querySelector('input[name="surgeryHospital[]"]');
+                            hospitalContainer = document.createElement('div');
+                            hospitalContainer.className = 'input-with-add';
+                            hospitalInput.parentNode.insertBefore(hospitalContainer, hospitalInput);
+                            hospitalContainer.appendChild(hospitalInput);
+                        }
+                        
+                        // Add plus button if it doesn't exist
+                        let plusBtn = hospitalContainer.querySelector('.btn-add-surgery');
+                        if (!plusBtn) {
+                            plusBtn = document.createElement('button');
+                            plusBtn.type = 'button';
+                            plusBtn.className = 'btn-add-surgery';
+                            plusBtn.onclick = function() { addSurgery(); };
+                            plusBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                            hospitalContainer.appendChild(plusBtn);
+                        }
+                        plusBtn.style.display = 'block';
+                    }
+                }
+            };
+
+            // Handle no allergies checkbox
+            const noAllergiesCheckbox = document.getElementById('noAllergies');
+            const allergiesTextarea = document.getElementById('allergies');
+            
+            noAllergiesCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    allergiesTextarea.value = '';
+                    allergiesTextarea.disabled = true;
+                } else {
+                    allergiesTextarea.disabled = false;
                 }
             });
 
@@ -345,6 +543,57 @@
             if (signatureHonorificSelect.value === '' && (roleValue.includes('doctor') || roleValue.includes('physician') || roleValue.includes('medical'))) {
                 signatureHonorificSelect.value = 'Dr.';
             }
+
+            // Handle form submission to download PDF and redirect
+            const form = document.getElementById('doctorsReportForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton.innerHTML;
+                
+                // Disable button and show loading
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+                
+                try {
+                    // Submit form and get PDF
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        // Get PDF blob
+                        const blob = await response.blob();
+                        
+                        // Create download link
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Doctors_Report_${@Model.StudentId}_${new Date().toISOString().split('T')[0]}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        
+                        // Redirect after short delay
+                        setTimeout(function() {
+                            window.location.href = '@Url.Action("Reports", "Clinicstaff")';
+                        }, 1000);
+                    } else {
+                        alert('Error generating PDF. Please try again.');
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalButtonText;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error generating PDF. Please try again.');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                }
+            });
         });
     </script>
 }

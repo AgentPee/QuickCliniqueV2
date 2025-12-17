@@ -1989,9 +1989,10 @@ namespace QuickClinique.Controllers
             bool requiresSurgery,
             string[]? medicalHistory,
             bool noSurgeries,
-            string? surgeryHospital,
-            string? surgeryYear,
-            string? surgeryComplications,
+            string[]? surgeryHospital,
+            string[]? surgeryYear,
+            string[]? surgeryComplications,
+            bool noAllergies,
             string? allergies,
             bool noMedications,
             string? medications,
@@ -2145,16 +2146,31 @@ namespace QuickClinique.Controllers
 
                             // Past Surgeries
                             column.Item().Text("Past Surgeries:").Bold();
-                            column.Item().PaddingTop(2).Text(noSurgeries ? "☑ No surgeries" : "☐ No surgeries");
                             
-                            if (!noSurgeries && (!string.IsNullOrWhiteSpace(surgeryHospital) || !string.IsNullOrWhiteSpace(surgeryYear) || !string.IsNullOrWhiteSpace(surgeryComplications)))
+                            // Only show "No surgeries" if checked
+                            if (noSurgeries)
                             {
-                                column.Item().PaddingTop(3).Row(surgeryRow =>
+                                column.Item().PaddingTop(2).Text("☑ No surgeries");
+                            }
+                            else if (surgeryHospital != null && surgeryHospital.Length > 0)
+                            {
+                                // Show surgery details for each entry
+                                for (int i = 0; i < surgeryHospital.Length; i++)
                                 {
-                                    surgeryRow.RelativeItem().Text($"hospital: {surgeryHospital ?? ""}");
-                                    surgeryRow.RelativeItem().Text($"Year: {surgeryYear ?? ""}");
-                                    surgeryRow.RelativeItem().Text($"Complications: {surgeryComplications ?? ""}");
-                                });
+                                    var hospital = surgeryHospital[i] ?? "";
+                                    var year = (surgeryYear != null && i < surgeryYear.Length) ? surgeryYear[i] ?? "" : "";
+                                    var complications = (surgeryComplications != null && i < surgeryComplications.Length) ? surgeryComplications[i] ?? "" : "";
+                                    
+                                    if (!string.IsNullOrWhiteSpace(hospital) || !string.IsNullOrWhiteSpace(year) || !string.IsNullOrWhiteSpace(complications))
+                                    {
+                                        column.Item().PaddingTop(i > 0 ? 5 : 3).Row(surgeryRow =>
+                                        {
+                                            surgeryRow.RelativeItem().Text($"hospital: {hospital}");
+                                            surgeryRow.RelativeItem().Text($"Year: {year}");
+                                            surgeryRow.RelativeItem().Text($"Complications: {complications}");
+                                        });
+                                    }
+                                }
                             }
 
                             column.Item().PaddingTop(8);
@@ -2165,7 +2181,14 @@ namespace QuickClinique.Controllers
                                 medRow.RelativeItem().Border(2).BorderColor(primaryTeal).Padding(6).Column(allergyCol =>
                                 {
                                     allergyCol.Item().Text("Allergies (list down allergies you have)").Bold().FontSize(9);
-                                    allergyCol.Item().PaddingTop(3).Text(allergies ?? "");
+                                    if (noAllergies)
+                                    {
+                                        allergyCol.Item().PaddingTop(2).Text("☑ No allergies");
+                                    }
+                                    else
+                                    {
+                                        allergyCol.Item().PaddingTop(3).Text(allergies ?? "");
+                                    }
                                 });
                                 
                                 medRow.RelativeItem().PaddingLeft(10).Border(2).BorderColor(primaryTeal).Padding(6).Column(medCol =>
