@@ -1737,17 +1737,44 @@ namespace QuickClinique.Controllers
 
         // GET: Clinicstaff/DoctorsReport
         [ClinicStaffOnly]
-        public async Task<IActionResult> DoctorsReport()
+        public async Task<IActionResult> DoctorsReport(int? studentId)
         {
-            var doctors = await _context.Clinicstaffs
-                .Include(c => c.User)
-                .OrderBy(c => c.LastName)
-                .ThenBy(c => c.FirstName)
-                .ToListAsync();
+            if (studentId == null)
+            {
+                // If no student ID provided, show list of students to select
+                var students = await _context.Students
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.LastName)
+                    .ThenBy(s => s.FirstName)
+                    .ToListAsync();
+                
+                return View("DoctorsReportList", students);
+            }
 
-            ViewData["GeneratedDate"] = DateTime.Now.ToString("MMMM dd, yyyy 'at' hh:mm tt");
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Get current clinic staff member
+            var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (staffId.HasValue)
+            {
+                var staff = await _context.Clinicstaffs
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+
+                if (staff != null)
+                {
+                    ViewBag.ClinicStaffName = $"{staff.FirstName} {staff.LastName}";
+                    ViewBag.ClinicStaffRole = staff.User?.Role ?? "Admin";
+                }
+            }
             
-            return View(doctors);
+            return View("DoctorsReportForm", student);
         }
 
         // GET: Clinicstaff/StudentCertificationReport
@@ -1949,6 +1976,246 @@ namespace QuickClinique.Controllers
             stream.Position = 0;
 
             var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            return File(stream, "application/pdf", fileName);
+        }
+
+        // POST: Clinicstaff/GenerateDoctorsReport
+        [HttpPost]
+        [ClinicStaffOnly]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateDoctorsReport(
+            int studentId,
+            string? initialDiagnosis,
+            bool requiresSurgery,
+            string[]? medicalHistory,
+            bool noSurgeries,
+            string? surgeryHospital,
+            string? surgeryYear,
+            string? surgeryComplications,
+            string? allergies,
+            bool noMedications,
+            string? medications,
+            string? additionalNotes,
+            string? signatureHonorific,
+            string? signatureName,
+            string? signatureRole)
+        {
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Generate PDF
+            QuestPDF.Settings.License = LicenseType.Community;
+            
+            var primaryTeal = Colors.Teal.Lighten1; // Close to #4ECDC4
+            var reportDate = DateTime.Now;
+            
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(0.8f, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    // Header Banner
+                    page.Header()
+                        .Height(50)
+                        .Background(primaryTeal)
+                        .Row(row =>
+                        {
+                            row.RelativeItem().PaddingLeft(15).PaddingTop(12).Text("QuickClinique")
+                                .FontSize(16)
+                                .Bold()
+                                .FontColor(Colors.White);
+                            
+                            // Right side - Logo
+                            row.RelativeItem().AlignRight().PaddingRight(15).PaddingTop(5).Column(rightColumn =>
+                            {
+                                var logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "logo.png");
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    rightColumn.Item().Width(40).Height(40).Image(logoPath);
+                                }
+                            });
+                        });
+
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(column =>
+                        {
+                            // Clinic Title
+                            column.Item().AlignCenter().Text("University of Cebu Medical-Dental Clinic")
+                                .FontSize(12)
+                                .Bold();
+                            column.Item().AlignCenter().PaddingTop(5).Text("Doctor's Report")
+                                .FontSize(18)
+                                .Bold();
+
+                            column.Item().PaddingTop(10);
+
+                            // Patient Information
+                            column.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text(text =>
+                                {
+                                    text.Span("Patient's Name: ").Bold();
+                                    text.Span($"{student.FirstName} {student.LastName}");
+                                });
+                                row.RelativeItem().Text(text =>
+                                {
+                                    text.Span("Initial Diagnosis: ").Bold();
+                                    text.Span(initialDiagnosis ?? "");
+                                });
+                            });
+
+                            column.Item().PaddingTop(5).Row(row =>
+                            {
+                                row.RelativeItem().Text(text =>
+                                {
+                                    text.Span("DOB: ").Bold();
+                                    text.Span(student.Birthdate?.ToString("MMMM dd, yyyy") ?? "");
+                                });
+                                row.RelativeItem().Text(text =>
+                                {
+                                    text.Span("Date: ").Bold();
+                                    text.Span(reportDate.ToString("MMMM dd, yyyy"));
+                                });
+                            });
+
+                            column.Item().PaddingTop(8).Text(text =>
+                            {
+                                text.Span("Does the issue require surgery? ").Bold();
+                                text.Span(requiresSurgery ? "☐ No  ☑ Yes" : "☑ No  ☐ Yes");
+                            });
+
+                            column.Item().PaddingTop(10);
+
+                            // Medical History Section
+                            column.Item().Background(Colors.Teal.Lighten5)
+                                .Border(2)
+                                .BorderColor(primaryTeal)
+                                .Padding(8)
+                                .Column(historyColumn =>
+                                {
+                                    historyColumn.Item().Text("Medical History: Do you have a history of the following problems?")
+                                        .Bold()
+                                        .FontSize(10);
+
+                                    historyColumn.Item().PaddingTop(5).Row(historyRow =>
+                                    {
+                                        // Left column
+                                        historyRow.RelativeItem().Column(leftCol =>
+                                        {
+                                            var leftConditions = new[] { "Asthma", "Diabetes", "Heart Problems", "Cancer", "Stroke", "Bone/joint problems", "Kidney problems", "Gallbladder", "Liver problems" };
+                                            foreach (var condition in leftConditions)
+                                            {
+                                                var isChecked = medicalHistory?.Contains(condition) ?? false;
+                                                leftCol.Item().PaddingBottom(2).Text(text =>
+                                                {
+                                                    text.Span(isChecked ? "☑ " : "☐ ").FontSize(9);
+                                                    text.Span(condition).FontSize(9);
+                                                });
+                                            }
+                                        });
+
+                                        // Right column
+                                        historyRow.RelativeItem().PaddingLeft(20).Column(rightCol =>
+                                        {
+                                            var rightConditions = new[] { "Electrical implants", "Anxiety attacks", "Sleep apnea", "Depression", "Bowel problems", "Alcohol abuse", "Drug use", "Smoking", "Headaches" };
+                                            foreach (var condition in rightConditions)
+                                            {
+                                                var isChecked = medicalHistory?.Contains(condition) ?? false;
+                                                rightCol.Item().PaddingBottom(2).Text(text =>
+                                                {
+                                                    text.Span(isChecked ? "☑ " : "☐ ").FontSize(9);
+                                                    text.Span(condition).FontSize(9);
+                                                });
+                                            }
+                                        });
+                                    });
+                                });
+
+                            column.Item().PaddingTop(8);
+
+                            // Past Surgeries
+                            column.Item().Text("Past Surgeries:").Bold();
+                            column.Item().PaddingTop(2).Text(noSurgeries ? "☑ No surgeries" : "☐ No surgeries");
+                            
+                            if (!noSurgeries && (!string.IsNullOrWhiteSpace(surgeryHospital) || !string.IsNullOrWhiteSpace(surgeryYear) || !string.IsNullOrWhiteSpace(surgeryComplications)))
+                            {
+                                column.Item().PaddingTop(3).Row(surgeryRow =>
+                                {
+                                    surgeryRow.RelativeItem().Text($"hospital: {surgeryHospital ?? ""}");
+                                    surgeryRow.RelativeItem().Text($"Year: {surgeryYear ?? ""}");
+                                    surgeryRow.RelativeItem().Text($"Complications: {surgeryComplications ?? ""}");
+                                });
+                            }
+
+                            column.Item().PaddingTop(8);
+
+                            // Allergies and Medications
+                            column.Item().Row(medRow =>
+                            {
+                                medRow.RelativeItem().Border(2).BorderColor(primaryTeal).Padding(6).Column(allergyCol =>
+                                {
+                                    allergyCol.Item().Text("Allergies (list down allergies you have)").Bold().FontSize(9);
+                                    allergyCol.Item().PaddingTop(3).Text(allergies ?? "");
+                                });
+                                
+                                medRow.RelativeItem().PaddingLeft(10).Border(2).BorderColor(primaryTeal).Padding(6).Column(medCol =>
+                                {
+                                    medCol.Item().Text("Medications (and dosage)").Bold().FontSize(9);
+                                    if (noMedications)
+                                    {
+                                        medCol.Item().PaddingTop(2).Text("☑ No medications");
+                                    }
+                                    else
+                                    {
+                                        medCol.Item().PaddingTop(2).Text(medications ?? "");
+                                    }
+                                });
+                            });
+
+                            column.Item().PaddingTop(8);
+
+                            // Additional Notes
+                            column.Item().Text("Additional Notes:").Bold();
+                            column.Item().Border(2).BorderColor(primaryTeal).Padding(6).Text(additionalNotes ?? "");
+
+                            column.Item().PaddingTop(20);
+
+                            // Signature Section
+                            column.Item().Width(250).PaddingTop(30).LineHorizontal(1);
+                            var fullSignatureName = !string.IsNullOrWhiteSpace(signatureHonorific) && !string.IsNullOrWhiteSpace(signatureName)
+                                ? $"{signatureHonorific} {signatureName?.ToUpper()}"
+                                : signatureName?.ToUpper() ?? "";
+                            column.Item().PaddingTop(5).Text(fullSignatureName).Bold();
+                            column.Item().PaddingTop(2).Text(signatureRole ?? "").FontSize(9);
+                        });
+
+                    // Footer Banner
+                    page.Footer()
+                        .Height(30)
+                        .Background(primaryTeal)
+                        .AlignCenter()
+                        .PaddingTop(8)
+                        .Text("QuickClinique - University of Cebu Medical-Dental Clinic")
+                        .FontSize(9)
+                        .FontColor(Colors.White);
+                });
+            });
+
+            var stream = new MemoryStream();
+            document.GeneratePdf(stream);
+            stream.Position = 0;
+
+            var fileName = $"Doctors_Report_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
             return File(stream, "application/pdf", fileName);
         }
 

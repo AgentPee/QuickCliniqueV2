@@ -1,73 +1,219 @@
-@model IEnumerable<QuickClinique.Models.Clinicstaff>
+@model QuickClinique.Models.Student
 @{
-    ViewData["Title"] = "Doctors Report";
+    ViewData["Title"] = "Doctor's Report";
     Layout = null; // Remove layout for printing
 }
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Doctors Report - QuickClinique</title>
+    <title>Doctor's Report - @Model.FirstName @Model.LastName</title>
     <link rel="stylesheet" href="~/css/reports-print.css" />
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            color: #333;
-        }
-        .report-header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #4ECDC4;
-            padding-bottom: 20px;
-        }
-        .report-header h1 {
-            color: #4ECDC4;
             margin: 0;
-            font-size: 28px;
+            padding: 15px;
+            color: #333;
+            font-size: 11px;
         }
-        .report-header p {
-            margin: 5px 0;
-            color: #666;
-        }
-        .report-info {
-            margin-bottom: 20px;
-            text-align: right;
-            font-size: 12px;
-            color: #666;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th {
+        .header-banner {
             background-color: #4ECDC4;
             color: white;
-            padding: 12px;
-            text-align: left;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .header-banner .logo {
+            font-size: 18px;
             font-weight: bold;
         }
-        td {
+        .header-banner .icon {
+            font-size: 20px;
+        }
+        .header-banner .logo-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        .clinic-title {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .clinic-title h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .clinic-title h1 {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .patient-info {
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .patient-info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .patient-info-label {
+            font-weight: bold;
+        }
+        .patient-info-value {
+            border-bottom: 1px solid #333;
+            min-width: 120px;
+            padding-bottom: 2px;
+        }
+        .surgery-question {
+            margin-bottom: 12px;
+        }
+        .surgery-question label {
+            margin-right: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .checkbox {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #333;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .checkbox.checked {
+            background-color: #9370DB;
+            border-color: #9370DB;
+            position: relative;
+        }
+        .checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .medical-history-section {
+            background-color: #E0F7FA;
+            border: 2px solid #4ECDC4;
             padding: 10px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 12px;
         }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
+        .medical-history-title {
             font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 11px;
         }
-        .status-active {
-            background-color: #28a745;
-            color: white;
+        .medical-history-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
         }
-        .status-inactive {
-            background-color: #dc3545;
+        .medical-history-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .past-surgeries {
+            margin-bottom: 12px;
+        }
+        .past-surgeries-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .past-surgeries-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        .surgery-fields {
+            display: flex;
+            gap: 10px;
+            margin-left: 25px;
+            margin-top: 5px;
+        }
+        .surgery-field {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .surgery-field input {
+            border: none;
+            border-bottom: 1px solid #333;
+            padding: 2px 5px;
+            min-width: 100px;
+        }
+        .allergies-medications {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        .field-box {
+            border: 2px solid #4ECDC4;
+            padding: 8px;
+            min-height: 50px;
+        }
+        .field-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 10px;
+        }
+        .field-value {
+            font-size: 11px;
+        }
+        .additional-notes {
+            margin-bottom: 12px;
+        }
+        .additional-notes-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .additional-notes-box {
+            border: 2px solid #4ECDC4;
+            padding: 8px;
+            min-height: 40px;
+        }
+        .signature-section {
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .signature-line {
+            border-top: 2px solid #333;
+            width: 250px;
+            margin-top: 30px;
+            margin-bottom: 8px;
+        }
+        .signature-name {
+            font-weight: bold;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+        .signature-role {
+            font-size: 10px;
+            color: #666;
+        }
+        .footer-banner {
+            background-color: #4ECDC4;
             color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 10px;
+            margin-top: 20px;
         }
         .no-print {
             display: none;
@@ -75,6 +221,8 @@
         @@media print {
             body {
                 margin: 0;
+                padding: 10px;
+                font-size: 10px;
             }
             .no-print {
                 display: none !important;
@@ -82,85 +230,160 @@
             .print-button {
                 display: none !important;
             }
+            @@page {
+                margin: 0.8cm;
+                size: A4;
+            }
+        }
+        @@media screen {
+            .no-print {
+                display: block;
+                margin-bottom: 15px;
+                text-align: right;
+            }
+            .print-button {
+                padding: 8px 16px;
+                background: #4ECDC4;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-left: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-        <button onclick="window.print()" class="print-button btn btn-primary" style="padding: 10px 20px; background: #4ECDC4; color: white; border: none; border-radius: 5px; cursor: pointer;">
+    <div class="no-print">
+        <button onclick="window.print()" class="print-button">
             <i class="fas fa-print"></i> Print Report
         </button>
-        <a href="@Url.Action("Reports", "Clinicstaff")" style="margin-left: 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;">
-            <i class="fas fa-arrow-left"></i> Back to Reports
+        <a href="@Url.Action("DoctorsReportList", "Clinicstaff")" style="margin-left: 10px; padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;">
+            <i class="fas fa-arrow-left"></i> Back
         </a>
     </div>
 
-    <div class="report-header">
-        <h1><i class="fas fa-user-md"></i> Doctors Report</h1>
-        <p>University of Cebu Medical-Dental Clinic</p>
-        <p>Sanciangko St, Cebu City</p>
-    </div>
-
-    <div class="report-info">
-        <p><strong>Generated:</strong> @ViewData["GeneratedDate"]</p>
-        <p><strong>Total Staff:</strong> @Model.Count()</p>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-                <th>Role</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int index = 1;
-            }
-            @foreach (var doctor in Model)
-            {
-                <tr>
-                    <td>@index</td>
-                    <td><strong>@doctor.FirstName @doctor.LastName</strong></td>
-                    <td>@doctor.Email</td>
-                    <td>@doctor.PhoneNumber</td>
-                    <td>@(doctor.User?.Role ?? "N/A")</td>
-                    <td>
-                        <span class="status-badge @(doctor.IsActive ? "status-active" : "status-inactive")">
-                            @(doctor.IsActive ? "Active" : "Inactive")
-                        </span>
-                    </td>
-                </tr>
-                index++;
-            }
-        </tbody>
-    </table>
-
-    @if (!Model.Any())
-    {
-        <div style="text-align: center; padding: 40px; color: #999;">
-            <i class="fas fa-info-circle" style="font-size: 48px;"></i>
-            <p style="margin-top: 20px; font-size: 18px;">No clinic staff records found.</p>
+    <!-- Header Banner -->
+    <div class="header-banner">
+        <div class="logo">QuickClinique</div>
+        <div class="icon">
+            <img src="~/img/logo.png" alt="QuickClinique Logo" class="logo-img" />
         </div>
-    }
-
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p>This report was generated by QuickClinique System</p>
-        <p>© @DateTime.Now.Year University of Cebu Medical-Dental Clinic. All rights reserved.</p>
     </div>
 
-    <script>
-        // Auto-print option (optional - can be removed if not needed)
-        // window.onload = function() {
-        //     setTimeout(function() {
-        //         window.print();
-        //     }, 500);
-        // }
-    </script>
+    <!-- Clinic Title -->
+    <div class="clinic-title">
+        <h3>University of Cebu Medical-Dental Clinic</h3>
+        <h1>Doctor's Report</h1>
+    </div>
+
+    <!-- Patient Information -->
+    <div class="patient-info">
+        <div class="patient-info-item">
+            <span class="patient-info-label">Patient's Name:</span>
+            <span class="patient-info-value">@Model.FirstName @Model.LastName</span>
+        </div>
+        <div class="patient-info-item">
+            <span class="patient-info-label">Initial Diagnosis:</span>
+            <span class="patient-info-value" style="min-width: 150px;">&nbsp;</span>
+        </div>
+        <div class="patient-info-item">
+            <span class="patient-info-label">DOB:</span>
+            <span class="patient-info-value">@(Model.Birthdate?.ToString("MMMM dd, yyyy") ?? "")</span>
+        </div>
+        <div class="patient-info-item">
+            <span class="patient-info-label">Date:</span>
+            <span class="patient-info-value">@DateTime.Now.ToString("MMMM dd, yyyy")</span>
+        </div>
+    </div>
+
+    <!-- Surgery Question -->
+    <div class="surgery-question">
+        <strong>Does the issue require surgery?</strong>
+        <label><span class="checkbox"></span> No</label>
+        <label><span class="checkbox"></span> Yes</label>
+    </div>
+
+    <!-- Medical History Section -->
+    <div class="medical-history-section">
+        <div class="medical-history-title">Medical History: Do you have a history of the following problems?</div>
+        <div class="medical-history-grid">
+            <div class="medical-history-item"><span class="checkbox"></span> Asthma</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Electrical implants</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Diabetes</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Anxiety attacks</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Heart Problems</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Sleep apnea</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Cancer</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Depression</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Stroke</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Bowel problems</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Bone/joint problems</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Alcohol abuse</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Kidney problems</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Drug use</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Gallbladder</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Smoking</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Liver problems</div>
+            <div class="medical-history-item"><span class="checkbox"></span> Headaches</div>
+        </div>
+    </div>
+
+    <!-- Past Surgeries -->
+    <div class="past-surgeries">
+        <div class="past-surgeries-title">Past Surgeries:</div>
+        <div class="past-surgeries-item">
+            <span class="checkbox"></span> No surgeries
+        </div>
+        <div class="surgery-fields">
+            <div class="surgery-field">
+                <span>hospital:</span>
+                <input type="text" />
+            </div>
+            <div class="surgery-field">
+                <span>Year:</span>
+                <input type="text" />
+            </div>
+            <div class="surgery-field">
+                <span>Complications:</span>
+                <input type="text" style="min-width: 150px;" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Allergies and Medications -->
+    <div class="allergies-medications">
+        <div class="field-box">
+            <div class="field-label">Allergies (list down allergies you have)</div>
+            <div class="field-value">&nbsp;</div>
+        </div>
+        <div class="field-box">
+            <div class="field-label">Medications (and dosage)</div>
+            <div class="field-value">
+                <label style="display: inline-flex; align-items: center; gap: 5px;">
+                    <span class="checkbox"></span> No medications
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Notes -->
+    <div class="additional-notes">
+        <div class="additional-notes-title">Additional Notes:</div>
+        <div class="additional-notes-box">&nbsp;</div>
+    </div>
+
+    <!-- Signature Section -->
+    <div class="signature-section">
+        <div class="signature-line"></div>
+        <div class="signature-name">@((ViewBag.ClinicStaffName as string)?.ToUpper() ?? "")</div>
+        <div class="signature-role">@(ViewBag.ClinicStaffRole ?? "")</div>
+    </div>
+
+    <!-- Footer Banner -->
+    <div class="footer-banner">
+        QuickClinique - University of Cebu Medical-Dental Clinic
+    </div>
 </body>
 </html>
 

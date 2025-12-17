@@ -1,0 +1,351 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = "Generate Doctor's Report";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" />
+    <style>
+        .report-form {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #4ECDC4;
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-generate {
+            background: #4ECDC4;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-generate:hover {
+            background: #3a9d96;
+        }
+        .student-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .medical-history-section {
+            background: #E0F7FA;
+            border: 2px solid #4ECDC4;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .medical-history-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .surgery-fields {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr;
+            gap: 10px;
+            margin-top: 10px;
+            margin-left: 30px;
+        }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+    </style>
+}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h2><i class="fas fa-user-md"></i> Generate Doctor's Report</h2>
+        <p class="text-muted">Fill in the details to generate a doctor's report for the student</p>
+    </div>
+
+    <div class="report-form">
+        <div class="student-info">
+            <h4><i class="fas fa-user"></i> Student Information</h4>
+            <p><strong>Name:</strong> @Model.FirstName @Model.LastName</p>
+            <p><strong>ID Number:</strong> @Model.Idnumber</p>
+            <p><strong>Date of Birth:</strong> @(Model.Birthdate?.ToString("MMMM dd, yyyy") ?? "N/A")</p>
+        </div>
+
+        <form method="post" action="@Url.Action("GenerateDoctorsReport", "Clinicstaff")" id="doctorsReportForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="studentId" value="@Model.StudentId" />
+
+            <div class="form-group">
+                <label for="initialDiagnosis">Initial Diagnosis:</label>
+                <input type="text" id="initialDiagnosis" name="initialDiagnosis" class="form-control" 
+                       placeholder="e.g., laing tiyan" />
+            </div>
+
+            <div class="form-group">
+                <label>Does the issue require surgery?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="radio" id="surgeryNo" name="requiresSurgery" value="false" checked />
+                        <label for="surgeryNo">No</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="radio" id="surgeryYes" name="requiresSurgery" value="true" />
+                        <label for="surgeryYes">Yes</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="medical-history-section">
+                <label style="font-weight: bold; display: block; margin-bottom: 10px;">
+                    Medical History: Do you have a history of the following problems?
+                </label>
+                <div class="medical-history-grid">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="asthma" name="medicalHistory" value="Asthma" />
+                        <label for="asthma">Asthma</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="electricalImplants" name="medicalHistory" value="Electrical implants" />
+                        <label for="electricalImplants">Electrical implants</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="diabetes" name="medicalHistory" value="Diabetes" />
+                        <label for="diabetes">Diabetes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="anxiety" name="medicalHistory" value="Anxiety attacks" />
+                        <label for="anxiety">Anxiety attacks</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="heartProblems" name="medicalHistory" value="Heart Problems" />
+                        <label for="heartProblems">Heart Problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sleepApnea" name="medicalHistory" value="Sleep apnea" />
+                        <label for="sleepApnea">Sleep apnea</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="cancer" name="medicalHistory" value="Cancer" />
+                        <label for="cancer">Cancer</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="depression" name="medicalHistory" value="Depression" />
+                        <label for="depression">Depression</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="stroke" name="medicalHistory" value="Stroke" />
+                        <label for="stroke">Stroke</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bowelProblems" name="medicalHistory" value="Bowel problems" />
+                        <label for="bowelProblems">Bowel problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="boneJoint" name="medicalHistory" value="Bone/joint problems" />
+                        <label for="boneJoint">Bone/joint problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="alcoholAbuse" name="medicalHistory" value="Alcohol abuse" />
+                        <label for="alcoholAbuse">Alcohol abuse</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="kidneyProblems" name="medicalHistory" value="Kidney problems" />
+                        <label for="kidneyProblems">Kidney problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="drugUse" name="medicalHistory" value="Drug use" />
+                        <label for="drugUse">Drug use</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="gallbladder" name="medicalHistory" value="Gallbladder" />
+                        <label for="gallbladder">Gallbladder</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="smoking" name="medicalHistory" value="Smoking" />
+                        <label for="smoking">Smoking</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="liverProblems" name="medicalHistory" value="Liver problems" />
+                        <label for="liverProblems">Liver problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="headaches" name="medicalHistory" value="Headaches" />
+                        <label for="headaches">Headaches</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Past Surgeries:</label>
+                <div class="checkbox-item" style="margin-bottom: 10px;">
+                    <input type="checkbox" id="noSurgeries" name="noSurgeries" value="true" />
+                    <label for="noSurgeries">No surgeries</label>
+                </div>
+                <div class="surgery-fields" id="surgeryFields" style="display: none;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="surgeryHospital" style="font-size: 12px;">Hospital:</label>
+                        <input type="text" id="surgeryHospital" name="surgeryHospital" class="form-control" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="surgeryYear" style="font-size: 12px;">Year:</label>
+                        <input type="text" id="surgeryYear" name="surgeryYear" class="form-control" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="surgeryComplications" style="font-size: 12px;">Complications:</label>
+                        <input type="text" id="surgeryComplications" name="surgeryComplications" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="form-group">
+                    <label for="allergies">Allergies (list down allergies you have):</label>
+                    <textarea id="allergies" name="allergies" class="form-control" rows="4" 
+                              placeholder="List any allergies..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Medications (and dosage):</label>
+                    <div class="checkbox-item" style="margin-bottom: 10px;">
+                        <input type="checkbox" id="noMedications" name="noMedications" value="true" />
+                        <label for="noMedications">No medications</label>
+                    </div>
+                    <textarea id="medications" name="medications" class="form-control" rows="3" 
+                              placeholder="List medications and dosages..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="additionalNotes">Additional Notes:</label>
+                <textarea id="additionalNotes" name="additionalNotes" class="form-control" rows="4" 
+                          placeholder="Any additional notes..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="signatureHonorific">Title/Honorific:</label>
+                    <select id="signatureHonorific" name="signatureHonorific" class="form-control">
+                        <option value="">None</option>
+                        <option value="Dr.">Dr.</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Mrs.">Mrs.</option>
+                        <option value="Ms.">Ms.</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signatureName">Signature Name:</label>
+                    <input type="text" id="signatureName" name="signatureName" class="form-control" 
+                           value="@ViewBag.ClinicStaffName" placeholder="e.g., Chopper Strawhats" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="signatureRole">Signature Role:</label>
+                <input type="text" id="signatureRole" name="signatureRole" class="form-control" 
+                       value="@ViewBag.ClinicStaffRole" placeholder="e.g., Admin" />
+            </div>
+
+            <button type="submit" class="btn-generate">
+                <i class="fas fa-file-pdf"></i> Generate Doctor's Report (PDF)
+            </button>
+        </form>
+
+        <div style="margin-top: 20px;">
+            <a href="@Url.Action("DoctorsReport", "Clinicstaff")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Student List
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle no surgeries checkbox
+            const noSurgeriesCheckbox = document.getElementById('noSurgeries');
+            const surgeryFields = document.getElementById('surgeryFields');
+            
+            noSurgeriesCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    surgeryFields.style.display = 'none';
+                    document.getElementById('surgeryHospital').value = '';
+                    document.getElementById('surgeryYear').value = '';
+                    document.getElementById('surgeryComplications').value = '';
+                } else {
+                    surgeryFields.style.display = 'grid';
+                }
+            });
+
+            // Handle no medications checkbox
+            const noMedicationsCheckbox = document.getElementById('noMedications');
+            const medicationsTextarea = document.getElementById('medications');
+            
+            noMedicationsCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    medicationsTextarea.value = '';
+                    medicationsTextarea.disabled = true;
+                } else {
+                    medicationsTextarea.disabled = false;
+                }
+            });
+
+            // Set default honorific to "Dr." if role suggests medical professional
+            const signatureRoleInput = document.getElementById('signatureRole');
+            const signatureHonorificSelect = document.getElementById('signatureHonorific');
+            const roleValue = signatureRoleInput.value.toLowerCase();
+            
+            if (signatureHonorificSelect.value === '' && (roleValue.includes('doctor') || roleValue.includes('physician') || roleValue.includes('medical'))) {
+                signatureHonorificSelect.value = 'Dr.';
+            }
+        });
+    </script>
+}
+
