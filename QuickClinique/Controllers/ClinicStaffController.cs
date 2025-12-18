@@ -2452,6 +2452,7 @@ namespace QuickClinique.Controllers
         }
 
         // GET: Clinicstaff/ForensicReport/{studentId?}
+        [HttpGet]
         [ClinicStaffOnly]
         public async Task<IActionResult> ForensicReport(int? studentId)
         {
@@ -2513,7 +2514,7 @@ namespace QuickClinique.Controllers
             // Calculate statistics
             var stats = new
             {
-                TotalVisits = student.Appointments.Count(a => a.AppointmentStatus == "Completed"),
+                TotalVisits = student.Appointments?.Count(a => a.AppointmentStatus == "Completed") ?? 0,
                 TotalRecords = student.Precords.Count,
                 AveragePulseRate = triageRecords.Where(r => r.PulseRate.HasValue).Any() 
                     ? triageRecords.Where(r => r.PulseRate.HasValue).Average(r => r.PulseRate.Value) : (double?)null,
@@ -2533,11 +2534,492 @@ namespace QuickClinique.Controllers
                     } : null
             };
 
+            // Get current signed-in clinic staff member
+            var currentStaffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            if (currentStaffId.HasValue)
+            {
+                var currentStaff = await _context.Clinicstaffs
+                    .FirstOrDefaultAsync(s => s.ClinicStaffId == currentStaffId.Value);
+                
+                if (currentStaff != null)
+                {
+                    ViewBag.CurrentStaffName = $"{currentStaff.FirstName} {currentStaff.LastName}";
+                    ViewBag.CurrentStaffLicenseNumber = currentStaff.LicenseNumber;
+                }
+            }
+
             ViewBag.Student = student;
             ViewBag.TriageRecords = triageRecords;
             ViewBag.Statistics = stats;
 
             return View("ForensicReport", student);
+        }
+
+        // POST: Clinicstaff/GenerateForensicReportPdf
+        [HttpPost]
+        [ClinicStaffOnly]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateForensicReportPdf(
+            int studentId,
+            string patientName,
+            string? idNumber,
+            string? birthdate,
+            string? gender,
+            DateTime reportDate,
+            string? chiefComplaint,
+            string? historyOfPresentIllness,
+            string? physicalExamination,
+            string? diagnosis,
+            string? treatmentPlan,
+            string? recommendations,
+            string? additionalNotes,
+            string? physicianHonorific,
+            string? attendingPhysicianName,
+            string? physicianLicenseNumber,
+            DateTime? signatureDate)
+        {
+            var student = await _context.Students
+                .Include(s => s.Precords)
+                .Include(s => s.Appointments)
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Parse birthdate if provided
+            DateOnly? parsedBirthdate = null;
+            if (!string.IsNullOrWhiteSpace(birthdate) && DateOnly.TryParse(birthdate, out var parsedDate))
+            {
+                parsedBirthdate = parsedDate;
+            }
+
+            // Get triage records
+            var triageRecords = student.Precords
+                .Where(p => p.TriageDateTime.HasValue)
+                .OrderBy(p => p.TriageDateTime)
+                .ToList();
+
+            // Load staff information
+            var staffIds = triageRecords
+                .Where(p => p.TriageTakenByStaffId.HasValue || p.TreatmentProvidedByStaffId.HasValue)
+                .SelectMany(p => new[] { p.TriageTakenByStaffId, p.TreatmentProvidedByStaffId })
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+
+            var staffMembers = await _context.Clinicstaffs
+                .Where(s => staffIds.Contains(s.ClinicStaffId))
+                .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+            foreach (var record in triageRecords)
+            {
+                if (record.TriageTakenByStaffId.HasValue && staffMembers.ContainsKey(record.TriageTakenByStaffId.Value))
+                {
+                    record.TriageTakenByName = staffMembers[record.TriageTakenByStaffId.Value];
+                }
+                if (record.TreatmentProvidedByStaffId.HasValue && staffMembers.ContainsKey(record.TreatmentProvidedByStaffId.Value))
+                {
+                    record.TreatmentProvidedByName = staffMembers[record.TreatmentProvidedByStaffId.Value];
+                }
+            }
+
+            // Calculate statistics
+            var stats = new
+            {
+                TotalVisits = student.Appointments?.Count(a => a.AppointmentStatus == "Completed") ?? 0,
+                TotalRecords = triageRecords.Count,
+                AveragePulseRate = triageRecords.Where(r => r.PulseRate.HasValue).Any() 
+                    ? triageRecords.Where(r => r.PulseRate.HasValue).Average(r => r.PulseRate.Value) : (double?)null,
+                AverageTemperature = triageRecords.Where(r => r.Temperature.HasValue).Any()
+                    ? triageRecords.Where(r => r.Temperature.HasValue).Average(r => (double)r.Temperature.Value) : (double?)null,
+                AverageOxygenSaturation = triageRecords.Where(r => r.OxygenSaturation.HasValue).Any()
+                    ? triageRecords.Where(r => r.OxygenSaturation.HasValue).Average(r => r.OxygenSaturation.Value) : (double?)null
+            };
+
+            // Generate PDF
+            QuestPDF.Settings.License = LicenseType.Community;
+            
+            var primaryTeal = Colors.Teal.Lighten1;
+            var darkTeal = Colors.Teal.Darken2;
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    // Header Banner with QuickClinique and Logo
+                    page.Header()
+                        .Height(50)
+                        .Background(primaryTeal)
+                        .Row(row =>
+                        {
+                            row.RelativeItem().PaddingLeft(15).PaddingTop(12).Text("QuickClinique")
+                                .FontSize(16)
+                                .Bold()
+                                .FontColor(Colors.White);
+                            
+                            row.RelativeItem().AlignRight().PaddingRight(15).PaddingTop(5).Column(rightColumn =>
+                            {
+                                var logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "logo.png");
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    rightColumn.Item().Width(40).Height(40).Image(logoPath);
+                                }
+                            });
+                        });
+
+                    page.Content()
+                        .PaddingVertical(10)
+                        .Column(column =>
+                        {
+                            // Header Information
+                            column.Item().PaddingBottom(5).AlignCenter().Column(headerColumn =>
+                            {
+                                headerColumn.Item().Text("University of Cebu Medical-Dental Clinic")
+                                    .FontSize(16)
+                                    .Bold()
+                                    .FontColor(darkTeal);
+                                
+                                headerColumn.Item().PaddingTop(3).Text("Sanciangko St, Cebu City")
+                                    .FontSize(11)
+                                    .FontColor(Colors.Grey.Darken1);
+                            });
+
+                            column.Item().PaddingTop(10).PaddingBottom(10);
+
+                            // FORENSIC MEDICAL REPORT Title
+                            column.Item().PaddingBottom(15).AlignCenter().Text("FORENSIC MEDICAL REPORT")
+                                .FontSize(22)
+                                .Bold()
+                                .FontColor(darkTeal);
+
+                            // Patient Information Section
+                            column.Item().PaddingBottom(10).Text("Patient Information").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().Table(patientTable =>
+                            {
+                                patientTable.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn(2);
+                                });
+
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Patient Name:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(patientName).FontSize(10);
+
+                                if (!string.IsNullOrEmpty(idNumber))
+                                {
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text("ID Number:").FontSize(10).SemiBold();
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text(idNumber).FontSize(10);
+                                }
+
+                                if (parsedBirthdate.HasValue)
+                                {
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text("Date of Birth:").FontSize(10).SemiBold();
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text(parsedBirthdate.Value.ToString("MMMM dd, yyyy")).FontSize(10);
+                                }
+
+                                if (!string.IsNullOrEmpty(gender))
+                                {
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text("Gender:").FontSize(10).SemiBold();
+                                    patientTable.Cell().Element(c => c.Padding(5)).Text(gender).FontSize(10);
+                                }
+
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Report Date:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(reportDate.ToString("MMMM dd, yyyy 'at' HH:mm")).FontSize(10);
+                            });
+
+                            column.Item().PaddingTop(15);
+
+                            // Report Details
+                            if (!string.IsNullOrWhiteSpace(chiefComplaint))
+                            {
+                                column.Item().PaddingBottom(5).Text("Chief Complaint").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(chiefComplaint).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(historyOfPresentIllness))
+                            {
+                                column.Item().PaddingBottom(5).Text("History of Present Illness").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(historyOfPresentIllness).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(physicalExamination))
+                            {
+                                column.Item().PaddingBottom(5).Text("Physical Examination Findings").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(physicalExamination).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(diagnosis))
+                            {
+                                column.Item().PaddingBottom(5).Text("Diagnosis").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(diagnosis).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(treatmentPlan))
+                            {
+                                column.Item().PaddingBottom(5).Text("Treatment Plan").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(treatmentPlan).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(recommendations))
+                            {
+                                column.Item().PaddingBottom(5).Text("Recommendations").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(recommendations).FontSize(10);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(additionalNotes))
+                            {
+                                column.Item().PaddingBottom(5).Text("Additional Notes").FontSize(12).Bold().FontColor(darkTeal);
+                                column.Item().PaddingBottom(10).Text(additionalNotes).FontSize(10);
+                            }
+
+                            column.Item().PaddingTop(15);
+
+                            // Statistics Section
+                            column.Item().PaddingBottom(5).Text("Patient Statistics").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().Table(statsTable =>
+                            {
+                                statsTable.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                });
+
+                                statsTable.Cell().Element(c => c
+                                    .Background(primaryTeal)
+                                    .Padding(10)
+                                    .AlignCenter())
+                                    .Column(card =>
+                                    {
+                                        card.Item().Text(stats.TotalVisits.ToString())
+                                            .FontSize(16)
+                                            .Bold()
+                                            .FontColor(Colors.White);
+                                        card.Item().Text("Total Visits")
+                                            .FontSize(9)
+                                            .FontColor(Colors.White);
+                                    });
+
+                                statsTable.Cell().Element(c => c
+                                    .Background(primaryTeal)
+                                    .Padding(10)
+                                    .AlignCenter())
+                                    .Column(card =>
+                                    {
+                                        card.Item().Text(stats.TotalRecords.ToString())
+                                            .FontSize(16)
+                                            .Bold()
+                                            .FontColor(Colors.White);
+                                        card.Item().Text("Medical Records")
+                                            .FontSize(9)
+                                            .FontColor(Colors.White);
+                                    });
+
+                                if (stats.AveragePulseRate.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{stats.AveragePulseRate.Value:F1}")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg Pulse Rate")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+
+                                if (stats.AverageTemperature.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{stats.AverageTemperature.Value:F1}°C")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg Temperature")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+                            });
+
+                            column.Item().PaddingTop(15);
+
+                            // Triage Records Table
+                            if (triageRecords.Any())
+                            {
+                                column.Item().PaddingBottom(5).Text("Triage Records").FontSize(14).Bold().FontColor(darkTeal);
+                                column.Item().PaddingTop(5).Table(table =>
+                                {
+                                    table.ColumnsDefinition(columns =>
+                                    {
+                                        columns.RelativeColumn(2);
+                                        columns.RelativeColumn(1);
+                                        columns.RelativeColumn(1.2f);
+                                        columns.RelativeColumn(1.2f);
+                                        columns.RelativeColumn(1.2f);
+                                        columns.RelativeColumn(1);
+                                        columns.RelativeColumn(1.5f);
+                                    });
+
+                                    table.Header(header =>
+                                    {
+                                        header.Cell().Element(CellStyle).Text("Date & Time").Bold();
+                                        header.Cell().Element(CellStyle).Text("Pulse Rate").Bold();
+                                        header.Cell().Element(CellStyle).Text("Blood Pressure").Bold();
+                                        header.Cell().Element(CellStyle).Text("Temperature").Bold();
+                                        header.Cell().Element(CellStyle).Text("O2 Saturation").Bold();
+                                        header.Cell().Element(CellStyle).Text("BMI").Bold();
+                                        header.Cell().Element(CellStyle).Text("Taken By").Bold();
+
+                                        IContainer CellStyle(IContainer container)
+                                        {
+                                            return container
+                                                .Background(primaryTeal)
+                                                .Padding(8)
+                                                .Border(1)
+                                                .BorderColor(Colors.White)
+                                                .AlignCenter()
+                                                .AlignMiddle()
+                                                .DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.White));
+                                        }
+                                    });
+
+                                    foreach (var record in triageRecords)
+                                    {
+                                        table.Cell().Element(CellStyle).Text(record.TriageDateTime?.ToString("MMM dd, yyyy\nHH:mm") ?? "N/A");
+                                        table.Cell().Element(CellStyle).Text(record.PulseRate?.ToString() ?? "N/A");
+                                        table.Cell().Element(CellStyle).Text(record.BloodPressure ?? "N/A");
+                                        table.Cell().Element(CellStyle).Text(record.Temperature?.ToString("F1") ?? "N/A");
+                                        table.Cell().Element(CellStyle).Text(record.OxygenSaturation?.ToString() ?? "N/A");
+                                        table.Cell().Element(CellStyle).Text(record.Bmi.ToString());
+                                        table.Cell().Element(CellStyle).Text(record.TriageTakenByName ?? "N/A");
+
+                                        static IContainer CellStyle(IContainer container)
+                                        {
+                                            return container
+                                                .Border(1)
+                                                .BorderColor(Colors.Grey.Lighten2)
+                                                .Padding(6)
+                                                .AlignCenter()
+                                                .AlignMiddle()
+                                                .DefaultTextStyle(x => x.FontSize(8));
+                                        }
+                                    }
+                                });
+                            }
+
+                            column.Item().PaddingTop(20);
+
+                            // Signature Section
+                            if (!string.IsNullOrWhiteSpace(attendingPhysicianName) || !string.IsNullOrWhiteSpace(physicianLicenseNumber))
+                            {
+                                // Combine honorific with physician name and capitalize
+                                var textInfo = System.Globalization.CultureInfo.CurrentCulture.TextInfo;
+                                var capitalizedName = !string.IsNullOrWhiteSpace(attendingPhysicianName) 
+                                    ? textInfo.ToTitleCase(attendingPhysicianName.ToLower()) 
+                                    : attendingPhysicianName;
+                                
+                                var fullPhysicianName = capitalizedName;
+                                if (!string.IsNullOrWhiteSpace(physicianHonorific) && !string.IsNullOrWhiteSpace(capitalizedName))
+                                {
+                                    fullPhysicianName = $"{physicianHonorific} {capitalizedName}";
+                                }
+                                else if (!string.IsNullOrWhiteSpace(physicianHonorific))
+                                {
+                                    fullPhysicianName = physicianHonorific;
+                                }
+
+                                column.Item().PaddingTop(20).Row(row =>
+                                {
+                                    row.RelativeItem().Column(sigColumn =>
+                                    {
+                                        sigColumn.Item().Text("").FontSize(10).AlignCenter();
+                                        if (!string.IsNullOrWhiteSpace(fullPhysicianName))
+                                        {
+                                           
+                                            sigColumn.Item().PaddingTop(5).Text(fullPhysicianName).FontSize(10).Bold().AlignCenter();
+                                        }
+                                        else
+                                        {
+                                          
+                                            sigColumn.Item().PaddingTop(5);
+                                        }
+                                        if (!string.IsNullOrWhiteSpace(physicianLicenseNumber))
+                                        {
+                                            sigColumn.Item().Text($"License: {physicianLicenseNumber}").FontSize(9).AlignCenter();
+                                        }
+                                    });
+                                    
+                                    row.RelativeItem().Column(sigColumn =>
+                                    {
+                                        sigColumn.Item().Text("").FontSize(10).AlignCenter();
+                                     
+                                        if (signatureDate.HasValue)
+                                        {
+                                            sigColumn.Item().PaddingTop(5).Text(signatureDate.Value.ToString("MMMM dd, yyyy")).FontSize(10).AlignCenter();
+                                        }
+                                        else
+                                        {
+                                            sigColumn.Item().PaddingTop(5);
+                                        }
+                                    });
+                                });
+                            }
+                        });
+
+                    // Footer Banner
+                    page.Footer()
+                        .Height(30)
+                        .Background(primaryTeal)
+                        .AlignCenter()
+                        .PaddingTop(8)
+                        .Text("QuickClinique - University of Cebu Medical-Dental Clinic")
+                        .FontSize(9)
+                        .FontColor(Colors.White);
+                });
+            });
+
+            try
+            {
+                var stream = new MemoryStream();
+                document.GeneratePdf(stream);
+                stream.Position = 0;
+
+                var fileName = $"Forensic_Report_{patientName.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred while generating the PDF: {ex.Message}";
+                return RedirectToAction("ForensicReport", new { studentId });
+            }
         }
 
         // GET: Clinicstaff/DoctorsReport

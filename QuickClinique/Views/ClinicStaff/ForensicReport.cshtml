@@ -1,364 +1,250 @@
 @model QuickClinique.Models.Student
 @{
     ViewData["Title"] = $"Forensic Report - {Model.FirstName} {Model.LastName}";
-    Layout = null; // Remove layout for printing
+    Layout = "_Layout";
     var triageRecords = ViewBag.TriageRecords as List<QuickClinique.Models.Precord> ?? new List<QuickClinique.Models.Precord>();
     var stats = ViewBag.Statistics as dynamic;
 }
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>Forensic Report - @Model.FirstName @Model.LastName</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            color: #333;
-        }
-        .report-header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #4ECDC4;
-            padding-bottom: 20px;
-        }
-        .report-header h1 {
-            color: #4ECDC4;
-            margin: 0;
-            font-size: 28px;
-        }
-        .report-header h2 {
-            color: #666;
-            margin: 10px 0;
-            font-size: 20px;
-            font-weight: normal;
-        }
-        .patient-info {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .info-row {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        .info-label {
-            font-weight: bold;
-            width: 200px;
-        }
-        .info-value {
-            flex: 1;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #4ECDC4 0%, #179C8E 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .stat-card h3 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .stat-card p {
-            margin: 5px 0 0 0;
-            font-size: 14px;
-        }
-        .chart-container {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .no-print {
-            display: block;
-            margin-bottom: 20px;
-        }
-        @@media print {
-            .no-print {
-                display: none !important;
-            }
-            body {
-                margin: 0;
-            }
-            @@page {
-                margin: 1cm;
-            }
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #4ECDC4;
-            color: white;
-        }
-        .signature-section {
-            margin-top: 60px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .signature-box {
-            width: 300px;
-            text-align: center;
-        }
-        .signature-line {
-            border-top: 2px solid #333;
-            margin-top: 60px;
-            padding-top: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="no-print" style="text-align: right;">
-        <button onclick="window.print()" class="btn btn-primary" style="padding: 10px 20px; background: #4ECDC4; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            <i class="fas fa-print"></i> Print Report
-        </button>
-        <a href="@Url.Action("ForensicReport", "Clinicstaff")" style="margin-left: 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;">
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/forensic-report.css" asp-append-version="true" />
+}
+
+<div class="forensic-report-container">
+    <div class="no-print mb-3">
+        <a href="@Url.Action("ForensicReport", "Clinicstaff")" class="btn-back">
             <i class="fas fa-arrow-left"></i> Back to Student List
         </a>
     </div>
 
-    <div class="report-header">
-        <h1><i class="fas fa-file-medical-alt"></i> FORENSIC MEDICAL REPORT</h1>
-        <h2>University of Cebu Medical-Dental Clinic</h2>
-        <p style="color: #666; margin: 5px 0;">Sanciangko St, Cebu City</p>
-        <p style="color: #666; margin: 5px 0; font-size: 12px;">Generated: @DateTime.Now.ToString("MMMM dd, yyyy HH:mm")</p>
-    </div>
+    <div class="forensic-form-card">
+        <div class="form-header">
+            <h2><i class="fas fa-file-medical-alt"></i> FORENSIC MEDICAL REPORT</h2>
+            <p class="subtitle">University of Cebu Medical-Dental Clinic</p>
+            <p class="subtitle-small">Sanciangko St, Cebu City</p>
+        </div>
 
-    <div class="patient-info">
-        <h3 style="margin-top: 0; color: #4ECDC4;">Patient Information</h3>
-        <div class="info-row">
-            <span class="info-label">Full Name:</span>
-            <span class="info-value">@Model.FirstName @Model.LastName</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">ID Number:</span>
-            <span class="info-value">@Model.Idnumber</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">@Model.Email</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Phone Number:</span>
-            <span class="info-value">@Model.PhoneNumber</span>
-        </div>
-        @if (Model.Birthdate.HasValue)
-        {
-            <div class="info-row">
-                <span class="info-label">Date of Birth:</span>
-                <span class="info-value">@Model.Birthdate.Value.ToString("MMMM dd, yyyy")</span>
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(Model.Gender))
-        {
-            <div class="info-row">
-                <span class="info-label">Gender:</span>
-                <span class="info-value">@Model.Gender</span>
-            </div>
-        }
-    </div>
+        <form id="forensicReportForm" method="post" action="@Url.Action("GenerateForensicReportPdf", "Clinicstaff")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="studentId" value="@Model.StudentId" />
 
-    @if (stats != null)
-    {
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>@stats.TotalVisits</h3>
-                <p>Total Visits</p>
+            <!-- Patient Information Section -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-user"></i> Patient Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="patientName">Patient Name <span class="required">*</span></label>
+                        <input type="text" id="patientName" name="patientName" class="form-control" 
+                               value="@($"{Model.FirstName} {Model.LastName}")" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="idNumber">ID Number</label>
+                        <input type="text" id="idNumber" name="idNumber" class="form-control" 
+                               value="@Model.Idnumber" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="birthdate">Date of Birth</label>
+                        <input type="date" id="birthdate" name="birthdate" class="form-control" 
+                               value="@(Model.Birthdate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <input type="text" id="gender" name="gender" class="form-control" 
+                               value="@Model.Gender" readonly />
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>@stats.TotalRecords</h3>
-                <p>Medical Records</p>
+
+            <!-- Report Details Section -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-clipboard-list"></i> Report Details</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="reportDate">Report Date</label>
+                        <input type="datetime-local" id="reportDate" name="reportDate" class="form-control" 
+                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="chiefComplaint">Chief Complaint</label>
+                        <textarea id="chiefComplaint" name="chiefComplaint" class="form-control" rows="3" 
+                                  placeholder="Enter the chief complaint..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="historyOfPresentIllness">History of Present Illness</label>
+                        <textarea id="historyOfPresentIllness" name="historyOfPresentIllness" class="form-control" rows="4" 
+                                  placeholder="Enter the history of present illness..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="physicalExamination">Physical Examination Findings</label>
+                        <textarea id="physicalExamination" name="physicalExamination" class="form-control" rows="4" 
+                                  placeholder="Enter physical examination findings..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="diagnosis">Diagnosis</label>
+                        <textarea id="diagnosis" name="diagnosis" class="form-control" rows="3" 
+                                  placeholder="Enter diagnosis..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="treatmentPlan">Treatment Plan</label>
+                        <textarea id="treatmentPlan" name="treatmentPlan" class="form-control" rows="4" 
+                                  placeholder="Enter treatment plan..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="recommendations">Recommendations</label>
+                        <textarea id="recommendations" name="recommendations" class="form-control" rows="3" 
+                                  placeholder="Enter recommendations..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="additionalNotes">Additional Notes</label>
+                        <textarea id="additionalNotes" name="additionalNotes" class="form-control" rows="3" 
+                                  placeholder="Enter any additional notes..."></textarea>
+                    </div>
+                </div>
             </div>
-            @if (stats.AveragePulseRate != null)
+
+            <!-- Statistics Section (Read-only) -->
+            @if (stats != null)
             {
-                <div class="stat-card">
-                    <h3>@stats.AveragePulseRate.Value.ToString("F1")</h3>
-                    <p>Avg Pulse Rate (bpm)</p>
+                <div class="form-section">
+                    <h3 class="section-title"><i class="fas fa-chart-bar"></i> Patient Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>@stats.TotalVisits</h4>
+                            <p>Total Visits</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>@stats.TotalRecords</h4>
+                            <p>Medical Records</p>
+                        </div>
+                        @if (stats.AveragePulseRate != null)
+                        {
+                            <div class="stat-card">
+                                <h4>@(Convert.ToDouble(stats.AveragePulseRate).ToString("F1"))</h4>
+                                <p>Avg Pulse Rate (bpm)</p>
+                            </div>
+                        }
+                        @if (stats.AverageTemperature != null)
+                        {
+                            <div class="stat-card">
+                                <h4>@(Convert.ToDouble(stats.AverageTemperature).ToString("F1"))</h4>
+                                <p>Avg Temperature (°C)</p>
+                            </div>
+                        }
+                        @if (stats.AverageOxygenSaturation != null)
+                        {
+                            <div class="stat-card">
+                                <h4>@(Convert.ToDouble(stats.AverageOxygenSaturation).ToString("F1"))</h4>
+                                <p>Avg O2 Saturation (%)</p>
+                            </div>
+                        }
+                    </div>
                 </div>
             }
-            @if (stats.AverageTemperature != null)
+
+            <!-- Triage Records Table (Read-only) -->
+            @if (triageRecords.Any())
             {
-                <div class="stat-card">
-                    <h3>@stats.AverageTemperature.Value.ToString("F1")</h3>
-                    <p>Avg Temperature (°C)</p>
+                <div class="form-section">
+                    <h3 class="section-title"><i class="fas fa-table"></i> Triage Records</h3>
+                    <div class="table-responsive">
+                        <table class="triage-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Pulse Rate</th>
+                                    <th>Blood Pressure</th>
+                                    <th>Temperature</th>
+                                    <th>O2 Saturation</th>
+                                    <th>BMI</th>
+                                    <th>Taken By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var record in triageRecords)
+                                {
+                                    <tr>
+                                        <td>@(record.TriageDateTime?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</td>
+                                        <td>@(record.PulseRate?.ToString() ?? "N/A")</td>
+                                        <td>@(record.BloodPressure ?? "N/A")</td>
+                                        <td>@(record.Temperature?.ToString("F1") ?? "N/A")</td>
+                                        <td>@(record.OxygenSaturation?.ToString() ?? "N/A")</td>
+                                        <td>@record.Bmi</td>
+                                        <td>@(record.TriageTakenByName ?? "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             }
-            @if (stats.AverageOxygenSaturation != null)
-            {
-                <div class="stat-card">
-                    <h3>@stats.AverageOxygenSaturation.Value.ToString("F1")</h3>
-                    <p>Avg O2 Saturation (%)</p>
+
+            <!-- Physician Information Section -->
+            <div class="form-section">
+                <h3 class="section-title"><i class="fas fa-user-md"></i> Attending Physician</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="physicianHonorific">Honorific</label>
+                        <select id="physicianHonorific" name="physicianHonorific" class="form-control">
+                            <option value="">Select...</option>
+                            <option value="Dr.">Dr.</option>
+                            <option value="Ms.">Ms.</option>
+                            <option value="Mr.">Mr.</option>
+                            <option value="Mrs.">Mrs.</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendingPhysicianName">Physician Name</label>
+                        <input type="text" id="attendingPhysicianName" name="attendingPhysicianName" class="form-control" 
+                               value="@(ViewBag.CurrentStaffName as string ?? "")"
+                               placeholder="Enter physician name..." />
+                    </div>
+                    <div class="form-group">
+                        <label for="physicianLicenseNumber">License Number</label>
+                        <input type="text" id="physicianLicenseNumber" name="physicianLicenseNumber" class="form-control" 
+                               value="@(ViewBag.CurrentStaffLicenseNumber as string ?? "")"
+                               pattern="\d{2}\s\d{6}" 
+                               placeholder="22 123456" />
+                        <small class="form-text">Format: 2 digits, space, 6 digits</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="signatureDate">Signature Date</label>
+                        <input type="datetime-local" id="signatureDate" name="signatureDate" class="form-control" 
+                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
                 </div>
-            }
-            @if (stats.MostCommonDiagnosis != null)
-            {
-                <div class="stat-card">
-                    <h3 style="font-size: 16px;">@stats.MostCommonDiagnosis</h3>
-                    <p>Most Common Diagnosis</p>
-                </div>
-            }
-        </div>
-    }
-
-    @if (triageRecords.Any())
-    {
-        <!-- Pulse Rate Chart -->
-        <div class="chart-container">
-            <h4>Pulse Rate Trend</h4>
-            <canvas id="pulseRateChart" height="80"></canvas>
-        </div>
-
-        <!-- Temperature Chart -->
-        <div class="chart-container">
-            <h4>Temperature Trend</h4>
-            <canvas id="temperatureChart" height="80"></canvas>
-        </div>
-
-        <!-- Oxygen Saturation Chart -->
-        <div class="chart-container">
-            <h4>Oxygen Saturation Trend</h4>
-            <canvas id="oxygenChart" height="80"></canvas>
-        </div>
-
-        <!-- Detailed Records Table -->
-        <div style="margin-top: 30px;">
-            <h3 style="color: #4ECDC4;">Detailed Triage Records</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Pulse Rate</th>
-                        <th>Blood Pressure</th>
-                        <th>Temperature</th>
-                        <th>O2 Saturation</th>
-                        <th>Taken By</th>
-                        <th>Doctor</th>
-                        <th>License #</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var record in triageRecords)
-                    {
-                        <tr>
-                            <td>@(record.TriageDateTime?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</td>
-                            <td>@(record.PulseRate?.ToString() ?? "N/A")</td>
-                            <td>@(record.BloodPressure ?? "N/A")</td>
-                            <td>@(record.Temperature?.ToString("F1") ?? "N/A")</td>
-                            <td>@(record.OxygenSaturation?.ToString() ?? "N/A")</td>
-                            <td>@(record.TriageTakenByName ?? "N/A")</td>
-                            <td>@(record.TreatmentProvidedByName ?? "N/A")</td>
-                            <td>@(record.DoctorLicenseNumber ?? "N/A")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <script>
-            const dates = @Html.Raw(Json.Serialize(triageRecords.Where(r => r.TriageDateTime.HasValue).Select(r => r.TriageDateTime.Value.ToString("MMM dd, yyyy"))));
-            const pulseRates = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.PulseRate)));
-            const temperatures = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.Temperature)));
-            const oxygenSaturations = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.OxygenSaturation)));
-
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: false
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
-                }
-            };
-
-            new Chart(document.getElementById('pulseRateChart'), {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Pulse Rate (bpm)',
-                        data: pulseRates,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: chartOptions
-            });
-
-            new Chart(document.getElementById('temperatureChart'), {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Temperature (°C)',
-                        data: temperatures,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: chartOptions
-            });
-
-            new Chart(document.getElementById('oxygenChart'), {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Oxygen Saturation (%)',
-                        data: oxygenSaturations,
-                        borderColor: 'rgb(54, 162, 235)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: chartOptions
-            });
-        </script>
-    }
-
-    <div class="signature-section">
-        <div class="signature-box">
-            <div class="signature-line">
-                <p style="margin: 0; font-weight: bold;">Attending Physician</p>
             </div>
-        </div>
-        <div class="signature-box">
-            <div class="signature-line">
-                <p style="margin: 0; font-weight: bold;">Date</p>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="btn-generate-pdf">
+                    <i class="fas fa-file-pdf"></i> Generate PDF Report
+                </button>
             </div>
-        </div>
+        </form>
     </div>
+</div>
 
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; font-size: 12px; color: #666;">
-        <p>This forensic report was generated by QuickClinique System</p>
-        <p>© @DateTime.Now.Year University of Cebu Medical-Dental Clinic. All rights reserved.</p>
-    </div>
-</body>
-</html>
+@section Scripts {
+    <script>
+        // License number formatting
+        document.getElementById('physicianLicenseNumber')?.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + ' ' + value.substring(2, 8);
+            }
+            if (value.length > 9) {
+                value = value.substring(0, 9);
+            }
+            this.value = value;
+        });
 
+        // Form submission
+        document.getElementById('forensicReportForm')?.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            }
+        });
+    </script>
+}

@@ -474,21 +474,21 @@
                                 <div>
                                     <strong><i class="fas fa-calendar-alt"></i> Triage Date & Time:</strong>
                                     <p class="medical-record-text">@record.TriageDateTime.Value.ToString("MMM dd, yyyy HH:mm")</p>
-                                </div>
+                        </div>
                             }
                             @if (!string.IsNullOrEmpty(record.TriageTakenByName))
                             {
                                 <div>
                                     <strong><i class="fas fa-user-nurse"></i> Triage Taken By:</strong>
                                     <p class="medical-record-text">@record.TriageTakenByName</p>
-                                </div>
-                            }
+                    </div>
+                }
                             @if (!string.IsNullOrEmpty(record.TreatmentProvidedByName))
                             {
                                 <div>
                                     <strong><i class="fas fa-user-md"></i> Treatment Provided By:</strong>
                                     <p class="medical-record-text">@record.TreatmentProvidedByName</p>
-                                </div>
+            </div>
                             }
                             @if (!string.IsNullOrEmpty(record.DoctorLicenseNumber))
                             {
@@ -552,8 +552,8 @@
                                 }
                             </tbody>
                         </table>
-                    </div>
-                }
+        </div>
+    }
                 else
                 {
                     <p class="text-muted">No medical record files uploaded yet.</p>
