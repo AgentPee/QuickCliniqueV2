@@ -75,6 +75,10 @@
             "QuestPDF": {
               "target": "Package",
               "version": "[2024.10.2, )"
+            },
+            "System.Drawing.Common": {
+              "target": "Package",
+              "version": "[9.0.0, )"
             }
           },
           "imports": [

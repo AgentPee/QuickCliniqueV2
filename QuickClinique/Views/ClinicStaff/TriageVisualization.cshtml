@@ -15,12 +15,9 @@
         <a href="@Url.Action("TriageVisualization", "Clinicstaff")" class="triage-btn-back">
             <i class="fas fa-arrow-left"></i> Back to Student List
         </a>
-        <form method="get" action="@Url.Action("DownloadTriageVisualizationPdf", "Clinicstaff")" style="display: inline-block; margin-left: 0.75rem;">
-            <input type="hidden" name="studentId" value="@Model.StudentId" />
-            <button type="submit" class="triage-btn-print">
-                <i class="fas fa-download"></i> Download PDF
-            </button>
-        </form>
+        <button type="button" class="triage-btn-print" onclick="downloadTriagePdf(event, @Model.StudentId)" style="margin-left: 0.75rem;">
+            <i class="fas fa-download"></i> Download PDF
+        </button>
     </div>
 
     <div class="triage-card">
@@ -122,6 +119,49 @@
                 </div>
 
                 <script>
+                    // Download PDF function
+                    async function downloadTriagePdf(event, studentId) {
+                        const button = event.target.closest('button');
+                        const originalHtml = button.innerHTML;
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+                        
+                        try {
+                            const url = '@Url.Action("DownloadTriageVisualizationPdf", "Clinicstaff")?studentId=' + studentId;
+                            const response = await fetch(url, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/pdf'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                // Get PDF blob
+                                const blob = await response.blob();
+                                
+                                // Create download link
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = downloadUrl;
+                                a.download = `Triage_Visualization_@(Model.FirstName)_@(Model.LastName)_${new Date().toISOString().split('T')[0]}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(downloadUrl);
+                            } else {
+                                const errorText = await response.text();
+                                alert('Error generating PDF. Please try again.');
+                                console.error('PDF generation error:', errorText);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error downloading PDF. Please try again.');
+                        } finally {
+                            button.disabled = false;
+                            button.innerHTML = originalHtml;
+                        }
+                    }
+
                     // Prepare data
                     const dates = @Html.Raw(Json.Serialize(triageRecords.Where(r => r.TriageDateTime.HasValue).Select(r => r.TriageDateTime.Value.ToString("MMM dd, yyyy HH:mm"))));
                     const pulseRates = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.PulseRate)));

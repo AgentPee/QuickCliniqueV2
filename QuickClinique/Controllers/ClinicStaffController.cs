@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using SD = System.Drawing;
+using System.Drawing.Imaging;
 
 namespace QuickClinique.Controllers
 {
@@ -1945,6 +1947,16 @@ namespace QuickClinique.Controllers
                 ? triageRecords.Average(r => r.Bmi) 
                 : (double?)null;
 
+            // Prepare chart data
+            var dates = triageRecords.Where(r => r.TriageDateTime.HasValue)
+                .Select(r => r.TriageDateTime.Value)
+                .ToList();
+            var pulseRates = triageRecords.Select(r => r.PulseRate).ToList();
+            var temperatures = triageRecords.Select(r => r.Temperature).ToList();
+            var oxygenSaturations = triageRecords.Select(r => r.OxygenSaturation).ToList();
+            var bmis = triageRecords.Select(r => (double?)r.Bmi).ToList();
+
+
             var document = Document.Create(container =>
             {
                 container.Page(page =>
@@ -1954,30 +1966,19 @@ namespace QuickClinique.Controllers
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(10));
 
-                    // Header Banner
+                    // Header Banner with QuickClinique and Logo
                     page.Header()
-                        .Height(60)
+                        .Height(50)
                         .Background(primaryTeal)
                         .Row(row =>
                         {
-                            row.RelativeItem().PaddingLeft(15).PaddingTop(15).Column(column =>
-                            {
-                                column.Item().Text("Triage Data Visualization Report")
-                                    .FontSize(18)
-                                    .Bold()
-                                    .FontColor(Colors.White);
-                                
-                                column.Item().PaddingTop(5).Text($"{student.FirstName} {student.LastName}")
-                                    .FontSize(12)
-                                    .FontColor(Colors.White);
-                                
-                                column.Item().Text($"ID Number: {student.Idnumber}")
-                                    .FontSize(10)
-                                    .FontColor(Colors.White);
-                            });
+                            row.RelativeItem().PaddingLeft(15).PaddingTop(12).Text("QuickClinique")
+                                .FontSize(16)
+                                .Bold()
+                                .FontColor(Colors.White);
                             
                             // Right side - Logo
-                            row.RelativeItem().AlignRight().PaddingRight(15).PaddingTop(10).Column(rightColumn =>
+                            row.RelativeItem().AlignRight().PaddingRight(15).PaddingTop(5).Column(rightColumn =>
                             {
                                 var logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "logo.png");
                                 if (System.IO.File.Exists(logoPath))
@@ -1988,60 +1989,190 @@ namespace QuickClinique.Controllers
                         });
 
                     page.Content()
-                        .PaddingVertical(15)
+                        .PaddingVertical(10)
                         .Column(column =>
                         {
-                            // Statistics Summary
-                            column.Item().Text("Statistics Summary").FontSize(14).Bold().FontColor(darkTeal);
-                            column.Item().PaddingTop(10).Row(row =>
+                            // Header Information
+                            column.Item().PaddingBottom(5).AlignCenter().Column(headerColumn =>
                             {
-                                row.ConstantItem(120).Text("Total Records:").FontSize(10);
-                                row.RelativeItem().Text(triageRecords.Count.ToString()).FontSize(10).Bold();
+                                headerColumn.Item().Text("University of Cebu Medical-Dental Clinic")
+                                    .FontSize(16)
+                                    .Bold()
+                                    .FontColor(darkTeal);
+                                
+                                headerColumn.Item().PaddingTop(3).Text("Sanciangko St, Cebu City")
+                                    .FontSize(11)
+                                    .FontColor(Colors.Grey.Darken1);
+                                
+                              
                             });
-                            
-                            if (avgPulseRate.HasValue)
-                            {
-                                column.Item().PaddingTop(5).Row(row =>
-                                {
-                                    row.ConstantItem(120).Text("Avg Pulse Rate:").FontSize(10);
-                                    row.RelativeItem().Text($"{avgPulseRate.Value:F1} bpm").FontSize(10).Bold();
-                                });
-                            }
-                            
-                            if (avgTemperature.HasValue)
-                            {
-                                column.Item().PaddingTop(5).Row(row =>
-                                {
-                                    row.ConstantItem(120).Text("Avg Temperature:").FontSize(10);
-                                    row.RelativeItem().Text($"{avgTemperature.Value:F1} °C").FontSize(10).Bold();
-                                });
-                            }
-                            
-                            if (avgOxygenSaturation.HasValue)
-                            {
-                                column.Item().PaddingTop(5).Row(row =>
-                                {
-                                    row.ConstantItem(120).Text("Avg O2 Saturation:").FontSize(10);
-                                    row.RelativeItem().Text($"{avgOxygenSaturation.Value:F1}%").FontSize(10).Bold();
-                                });
-                            }
-                            
-                            if (avgBmi.HasValue)
-                            {
-                                column.Item().PaddingTop(5).Row(row =>
-                                {
-                                    row.ConstantItem(120).Text("Avg BMI:").FontSize(10);
-                                    row.RelativeItem().Text($"{avgBmi.Value:F1}").FontSize(10).Bold();
-                                });
-                            }
 
-                            column.Item().PaddingTop(20);
+                            column.Item().PaddingTop(10).PaddingBottom(10);
 
-                            // Detailed Records Table
-                            column.Item().Text("Detailed Triage Records").FontSize(14).Bold().FontColor(darkTeal);
-                            column.Item().PaddingTop(10).Table(table =>
+                            // DATA TRIAGE Label
+                            column.Item().PaddingBottom(10).AlignCenter().Text("DATA TRIAGE")
+                                .FontSize(20)
+                                .Bold()
+                                .FontColor(darkTeal);
+
+                            // Patient Information Section
+                            column.Item().PaddingBottom(10).Table(patientTable =>
                             {
-                                // Header
+                                patientTable.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                });
+
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Patient Name:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text($"{student.FirstName} {student.LastName}").FontSize(10);
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Date Today:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(DateTime.Now.ToString("MMMM dd, yyyy")).FontSize(10);
+
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Gender:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(student.Gender ?? "N/A").FontSize(10);
+                                patientTable.Cell().Element(c => c.Padding(5)).Text("Date of Birth:").FontSize(10).SemiBold();
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(student.Birthdate?.ToString("MMMM dd, yyyy") ?? "N/A").FontSize(10);
+                            });
+
+                            column.Item().PaddingTop(10).PaddingBottom(10);
+
+                            // Statistics Cards (Averages)
+                            column.Item().PaddingBottom(5).Text("Statistics Summary").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().Table(statsTable =>
+                            {
+                                statsTable.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                    columns.RelativeColumn();
+                                });
+
+                                // Total Records Card
+                                statsTable.Cell().Element(c => c
+                                    .Background(primaryTeal)
+                                    .Padding(10)
+                                    .AlignCenter())
+                                    .Column(card =>
+                                    {
+                                        card.Item().Text(triageRecords.Count.ToString())
+                                            .FontSize(16)
+                                            .Bold()
+                                            .FontColor(Colors.White);
+                                        card.Item().Text("Total Records")
+                                            .FontSize(9)
+                                            .FontColor(Colors.White);
+                                    });
+
+                                // Avg Pulse Rate Card
+                                if (avgPulseRate.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{avgPulseRate.Value:F1}")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg Pulse Rate")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+
+                                // Avg Temperature Card
+                                if (avgTemperature.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{avgTemperature.Value:F1}°C")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg Temperature")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+
+                                // Avg O2 Saturation Card
+                                if (avgOxygenSaturation.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{avgOxygenSaturation.Value:F1}%")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg O2 Saturation")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+
+                                // Avg BMI Card
+                                if (avgBmi.HasValue)
+                                {
+                                    statsTable.Cell().Element(c => c
+                                        .Background(primaryTeal)
+                                        .Padding(10)
+                                        .AlignCenter())
+                                        .Column(card =>
+                                        {
+                                            card.Item().Text($"{avgBmi.Value:F1}")
+                                                .FontSize(16)
+                                                .Bold()
+                                                .FontColor(Colors.White);
+                                            card.Item().Text("Avg BMI")
+                                                .FontSize(9)
+                                                .FontColor(Colors.White);
+                                        });
+                                }
+                                else
+                                {
+                                    statsTable.Cell();
+                                }
+                            });
+
+                            column.Item().PaddingTop(15);
+
+                            // Chart visualization note
+                            column.Item().PaddingBottom(10).AlignCenter().Text("Chart visualization is available in the web interface.")
+                                .FontSize(10)
+                                .Italic()
+                                .FontColor(Colors.Grey.Darken1);
+
+                            // Detailed Triage Records Table
+                            column.Item().PaddingBottom(5).Text("Detailed Triage Records").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().PaddingTop(5).Table(table =>
+                            {
                                 table.ColumnsDefinition(columns =>
                                 {
                                     columns.RelativeColumn(2);
@@ -2076,7 +2207,6 @@ namespace QuickClinique.Controllers
                                     }
                                 });
 
-                                // Data rows
                                 foreach (var record in triageRecords)
                                 {
                                     table.Cell().Element(CellStyle).Text(record.TriageDateTime?.ToString("MMM dd, yyyy\nHH:mm") ?? "N/A");
@@ -2099,12 +2229,6 @@ namespace QuickClinique.Controllers
                                     }
                                 }
                             });
-
-                            column.Item().PaddingTop(20);
-                            column.Item().Text($"Generated on: {DateTime.Now:MMMM dd, yyyy 'at' HH:mm}")
-                                .FontSize(9)
-                                .FontColor(Colors.Grey.Darken1)
-                                .Italic();
                         });
 
                     // Footer Banner
@@ -2134,6 +2258,196 @@ namespace QuickClinique.Controllers
                 // Log the error (you might want to use a logger here)
                 TempData["Error"] = $"An error occurred while generating the PDF: {ex.Message}";
                 return RedirectToAction("TriageVisualization", new { studentId });
+            }
+        }
+
+        private byte[]? GenerateChartImage(List<DateTime> dates, List<int?> pulseRates, List<decimal?> temperatures, List<int?> oxygenSaturations, List<double?> bmis)
+        {
+            try
+            {
+                const int width = 800;
+                const int height = 400;
+                const int padding = 50;
+                const int chartWidth = width - (padding * 2);
+                const int chartHeight = height - (padding * 2);
+
+                using (var bitmap = new System.Drawing.Bitmap(width, height))
+                using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
+                {
+                    // Set high quality
+                    graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+                    // White background
+                    graphics.Clear(SD.Color.White);
+
+                    // Prepare data
+                    var validData = dates.Zip(pulseRates, (d, p) => new { Date = d, Pulse = p })
+                        .Zip(temperatures, (x, t) => new { x.Date, x.Pulse, Temp = t })
+                        .Zip(oxygenSaturations, (x, o) => new { x.Date, x.Pulse, x.Temp, O2 = o })
+                        .Zip(bmis, (x, b) => new { x.Date, x.Pulse, x.Temp, x.O2, BMI = b })
+                        .ToList();
+
+                    if (!validData.Any()) return null;
+
+                    // Calculate min/max for scaling
+                    var allValues = new List<double>();
+                    if (pulseRates.Any(p => p.HasValue)) allValues.AddRange(pulseRates.Where(p => p.HasValue).Select(p => (double)p.Value));
+                    if (temperatures.Any(t => t.HasValue)) allValues.AddRange(temperatures.Where(t => t.HasValue).Select(t => (double)t.Value));
+                    if (oxygenSaturations.Any(o => o.HasValue)) allValues.AddRange(oxygenSaturations.Where(o => o.HasValue).Select(o => (double)o.Value));
+                    if (bmis.Any(b => b.HasValue)) allValues.AddRange(bmis.Where(b => b.HasValue).Select(b => b.Value));
+
+                    if (!allValues.Any()) return null;
+
+                    var minValue = allValues.Min();
+                    var maxValue = allValues.Max();
+                    var range = maxValue - minValue;
+                    if (range == 0) range = 1;
+
+                    // Draw axes
+                    using (var axisPen = new SD.Pen(SD.Color.Gray, 2))
+                    {
+                        // Y-axis
+                        graphics.DrawLine(axisPen, padding, padding, padding, height - padding);
+                        // X-axis
+                        graphics.DrawLine(axisPen, padding, height - padding, width - padding, height - padding);
+                    }
+
+                    // Draw grid lines
+                    using (var gridPen = new SD.Pen(SD.Color.LightGray, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot })
+                    {
+                        for (int i = 0; i <= 5; i++)
+                        {
+                            var y = padding + (chartHeight * i / 5);
+                            graphics.DrawLine(gridPen, padding, y, width - padding, y);
+                        }
+                    }
+
+                    // Draw Pulse Rate line (Cyan)
+                    if (pulseRates.Any(p => p.HasValue))
+                    {
+                        DrawChartLine(graphics, validData, d => d.Pulse.HasValue ? (double)d.Pulse.Value : double.NaN,
+                            minValue, maxValue, padding, height - padding, chartWidth, chartHeight, SD.Color.FromArgb(0, 191, 255));
+                    }
+
+                    // Draw Temperature line (Red)
+                    if (temperatures.Any(t => t.HasValue))
+                    {
+                        DrawChartLine(graphics, validData, d => d.Temp.HasValue ? (double)d.Temp.Value : double.NaN,
+                            minValue, maxValue, padding, height - padding, chartWidth, chartHeight, SD.Color.Red);
+                    }
+
+                    // Draw Oxygen Saturation line (Blue)
+                    if (oxygenSaturations.Any(o => o.HasValue))
+                    {
+                        DrawChartLine(graphics, validData, d => d.O2.HasValue ? (double)d.O2.Value : double.NaN,
+                            minValue, maxValue, padding, height - padding, chartWidth, chartHeight, SD.Color.Blue);
+                    }
+
+                    // Draw BMI line (Purple)
+                    if (bmis.Any(b => b.HasValue))
+                    {
+                        DrawChartLine(graphics, validData, d => d.BMI.HasValue ? d.BMI.Value : double.NaN,
+                            minValue, maxValue, padding, height - padding, chartWidth, chartHeight, SD.Color.Purple);
+                    }
+
+                    // Draw labels
+                    using (var font = new SD.Font("Arial", 9))
+                    using (var brush = new SD.SolidBrush(SD.Color.Black))
+                    {
+                        graphics.DrawString("Date & Time", font, brush, width / 2 - 40, height - padding + 5);
+                        graphics.DrawString("Value", font, brush, 5, padding - 20);
+                    }
+
+                    // Draw legend
+                    int legendX = width - 150;
+                    int legendY = padding;
+                    int legendItemHeight = 20;
+                    int legendIndex = 0;
+
+                    if (pulseRates.Any(p => p.HasValue))
+                    {
+                        DrawLegendItem(graphics, legendX, legendY + (legendIndex++ * legendItemHeight), SD.Color.FromArgb(0, 191, 255), "Pulse Rate");
+                    }
+                    if (temperatures.Any(t => t.HasValue))
+                    {
+                        DrawLegendItem(graphics, legendX, legendY + (legendIndex++ * legendItemHeight), SD.Color.Red, "Temperature");
+                    }
+                    if (oxygenSaturations.Any(o => o.HasValue))
+                    {
+                        DrawLegendItem(graphics, legendX, legendY + (legendIndex++ * legendItemHeight), SD.Color.Blue, "O2 Saturation");
+                    }
+                    if (bmis.Any(b => b.HasValue))
+                    {
+                        DrawLegendItem(graphics, legendX, legendY + (legendIndex++ * legendItemHeight), SD.Color.Purple, "BMI");
+                    }
+
+                    // Convert to byte array
+                    using (var ms = new MemoryStream())
+                    {
+                        bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        return ms.ToArray();
+                    }
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void DrawChartLine<T>(SD.Graphics graphics, List<T> data, Func<T, double> valueSelector, 
+            double minValue, double maxValue, int leftMargin, int bottomMargin, int chartWidth, int chartHeight, 
+            SD.Color color)
+        {
+            var points = new List<SD.PointF>();
+            var range = maxValue - minValue;
+            if (range == 0) range = 1;
+
+            for (int i = 0; i < data.Count; i++)
+            {
+                var value = valueSelector(data[i]);
+                if (!double.IsNaN(value))
+                {
+                    var x = leftMargin + (i / (float)(data.Count - 1)) * chartWidth;
+                    var normalizedValue = (value - minValue) / range;
+                    var y = bottomMargin - (float)(normalizedValue * chartHeight);
+                    points.Add(new SD.PointF(x, y));
+                }
+            }
+
+            if (points.Count > 1)
+            {
+                using (var pen = new SD.Pen(color, 2))
+                {
+                    graphics.DrawLines(pen, points.ToArray());
+                }
+
+                // Draw points
+                using (var brush = new SD.SolidBrush(color))
+                {
+                    foreach (var point in points)
+                    {
+                        graphics.FillEllipse(brush, point.X - 3, point.Y - 3, 6, 6);
+                    }
+                }
+            }
+        }
+
+        private void DrawLegendItem(SD.Graphics graphics, int x, int y, SD.Color color, string label)
+        {
+            using (var brush = new SD.SolidBrush(color))
+            {
+                graphics.FillRectangle(brush, x, y, 15, 10);
+            }
+            using (var pen = new SD.Pen(SD.Color.Black, 1))
+            {
+                graphics.DrawRectangle(pen, x, y, 15, 10);
+            }
+            using (var font = new SD.Font("Arial", 8))
+            using (var brush = new SD.SolidBrush(SD.Color.Black))
+            {
+                graphics.DrawString(label, font, brush, x + 20, y);
             }
         }
 
