@@ -1453,19 +1453,10 @@ namespace QuickClinique.Controllers
                                             }
                                         });
 
-                                        if (record.RespiratoryRate.HasValue || record.OxygenSaturation.HasValue)
+                                        if (record.OxygenSaturation.HasValue)
                                         {
                                             recordColumn.Item().PaddingTop(3).Row(row =>
                                             {
-                                                if (record.RespiratoryRate.HasValue)
-                                                {
-                                                    row.RelativeItem().Text(text =>
-                                                    {
-                                                        text.Span("Respiratory Rate: ").Bold();
-                                                        text.Span($"{record.RespiratoryRate.Value} breaths/min");
-                                                    });
-                                                }
-                                                
                                                 if (record.OxygenSaturation.HasValue)
                                                 {
                                                     row.RelativeItem().Text(text =>

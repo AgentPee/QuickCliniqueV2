@@ -34,6 +34,9 @@ public partial class Clinicstaff
     public string? Gender { get; set; }
     public string? Image { get; set; }
 
+    // Professional information
+    public string? LicenseNumber { get; set; }
+
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual Usertype User { get; set; } = null!;

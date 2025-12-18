@@ -48,5 +48,9 @@ namespace QuickClinique.Models
         [Display(Name = "Confirm Password")]
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = null!;
+
+        [Display(Name = "License Number (Optional)")]
+        [RegularExpression(@"^\d{2}\s\d{6}$", ErrorMessage = "License number must be in format: 2 digits, space, 6 digits (e.g., 22 123456)")]
+        public string? LicenseNumber { get; set; }
     }
 }

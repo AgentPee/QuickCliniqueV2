@@ -38,6 +38,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
+    public virtual DbSet<MedicalRecordFile> MedicalRecordFiles { get; set; } = null!;
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         // Configuration is handled in Program.cs
@@ -151,6 +153,10 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Image)
                 .HasColumnType("varchar(500)")
                 .HasColumnName("Image");
+            entity.Property(e => e.LicenseNumber)
+                .HasColumnType("varchar(100)")
+                .HasColumnName("LicenseNumber")
+                .IsRequired(false);
 
             entity.HasOne(d => d.User).WithMany(p => p.Clinicstaffs)
                 .HasForeignKey(d => d.UserId)
@@ -348,12 +354,33 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Temperature)
                 .HasColumnType("decimal(5,2)")
                 .HasColumnName("Temperature");
-            entity.Property(e => e.RespiratoryRate)
-                .HasColumnType("int(50)")
-                .HasColumnName("RespiratoryRate");
             entity.Property(e => e.OxygenSaturation)
                 .HasColumnType("int(50)")
                 .HasColumnName("OxygenSaturation");
+            entity.Property(e => e.TriageDateTime)
+                .HasColumnType("datetime")
+                .HasColumnName("TriageDateTime")
+                .IsRequired(false);
+            entity.Property(e => e.TriageTakenByStaffId)
+                .HasColumnType("int(100)")
+                .HasColumnName("TriageTakenByStaffId")
+                .IsRequired(false);
+            entity.Property(e => e.TriageTakenByName)
+                .HasColumnType("varchar(255)")
+                .HasColumnName("TriageTakenByName")
+                .IsRequired(false);
+            entity.Property(e => e.TreatmentProvidedByStaffId)
+                .HasColumnType("int(100)")
+                .HasColumnName("TreatmentProvidedByStaffId")
+                .IsRequired(false);
+            entity.Property(e => e.TreatmentProvidedByName)
+                .HasColumnType("varchar(255)")
+                .HasColumnName("TreatmentProvidedByName")
+                .IsRequired(false);
+            entity.Property(e => e.DoctorLicenseNumber)
+                .HasColumnType("varchar(100)")
+                .HasColumnName("DoctorLicenseNumber")
+                .IsRequired(false);
 
             entity.HasOne(d => d.Patient).WithMany(p => p.Precords)
                 .HasForeignKey(d => d.PatientId)
@@ -485,6 +512,59 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255);
             entity.Property(e => e.Xml)
                 .HasColumnType("longtext");
+        });
+
+        modelBuilder.Entity<MedicalRecordFile>(entity =>
+        {
+            entity.HasKey(e => e.FileId).HasName("PRIMARY");
+
+            entity.ToTable("medicalrecordfiles");
+
+            entity.HasIndex(e => e.PatientId, "PatientID");
+            entity.HasIndex(e => e.RecordId, "RecordID");
+
+            entity.Property(e => e.FileId)
+                .HasColumnType("int(100)")
+                .HasColumnName("FileID");
+            entity.Property(e => e.PatientId)
+                .HasColumnType("int(100)")
+                .HasColumnName("PatientID");
+            entity.Property(e => e.RecordId)
+                .HasColumnType("int(100)")
+                .HasColumnName("RecordID")
+                .IsRequired(false);
+            entity.Property(e => e.FileName)
+                .HasColumnType("varchar(500)")
+                .HasColumnName("FileName");
+            entity.Property(e => e.FilePath)
+                .HasColumnType("varchar(1000)")
+                .HasColumnName("FilePath");
+            entity.Property(e => e.FileType)
+                .HasColumnType("varchar(100)")
+                .HasColumnName("FileType");
+            entity.Property(e => e.FileSize)
+                .HasColumnType("bigint")
+                .HasColumnName("FileSize");
+            entity.Property(e => e.Description)
+                .HasColumnType("text")
+                .HasColumnName("Description")
+                .IsRequired(false);
+            entity.Property(e => e.UploadedByStaffId)
+                .HasColumnType("int(100)")
+                .HasColumnName("UploadedByStaffId")
+                .IsRequired(false);
+            entity.Property(e => e.UploadedByName)
+                .HasColumnType("varchar(255)")
+                .HasColumnName("UploadedByName")
+                .IsRequired(false);
+            entity.Property(e => e.UploadedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("UploadedAt")
+                .HasDefaultValueSql("current_timestamp");
+
+            entity.HasOne(d => d.Patient).WithMany()
+                .HasForeignKey(d => d.PatientId)
+                .HasConstraintName("medicalrecordfiles_ibfk_1");
         });
 
         OnModelCreatingPartial(modelBuilder);

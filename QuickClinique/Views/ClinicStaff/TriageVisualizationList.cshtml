@@ -1,0 +1,60 @@
+@model List<QuickClinique.Models.Student>
+@{
+    ViewData["Title"] = "Triage Visualization - Select Student";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-3">
+                <a href="@Url.Action("Reports", "Clinicstaff")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Reports
+                </a>
+            </div>
+            <h2><i class="fas fa-chart-line"></i> Triage Data Visualization</h2>
+            <p class="text-muted">Select a student to view their triage data visualization and predictive health analysis.</p>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID Number</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var student in Model)
+                                    {
+                                        <tr>
+                                            <td>@student.Idnumber</td>
+                                            <td>@student.FirstName @student.LastName</td>
+                                            <td>@student.Email</td>
+                                            <td>
+                                                <a href="@Url.Action("TriageVisualization", "Clinicstaff", new { studentId = student.StudentId })" 
+                                                   class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-chart-line"></i> View Visualization
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No students found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

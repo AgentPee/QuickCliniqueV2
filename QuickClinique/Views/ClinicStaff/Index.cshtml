@@ -21,6 +21,7 @@
                 <tr>
                
                     <th><i class="fas fa-user"></i> Name</th>
+                    <th><i class="fas fa-id-card"></i> License #</th>
                     <th><i class="fas fa-envelope"></i> Email</th>
                     <th><i class="fas fa-phone"></i> Phone Number</th>
                     <th><i class="fas fa-user-tag"></i> User Role</th>
@@ -35,6 +36,11 @@
                         <td>
                             <span class="staff-field">
                                 <i class="fas fa-user"></i> @item.FirstName @item.LastName
+                            </span>
+                        </td>
+                        <td>
+                            <span class="staff-field">
+                                <i class="fas fa-id-card"></i> @(string.IsNullOrWhiteSpace(item.LicenseNumber) ? "N/A" : item.LicenseNumber)
                             </span>
                         </td>
                         <td>
@@ -662,7 +668,7 @@
             const row = document.querySelector(`tr[data-staff-id="${staffId}"]`);
             if (!row) return;
             
-            const statusCell = row.querySelector('td:nth-child(5)'); // Status column
+            const statusCell = row.querySelector('td:nth-child(6)'); // Status column (updated after adding License # column)
             if (!statusCell) return;
             
             const statusDiv = statusCell.querySelector('.flex-align-center');

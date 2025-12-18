@@ -12,11 +12,13 @@ namespace QuickClinique.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public PrecordController(ApplicationDbContext context, IEmailService emailService)
+        public PrecordController(ApplicationDbContext context, IEmailService emailService, IFileStorageService fileStorageService)
         {
             _context = context;
             _emailService = emailService;
+            _fileStorageService = fileStorageService;
         }
 
         // Helper method to get the base URL for absolute links (for email verification, etc.)
@@ -65,12 +67,72 @@ namespace QuickClinique.Controllers
                 .Include(s => s.Precords)
                 .FirstOrDefaultAsync(m => m.StudentId == id);
 
+            // Load staff information for all precords to get actual names
+            if (student != null && student.Precords.Any())
+            {
+                var staffIds = student.Precords
+                    .Where(p => p.TriageTakenByStaffId.HasValue || p.TreatmentProvidedByStaffId.HasValue)
+                    .SelectMany(p => new[] { p.TriageTakenByStaffId, p.TreatmentProvidedByStaffId })
+                    .Where(id => id.HasValue)
+                    .Select(id => id.Value)
+                    .Distinct()
+                    .ToList();
+
+                var staffMembers = await _context.Clinicstaffs
+                    .Where(s => staffIds.Contains(s.ClinicStaffId))
+                    .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+                // Update the names in memory for display
+                foreach (var record in student.Precords)
+                {
+                    if (record.TriageTakenByStaffId.HasValue && staffMembers.ContainsKey(record.TriageTakenByStaffId.Value))
+                    {
+                        record.TriageTakenByName = staffMembers[record.TriageTakenByStaffId.Value];
+                    }
+                    if (record.TreatmentProvidedByStaffId.HasValue && staffMembers.ContainsKey(record.TreatmentProvidedByStaffId.Value))
+                    {
+                        record.TreatmentProvidedByName = staffMembers[record.TreatmentProvidedByStaffId.Value];
+                    }
+                }
+            }
+
             if (student == null)
             {
                 if (IsAjaxRequest())
                     return Json(new { success = false, error = "Patient not found" });
                 return NotFound();
             }
+
+            // Load medical record files separately
+            var medicalRecordFiles = await _context.MedicalRecordFiles
+                .Where(f => f.PatientId == student.StudentId)
+                .OrderByDescending(f => f.UploadedAt)
+                .ToListAsync();
+
+            // Load staff information for medical record files to get actual names
+            if (medicalRecordFiles.Any())
+            {
+                var fileStaffIds = medicalRecordFiles
+                    .Where(f => f.UploadedByStaffId.HasValue)
+                    .Select(f => f.UploadedByStaffId.Value)
+                    .Distinct()
+                    .ToList();
+
+                var fileStaffMembers = await _context.Clinicstaffs
+                    .Where(s => fileStaffIds.Contains(s.ClinicStaffId))
+                    .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+                // Update the names in memory for display
+                foreach (var file in medicalRecordFiles)
+                {
+                    if (file.UploadedByStaffId.HasValue && fileStaffMembers.ContainsKey(file.UploadedByStaffId.Value))
+                    {
+                        file.UploadedByName = fileStaffMembers[file.UploadedByStaffId.Value];
+                    }
+                }
+            }
+
+            ViewBag.MedicalRecordFiles = medicalRecordFiles;
 
             // Order appointments by date descending (most recent first)
             var orderedAppointments = student.Appointments
@@ -529,6 +591,130 @@ namespace QuickClinique.Controllers
             {
                 Console.WriteLine($"Error updating patient status: {ex.Message}");
                 return Json(new { success = false, message = "An unexpected error occurred. Please try again." });
+            }
+        }
+
+        // POST: Precord/UploadMedicalRecordFile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadMedicalRecordFile(int patientId, int? recordId, IFormFile file, string? description)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Please select a file to upload." });
+            }
+
+            // Validate file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".pdf", ".doc", ".docx", ".xls", ".xlsx" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return Json(new { success = false, message = "Invalid file type. Allowed types: images (jpg, png, gif, bmp, webp), PDF, and Office documents (doc, docx, xls, xlsx)." });
+            }
+
+            // Validate file size (max 10MB)
+            const long maxFileSize = 10 * 1024 * 1024; // 10MB
+            if (file.Length > maxFileSize)
+            {
+                return Json(new { success = false, message = "File size exceeds the maximum limit of 10MB." });
+            }
+
+            // Verify patient exists
+            var patient = await _context.Students.FindAsync(patientId);
+            if (patient == null)
+            {
+                return Json(new { success = false, message = "Patient not found." });
+            }
+
+            // Get current staff member
+            var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+            Clinicstaff? staff = null;
+            if (staffId.HasValue)
+            {
+                staff = await _context.Clinicstaffs
+                    .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+            }
+
+            try
+            {
+                // Generate unique file name
+                var fileName = $"{patientId}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
+                var folder = "medical-records";
+
+                // Upload file
+                var filePath = await _fileStorageService.UploadFileAsync(file, folder, fileName);
+
+                // Create database record
+                var medicalRecordFile = new MedicalRecordFile
+                {
+                    PatientId = patientId,
+                    RecordId = recordId,
+                    FileName = file.FileName,
+                    FilePath = filePath,
+                    FileType = file.ContentType,
+                    FileSize = file.Length,
+                    Description = description,
+                    UploadedByStaffId = staffId,
+                    UploadedByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null,
+                    UploadedAt = DateTime.Now
+                };
+
+                _context.MedicalRecordFiles.Add(medicalRecordFile);
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = "File uploaded successfully.",
+                    fileId = medicalRecordFile.FileId,
+                    fileName = medicalRecordFile.FileName,
+                    filePath = medicalRecordFile.FilePath
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading medical record file: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while uploading the file. Please try again." });
+            }
+        }
+
+        // GET: Precord/GetMedicalRecordFiles/{patientId}
+        [HttpGet]
+        public async Task<IActionResult> GetMedicalRecordFiles(int patientId)
+        {
+            var files = await _context.MedicalRecordFiles
+                .Where(f => f.PatientId == patientId)
+                .OrderByDescending(f => f.UploadedAt)
+                .ToListAsync();
+
+            return Json(new { success = true, files = files });
+        }
+
+        // POST: Precord/DeleteMedicalRecordFile/{fileId}
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMedicalRecordFile(int fileId)
+        {
+            var file = await _context.MedicalRecordFiles.FindAsync(fileId);
+            if (file == null)
+            {
+                return Json(new { success = false, message = "File not found." });
+            }
+
+            try
+            {
+                // Delete physical file
+                await _fileStorageService.DeleteFileAsync(file.FilePath);
+
+                // Delete database record
+                _context.MedicalRecordFiles.Remove(file);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "File deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting medical record file: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while deleting the file. Please try again." });
             }
         }
 

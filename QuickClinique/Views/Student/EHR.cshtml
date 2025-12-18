@@ -14,9 +14,7 @@
                 <i class="fas fa-arrow-left"></i>
                 Back to Profile
             </a>
-            <a href="@Url.Action("GenerateMedicalCertificate", "Student")" class="btn-generate-report">
-                <i class="fas fa-file-pdf"></i> Generate Medical Certificate (PDF)
-            </a>
+       
         </div>
         <div class="header-separator"></div>
         <div class="header-content">
@@ -136,16 +134,6 @@
                                         <div>
                                             <div class="info-card-label">Temperature</div>
                                             <div class="info-card-value">@(record.Temperature.HasValue ? record.Temperature.Value.ToString("F1") + "°C" : "N/A")</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <i class="fas fa-lungs"></i>
-                                        <div>
-                                            <div class="info-card-label">Respiratory Rate</div>
-                                            <div class="info-card-value">@(record.RespiratoryRate.HasValue ? record.RespiratoryRate.Value + " breaths/min" : "N/A")</div>
                                         </div>
                                     </div>
                                 </div>

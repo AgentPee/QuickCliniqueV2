@@ -1,0 +1,479 @@
+/* Triage Visualization - Modern Premium UI Design */
+
+/* CSS Variables */
+:root {
+    --primary-teal: #4ECDC4;
+    --secondary-teal: #44A08D;
+    --dark-teal: #3BA89F;
+    --white: #FFFFFF;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --text-dark: #1F2937;
+    --text-muted: #6B7280;
+    --border-color: #E5E7EB;
+    
+    --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-teal: 0 10px 30px -5px rgba(78, 205, 196, 0.3);
+    
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Container */
+.triage-visualization-container {
+    padding: 1.25rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: 
+        radial-gradient(ellipse at top left, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(68, 160, 141, 0.1) 0%, transparent 50%),
+        linear-gradient(135deg, #FAFBFC 0%, #F3F4F6 50%, #E5E7EB 100%);
+    position: relative;
+}
+
+/* Modern Back Button */
+.triage-btn-back {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-base);
+    margin-bottom: 1.25rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-md), var(--shadow-teal);
+}
+
+.triage-btn-back:hover {
+    background: linear-gradient(135deg, var(--dark-teal) 0%, var(--primary-teal) 100%);
+    transform: translateX(-4px) translateY(-2px);
+    box-shadow: var(--shadow-xl), var(--shadow-teal);
+    color: var(--white);
+}
+
+.triage-btn-print {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-base);
+    margin-left: 0.75rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md), var(--shadow-teal);
+    text-decoration: none;
+}
+
+.triage-btn-print:hover {
+    background: linear-gradient(135deg, var(--dark-teal) 0%, var(--primary-teal) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl), var(--shadow-teal);
+    color: var(--white);
+    text-decoration: none;
+}
+
+/* Premium Card Design */
+.triage-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    transition: all var(--transition-base);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+}
+
+.triage-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    z-index: 1;
+}
+
+.triage-card:hover {
+    box-shadow: var(--shadow-xl), var(--shadow-teal);
+    transform: translateY(-4px);
+    border-color: rgba(78, 205, 196, 0.3);
+}
+
+/* Card Header */
+.triage-card-header {
+    padding: 1.5rem 1.75rem;
+    border-bottom: 2px solid var(--gray-100);
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.08) 0%, rgba(68, 160, 141, 0.08) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.triage-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+}
+
+.triage-card-header h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.triage-card-header h3 i {
+    color: var(--primary-teal);
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.triage-card-header p {
+    color: var(--text-muted);
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+}
+
+/* Card Body */
+.triage-card-body {
+    padding: 1.5rem 1.75rem;
+    background: var(--white);
+}
+
+/* Statistics Cards */
+.triage-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.triage-stats-card {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(68, 160, 141, 0.1) 100%);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+    border-left: 4px solid var(--primary-teal);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(78, 205, 196, 0.2);
+}
+
+.triage-stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-left-width: 6px;
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.15) 0%, rgba(68, 160, 141, 0.15) 100%);
+}
+
+.triage-stats-card h4 {
+    font-size: 1.875rem;
+    font-weight: 900;
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.triage-stats-card p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+/* Chart Container */
+.triage-chart-container {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-100);
+    transition: all var(--transition-base);
+}
+
+.triage-chart-container:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(78, 205, 196, 0.3);
+}
+
+.triage-chart-container h5 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.triage-chart-container canvas {
+    max-height: 400px;
+    width: 100% !important;
+}
+
+/* Vital Signs Filter */
+.vital-signs-filter {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid var(--gray-200);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.filter-checkbox:hover {
+    background: rgba(78, 205, 196, 0.1);
+    border-color: var(--primary-teal);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-checkbox input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-teal);
+}
+
+.filter-checkbox input[type="checkbox"]:checked {
+    accent-color: var(--primary-teal);
+}
+
+.filter-checkbox span {
+    font-size: 0.875rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+/* Table Styling */
+.triage-table-container {
+    margin-top: 1.5rem;
+}
+
+.triage-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.triage-table thead {
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    color: var(--white);
+}
+
+.triage-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.triage-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--text-dark);
+    font-size: 0.9rem;
+}
+
+.triage-table tbody tr {
+    transition: all var(--transition-base);
+}
+
+.triage-table tbody tr:hover {
+    background: rgba(78, 205, 196, 0.05);
+}
+
+.triage-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Alert Styling */
+.triage-alert {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-left: 4px solid var(--info);
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.triage-alert i {
+    color: var(--info);
+    font-size: 1.25rem;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .triage-visualization-container {
+        background: white;
+        padding: 0;
+    }
+    
+    .triage-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .triage-card-header {
+        background: #f8f9fa !important;
+        color: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .triage-stats-card {
+        background: #e8f5f4 !important;
+        color: #333 !important;
+        border: 1px solid var(--primary-teal);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .triage-stats-card h4 {
+        color: var(--dark-teal) !important;
+        -webkit-text-fill-color: var(--dark-teal) !important;
+    }
+    
+    .triage-chart-container {
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .triage-table thead {
+        background: #e8f5f4 !important;
+        color: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .triage-table th,
+    .triage-table td {
+        border: 1px solid #ddd;
+    }
+    
+    @page {
+        margin: 1cm;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .triage-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .triage-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .triage-visualization-container {
+        padding: 1rem;
+    }
+    
+    .triage-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .triage-card-header {
+        padding: 1.25rem;
+    }
+    
+    .triage-card-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .triage-card-body {
+        padding: 1.25rem;
+    }
+    
+    .vital-signs-filter {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-checkbox {
+        width: 100%;
+    }
+    
+    .triage-table {
+        font-size: 0.85rem;
+    }
+    
+    .triage-table th,
+    .triage-table td {
+        padding: 0.75rem;
+    }
+}
+

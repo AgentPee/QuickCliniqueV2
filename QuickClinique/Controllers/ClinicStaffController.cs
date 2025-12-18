@@ -167,7 +167,7 @@ namespace QuickClinique.Controllers
         // POST: Clinicstaff/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber,Birthdate,Gender")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
+        public async Task<IActionResult> Edit(int id, [Bind("ClinicStaffId,UserId,FirstName,LastName,Email,PhoneNumber,LicenseNumber,Birthdate,Gender")] Clinicstaff clinicstaff, string? newPassword, string? confirmPassword)
         {
             Console.WriteLine($"=== EDIT POST STARTED ===");
             Console.WriteLine($"ID: {id}, ClinicStaffId: {clinicstaff.ClinicStaffId}");
@@ -185,6 +185,17 @@ namespace QuickClinique.Controllers
             ModelState.Remove("Notifications");
             ModelState.Remove("newPassword");
             ModelState.Remove("confirmPassword");
+
+            // Validate LicenseNumber format if provided
+            if (!string.IsNullOrWhiteSpace(clinicstaff.LicenseNumber))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(clinicstaff.LicenseNumber.Trim(), @"^\d{2}\s\d{6}$"))
+                {
+                    if (IsAjaxRequest())
+                        return Json(new { success = false, error = "License number must be in format: 2 digits, space, 6 digits (e.g., 22 123456)" });
+                    ModelState.AddModelError("LicenseNumber", "License number must be in format: 2 digits, space, 6 digits (e.g., 22 123456)");
+                }
+            }
 
             // Validate password confirmation if new password is provided
             if (!string.IsNullOrWhiteSpace(newPassword))
@@ -243,8 +254,37 @@ namespace QuickClinique.Controllers
                     existingStaff.LastName = clinicstaff.LastName;
                     existingStaff.Email = clinicstaff.Email;
                     existingStaff.PhoneNumber = clinicstaff.PhoneNumber;
+                    existingStaff.LicenseNumber = clinicstaff.LicenseNumber;
                     existingStaff.Birthdate = clinicstaff.Birthdate;
                     existingStaff.Gender = clinicstaff.Gender;
+
+                    // Update role based on LicenseNumber
+                    if (existingStaff.User != null)
+                    {
+                        bool hasLicense = !string.IsNullOrWhiteSpace(clinicstaff.LicenseNumber);
+                        bool isCurrentlyAdmin = existingStaff.User.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) ?? false;
+                        
+                        if (hasLicense && !isCurrentlyAdmin)
+                        {
+                            // Assign Admin role if license number is provided
+                            var adminUserType = await _context.Usertypes
+                                .FirstOrDefaultAsync(ut => ut.Role == "Admin");
+                            if (adminUserType != null)
+                            {
+                                existingStaff.UserId = adminUserType.UserId;
+                            }
+                        }
+                        else if (!hasLicense && isCurrentlyAdmin)
+                        {
+                            // Assign ClinicStaff role if license number is removed
+                            var clinicStaffUserType = await _context.Usertypes
+                                .FirstOrDefaultAsync(ut => ut.Role == "ClinicStaff");
+                            if (clinicStaffUserType != null)
+                            {
+                                existingStaff.UserId = clinicStaffUserType.UserId;
+                            }
+                        }
+                    }
 
                     // Only update password if a new one was provided
                     if (!string.IsNullOrWhiteSpace(newPassword))
@@ -607,6 +647,15 @@ namespace QuickClinique.Controllers
                 ModelState.AddModelError("StaffIdImageBack", "Staff ID Back image is required. Please upload a photo of the back of your ID.");
             }
 
+            // Validate license number format if provided
+            if (!string.IsNullOrWhiteSpace(model.LicenseNumber))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(model.LicenseNumber.Trim(), @"^\d{2}\s\d{6}$"))
+                {
+                    ModelState.AddModelError("LicenseNumber", "License number must be in format: 2 digits, space, 6 digits (e.g., 22 123456)");
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(model.Password))
             {
                 ModelState.AddModelError("Password", "Password is required. Please enter a password.");
@@ -644,29 +693,56 @@ namespace QuickClinique.Controllers
                     }
 
                  
-                    // Create and save the Usertype first
-                    var usertype = new Usertype
+                    // Determine user type based on license number
+                    Usertype usertype;
+                    
+                    // If license number is provided, assign Admin role
+                    if (!string.IsNullOrWhiteSpace(model.LicenseNumber))
                     {
-                        Name = model.FirstName.ToUpper() + " " + model.LastName.ToUpper(),
-                        Role = "ClinicStaff"
-                    };
-
-                    try
-                    {
-                        _context.Usertypes.Add(usertype);
-                        await _context.SaveChangesAsync();
+                        // Find existing Admin Usertype
+                        var adminUserType = await _context.Usertypes
+                            .FirstOrDefaultAsync(ut => ut.Role == "Admin");
+                        
+                        if (adminUserType == null)
+                        {
+                            // Create Admin Usertype if it doesn't exist
+                            adminUserType = new Usertype
+                            {
+                                Name = "System Administrator",
+                                Role = "Admin"
+                            };
+                            _context.Usertypes.Add(adminUserType);
+                            await _context.SaveChangesAsync();
+                        }
+                        
+                        usertype = adminUserType;
                     }
-                    catch (DbUpdateException dbEx)
+                    else
                     {
-                        Console.WriteLine($"Database error creating user type: {dbEx.Message}");
-                        if (IsAjaxRequest())
-                            return Json(new { 
-                                success = false, 
-                                error = "An error occurred while creating your account. Please try again. If the problem persists, contact support."
-                            });
+                        // Create and save the Usertype for ClinicStaff
+                        usertype = new Usertype
+                        {
+                            Name = model.FirstName.ToUpper() + " " + model.LastName.ToUpper(),
+                            Role = "ClinicStaff"
+                        };
 
-                        ModelState.AddModelError("", "An error occurred while creating your account. Please try again.");
-                        return View(model);
+                        try
+                        {
+                            _context.Usertypes.Add(usertype);
+                            await _context.SaveChangesAsync();
+                        }
+                        catch (DbUpdateException dbEx)
+                        {
+                            Console.WriteLine($"Database error creating user type: {dbEx.Message}");
+                            if (IsAjaxRequest())
+                                return Json(new { 
+                                    success = false, 
+                                    error = "An error occurred while creating your account. Please try again. If the problem persists, contact support."
+                                });
+
+                            ModelState.AddModelError("", "An error occurred while creating your account. Please try again.");
+                            return View(model);
+                        }
                     }
 
                     // Generate email verification token
@@ -794,6 +870,7 @@ namespace QuickClinique.Controllers
                         Birthdate = model.Birthdate,
                         Image = imagePath,
                         Password = _passwordService.HashPassword(model.Password),
+                        LicenseNumber = !string.IsNullOrWhiteSpace(model.LicenseNumber) ? model.LicenseNumber.Trim() : null,
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
                         EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
@@ -1733,6 +1810,420 @@ namespace QuickClinique.Controllers
                 return Json(new { success = true });
 
             return View();
+        }
+
+        // GET: Clinicstaff/TriageVisualization/{studentId}
+        [ClinicStaffOnly]
+        public async Task<IActionResult> TriageVisualization(int? studentId)
+        {
+            if (studentId == null)
+            {
+                // If no student ID provided, show list of students to select
+                var students = await _context.Students
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.LastName)
+                    .ThenBy(s => s.FirstName)
+                    .ToListAsync();
+                
+                return View("TriageVisualizationList", students);
+            }
+
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Get all triage records (Precords) for this student with timestamps
+            var triageRecords = await _context.Precords
+                .Where(p => p.PatientId == studentId && p.TriageDateTime.HasValue)
+                .OrderBy(p => p.TriageDateTime)
+                .ToListAsync();
+
+            // Load staff information to get actual names instead of stored names
+            var staffIds = triageRecords
+                .Where(p => p.TriageTakenByStaffId.HasValue || p.TreatmentProvidedByStaffId.HasValue)
+                .SelectMany(p => new[] { p.TriageTakenByStaffId, p.TreatmentProvidedByStaffId })
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+
+            var staffMembers = await _context.Clinicstaffs
+                .Where(s => staffIds.Contains(s.ClinicStaffId))
+                .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+            // Update the names in memory for display
+            foreach (var record in triageRecords)
+            {
+                if (record.TriageTakenByStaffId.HasValue && staffMembers.ContainsKey(record.TriageTakenByStaffId.Value))
+                {
+                    record.TriageTakenByName = staffMembers[record.TriageTakenByStaffId.Value];
+                }
+                if (record.TreatmentProvidedByStaffId.HasValue && staffMembers.ContainsKey(record.TreatmentProvidedByStaffId.Value))
+                {
+                    record.TreatmentProvidedByName = staffMembers[record.TreatmentProvidedByStaffId.Value];
+                }
+            }
+
+            ViewBag.Student = student;
+            ViewBag.TriageRecords = triageRecords;
+
+            return View("TriageVisualization", student);
+        }
+
+        // GET: Clinicstaff/DownloadTriageVisualizationPdf/{studentId}
+        [HttpGet]
+        [ClinicStaffOnly]
+        public async Task<IActionResult> DownloadTriageVisualizationPdf(int studentId)
+        {
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Get all triage records (Precords) for this student with timestamps
+            var triageRecords = await _context.Precords
+                .Where(p => p.PatientId == studentId && p.TriageDateTime.HasValue)
+                .OrderBy(p => p.TriageDateTime)
+                .ToListAsync();
+
+            if (!triageRecords.Any())
+            {
+                TempData["Error"] = "No triage records found for this student.";
+                return RedirectToAction("TriageVisualization", new { studentId });
+            }
+
+            // Load staff information to get actual names instead of stored names
+            var staffIds = triageRecords
+                .Where(p => p.TriageTakenByStaffId.HasValue || p.TreatmentProvidedByStaffId.HasValue)
+                .SelectMany(p => new[] { p.TriageTakenByStaffId, p.TreatmentProvidedByStaffId })
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+
+            var staffMembers = await _context.Clinicstaffs
+                .Where(s => staffIds.Contains(s.ClinicStaffId))
+                .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+            // Update the names in memory for display
+            foreach (var record in triageRecords)
+            {
+                if (record.TriageTakenByStaffId.HasValue && staffMembers.ContainsKey(record.TriageTakenByStaffId.Value))
+                {
+                    record.TriageTakenByName = staffMembers[record.TriageTakenByStaffId.Value];
+                }
+                if (record.TreatmentProvidedByStaffId.HasValue && staffMembers.ContainsKey(record.TreatmentProvidedByStaffId.Value))
+                {
+                    record.TreatmentProvidedByName = staffMembers[record.TreatmentProvidedByStaffId.Value];
+                }
+            }
+
+            // Generate PDF
+            QuestPDF.Settings.License = LicenseType.Community;
+            
+            var primaryTeal = Colors.Teal.Lighten1; // Close to #4ECDC4
+            var darkTeal = Colors.Teal.Darken2; // Close to #179C8E
+            
+            // Calculate statistics
+            var avgPulseRate = triageRecords.Where(r => r.PulseRate.HasValue).Any() 
+                ? triageRecords.Where(r => r.PulseRate.HasValue).Average(r => r.PulseRate.Value) 
+                : (double?)null;
+            var avgTemperature = triageRecords.Where(r => r.Temperature.HasValue).Any() 
+                ? triageRecords.Where(r => r.Temperature.HasValue).Average(r => (double)r.Temperature.Value) 
+                : (double?)null;
+            var avgOxygenSaturation = triageRecords.Where(r => r.OxygenSaturation.HasValue).Any() 
+                ? triageRecords.Where(r => r.OxygenSaturation.HasValue).Average(r => r.OxygenSaturation.Value) 
+                : (double?)null;
+            var avgBmi = triageRecords.Any() 
+                ? triageRecords.Average(r => r.Bmi) 
+                : (double?)null;
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(1, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    // Header Banner
+                    page.Header()
+                        .Height(60)
+                        .Background(primaryTeal)
+                        .Row(row =>
+                        {
+                            row.RelativeItem().PaddingLeft(15).PaddingTop(15).Column(column =>
+                            {
+                                column.Item().Text("Triage Data Visualization Report")
+                                    .FontSize(18)
+                                    .Bold()
+                                    .FontColor(Colors.White);
+                                
+                                column.Item().PaddingTop(5).Text($"{student.FirstName} {student.LastName}")
+                                    .FontSize(12)
+                                    .FontColor(Colors.White);
+                                
+                                column.Item().Text($"ID Number: {student.Idnumber}")
+                                    .FontSize(10)
+                                    .FontColor(Colors.White);
+                            });
+                            
+                            // Right side - Logo
+                            row.RelativeItem().AlignRight().PaddingRight(15).PaddingTop(10).Column(rightColumn =>
+                            {
+                                var logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "img", "logo.png");
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    rightColumn.Item().Width(40).Height(40).Image(logoPath);
+                                }
+                            });
+                        });
+
+                    page.Content()
+                        .PaddingVertical(15)
+                        .Column(column =>
+                        {
+                            // Statistics Summary
+                            column.Item().Text("Statistics Summary").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().PaddingTop(10).Row(row =>
+                            {
+                                row.ConstantItem(120).Text("Total Records:").FontSize(10);
+                                row.RelativeItem().Text(triageRecords.Count.ToString()).FontSize(10).Bold();
+                            });
+                            
+                            if (avgPulseRate.HasValue)
+                            {
+                                column.Item().PaddingTop(5).Row(row =>
+                                {
+                                    row.ConstantItem(120).Text("Avg Pulse Rate:").FontSize(10);
+                                    row.RelativeItem().Text($"{avgPulseRate.Value:F1} bpm").FontSize(10).Bold();
+                                });
+                            }
+                            
+                            if (avgTemperature.HasValue)
+                            {
+                                column.Item().PaddingTop(5).Row(row =>
+                                {
+                                    row.ConstantItem(120).Text("Avg Temperature:").FontSize(10);
+                                    row.RelativeItem().Text($"{avgTemperature.Value:F1} °C").FontSize(10).Bold();
+                                });
+                            }
+                            
+                            if (avgOxygenSaturation.HasValue)
+                            {
+                                column.Item().PaddingTop(5).Row(row =>
+                                {
+                                    row.ConstantItem(120).Text("Avg O2 Saturation:").FontSize(10);
+                                    row.RelativeItem().Text($"{avgOxygenSaturation.Value:F1}%").FontSize(10).Bold();
+                                });
+                            }
+                            
+                            if (avgBmi.HasValue)
+                            {
+                                column.Item().PaddingTop(5).Row(row =>
+                                {
+                                    row.ConstantItem(120).Text("Avg BMI:").FontSize(10);
+                                    row.RelativeItem().Text($"{avgBmi.Value:F1}").FontSize(10).Bold();
+                                });
+                            }
+
+                            column.Item().PaddingTop(20);
+
+                            // Detailed Records Table
+                            column.Item().Text("Detailed Triage Records").FontSize(14).Bold().FontColor(darkTeal);
+                            column.Item().PaddingTop(10).Table(table =>
+                            {
+                                // Header
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.5f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1.5f);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Element(CellStyle).Text("Date & Time").Bold();
+                                    header.Cell().Element(CellStyle).Text("Pulse Rate").Bold();
+                                    header.Cell().Element(CellStyle).Text("Blood Pressure").Bold();
+                                    header.Cell().Element(CellStyle).Text("Temperature").Bold();
+                                    header.Cell().Element(CellStyle).Text("O2 Saturation").Bold();
+                                    header.Cell().Element(CellStyle).Text("BMI").Bold();
+                                    header.Cell().Element(CellStyle).Text("Taken By").Bold();
+
+                                    IContainer CellStyle(IContainer container)
+                                    {
+                                        return container
+                                            .Background(primaryTeal)
+                                            .Padding(8)
+                                            .Border(1)
+                                            .BorderColor(Colors.White)
+                                            .AlignCenter()
+                                            .AlignMiddle()
+                                            .DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.White));
+                                    }
+                                });
+
+                                // Data rows
+                                foreach (var record in triageRecords)
+                                {
+                                    table.Cell().Element(CellStyle).Text(record.TriageDateTime?.ToString("MMM dd, yyyy\nHH:mm") ?? "N/A");
+                                    table.Cell().Element(CellStyle).Text(record.PulseRate?.ToString() ?? "N/A");
+                                    table.Cell().Element(CellStyle).Text(record.BloodPressure ?? "N/A");
+                                    table.Cell().Element(CellStyle).Text(record.Temperature?.ToString("F1") ?? "N/A");
+                                    table.Cell().Element(CellStyle).Text(record.OxygenSaturation?.ToString() ?? "N/A");
+                                    table.Cell().Element(CellStyle).Text(record.Bmi.ToString());
+                                    table.Cell().Element(CellStyle).Text(record.TriageTakenByName ?? "N/A");
+
+                                    static IContainer CellStyle(IContainer container)
+                                    {
+                                        return container
+                                            .Border(1)
+                                            .BorderColor(Colors.Grey.Lighten2)
+                                            .Padding(6)
+                                            .AlignCenter()
+                                            .AlignMiddle()
+                                            .DefaultTextStyle(x => x.FontSize(8));
+                                    }
+                                }
+                            });
+
+                            column.Item().PaddingTop(20);
+                            column.Item().Text($"Generated on: {DateTime.Now:MMMM dd, yyyy 'at' HH:mm}")
+                                .FontSize(9)
+                                .FontColor(Colors.Grey.Darken1)
+                                .Italic();
+                        });
+
+                    // Footer Banner
+                    page.Footer()
+                        .Height(30)
+                        .Background(primaryTeal)
+                        .AlignCenter()
+                        .PaddingTop(8)
+                        .Text("QuickClinique - University of Cebu Medical-Dental Clinic")
+                        .FontSize(9)
+                        .FontColor(Colors.White);
+                });
+            });
+
+            try
+            {
+                var stream = new MemoryStream();
+                document.GeneratePdf(stream);
+                stream.Position = 0;
+
+                var fileName = $"Triage_Visualization_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+                // File() method automatically sets Content-Disposition header when filename is provided
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                // Log the error (you might want to use a logger here)
+                TempData["Error"] = $"An error occurred while generating the PDF: {ex.Message}";
+                return RedirectToAction("TriageVisualization", new { studentId });
+            }
+        }
+
+        // GET: Clinicstaff/ForensicReport/{studentId?}
+        [ClinicStaffOnly]
+        public async Task<IActionResult> ForensicReport(int? studentId)
+        {
+            if (studentId == null)
+            {
+                // If no student ID provided, show list of students to select
+                var students = await _context.Students
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.LastName)
+                    .ThenBy(s => s.FirstName)
+                    .ToListAsync();
+                
+                return View("ForensicReportList", students);
+            }
+
+            var student = await _context.Students
+                .Include(s => s.Precords)
+                .Include(s => s.Appointments)
+                    .ThenInclude(a => a.Schedule)
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            // Get all triage records with timestamps
+            var triageRecords = student.Precords
+                .Where(p => p.TriageDateTime.HasValue)
+                .OrderBy(p => p.TriageDateTime)
+                .ToList();
+
+            // Load staff information to get actual names instead of stored names
+            var staffIds = triageRecords
+                .Where(p => p.TriageTakenByStaffId.HasValue || p.TreatmentProvidedByStaffId.HasValue)
+                .SelectMany(p => new[] { p.TriageTakenByStaffId, p.TreatmentProvidedByStaffId })
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .Distinct()
+                .ToList();
+
+            var staffMembers = await _context.Clinicstaffs
+                .Where(s => staffIds.Contains(s.ClinicStaffId))
+                .ToDictionaryAsync(s => s.ClinicStaffId, s => $"{s.FirstName} {s.LastName}");
+
+            // Update the names in memory for display
+            foreach (var record in triageRecords)
+            {
+                if (record.TriageTakenByStaffId.HasValue && staffMembers.ContainsKey(record.TriageTakenByStaffId.Value))
+                {
+                    record.TriageTakenByName = staffMembers[record.TriageTakenByStaffId.Value];
+                }
+                if (record.TreatmentProvidedByStaffId.HasValue && staffMembers.ContainsKey(record.TreatmentProvidedByStaffId.Value))
+                {
+                    record.TreatmentProvidedByName = staffMembers[record.TreatmentProvidedByStaffId.Value];
+                }
+            }
+
+            // Calculate statistics
+            var stats = new
+            {
+                TotalVisits = student.Appointments.Count(a => a.AppointmentStatus == "Completed"),
+                TotalRecords = student.Precords.Count,
+                AveragePulseRate = triageRecords.Where(r => r.PulseRate.HasValue).Any() 
+                    ? triageRecords.Where(r => r.PulseRate.HasValue).Average(r => r.PulseRate.Value) : (double?)null,
+                AverageTemperature = triageRecords.Where(r => r.Temperature.HasValue).Any()
+                    ? triageRecords.Where(r => r.Temperature.HasValue).Average(r => (double)r.Temperature.Value) : (double?)null,
+                AverageOxygenSaturation = triageRecords.Where(r => r.OxygenSaturation.HasValue).Any()
+                    ? triageRecords.Where(r => r.OxygenSaturation.HasValue).Average(r => r.OxygenSaturation.Value) : (double?)null,
+                MostCommonDiagnosis = student.Precords
+                    .Where(p => !string.IsNullOrEmpty(p.Diagnosis) && p.Diagnosis != "Triage in progress - Diagnosis pending")
+                    .GroupBy(p => p.Diagnosis)
+                    .OrderByDescending(g => g.Count())
+                    .FirstOrDefault()?.Key,
+                DateRange = triageRecords.Any() 
+                    ? new { 
+                        Start = triageRecords.Min(r => r.TriageDateTime), 
+                        End = triageRecords.Max(r => r.TriageDateTime) 
+                    } : null
+            };
+
+            ViewBag.Student = student;
+            ViewBag.TriageRecords = triageRecords;
+            ViewBag.Statistics = stats;
+
+            return View("ForensicReport", student);
         }
 
         // GET: Clinicstaff/DoctorsReport
