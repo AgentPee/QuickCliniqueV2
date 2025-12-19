@@ -5,6 +5,8 @@ using QuickClinique.Models;
 using QuickClinique.Attributes;
 using QuickClinique.Hubs;
 using Microsoft.EntityFrameworkCore;
+using QuickClinique.Services;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers;
 
@@ -138,7 +140,7 @@ public class HomeController : Controller
             SenderId = student.UserId,
             ReceiverId = clinicStaff.UserId,
             Message1 = request.Message,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = GetPhilippineTime()
         };
 
         _context.Messages.Add(message);

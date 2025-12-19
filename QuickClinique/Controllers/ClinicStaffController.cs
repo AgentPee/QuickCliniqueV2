@@ -13,6 +13,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using SD = System.Drawing;
 using System.Drawing.Imaging;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers
 {
@@ -875,7 +876,7 @@ namespace QuickClinique.Controllers
                         LicenseNumber = !string.IsNullOrWhiteSpace(model.LicenseNumber) ? model.LicenseNumber.Trim() : null,
                         IsEmailVerified = false,
                         EmailVerificationToken = emailToken,
-                        EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                        EmailVerificationTokenExpiry = GetPhilippineTime().AddHours(24),
                         IsActive = false // Account starts as inactive until activated by administrator
                     };
 
@@ -1055,7 +1056,7 @@ namespace QuickClinique.Controllers
             var clinicstaff = await _context.Clinicstaffs
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.EmailVerificationToken == token &&
-                         s.EmailVerificationTokenExpiry > DateTime.Now);
+                         s.EmailVerificationTokenExpiry > GetPhilippineTime());
 
             if (clinicstaff == null)
             {
@@ -1135,7 +1136,7 @@ namespace QuickClinique.Controllers
                 // Generate new token and extend expiry
                 var newToken = GenerateToken();
                 clinicstaff.EmailVerificationToken = newToken;
-                clinicstaff.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+                clinicstaff.EmailVerificationTokenExpiry = GetPhilippineTime().AddHours(24);
 
                 await _context.SaveChangesAsync();
 
@@ -1224,7 +1225,7 @@ namespace QuickClinique.Controllers
                 // Generate new token and extend expiry
                 var resetToken = GenerateToken();
                 clinicstaff.PasswordResetToken = resetToken;
-                clinicstaff.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+                clinicstaff.PasswordResetTokenExpiry = GetPhilippineTime().AddHours(1);
 
                 await _context.SaveChangesAsync();
 
@@ -1286,7 +1287,7 @@ namespace QuickClinique.Controllers
                     {
                         var resetToken = GenerateToken();
                         clinicstaff.PasswordResetToken = resetToken;
-                        clinicstaff.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+                        clinicstaff.PasswordResetTokenExpiry = GetPhilippineTime().AddHours(1);
 
                         await _context.SaveChangesAsync();
 
@@ -1356,7 +1357,7 @@ namespace QuickClinique.Controllers
             var clinicstaff = await _context.Clinicstaffs
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.PasswordResetToken == token &&
-                         s.PasswordResetTokenExpiry > DateTime.Now);
+                         s.PasswordResetTokenExpiry > GetPhilippineTime());
 
             if (clinicstaff == null)
             {
@@ -1397,7 +1398,7 @@ namespace QuickClinique.Controllers
                     var clinicstaff = await _context.Clinicstaffs
                         .FirstOrDefaultAsync(s => s.Email == model.Email &&
                                  s.PasswordResetToken == model.Token &&
-                                 s.PasswordResetTokenExpiry > DateTime.Now);
+                                 s.PasswordResetTokenExpiry > GetPhilippineTime());
 
                     if (clinicstaff == null)
                     {
@@ -1470,7 +1471,7 @@ namespace QuickClinique.Controllers
             try
             {
                 DateTime startDate;
-                DateTime endDate = DateTime.Now;
+                DateTime endDate = GetPhilippineTime();
                 
                 // Handle "Today" (timeRange = 0) by setting start date to today at 00:00:00
                 if (timeRange == 0)
@@ -1479,7 +1480,7 @@ namespace QuickClinique.Controllers
                 }
                 else
                 {
-                    startDate = DateTime.Now.AddDays(-timeRange);
+                    startDate = GetPhilippineTime().AddDays(-timeRange);
                 }
 
                 // Get all appointments with related data
@@ -1616,7 +1617,7 @@ namespace QuickClinique.Controllers
 
                 // Calculate no-show and cancellation statistics
                 var noShows = appointments.Count(a => a.AppointmentStatus == "Cancelled" && 
-                    a.Schedule.Date < DateOnly.FromDateTime(DateTime.Now));
+                    a.Schedule.Date < GetPhilippineDate());
                 var cancellations = appointments.Count(a => a.AppointmentStatus == "Cancelled");
                 var completed = appointments.Count(a => a.AppointmentStatus == "Completed");
 
@@ -1667,7 +1668,7 @@ namespace QuickClinique.Controllers
                     .ToListAsync();
 
                 // Calculate emergency statistics by time period
-                var now = DateTime.Now;
+                var now = GetPhilippineTime();
                 var todayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0);
                 var weekStart = todayStart.AddDays(-(int)now.DayOfWeek);
                 var monthStart = new DateTime(now.Year, now.Month, 1);
@@ -2029,7 +2030,7 @@ namespace QuickClinique.Controllers
                                 patientTable.Cell().Element(c => c.Padding(5)).Text("Patient Name:").FontSize(10).SemiBold();
                                 patientTable.Cell().Element(c => c.Padding(5)).Text($"{student.FirstName} {student.LastName}").FontSize(10);
                                 patientTable.Cell().Element(c => c.Padding(5)).Text("Date Today:").FontSize(10).SemiBold();
-                                patientTable.Cell().Element(c => c.Padding(5)).Text(DateTime.Now.ToString("MMMM dd, yyyy")).FontSize(10);
+                                patientTable.Cell().Element(c => c.Padding(5)).Text(GetPhilippineTime().ToString("MMMM dd, yyyy")).FontSize(10);
 
                                 patientTable.Cell().Element(c => c.Padding(5)).Text("Gender:").FontSize(10).SemiBold();
                                 patientTable.Cell().Element(c => c.Padding(5)).Text(student.Gender ?? "N/A").FontSize(10);
@@ -2249,7 +2250,7 @@ namespace QuickClinique.Controllers
                 document.GeneratePdf(stream);
                 stream.Position = 0;
 
-                var fileName = $"Triage_Visualization_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+                var fileName = $"Triage_Visualization_{student.FirstName}_{student.LastName}_{GetPhilippineTime():yyyyMMdd}.pdf";
                 // File() method automatically sets Content-Disposition header when filename is provided
                 return File(stream, "application/pdf", fileName);
             }
@@ -3012,7 +3013,7 @@ namespace QuickClinique.Controllers
                 document.GeneratePdf(stream);
                 stream.Position = 0;
 
-                var fileName = $"Forensic_Report_{patientName.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+                var fileName = $"Forensic_Report_{patientName.Replace(" ", "_")}_{GetPhilippineTime():yyyyMMdd}.pdf";
                 return File(stream, "application/pdf", fileName);
             }
             catch (Exception ex)
@@ -3214,7 +3215,7 @@ namespace QuickClinique.Controllers
                             column.Item().PaddingTop(20).AlignCenter().DefaultTextStyle(x => x.FontSize(12).FontColor(Colors.Black).LineHeight(1.6f)).Text(recommendationText);
 
                             // Issuance Date - Centered
-                            column.Item().PaddingTop(25).AlignCenter().Text($"Issued on {DateTime.Now.ToString("MMMM dd, yyyy")}.")
+                            column.Item().PaddingTop(25).AlignCenter().Text($"Issued on {GetPhilippineTime().ToString("MMMM dd, yyyy")}.")
                                 .FontSize(11)
                                 .FontColor(Colors.Black);
 
@@ -3262,7 +3263,7 @@ namespace QuickClinique.Controllers
             document.GeneratePdf(stream);
             stream.Position = 0;
 
-            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{GetPhilippineTime():yyyyMMdd}.pdf";
             return File(stream, "application/pdf", fileName);
         }
 
@@ -3300,7 +3301,7 @@ namespace QuickClinique.Controllers
             QuestPDF.Settings.License = LicenseType.Community;
             
             var primaryTeal = Colors.Teal.Lighten1; // Close to #4ECDC4
-            var reportDate = DateTime.Now;
+            var reportDate = GetPhilippineTime();
             
             var document = Document.Create(container =>
             {
@@ -3525,7 +3526,7 @@ namespace QuickClinique.Controllers
             document.GeneratePdf(stream);
             stream.Position = 0;
 
-            var fileName = $"Doctors_Report_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            var fileName = $"Doctors_Report_{student.FirstName}_{student.LastName}_{GetPhilippineTime():yyyyMMdd}.pdf";
             return File(stream, "application/pdf", fileName);
         }
 

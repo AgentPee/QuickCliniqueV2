@@ -70,7 +70,7 @@
             @if (Model.Birthdate.HasValue)
             {
                 var birthdate = Model.Birthdate.Value;
-                var today = DateOnly.FromDateTime(DateTime.Now);
+                var today = GetPhilippineDate();
                 var age = today.Year - birthdate.Year;
                 
                 // Subtract one year if birthday hasn't occurred yet this year
