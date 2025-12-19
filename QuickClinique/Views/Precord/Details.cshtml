@@ -887,9 +887,16 @@
         // Also run after a short delay to catch dynamically loaded content
         setTimeout(initCollapsibles, 100);
 
-        // File Upload Functions
-        function showUploadFileModal(patientId) {
+        // File Upload Functions - Make globally accessible
+        window.showUploadFileModal = function(patientId) {
+            console.log('showUploadFileModal called with patientId:', patientId);
             const modal = document.getElementById('uploadFileModal');
+            if (!modal) {
+                console.error('Upload file modal not found');
+                showNotification('Upload modal not found. Please refresh the page.', 'error');
+                return;
+            }
+            
             const hiddenInput = document.getElementById('uploadPatientId');
             if (hiddenInput) {
                 hiddenInput.value = patientId;
@@ -898,10 +905,12 @@
             const form = document.getElementById('uploadFileForm');
             if (form) {
                 form.reset();
-                hiddenInput.value = patientId; // Reset might clear it, so set again
+                if (hiddenInput) {
+                    hiddenInput.value = patientId; // Reset might clear it, so set again
+                }
             }
             openModal('uploadFileModal');
-        }
+        };
         
         // Initialize upload form handler - ensure it's attached
         let uploadFormInitialized = false;
@@ -955,7 +964,7 @@
             setTimeout(initializeUploadForm, 100);
         }
 
-        async function uploadMedicalRecordFile(patientId) {
+        window.uploadMedicalRecordFile = async function(patientId) {
             console.log('uploadMedicalRecordFile called with patientId:', patientId);
             
             const form = document.getElementById('uploadFileForm');
@@ -1042,9 +1051,9 @@
                     submitButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
                 }
             }
-        }
+        };
 
-        async function deleteMedicalRecordFile(fileId) {
+        window.deleteMedicalRecordFile = async function(fileId) {
             if (!confirm('Are you sure you want to delete this file?')) {
                 return;
             }
@@ -1073,7 +1082,7 @@
                 console.error('Error:', error);
                 showNotification(error.message || 'Error deleting file. Please try again.', 'error');
             }
-        }
+        };
     </script>
 }
 
