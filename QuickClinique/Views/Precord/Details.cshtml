@@ -474,21 +474,21 @@
                                 <div>
                                     <strong><i class="fas fa-calendar-alt"></i> Triage Date & Time:</strong>
                                     <p class="medical-record-text">@record.TriageDateTime.Value.ToString("MMM dd, yyyy HH:mm")</p>
-                        </div>
+                                </div>
                             }
                             @if (!string.IsNullOrEmpty(record.TriageTakenByName))
                             {
                                 <div>
                                     <strong><i class="fas fa-user-nurse"></i> Triage Taken By:</strong>
                                     <p class="medical-record-text">@record.TriageTakenByName</p>
-                    </div>
-                }
+                                </div>
+                            }
                             @if (!string.IsNullOrEmpty(record.TreatmentProvidedByName))
                             {
                                 <div>
                                     <strong><i class="fas fa-user-md"></i> Treatment Provided By:</strong>
                                     <p class="medical-record-text">@record.TreatmentProvidedByName</p>
-            </div>
+                                </div>
                             }
                             @if (!string.IsNullOrEmpty(record.DoctorLicenseNumber))
                             {
@@ -552,31 +552,19 @@
                                 }
                             </tbody>
                         </table>
-        </div>
-    }
+                    </div>
+                }
                 else
                 {
                     <p class="text-muted">No medical record files uploaded yet.</p>
                 }
             }
+            else
+            {
+                <p class="text-muted">No medical record files uploaded yet.</p>
+            }
         </div>
     </div>
-    else
-    {
-        <div class="medical-records-section medical-records-section-mt">
-            <div class="section-header">
-                <h3 class="section-title">
-                    <i class="fas fa-file-medical"></i>
-                    Medical Records
-                </h3>
-            </div>
-            <div class="no-appointments no-appointments-style">
-                <i class="fas fa-file-medical no-appointments-icon"></i>
-                <p class="no-appointments-text">No medical records found for this patient.</p>
-           
-            </div>
-        </div>
-    }
 
     <div class="action-buttons-container">
         <button onclick="showEditModal(@Model.StudentId)" class="btn-action btn-edit action-button-style">
@@ -619,6 +607,37 @@
                     <i class="fas fa-check"></i> <span id="toggleConfirmText">Confirm</span>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload File Modal -->
+<div id="uploadFileModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-upload"></i> Upload Medical Record File</h2>
+            <button class="modal-close" onclick="closeModal('uploadFileModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="uploadFileForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="patientId" id="uploadPatientId" value="@Model.StudentId" />
+                <div class="form-group">
+                    <label for="fileInput">Select File:</label>
+                    <input type="file" id="fileInput" name="file" class="form-control" required />
+                    <small class="form-text text-muted">Allowed types: images, PDF, Office documents. Max size: 10MB</small>
+                </div>
+                <div class="form-group">
+                    <label for="fileDescription">Description (optional):</label>
+                    <textarea id="fileDescription" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeModal('uploadFileModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -871,62 +890,56 @@
         // File Upload Functions
         function showUploadFileModal(patientId) {
             const modal = document.getElementById('uploadFileModal');
-            if (!modal) {
-                // Create modal if it doesn't exist
-                const modalHtml = `
-                    <div id="uploadFileModal" class="modal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h2><i class="fas fa-upload"></i> Upload Medical Record File</h2>
-                                <button class="modal-close" onclick="closeModal('uploadFileModal')">&times;</button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="uploadFileForm" enctype="multipart/form-data">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="patientId" value="${patientId}" />
-                                    <div class="form-group">
-                                        <label for="fileInput">Select File:</label>
-                                        <input type="file" id="fileInput" name="file" class="form-control" required />
-                                        <small class="form-text text-muted">Allowed types: images, PDF, Office documents. Max size: 10MB</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="fileDescription">Description (optional):</label>
-                                        <textarea id="fileDescription" name="description" class="form-control" rows="3"></textarea>
-                                    </div>
-                                    <div class="modal-buttons">
-                                        <button type="button" onclick="closeModal('uploadFileModal')" class="btn btn-secondary">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-upload"></i> Upload
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-                
-                // Add form submit handler
-                document.getElementById('uploadFileForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    await uploadMedicalRecordFile(patientId);
-                });
+            const hiddenInput = document.getElementById('uploadPatientId');
+            if (hiddenInput) {
+                hiddenInput.value = patientId;
+            }
+            // Reset form
+            const form = document.getElementById('uploadFileForm');
+            if (form) {
+                form.reset();
+                hiddenInput.value = patientId; // Reset might clear it, so set again
             }
             openModal('uploadFileModal');
         }
+        
+        // Initialize upload form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadForm = document.getElementById('uploadFileForm');
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const patientIdInput = document.getElementById('uploadPatientId');
+                    const patientId = patientIdInput ? parseInt(patientIdInput.value) : @Model.StudentId;
+                    await uploadMedicalRecordFile(patientId);
+                });
+            }
+        });
 
         async function uploadMedicalRecordFile(patientId) {
             const form = document.getElementById('uploadFileForm');
-            const formData = new FormData(form);
             const fileInput = document.getElementById('fileInput');
             
-            if (!fileInput.files || !fileInput.files[0]) {
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
                 showNotification('Please select a file to upload.', 'error');
                 return;
             }
 
+            const formData = new FormData();
+            
+            // Get anti-forgery token
+            let token = form.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                formData.append('__RequestVerificationToken', token.value);
+            }
+            
+            formData.append('patientId', patientId);
             formData.append('file', fileInput.files[0]);
-            formData.append('description', document.getElementById('fileDescription').value || '');
+            
+            const description = document.getElementById('fileDescription');
+            if (description) {
+                formData.append('description', description.value || '');
+            }
 
             const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
@@ -938,7 +951,18 @@
                     body: formData
                 });
 
-                const result = await response.json();
+                let result;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    try {
+                        result = JSON.parse(text);
+                    } catch {
+                        throw new Error(text || 'Failed to upload file');
+                    }
+                }
 
                 if (result.success) {
                     showNotification('File uploaded successfully!', 'success');
