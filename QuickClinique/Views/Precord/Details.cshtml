@@ -511,10 +511,42 @@
                 <i class="fas fa-file-upload"></i>
                 Medical Record Files
             </h3>
-            <button onclick="showUploadFileModal(@Model.StudentId)" class="btn btn-primary btn-sm">
-                <i class="fas fa-upload"></i> Upload File
-            </button>
         </div>
+        
+        <!-- Simple File Upload Form -->
+        <div class="upload-section" style="margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <form id="uploadFileForm" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1rem;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="patientId" id="uploadPatientId" value="@Model.StudentId" />
+                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label for="fileInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            <i class="fas fa-file"></i> Select File:
+                        </label>
+                        <input type="file" id="fileInput" name="file" class="form-control" 
+                               accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx" 
+                               style="cursor: pointer;" />
+                        <small class="form-text text-muted" style="display: block; margin-top: 0.25rem;">
+                            Allowed: images, PDF, Office documents. Max size: 10MB
+                        </small>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label for="fileDescription" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                            <i class="fas fa-comment"></i> Description (optional):
+                        </label>
+                        <input type="text" id="fileDescription" name="description" class="form-control" 
+                               placeholder="Enter file description..." />
+                    </div>
+                    <div>
+                        <button type="button" onclick="handleFileUpload(@Model.StudentId)" 
+                                id="uploadFileButton" class="btn btn-primary" style="min-width: 120px;">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
         <div id="medicalRecordFilesList">
             @if (ViewBag.MedicalRecordFiles != null)
             {
@@ -611,36 +643,6 @@
     </div>
 </div>
 
-<!-- Upload File Modal -->
-<div id="uploadFileModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-upload"></i> Upload Medical Record File</h2>
-            <button class="modal-close" onclick="closeModal('uploadFileModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="uploadFileForm" enctype="multipart/form-data">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="patientId" id="uploadPatientId" value="@Model.StudentId" />
-                <div class="form-group">
-                    <label for="fileInput">Select File:</label>
-                    <input type="file" id="fileInput" name="file" class="form-control" required />
-                    <small class="form-text text-muted">Allowed types: images, PDF, Office documents. Max size: 10MB</small>
-                </div>
-                <div class="form-group">
-                    <label for="fileDescription">Description (optional):</label>
-                    <textarea id="fileDescription" name="description" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" onclick="closeModal('uploadFileModal')" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" id="uploadSubmitButton" class="btn btn-primary">
-                        <i class="fas fa-upload"></i> Upload
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script>
@@ -887,97 +889,42 @@
         // Also run after a short delay to catch dynamically loaded content
         setTimeout(initCollapsibles, 100);
 
-        // File Upload Functions - Make globally accessible
-        window.showUploadFileModal = function(patientId) {
-            console.log('showUploadFileModal called with patientId:', patientId);
-            const modal = document.getElementById('uploadFileModal');
-            if (!modal) {
-                console.error('Upload file modal not found');
-                showNotification('Upload modal not found. Please refresh the page.', 'error');
+        // Simple File Upload Handler - Opens native file explorer
+        window.handleFileUpload = function(patientId) {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput) {
+                showNotification('File input not found. Please refresh the page.', 'error');
                 return;
             }
             
-            const hiddenInput = document.getElementById('uploadPatientId');
-            if (hiddenInput) {
-                hiddenInput.value = patientId;
+            // If no file selected, trigger file picker
+            if (!fileInput.files || !fileInput.files[0]) {
+                fileInput.click();
+                // Wait for file selection, then auto-upload
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        uploadMedicalRecordFileDirect(patientId);
+                    }
+                }, { once: true });
+            } else {
+                // File already selected, upload it
+                uploadMedicalRecordFileDirect(patientId);
             }
-            // Reset form
-            const form = document.getElementById('uploadFileForm');
-            if (form) {
-                form.reset();
-                if (hiddenInput) {
-                    hiddenInput.value = patientId; // Reset might clear it, so set again
-                }
-            }
-            openModal('uploadFileModal');
         };
         
-        // Initialize upload form handler - ensure it's attached
-        let uploadFormInitialized = false;
-        function initializeUploadForm() {
-            if (uploadFormInitialized) return; // Prevent multiple initializations
-            
-            const uploadForm = document.getElementById('uploadFileForm');
-            if (!uploadForm) {
-                console.log('Upload form not found yet, will retry...');
-                return;
-            }
-            
-            // Check if handler is already attached
-            if (uploadForm.dataset.handlerAttached === 'true') {
-                console.log('Upload form handler already attached');
-                return;
-            }
-            
-            console.log('Initializing upload form handler');
-            
-            // Add submit handler to form
-            uploadForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Form submit event triggered');
-                const patientIdInput = document.getElementById('uploadPatientId');
-                const patientId = patientIdInput ? parseInt(patientIdInput.value) : null;
-                if (!patientId || isNaN(patientId)) {
-                    showNotification('Invalid patient ID. Please try again.', 'error');
-                    return;
-                }
-                await uploadMedicalRecordFile(patientId);
-            });
-            
-            // Mark as initialized
-            uploadForm.dataset.handlerAttached = 'true';
-            uploadFormInitialized = true;
-            console.log('Upload form handler initialized successfully');
-        }
-        
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                initializeUploadForm();
-                // Also try after a short delay
-                setTimeout(initializeUploadForm, 100);
-            });
-        } else {
-            initializeUploadForm();
-            // Also try after a short delay
-            setTimeout(initializeUploadForm, 100);
-        }
-
-        window.uploadMedicalRecordFile = async function(patientId) {
-            console.log('uploadMedicalRecordFile called with patientId:', patientId);
-            
+        // Direct upload function (no modal needed)
+        window.uploadMedicalRecordFileDirect = async function(patientId) {
             const form = document.getElementById('uploadFileForm');
-            if (!form) {
-                console.error('Upload form not found');
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!form || !fileInput) {
                 showNotification('Upload form not found. Please refresh the page.', 'error');
                 return;
             }
             
-            const fileInput = document.getElementById('fileInput');
-            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            if (!fileInput.files || !fileInput.files[0]) {
                 showNotification('Please select a file to upload.', 'error');
-                fileInput?.focus();
+                fileInput.click();
                 return;
             }
 
@@ -987,34 +934,27 @@
             let token = form.querySelector('input[name="__RequestVerificationToken"]');
             if (token) {
                 formData.append('__RequestVerificationToken', token.value);
-                console.log('Anti-forgery token found');
-            } else {
-                console.warn('Anti-forgery token not found in form');
             }
             
             formData.append('patientId', patientId);
             formData.append('file', fileInput.files[0]);
-            console.log('File selected:', fileInput.files[0].name, 'Size:', fileInput.files[0].size);
             
             const description = document.getElementById('fileDescription');
             if (description && description.value) {
                 formData.append('description', description.value.trim());
             }
 
-            const submitButton = form.querySelector('button[type="submit"]');
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            const uploadButton = document.getElementById('uploadFileButton');
+            if (uploadButton) {
+                uploadButton.disabled = true;
+                uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
             }
 
             try {
-                console.log('Sending upload request to /Precord/UploadMedicalRecordFile');
                 const response = await fetch('/Precord/UploadMedicalRecordFile', {
                     method: 'POST',
                     body: formData
                 });
-
-                console.log('Response status:', response.status, response.statusText);
 
                 let result;
                 const contentType = response.headers.get('content-type');
@@ -1022,20 +962,15 @@
                     result = await response.json();
                 } else {
                     const text = await response.text();
-                    console.log('Response text:', text);
                     try {
                         result = JSON.parse(text);
-                    } catch (parseError) {
-                        console.error('Failed to parse response as JSON:', parseError);
+                    } catch {
                         throw new Error(text || 'Failed to upload file');
                     }
                 }
 
-                console.log('Upload result:', result);
-
                 if (result.success) {
                     showNotification('File uploaded successfully!', 'success');
-                    closeModal('uploadFileModal');
                     form.reset();
                     // Reload the files list
                     setTimeout(() => location.reload(), 1000);
@@ -1043,14 +978,35 @@
                     throw new Error(result.message || 'Failed to upload file');
                 }
             } catch (error) {
-                console.error('Error uploading file:', error);
+                console.error('Error:', error);
                 showNotification(error.message || 'Error uploading file. Please try again.', 'error');
             } finally {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+                if (uploadButton) {
+                    uploadButton.disabled = false;
+                    uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
                 }
             }
+        };
+        
+        // Legacy function for backward compatibility (if called from elsewhere)
+        window.showUploadFileModal = function(patientId) {
+            // Just trigger file input click instead of opening modal
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.click();
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        uploadMedicalRecordFileDirect(patientId);
+                    }
+                }, { once: true });
+            } else {
+                handleFileUpload(patientId);
+            }
+        };
+        
+        // Keep old function name for backward compatibility - redirects to new function
+        window.uploadMedicalRecordFile = async function(patientId) {
+            return window.uploadMedicalRecordFileDirect(patientId);
         };
 
         window.deleteMedicalRecordFile = async function(fileId) {
