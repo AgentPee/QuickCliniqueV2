@@ -483,6 +483,20 @@ async function submitCompleteAppointment() {
         return;
     }
 
+    const treatmentProvidedByName = document.getElementById('treatmentProvidedByName').value.trim();
+    if (!treatmentProvidedByName) {
+        alert('Please enter the treatment provider name before completing the appointment.');
+        document.getElementById('treatmentProvidedByName').focus();
+        return;
+    }
+
+    const doctorLicenseNumber = document.getElementById('doctorLicenseNumber').value.trim();
+    if (!doctorLicenseNumber) {
+        alert('Please enter the doctor license number before completing the appointment.');
+        document.getElementById('doctorLicenseNumber').focus();
+        return;
+    }
+
     const appointmentId = document.getElementById('completeAppointmentId').value;
     const patientId = document.getElementById('completePatientId').value;
 
@@ -497,12 +511,14 @@ async function submitCompleteAppointment() {
         return;
     }
 
-    // Prepare form data (only diagnosis and medications)
+    // Prepare form data
     const formData = {
         appointmentId: parseInt(appointmentId),
         patientId: parseInt(patientId),
         diagnosis: diagnosis,
-        medications: medications
+        medications: medications,
+        treatmentProvidedByName: treatmentProvidedByName,
+        doctorLicenseNumber: doctorLicenseNumber
     };
 
     console.log('Submitting completion data:', formData);

@@ -32,6 +32,12 @@ namespace QuickClinique.Models
 
         [StringLength(1000, ErrorMessage = "Additional notes cannot exceed 1000 characters")]
         public string? AdditionalNotes { get; set; }
+
+        [StringLength(255, ErrorMessage = "Treatment provider name cannot exceed 255 characters")]
+        public string? TreatmentProvidedByName { get; set; }
+
+        [StringLength(100, ErrorMessage = "Doctor license number cannot exceed 100 characters")]
+        public string? DoctorLicenseNumber { get; set; }
     }
 }
 
