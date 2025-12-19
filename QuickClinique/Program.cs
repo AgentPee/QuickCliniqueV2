@@ -227,6 +227,30 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 
 var app = builder.Build();
 
+// Ensure database tables exist based on DbContext
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        // EnsureCreatedAsync creates the database and all tables based on DbContext if they don't exist
+        var created = await dbContext.Database.EnsureCreatedAsync();
+        if (created)
+        {
+            Console.WriteLine("[DB INIT] ✅ Database and tables created successfully based on DbContext model.");
+        }
+        else
+        {
+            Console.WriteLine("[DB INIT] ✅ Database and tables already exist.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB INIT] ⚠️  Warning: {ex.Message}");
+        // Continue execution even if table creation fails (they might already exist)
+    }
+}
+
 // Configure forwarded headers for Railway (to get correct scheme and host from proxy)
 // This must be called before UseHttpsRedirection and other middleware
 var forwardedHeadersOptions = new ForwardedHeadersOptions
