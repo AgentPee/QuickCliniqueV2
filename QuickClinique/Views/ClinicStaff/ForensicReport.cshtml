@@ -62,7 +62,7 @@
                     <div class="form-group">
                         <label for="reportDate">Report Date</label>
                         <input type="datetime-local" id="reportDate" name="reportDate" class="form-control" 
-                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                               value="@GetPhilippineTime().ToString("yyyy-MM-ddTHH:mm")" required />
                     </div>
                     <div class="form-group full-width">
                         <label for="chiefComplaint">Chief Complaint</label>
@@ -209,7 +209,7 @@
                     <div class="form-group">
                         <label for="signatureDate">Signature Date</label>
                         <input type="datetime-local" id="signatureDate" name="signatureDate" class="form-control" 
-                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                               value="@GetPhilippineTime().ToString("yyyy-MM-ddTHH:mm")" />
                     </div>
                 </div>
             </div>

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using QuickClinique.Models;
 using QuickClinique.Services;
 using QuickClinique.Attributes;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers
 {
@@ -638,7 +639,7 @@ namespace QuickClinique.Controllers
             try
             {
                 // Generate unique file name
-                var fileName = $"{patientId}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
+                var fileName = $"{patientId}_{GetPhilippineTime():yyyyMMddHHmmss}_{Guid.NewGuid():N}";
                 var folder = "medical-records";
 
                 // Upload file
@@ -656,7 +657,7 @@ namespace QuickClinique.Controllers
                     Description = description,
                     UploadedByStaffId = staffId,
                     UploadedByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null,
-                    UploadedAt = DateTime.Now
+                    UploadedAt = GetPhilippineTime()
                 };
 
                 _context.MedicalRecordFiles.Add(medicalRecordFile);

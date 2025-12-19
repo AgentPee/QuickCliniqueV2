@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using QuickClinique.Services;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Models
 {
@@ -20,7 +22,7 @@ namespace QuickClinique.Models
         public string? Gender { get; set; }
         
         [Display(Name = "Report Date")]
-        public DateTime ReportDate { get; set; } = DateTime.Now;
+        public DateTime ReportDate { get; set; } = GetPhilippineTime();
         
         [Display(Name = "Chief Complaint")]
         public string? ChiefComplaint { get; set; }
@@ -50,7 +52,7 @@ namespace QuickClinique.Models
         public string? PhysicianLicenseNumber { get; set; }
         
         [Display(Name = "Physician Signature Date")]
-        public DateTime? SignatureDate { get; set; } = DateTime.Now;
+        public DateTime? SignatureDate { get; set; } = GetPhilippineTime();
     }
 }
 

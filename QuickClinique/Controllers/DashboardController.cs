@@ -5,6 +5,7 @@ using QuickClinique.Models;
 using QuickClinique.Attributes;
 using QuickClinique.Hubs;
 using QuickClinique.Services;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers
 {
@@ -504,7 +505,7 @@ namespace QuickClinique.Controllers
                 SenderId = clinicStaff.UserId,
                 ReceiverId = request.ReceiverId,
                 Message1 = request.Message,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = GetPhilippineTime()
             };
 
             _context.Messages.Add(message);
@@ -689,7 +690,7 @@ namespace QuickClinique.Controllers
                 {
                     emergencyId = emergency.EmergencyId,
                     message = "Your SOS alert has been received. Help is on the way.",
-                    acknowledgedAt = DateTime.Now
+                    acknowledgedAt = GetPhilippineTime()
                 });
                 Console.WriteLine($"[SignalR] Sent emergency acknowledgment to student {emergency.StudentId.Value} for emergency {emergency.EmergencyId}");
             }
@@ -1022,7 +1023,7 @@ namespace QuickClinique.Controllers
                 }
 
                 // Create the appointment
-                var now = DateTime.Now;
+                var now = GetPhilippineTime();
                 var timeSelected = appointmentDate.ToDateTime(appointmentTime);
                 
                 var appointment = new Appointment

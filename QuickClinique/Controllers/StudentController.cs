@@ -13,6 +13,7 @@ using QuickClinique.Hubs;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using static QuickClinique.Services.TimeZoneHelper;
 
 namespace QuickClinique.Controllers
 {
@@ -617,7 +618,7 @@ namespace QuickClinique.Controllers
                                 Password = _passwordService.HashPassword(model.Password), // Hash the password
                                 IsEmailVerified = false,
                                 EmailVerificationToken = emailToken,
-                                EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
+                                EmailVerificationTokenExpiry = GetPhilippineTime().AddHours(24),
                                 IsActive = false, // Account starts as inactive until activated by administrator
                                 EmergencyContactName = model.EmergencyContactName.ToUpper(),
                                 EmergencyContactRelationship = model.EmergencyContactRelationship.ToUpper(),
@@ -1589,7 +1590,7 @@ namespace QuickClinique.Controllers
                             column.Item().PaddingTop(20).Padding(10).Background(Colors.Grey.Lighten4).Border(1).BorderColor(Colors.Grey.Lighten2).Text(text =>
                             {
                                 text.Span("Note: ").Bold();
-                                text.Span($"This certification is based on the medical records available in the QuickClinique system as of {DateTime.Now:MMMM dd, yyyy}. For any inquiries or additional information, please contact the clinic directly.");
+                                text.Span($"This certification is based on the medical records available in the QuickClinique system as of {GetPhilippineTime():MMMM dd, yyyy}. For any inquiries or additional information, please contact the clinic directly.");
                             });
 
                             // Signature Section
@@ -1613,9 +1614,9 @@ namespace QuickClinique.Controllers
                         .AlignCenter()
                         .Text(text =>
                         {
-                            text.Span($"Generated on {DateTime.Now:MMMM dd, yyyy 'at' hh:mm tt}").FontSize(8).FontColor(Colors.Grey.Medium);
+                            text.Span($"Generated on {GetPhilippineTime():MMMM dd, yyyy 'at' hh:mm tt}").FontSize(8).FontColor(Colors.Grey.Medium);
                             text.EmptyLine();
-                            text.Span($"© {DateTime.Now.Year} University of Cebu Medical-Dental Clinic. All rights reserved.").FontSize(8).FontColor(Colors.Grey.Medium);
+                            text.Span($"© {GetPhilippineTime().Year} University of Cebu Medical-Dental Clinic. All rights reserved.").FontSize(8).FontColor(Colors.Grey.Medium);
                         });
                 });
             });
@@ -1624,7 +1625,7 @@ namespace QuickClinique.Controllers
             document.GeneratePdf(stream);
             stream.Position = 0;
 
-            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{DateTime.Now:yyyyMMdd}.pdf";
+            var fileName = $"Medical_Certificate_{student.FirstName}_{student.LastName}_{GetPhilippineTime():yyyyMMdd}.pdf";
             return File(stream, "application/pdf", fileName);
         }
 
@@ -1702,7 +1703,7 @@ namespace QuickClinique.Controllers
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.EmailVerificationToken == token &&
-                         s.EmailVerificationTokenExpiry > DateTime.Now);
+                         s.EmailVerificationTokenExpiry > GetPhilippineTime());
 
             if (student == null)
             {
@@ -1798,7 +1799,7 @@ namespace QuickClinique.Controllers
                 // Generate new token and extend expiry
                 var newToken = GenerateToken();
                 student.EmailVerificationToken = newToken;
-                student.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+                student.EmailVerificationTokenExpiry = GetPhilippineTime().AddHours(24);
 
                 await _context.SaveChangesAsync();
 
@@ -1894,7 +1895,7 @@ namespace QuickClinique.Controllers
                 // Generate new token and extend expiry
                 var resetToken = GenerateToken();
                 student.PasswordResetToken = resetToken;
-                student.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+                student.PasswordResetTokenExpiry = GetPhilippineTime().AddHours(1);
 
                 await _context.SaveChangesAsync();
 
@@ -1960,7 +1961,7 @@ namespace QuickClinique.Controllers
                 {
                     var resetToken = GenerateToken();
                     student.PasswordResetToken = resetToken;
-                    student.PasswordResetTokenExpiry = DateTime.Now.AddHours(1);
+                    student.PasswordResetTokenExpiry = GetPhilippineTime().AddHours(1);
 
                     await _context.SaveChangesAsync();
 
@@ -2020,7 +2021,7 @@ namespace QuickClinique.Controllers
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.Email == email &&
                          s.PasswordResetToken == token &&
-                         s.PasswordResetTokenExpiry > DateTime.Now);
+                         s.PasswordResetTokenExpiry > GetPhilippineTime());
 
             if (student == null)
             {
@@ -2059,7 +2060,7 @@ namespace QuickClinique.Controllers
                 var student = await _context.Students
                     .FirstOrDefaultAsync(s => s.Email == model.Email &&
                              s.PasswordResetToken == model.Token &&
-                             s.PasswordResetTokenExpiry > DateTime.Now);
+                             s.PasswordResetTokenExpiry > GetPhilippineTime());
 
                 if (student == null)
                 {
@@ -2137,7 +2138,7 @@ namespace QuickClinique.Controllers
                 Location = request.Location,
                 Needs = request.Needs,
                 IsResolved = false,
-                CreatedAt = DateTime.Now
+                CreatedAt = GetPhilippineTime()
             };
 
             _context.Emergencies.Add(emergency);
@@ -2193,7 +2194,7 @@ namespace QuickClinique.Controllers
             emergency.IsAcknowledged = false;
 
             // Update the timestamp to show it was resent
-            emergency.CreatedAt = DateTime.Now;
+            emergency.CreatedAt = GetPhilippineTime();
 
             await _context.SaveChangesAsync();
 
@@ -2246,7 +2247,7 @@ namespace QuickClinique.Controllers
 
                 if (recentlyAcknowledged != null && recentlyAcknowledged.CreatedAt.HasValue)
                 {
-                    var timeSinceCreated = DateTime.Now - recentlyAcknowledged.CreatedAt.Value;
+                    var timeSinceCreated = GetPhilippineTime() - recentlyAcknowledged.CreatedAt.Value;
                     // If acknowledged within last 10 minutes, return it to show "Help is on the Way" modal
                     if (timeSinceCreated.TotalMinutes <= 10)
                     {

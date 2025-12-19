@@ -13,8 +13,8 @@
     // Helper function to check if a schedule is in the past
     bool IsPastSchedule(QuickClinique.Models.Schedule schedule)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var currentTime = TimeOnly.FromDateTime(DateTime.Now);
+        var today = GetPhilippineDate();
+        var currentTime = GetPhilippineTimeOnly();
         return schedule.Date < today || (schedule.Date == today && schedule.EndTime < currentTime);
     }
 }

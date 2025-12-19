@@ -791,7 +791,7 @@ namespace QuickClinique.Controllers
                         BloodPressure = request.BloodPressure,
                         Temperature = request.Temperature,
                         OxygenSaturation = request.OxygenSaturation,
-                        TriageDateTime = DateTime.Now,
+                        TriageDateTime = GetPhilippineTime(),
                         TriageTakenByStaffId = staffId,
                         TriageTakenByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null
                     };
@@ -879,7 +879,7 @@ namespace QuickClinique.Controllers
                                 }
                                 else if (status == "Completed")
                                 {
-                                    var appointmentDate = schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                                    var appointmentDate = schedule?.Date.ToString("MMM dd, yyyy") ?? GetPhilippineTime().ToString("MMM dd, yyyy");
                                     Console.WriteLine($"[EMAIL DEBUG] Sending completion email to {patientEmail}");
                                     await emailService.SendAppointmentCompletedEmail(
                                         patientEmail,
@@ -1225,7 +1225,7 @@ namespace QuickClinique.Controllers
                         BloodPressure = request.BloodPressure,
                         Temperature = request.Temperature,
                         OxygenSaturation = request.OxygenSaturation,
-                        TriageDateTime = DateTime.Now,
+                        TriageDateTime = GetPhilippineTime(),
                         TriageTakenByStaffId = staffId,
                         TriageTakenByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null
                     };
@@ -1942,7 +1942,7 @@ namespace QuickClinique.Controllers
                 if (appointment.Patient != null && !string.IsNullOrEmpty(appointment.Patient.Email))
                 {
                     Console.WriteLine($"[EMAIL DEBUG] CompleteAppointment - Preparing to send completion email to {appointment.Patient.Email}");
-                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? DateTime.Now.ToString("MMM dd, yyyy");
+                    var appointmentDate = appointment.Schedule?.Date.ToString("MMM dd, yyyy") ?? GetPhilippineTime().ToString("MMM dd, yyyy");
                     var patientEmail = appointment.Patient.Email;
                     var patientName = appointment.Patient.FullName;
                     
