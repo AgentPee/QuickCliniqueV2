@@ -27,5 +27,17 @@ public class MessageHub : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, "clinic_staff");
     }
+
+    // Method for students to join emergency notification group
+    public async Task JoinEmergencyGroup(int studentId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"emergency_student_{studentId}");
+    }
+
+    // Method for students to leave emergency notification group
+    public async Task LeaveEmergencyGroup(int studentId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"emergency_student_{studentId}");
+    }
 }
 

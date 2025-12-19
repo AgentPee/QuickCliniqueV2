@@ -29,9 +29,15 @@ public partial class Precord
 
     public decimal? Temperature { get; set; }
 
-    public int? RespiratoryRate { get; set; }
-
     public int? OxygenSaturation { get; set; }
+
+    // Triage tracking information
+    public DateTime? TriageDateTime { get; set; } // Date and time when triage was taken
+    public int? TriageTakenByStaffId { get; set; } // ID of staff member who took the vital signs
+    public string? TriageTakenByName { get; set; } // Name of staff member who took the vital signs
+    public int? TreatmentProvidedByStaffId { get; set; } // ID of doctor/staff who provided treatment
+    public string? TreatmentProvidedByName { get; set; } // Name of doctor/staff who provided treatment
+    public string? DoctorLicenseNumber { get; set; } // License number of the doctor providing treatment
 
     public virtual Student Patient { get; set; } = null!;
 }

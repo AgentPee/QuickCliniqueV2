@@ -69,7 +69,65 @@
             </div>
             <div class="modal-footer emergency-footer">
                 <button type="button" class="btn btn-success emergency-resolve-btn" id="resolveEmergencyBtn">
-                    <i class="fas fa-check"></i> Mark as Resolved
+                    <i class="fas fa-check"></i> Respond
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Received Notification Modal for Clinic Staff -->
+<div class="modal fade" id="helpReceivedModal" tabindex="-1" aria-labelledby="helpReceivedModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content help-received-modal-content">
+            <div class="modal-header help-received-header">
+                <h5 class="modal-title" id="helpReceivedModalLabel">
+                    <i class="fas fa-check-circle"></i> Help Received Notification
+                </h5>
+            </div>
+            <div class="modal-body help-received-body">
+                <div class="help-received-message-container">
+                    <div class="help-received-icon-wrapper">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3 class="help-received-title">Student Has Confirmed Help Received</h3>
+                    <p class="help-received-message">
+                        The student has confirmed that help has arrived and assistance has been received.
+                    </p>
+                    <div class="help-received-info">
+                        <div class="info-row">
+                            <div class="info-label">
+                                <div class="info-icon-wrapper">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span>Student Name</span>
+                            </div>
+                            <div class="info-value" id="helpReceivedStudentName"></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">
+                                <div class="info-icon-wrapper">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <span>Student ID</span>
+                            </div>
+                            <div class="info-value" id="helpReceivedStudentId"></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">
+                                <div class="info-icon-wrapper">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <span>Location</span>
+                            </div>
+                            <div class="info-value" id="helpReceivedLocation"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer help-received-footer">
+                <button type="button" class="btn btn-success help-received-resolve-btn" id="resolveHelpReceivedBtn">
+                    <i class="fas fa-check"></i> Resolved
                 </button>
             </div>
         </div>
@@ -84,6 +142,9 @@
         let lastCheckedEmergencyId = null;
         let alertAudio = null;
         let audioInterval = null;
+        let helpReceivedCheckInterval = null;
+        let lastCheckedHelpReceivedId = null;
+        let currentHelpReceivedId = null;
 
         // Check for emergencies every 5 seconds
         function startEmergencyCheck() {
@@ -122,14 +183,19 @@
                     
                     console.log('Comparing IDs - Latest:', latestId, 'Last Checked:', lastCheckedId, 'Current:', currentEmergencyId);
                     
-                    // Show modal if:
-                    // 1. It's a new emergency (different ID), OR
-                    // 2. The modal is not currently showing (currentEmergencyId is null)
-                    if (latestId !== lastCheckedId || currentEmergencyId === null) {
+                    // Show modal only if it's a new emergency (different ID) and modal is not currently showing
+                    // Also check if modal is actually visible to prevent spamming
+                    const modalElement = document.getElementById('emergencyModal');
+                    const isModalVisible = modalElement && modalElement.classList.contains('show');
+                    
+                    if ((latestId !== lastCheckedId || (currentEmergencyId === null && !isModalVisible)) && !isModalVisible) {
                         console.log('Showing emergency modal for ID:', latestId);
                         lastCheckedEmergencyId = latestId;
                         currentEmergencyId = latestId;
                         showEmergencyModal(latestEmergency);
+                    } else if (latestId === lastCheckedId && currentEmergencyId === latestId) {
+                        // Emergency already shown, just update currentEmergencyId if needed
+                        currentEmergencyId = latestId;
                     }
                 } else {
                     // No active emergencies - stop beeping and reset tracking
@@ -156,6 +222,19 @@
 
         // Show emergency modal
         function showEmergencyModal(emergency) {
+            // Prevent showing duplicate modals
+            const modalElement = document.getElementById('emergencyModal');
+            if (!modalElement) {
+                console.error('Emergency modal element not found');
+                return;
+            }
+
+            // Check if modal is already visible
+            if (modalElement.classList.contains('show')) {
+                console.log('Modal already visible, skipping duplicate show');
+                return;
+            }
+
             // Update modal content
             document.getElementById('emergencyStudentName').textContent = emergency.studentName || 'Unknown';
             document.getElementById('emergencyStudentId').textContent = emergency.studentIdNumber || 'N/A';
@@ -170,13 +249,6 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
-
-            // Get or create modal instance
-            const modalElement = document.getElementById('emergencyModal');
-            if (!modalElement) {
-                console.error('Emergency modal element not found');
-                return;
-            }
 
             // Ensure modal has highest z-index
             modalElement.style.zIndex = '10000';
@@ -385,39 +457,203 @@
             initializeEmergencyPolling();
         }
 
+        // Track if button handler has been attached
+        let buttonHandlerAttached = false;
+
         function initializeEmergencyPolling() {
-            // Resolve button handler
+            // Resolve button handler - only attach once to prevent duplicate listeners
             const resolveBtn = document.getElementById('resolveEmergencyBtn');
-            if (resolveBtn) {
-                resolveBtn.addEventListener('click', async function() {
-                    if (!currentEmergencyId) {
+            if (resolveBtn && !buttonHandlerAttached) {
+                buttonHandlerAttached = true;
+                resolveBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const emergencyId = currentEmergencyId;
+                    if (!emergencyId) {
+                        console.error('No current emergency ID');
+                        alert('No emergency selected. Please refresh the page.');
                         return;
                     }
 
                     const btn = this;
                     btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resolving...';
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Responding...';
 
                     try {
-                        const response = await fetch('/Dashboard/MarkEmergencyResolved', {
+                        console.log('Acknowledging emergency ID:', emergencyId);
+                        
+                        // Acknowledge emergency (this triggers "Help is on the Way" modal for student, but doesn't mark as resolved)
+                        const response = await fetch('/Dashboard/AcknowledgeEmergency', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest'
                             },
-                            body: JSON.stringify({ emergencyId: currentEmergencyId })
+                            body: JSON.stringify({ emergencyId: emergencyId })
                         });
 
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
                         const result = await response.json();
+                        console.log('Acknowledge response:', result);
 
                         if (result.success) {
                             // Stop the beeping sound
                             stopEmergencyBeep();
                             
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyModal'));
-                            if (modal) {
-                                modal.hide();
+                            // Hide modal
+                            const modalElement = document.getElementById('emergencyModal');
+                            if (modalElement) {
+                                const modal = bootstrap.Modal.getInstance(modalElement);
+                                if (modal) {
+                                    modal.hide();
+                                }
                             }
+                            
+                            // Mark this emergency as acknowledged so it won't show again
+                            lastCheckedEmergencyId = emergencyId;
+                            currentEmergencyId = null;
+                            
+                            // Show success message
+                            if (typeof showMessage === 'function') {
+                                showMessage('Emergency acknowledged. Student has been notified that help is on the way.', 'success');
+                            } else {
+                                alert('Emergency acknowledged. Student has been notified that help is on the way.');
+                            }
+                            
+                            // Small delay before reload to ensure message is shown
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            const errorMsg = 'Failed to acknowledge emergency: ' + (result.error || 'Unknown error');
+                            console.error('Acknowledge failed:', errorMsg);
+                            if (typeof showMessage === 'function') {
+                                showMessage(errorMsg, 'error');
+                            } else {
+                                alert(errorMsg);
+                            }
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    } catch (error) {
+                        console.error('Error acknowledging emergency:', error);
+                        const errorMsg = 'Error acknowledging emergency: ' + (error.message || 'Please try again.');
+                        if (typeof showMessage === 'function') {
+                            showMessage(errorMsg, 'error');
+                        } else {
+                            alert(errorMsg);
+                        }
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                });
+                
+                console.log('Respond button handler attached');
+            } else if (!resolveBtn) {
+                console.warn('Respond button not found in DOM');
+            }
+
+            // Start emergency check when page loads
+            startEmergencyCheck();
+            
+            // Start help received check
+            startHelpReceivedCheck();
+        }
+
+        // Check for help received notifications
+        function startHelpReceivedCheck() {
+            if (helpReceivedCheckInterval) {
+                clearInterval(helpReceivedCheckInterval);
+            }
+
+            helpReceivedCheckInterval = setInterval(async () => {
+                await checkForHelpReceived();
+            }, 5000); // Check every 5 seconds
+
+            // Check immediately on page load
+            checkForHelpReceived();
+        }
+
+        // Check for help received notifications
+        async function checkForHelpReceived() {
+            try {
+                const response = await fetch('/Dashboard/GetHelpReceivedNotifications');
+                if (!response.ok) {
+                    console.error('Failed to fetch help received notifications:', response.status);
+                    return;
+                }
+                
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    // Get the most recent help received notification
+                    const latestHelpReceived = result.data[0];
+                    const latestId = parseInt(latestHelpReceived.emergencyId);
+                    const lastCheckedId = lastCheckedHelpReceivedId ? parseInt(lastCheckedHelpReceivedId) : null;
+                    
+                    // Show modal if this is a new help received notification
+                    if (latestId !== lastCheckedId && latestId !== currentHelpReceivedId) {
+                        showHelpReceivedModal(latestHelpReceived);
+                        currentHelpReceivedId = latestId;
+                        lastCheckedHelpReceivedId = latestId;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking for help received notifications:', error);
+            }
+        }
+
+        // Show help received modal
+        function showHelpReceivedModal(helpReceivedData) {
+            const modalElement = document.getElementById('helpReceivedModal');
+            if (!modalElement) {
+                console.error('Help received modal element not found');
+                return;
+            }
+
+            // Populate modal with data
+            document.getElementById('helpReceivedStudentName').textContent = helpReceivedData.studentName || 'N/A';
+            document.getElementById('helpReceivedStudentId').textContent = helpReceivedData.studentIdNumber || 'N/A';
+            document.getElementById('helpReceivedLocation').textContent = helpReceivedData.location || 'N/A';
+
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+
+            modal.show();
+
+            // Handle resolve button
+            const resolveBtn = document.getElementById('resolveHelpReceivedBtn');
+            if (resolveBtn) {
+                resolveBtn.onclick = async function() {
+                    const btn = this;
+                    btn.disabled = true;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resolving...';
+
+                    try {
+                        const response = await fetch('/Dashboard/MarkHelpReceivedAsResolved', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ emergencyId: helpReceivedData.emergencyId })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            modal.hide();
                             
                             // Show success message if showMessage function exists
                             if (typeof showMessage === 'function') {
@@ -426,16 +662,16 @@
                                 alert('Emergency marked as resolved');
                             }
                             
-                            // Reset tracking so new emergencies will show
-                            currentEmergencyId = null;
-                            lastCheckedEmergencyId = null;
+                            // Reset tracking
+                            currentHelpReceivedId = null;
+                            lastCheckedHelpReceivedId = helpReceivedData.emergencyId;
                             
-                            // Reload the page after a short delay
+                            // Reload page to refresh the emergency table
                             setTimeout(() => {
                                 window.location.reload();
                             }, 500);
                         } else {
-                            const errorMsg = 'Failed to resolve emergency: ' + (result.error || 'Unknown error');
+                            const errorMsg = 'Failed to resolve help received notification: ' + (result.error || 'Unknown error');
                             if (typeof showMessage === 'function') {
                                 showMessage(errorMsg, 'error');
                             } else {
@@ -443,8 +679,8 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Error resolving emergency:', error);
-                        const errorMsg = 'Error resolving emergency. Please try again.';
+                        console.error('Error resolving help received notification:', error);
+                        const errorMsg = 'Error resolving help received notification. Please try again.';
                         if (typeof showMessage === 'function') {
                             showMessage(errorMsg, 'error');
                         } else {
@@ -452,13 +688,75 @@
                         }
                     } finally {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-check"></i> Mark as Resolved';
+                        btn.innerHTML = '<i class="fas fa-check"></i> Resolved';
+                    }
+                };
+            }
+        }
+    })();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+<script>
+    // ===== SIGNALR FOR REAL-TIME EMERGENCY NOTIFICATIONS =====
+    (function() {
+        let emergencyConnection = null;
+
+        // Initialize SignalR for emergency notifications
+        async function initializeEmergencySignalR() {
+            try {
+                emergencyConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/messageHub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                // Listen for new emergencies in real-time
+                emergencyConnection.on("NewEmergency", function (emergency) {
+                    console.log('New emergency received via SignalR:', emergency);
+                    if (emergency && emergency.emergencyId) {
+                        const emergencyId = parseInt(emergency.emergencyId);
+                        // Show modal if it's a new emergency
+                        if (emergencyId !== currentEmergencyId) {
+                            showEmergencyModal(emergency);
+                            currentEmergencyId = emergencyId;
+                            lastCheckedEmergencyId = emergencyId;
+                        }
                     }
                 });
-            }
 
-            // Start emergency check when page loads
-            startEmergencyCheck();
+                // Handle connection events
+                emergencyConnection.onreconnecting(() => {
+                    console.log('Emergency SignalR reconnecting...');
+                });
+
+                emergencyConnection.onreconnected(async () => {
+                    console.log('Emergency SignalR reconnected');
+                    // Rejoin clinic staff group
+                    await emergencyConnection.invoke("JoinClinicStaffGroup").catch(err => console.error(err));
+                });
+
+                emergencyConnection.onclose(() => {
+                    console.log('Emergency SignalR connection closed');
+                });
+
+                // Start connection
+                await emergencyConnection.start();
+                console.log('Emergency SignalR connected');
+
+                // Join clinic staff group to receive emergency notifications
+                await emergencyConnection.invoke("JoinClinicStaffGroup");
+                console.log('Joined clinic staff group for emergency notifications');
+            } catch (err) {
+                console.error('Error starting Emergency SignalR connection:', err);
+                // Fallback to polling if SignalR fails
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEmergencySignalR);
+        } else {
+            initializeEmergencySignalR();
         }
     })();
 </script>
@@ -885,6 +1183,124 @@
             padding: 0.875rem 1.5rem;
             font-size: 0.95rem;
         }
+    }
+
+    /* Help Received Modal Styles */
+    .help-received-modal-content {
+        border: 3px solid #10b981;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.5);
+        animation: helpReceivedModalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        overflow: hidden;
+    }
+
+    @@keyframes helpReceivedModalEntrance {
+        0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .help-received-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-bottom: none;
+        padding: 0.875rem 1.25rem;
+    }
+
+    .help-received-header .modal-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .help-received-header .modal-title i {
+        font-size: 1.5rem;
+    }
+
+    .help-received-body {
+        padding: 2rem 1.5rem;
+        background: #ffffff;
+        text-align: center;
+    }
+
+    .help-received-message-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .help-received-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+    }
+
+    .help-received-icon-wrapper i {
+        color: #10b981;
+        font-size: 3rem;
+    }
+
+    .help-received-title {
+        color: #059669;
+        font-weight: 700;
+        font-size: 1.75rem;
+        margin: 0;
+    }
+
+    .help-received-message {
+        color: #374151;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin: 0;
+        max-width: 500px;
+    }
+
+    .help-received-info {
+        margin-top: 1.5rem;
+        width: 100%;
+        max-width: 500px;
+        text-align: left;
+    }
+
+    .help-received-footer {
+        border-top: 3px solid #d1fae5;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        display: flex;
+        justify-content: center;
+    }
+
+    .help-received-resolve-btn {
+        padding: 1rem 3rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+        transition: all 0.3s ease;
+    }
+
+    .help-received-resolve-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
     }
 </style>
 

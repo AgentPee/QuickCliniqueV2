@@ -23,114 +23,163 @@ namespace QuickClinique.Services
         public async Task SeedDataAsync()
         {
             // Check if data already exists
-            if (await _context.Usertypes.AnyAsync())
+            if (!await _context.Usertypes.AnyAsync())
             {
-                return; // Data already seeded
+                // Create default user types
+                var userTypes = new List<Usertype>
+                {
+                    new Usertype { Name = "System Administrator", Role = "Admin" },
+                    new Usertype { Name = "Clinic Staff", Role = "ClinicStaff" },
+                    new Usertype { Name = "Student", Role = "Student" }
+                };
+
+                _context.Usertypes.AddRange(userTypes);
+                await _context.SaveChangesAsync();
+
+                // Create default admin clinic staff
+                var adminUserType = userTypes.First(ut => ut.Role == "Admin");
+                var adminStaff = new Clinicstaff
+                {
+                    UserId = adminUserType.UserId,
+                    FirstName = "Admin",
+                    LastName = "User",
+                    Email = "admin@quickclinique.com",
+                    PhoneNumber = "09123456789",
+                    Password = _passwordService.HashPassword("Admin123!"),
+                    IsEmailVerified = true,
+                    IsActive = true
+                };
+
+                _context.Clinicstaffs.Add(adminStaff);
+                await _context.SaveChangesAsync();
+
+                // Create sample schedules for the next 30 days
+                var schedules = new List<Schedule>();
+                var startDate = DateTime.Today;
+                
+                for (int i = 0; i < 30; i++)
+                {
+                    var currentDate = startDate.AddDays(i);
+                    
+                    // Skip weekends
+                    if (currentDate.DayOfWeek == DayOfWeek.Saturday || currentDate.DayOfWeek == DayOfWeek.Sunday)
+                        continue;
+
+                    // Create morning slots (9 AM - 12 PM)
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(9, 0),
+                        EndTime = new TimeOnly(10, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(10, 0),
+                        EndTime = new TimeOnly(11, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(11, 0),
+                        EndTime = new TimeOnly(12, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    // Create afternoon slots (1 PM - 5 PM)
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(13, 0),
+                        EndTime = new TimeOnly(14, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(14, 0),
+                        EndTime = new TimeOnly(15, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(15, 0),
+                        EndTime = new TimeOnly(16, 0),
+                        IsAvailable = "Yes"
+                    });
+
+                    schedules.Add(new Schedule
+                    {
+                        Date = DateOnly.FromDateTime(currentDate),
+                        StartTime = new TimeOnly(16, 0),
+                        EndTime = new TimeOnly(17, 0),
+                        IsAvailable = "Yes"
+                    });
+                }
+
+                _context.Schedules.AddRange(schedules);
+                await _context.SaveChangesAsync();
             }
 
-            // Create default user types
-            var userTypes = new List<Usertype>
-            {
-                new Usertype { Name = "System Administrator", Role = "Admin" },
-                new Usertype { Name = "Clinic Staff", Role = "ClinicStaff" },
-                new Usertype { Name = "Student", Role = "Student" }
-            };
+            // Always check and seed the default student user (even if other data already exists)
+            await SeedStudentAsync();
 
-            _context.Usertypes.AddRange(userTypes);
-            await _context.SaveChangesAsync();
+            Console.WriteLine("Database seeded successfully!");
+        }
 
-            // Create default admin clinic staff
-            var adminUserType = userTypes.First(ut => ut.Role == "Admin");
-            var adminStaff = new Clinicstaff
+        public async Task SeedStudentAsync()
+        {
+            // Check if student with ID 12345678 already exists
+            var existingStudent = await _context.Students
+                .FirstOrDefaultAsync(s => s.Idnumber == 12345678);
+
+            if (existingStudent != null)
             {
-                UserId = adminUserType.UserId,
-                FirstName = "Admin",
-                LastName = "User",
-                Email = "admin@quickclinique.com",
+                Console.WriteLine("Student with ID 12345678 already exists. Skipping seed.");
+                return;
+            }
+
+            // Get or create Student user type
+            var studentUserType = await _context.Usertypes
+                .FirstOrDefaultAsync(ut => ut.Role == "Student");
+
+            if (studentUserType == null)
+            {
+                // Create Student user type if it doesn't exist
+                studentUserType = new Usertype
+                {
+                    Name = "Student",
+                    Role = "Student"
+                };
+                _context.Usertypes.Add(studentUserType);
+                await _context.SaveChangesAsync();
+            }
+
+            // Create the student
+            var student = new Student
+            {
+                UserId = studentUserType.UserId,
+                Idnumber = 12345678,
+                FirstName = "Luffy",
+                LastName = "zoro",
+                Email = "luffy.zoro@quickclinique.com",
                 PhoneNumber = "09123456789",
-                Password = _passwordService.HashPassword("Admin123!"),
+                Password = _passwordService.HashPassword("123123"),
                 IsEmailVerified = true,
                 IsActive = true
             };
 
-            _context.Clinicstaffs.Add(adminStaff);
+            _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
-            // Create sample schedules for the next 30 days
-            var schedules = new List<Schedule>();
-            var startDate = DateTime.Today;
-            
-            for (int i = 0; i < 30; i++)
-            {
-                var currentDate = startDate.AddDays(i);
-                
-                // Skip weekends
-                if (currentDate.DayOfWeek == DayOfWeek.Saturday || currentDate.DayOfWeek == DayOfWeek.Sunday)
-                    continue;
-
-                // Create morning slots (9 AM - 12 PM)
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(9, 0),
-                    EndTime = new TimeOnly(10, 0),
-                    IsAvailable = "Yes"
-                });
-
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(10, 0),
-                    EndTime = new TimeOnly(11, 0),
-                    IsAvailable = "Yes"
-                });
-
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(11, 0),
-                    EndTime = new TimeOnly(12, 0),
-                    IsAvailable = "Yes"
-                });
-
-                // Create afternoon slots (1 PM - 5 PM)
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(13, 0),
-                    EndTime = new TimeOnly(14, 0),
-                    IsAvailable = "Yes"
-                });
-
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(14, 0),
-                    EndTime = new TimeOnly(15, 0),
-                    IsAvailable = "Yes"
-                });
-
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(15, 0),
-                    EndTime = new TimeOnly(16, 0),
-                    IsAvailable = "Yes"
-                });
-
-                schedules.Add(new Schedule
-                {
-                    Date = DateOnly.FromDateTime(currentDate),
-                    StartTime = new TimeOnly(16, 0),
-                    EndTime = new TimeOnly(17, 0),
-                    IsAvailable = "Yes"
-                });
-            }
-
-            _context.Schedules.AddRange(schedules);
-            await _context.SaveChangesAsync();
-
-            Console.WriteLine("Database seeded successfully!");
+            Console.WriteLine("Student user (Luffy zoro, ID: 12345678) seeded successfully!");
         }
     }
 }

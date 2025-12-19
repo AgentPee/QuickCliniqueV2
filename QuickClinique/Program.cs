@@ -1401,26 +1401,6 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("[OK] Temperature column already exists in precords table.");
             }
 
-            // Check RespiratoryRate
-            command.CommandText = @"
-                SELECT COUNT(*) 
-                FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_SCHEMA = DATABASE() 
-                AND TABLE_NAME = 'precords' 
-                AND UPPER(COLUMN_NAME) = 'RESPIRATORYRATE'";
-            var respiratoryRateExists = Convert.ToInt32(await command.ExecuteScalarAsync()) > 0;
-            if (!respiratoryRateExists)
-            {
-                Console.WriteLine("[INIT] Adding RespiratoryRate column to precords table...");
-                command.CommandText = "ALTER TABLE `precords` ADD COLUMN `RespiratoryRate` int(50) NULL";
-                await command.ExecuteNonQueryAsync();
-                Console.WriteLine("[SUCCESS] RespiratoryRate column added to precords table!");
-            }
-            else
-            {
-                Console.WriteLine("[OK] RespiratoryRate column already exists in precords table.");
-            }
-
             // Check OxygenSaturation
             command.CommandText = @"
                 SELECT COUNT(*) 

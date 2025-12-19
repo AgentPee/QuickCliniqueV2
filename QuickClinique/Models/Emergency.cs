@@ -18,6 +18,10 @@ public partial class Emergency
 
     public bool IsResolved { get; set; } = false;
 
+    public bool IsAcknowledged { get; set; } = false;
+
+    public bool IsHelpReceivedRequested { get; set; } = false;
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual Student? Student { get; set; }

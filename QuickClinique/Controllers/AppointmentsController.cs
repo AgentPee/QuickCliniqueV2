@@ -768,6 +768,15 @@ namespace QuickClinique.Controllers
                     // Get gender from patient if available, otherwise use request.Gender or default
                     string gender = appointment.Patient?.Gender ?? request.Gender ?? "Not specified";
                     
+                    // Get current staff member who is taking the triage
+                    var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+                    Clinicstaff? staff = null;
+                    if (staffId.HasValue)
+                    {
+                        staff = await _context.Clinicstaffs
+                            .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+                    }
+
                     var medicalRecord = new Precord
                     {
                         PatientId = appointment.PatientId,
@@ -777,7 +786,14 @@ namespace QuickClinique.Controllers
                         Name = appointment.Patient?.FullName ?? "Unknown",
                         Age = age,
                         Gender = gender,
-                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0
+                        Bmi = request.Bmi.HasValue ? (int)request.Bmi.Value : 0,
+                        PulseRate = request.PulseRate,
+                        BloodPressure = request.BloodPressure,
+                        Temperature = request.Temperature,
+                        OxygenSaturation = request.OxygenSaturation,
+                        TriageDateTime = DateTime.Now,
+                        TriageTakenByStaffId = staffId,
+                        TriageTakenByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null
                     };
 
                     _context.Precords.Add(medicalRecord);
@@ -928,6 +944,11 @@ namespace QuickClinique.Controllers
             public double? Bmi { get; set; }
             public string? Allergies { get; set; }
             public string? TriageNotes { get; set; }
+            // Vital Signs
+            public int? PulseRate { get; set; }
+            public string? BloodPressure { get; set; }
+            public decimal? Temperature { get; set; }
+            public int? OxygenSaturation { get; set; }
         }
 
         // Helper class for NextInQueue request
@@ -937,7 +958,6 @@ namespace QuickClinique.Controllers
             public int? PulseRate { get; set; }
             public string? BloodPressure { get; set; }
             public decimal? Temperature { get; set; }
-            public int? RespiratoryRate { get; set; }
             public int? OxygenSaturation { get; set; }
             public double? Bmi { get; set; }
             public string? Allergies { get; set; }
@@ -1078,7 +1098,7 @@ namespace QuickClinique.Controllers
                 })
                 .ToListAsync();
 
-            // Get all emergencies
+            // Get all emergencies (both resolved and unresolved)
             var emergencies = await _context.Emergencies
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new {
@@ -1089,6 +1109,8 @@ namespace QuickClinique.Controllers
                     location = e.Location,
                     needs = e.Needs,
                     isResolved = e.IsResolved,
+                    isAcknowledged = e.IsAcknowledged,
+                    isHelpReceivedRequested = e.IsHelpReceivedRequested,
                     createdAt = e.CreatedAt
                 })
                 .ToListAsync();
@@ -1171,7 +1193,7 @@ namespace QuickClinique.Controllers
                 // Create Precord with triage data if provided
                 if (request != null && 
                     (request.PulseRate.HasValue || request.BloodPressure != null || 
-                     request.Temperature.HasValue || request.RespiratoryRate.HasValue ||
+                     request.Temperature.HasValue ||
                      request.OxygenSaturation.HasValue || request.Bmi.HasValue || request.Allergies != null))
                 {
                     // Calculate age from Birthdate if available
@@ -1180,6 +1202,15 @@ namespace QuickClinique.Controllers
                     // Get gender from patient if available
                     string gender = nextAppointment.Patient?.Gender ?? "Not specified";
                     
+                    // Get current staff member who is taking the triage
+                    var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+                    Clinicstaff? staff = null;
+                    if (staffId.HasValue)
+                    {
+                        staff = await _context.Clinicstaffs
+                            .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+                    }
+
                     var medicalRecord = new Precord
                     {
                         PatientId = nextAppointment.PatientId,
@@ -1193,8 +1224,10 @@ namespace QuickClinique.Controllers
                         PulseRate = request.PulseRate,
                         BloodPressure = request.BloodPressure,
                         Temperature = request.Temperature,
-                        RespiratoryRate = request.RespiratoryRate,
-                        OxygenSaturation = request.OxygenSaturation
+                        OxygenSaturation = request.OxygenSaturation,
+                        TriageDateTime = DateTime.Now,
+                        TriageTakenByStaffId = staffId,
+                        TriageTakenByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null
                     };
 
                     _context.Precords.Add(medicalRecord);
@@ -1854,9 +1887,23 @@ namespace QuickClinique.Controllers
                         Allergies = "None"
                     };
 
+                // Get current staff member (doctor) who is providing treatment
+                var staffId = HttpContext.Session.GetInt32("ClinicStaffId");
+                Clinicstaff? staff = null;
+                if (staffId.HasValue)
+                {
+                    staff = await _context.Clinicstaffs
+                        .FirstOrDefaultAsync(s => s.ClinicStaffId == staffId.Value);
+                }
+
                 // Update diagnosis and medications
                 medicalRecord.Diagnosis = model.Diagnosis;
                 medicalRecord.Medications = model.Medications;
+                
+                // Update treatment provider information
+                medicalRecord.TreatmentProvidedByStaffId = staffId;
+                medicalRecord.TreatmentProvidedByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null;
+                medicalRecord.DoctorLicenseNumber = staff?.LicenseNumber;
                 
                 // Update age and gender if not already set from triage
                 if (existingPrecord == null || existingPrecord.Age == 0)

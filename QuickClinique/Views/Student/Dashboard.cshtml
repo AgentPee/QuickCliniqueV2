@@ -9,6 +9,11 @@
 }
 
 <div class="student-dashboard">
+    <!-- Fixed SOS Emergency Button -->
+    <button type="button" class="fixed-sos-btn sos-btn" data-bs-toggle="modal" data-bs-target="#sosModal">
+        <i class="fas fa-exclamation-triangle"></i> SOS Emergency
+    </button>
+    
     <div class="dashboard-container">
         <!-- Welcome Section -->
         <div class="welcome-section">
@@ -108,10 +113,6 @@
                 <h4>
                     <i class="fas fa-bolt"></i> Quick Actions
                 </h4>
-
-                <button type="button" class="action-btn sos-btn" data-bs-toggle="modal" data-bs-target="#sosModal">
-                    <i class="fas fa-exclamation-triangle"></i> SOS Emergency
-                </button>
 
                 <a href="@Url.Action("Index", "Home")" class="action-btn">
                     <i class="fas fa-calendar-plus"></i> Set Appointment
@@ -396,6 +397,43 @@
     </div>
 </div>
 
+<!-- Follow-up Reminder Modal -->
+<div class="modal fade" id="followUpReminderModal" tabindex="-1" aria-labelledby="followUpReminderModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content follow-up-modal-content">
+            <div class="modal-header follow-up-header">
+                <h5 class="modal-title" id="followUpReminderModalLabel">
+                    <i class="fas fa-clock"></i> Follow-up Reminder
+                </h5>
+            </div>
+            <div class="modal-body follow-up-body">
+                <div class="follow-up-message-container">
+                    <div class="follow-up-icon-wrapper">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h3 class="follow-up-title">Do you still need assistance?</h3>
+                    <p class="follow-up-message">
+                        It's been 1 minute since clinic staff responded to your emergency request. 
+                        Please let us know if you still need help or if assistance has arrived.
+                    </p>
+                    <div class="follow-up-info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Choose an option below to continue.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer follow-up-footer">
+                <button type="button" class="btn btn-warning follow-up-follow-btn" id="followUpBtn">
+                    <i class="fas fa-redo"></i> Follow Up (Re-send Emergency)
+                </button>
+                <button type="button" class="btn btn-success follow-up-received-btn" id="helpReceivedBtn">
+                    <i class="fas fa-check-circle"></i> Help is Received
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
     <script>
@@ -404,11 +442,159 @@
         let emergencyCheckInterval = null;
         let lastCheckedEmergencyId = null;
         let helpModalShown = false;
+        let followUpTimer = null;
+        let currentEmergencyIdForFollowUp = null;
+        let lastSOSData = null;
 
         $(document).ready(function() {
             initializeMessaging();
             loadDashboardStatistics();
+            initializeSOSButton();
+            
+            // Also initialize SOS button when modal is shown (in case it's opened dynamically)
+            const sosModalElement = document.getElementById('sosModal');
+            if (sosModalElement) {
+                sosModalElement.addEventListener('shown.bs.modal', function() {
+                    setTimeout(() => {
+                        initializeSOSButton();
+                    }, 50);
+                });
+            }
         });
+
+        // Initialize SOS button with proper event handling
+        function initializeSOSButton() {
+            const sendSOSBtn = document.getElementById('sendSOSBtn');
+            if (!sendSOSBtn) {
+                console.error('Send SOS button not found');
+                return;
+            }
+
+            // Remove existing event listeners by cloning and replacing
+            const newBtn = sendSOSBtn.cloneNode(true);
+            sendSOSBtn.parentNode.replaceChild(newBtn, sendSOSBtn);
+
+            // Attach event listener to the new button
+            document.getElementById('sendSOSBtn').addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const location = document.getElementById('sosLocation').value.trim();
+                const needs = [];
+                
+                if (document.getElementById('needFirstAid').checked) {
+                    needs.push('First Aid Kit');
+                }
+                if (document.getElementById('needWheelchair').checked) {
+                    needs.push('Wheelchair');
+                }
+                if (document.getElementById('needStretcher').checked) {
+                    needs.push('Stretcher');
+                }
+                if (document.getElementById('needOther').checked) {
+                    const otherValue = document.getElementById('otherInput').value.trim();
+                    if (otherValue) {
+                        needs.push('Other: ' + otherValue);
+                    } else {
+                        needs.push('Other');
+                    }
+                }
+
+                // Validation
+                let isValid = true;
+                document.getElementById('locationError').textContent = '';
+                document.getElementById('needsError').textContent = '';
+                
+                if (!location) {
+                    document.getElementById('locationError').textContent = 'Location is required';
+                    document.getElementById('sosLocation').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('sosLocation').classList.remove('is-invalid');
+                }
+
+                if (needs.length === 0) {
+                    const needsError = document.getElementById('needsError');
+                    needsError.textContent = 'Please select at least one need';
+                    needsError.style.display = 'block';
+                    document.querySelectorAll('.sos-need-option').forEach(el => {
+                        el.classList.add('error-state');
+                    });
+                    isValid = false;
+                } else {
+                    document.getElementById('needsError').style.display = 'none';
+                    document.querySelectorAll('.sos-need-option').forEach(el => {
+                        el.classList.remove('error-state');
+                    });
+                }
+
+                if (!isValid) {
+                    return;
+                }
+
+                // Disable button and show loading
+                const btn = this;
+                btn.disabled = true;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                try {
+                    const response = await fetch('/Student/SendSOS', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            location: location,
+                            needs: needs.join(', ')
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Store the SOS data for follow-up resending
+                        lastSOSData = {
+                            location: location,
+                            needs: needs.join(', ')
+                        };
+                        
+                        alert('SOS emergency request sent successfully! Clinic staff has been notified.');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('sosModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Reset form
+                        const sosForm = document.getElementById('sosForm');
+                        if (sosForm) {
+                            sosForm.reset();
+                        }
+                        const otherContainer = document.getElementById('otherInputContainer');
+                        if (otherContainer) {
+                            otherContainer.classList.add('hidden');
+                        }
+                        
+                        // Reset help modal flag so it can show when resolved
+                        helpModalShown = false;
+                        lastCheckedEmergencyId = result.emergencyId;
+                    } else {
+                        alert('Failed to send SOS: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error sending SOS:', error);
+                    alert('Error sending SOS: ' + (error.message || 'Please try again.'));
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
+        }
 
         // Initialize messaging with SignalR
         async function initializeMessaging() {
@@ -429,16 +615,52 @@
                 addMessageToChat(message);
             });
 
+            // Handle emergency acknowledgment from staff (real-time notification)
+            connection.on("EmergencyAcknowledged", function (data) {
+                console.log('Emergency acknowledged via SignalR:', data);
+                if (data && data.emergencyId) {
+                    const acknowledgedId = data.emergencyId;
+                    // Show "Help is on the Way" modal immediately
+                    // Allow showing again even if previously acknowledged (for resend scenarios)
+                    if (!helpModalShown || lastCheckedEmergencyId !== acknowledgedId) {
+                        // Clear any existing modal instance
+                        const modalElement = document.getElementById('helpOnTheWayModal');
+                        if (modalElement) {
+                            const existingModal = bootstrap.Modal.getInstance(modalElement);
+                            if (existingModal) {
+                                existingModal.hide();
+                            }
+                        }
+                        
+                        showHelpOnTheWayModal(acknowledgedId);
+                        helpModalShown = true;
+                        lastCheckedEmergencyId = acknowledgedId;
+                    }
+                }
+            });
+
             // Handle connection events
             connection.onreconnecting(() => {
                 console.log('SignalR reconnecting...');
             });
 
-            connection.onreconnected(() => {
+            connection.onreconnected(async () => {
                 console.log('SignalR reconnected');
-                // Rejoin user group after reconnection
+                // Rejoin user group and emergency group after reconnection
                 if (currentUserId) {
-                    connection.invoke("JoinUserGroup", currentUserId).catch(err => console.error(err));
+                    await connection.invoke("JoinUserGroup", currentUserId).catch(err => console.error(err));
+                }
+                // Rejoin emergency group
+                try {
+                    const studentIdResponse = await fetch('/Student/GetCurrentStudentId');
+                    if (studentIdResponse.ok) {
+                        const studentIdResult = await studentIdResponse.json();
+                        if (studentIdResult.success && studentIdResult.studentId) {
+                            await connection.invoke("JoinEmergencyGroup", studentIdResult.studentId).catch(err => console.error(err));
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error rejoining emergency group:', err);
                 }
             });
 
@@ -455,6 +677,21 @@
                 if (currentUserId) {
                     await connection.invoke("JoinUserGroup", currentUserId);
                     console.log('Joined user group:', currentUserId);
+                }
+
+                // Join emergency notification group for real-time emergency updates
+                // Get student ID from the loadMessages function or fetch it
+                try {
+                    const studentIdResponse = await fetch('/Student/GetCurrentStudentId');
+                    if (studentIdResponse.ok) {
+                        const studentIdResult = await studentIdResponse.json();
+                        if (studentIdResult.success && studentIdResult.studentId) {
+                            await connection.invoke("JoinEmergencyGroup", studentIdResult.studentId);
+                            console.log('Joined emergency group for student:', studentIdResult.studentId);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error getting student ID for emergency group:', err);
                 }
             } catch (err) {
                 console.error('Error starting SignalR connection:', err);
@@ -799,6 +1036,12 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // Store the SOS data for follow-up resending
+                    lastSOSData = {
+                        location: location,
+                        needs: needs.join(', ')
+                    };
+                    
                     alert('SOS emergency request sent successfully! Clinic staff has been notified.');
                     const modal = bootstrap.Modal.getInstance(document.getElementById('sosModal'));
                     modal.hide();
@@ -856,10 +1099,11 @@
                 clearInterval(emergencyCheckInterval);
             }
 
-            // Check more frequently (every 2 seconds) for better responsiveness
+            // Use SignalR for real-time updates, but keep polling as fallback
+            // Check less frequently (every 10 seconds) since SignalR handles real-time
             emergencyCheckInterval = setInterval(async () => {
                 await checkIfEmergencyResolved();
-            }, 2000); // Check every 2 seconds
+            }, 10000); // Check every 10 seconds as fallback
 
             // Check immediately on page load
             checkIfEmergencyResolved();
@@ -925,24 +1169,402 @@
                     // Mark this emergency as acknowledged in localStorage
                     if (emergencyId) {
                         addAcknowledgedEmergencyId(emergencyId);
+                        currentEmergencyIdForFollowUp = emergencyId;
+                        
+                        // Store the confirmation time for follow-up reminder
+                        try {
+                            const followUpData = {
+                                emergencyId: emergencyId,
+                                confirmedAt: new Date().toISOString()
+                            };
+                            localStorage.setItem('followUpReminder', JSON.stringify(followUpData));
+                        } catch (e) {
+                            console.error('Error storing follow-up reminder:', e);
+                        }
                     }
                     modal.hide();
                     helpModalShown = true; // Keep flag true so it doesn't show again
-                    // Reload the page
-                    window.location.reload();
+                    
+                    // Set timer for 1 minute to show follow-up reminder
+                    if (followUpTimer) {
+                        clearTimeout(followUpTimer);
+                    }
+                    followUpTimer = setTimeout(function() {
+                        checkAndShowFollowUpReminder();
+                    }, 1 * 60 * 1000); // 1 minute
                 };
             }
         }
 
+        // Check for follow-up reminder on page load (only if emergency is still active)
+        async function checkAndShowFollowUpReminder() {
+            try {
+                const followUpDataStr = localStorage.getItem('followUpReminder');
+                if (!followUpDataStr) return;
+                
+                const followUpData = JSON.parse(followUpDataStr);
+                if (!followUpData.emergencyId || !followUpData.confirmedAt) return;
+
+                // Verify the emergency is still active (not resolved) before showing follow-up
+                try {
+                    const response = await fetch('/Student/CheckEmergencyResolved');
+                    if (response.ok) {
+                        const result = await response.json();
+                        // If emergency is resolved, clear the follow-up reminder
+                        if (result.success && result.resolved) {
+                            // Emergency is resolved, clear the reminder
+                            localStorage.removeItem('followUpReminder');
+                            localStorage.setItem(`followUpHandled_${followUpData.emergencyId}`, 'true');
+                            return;
+                        }
+                        // If no active emergency at all, clear the reminder
+                        if (result.success && !result.resolved && !result.emergencyId) {
+                            localStorage.removeItem('followUpReminder');
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error verifying emergency status:', error);
+                    // Continue with follow-up check even if verification fails
+                }
+                
+                const confirmedAt = new Date(followUpData.confirmedAt);
+                const now = new Date();
+                const minutesSinceConfirmed = (now - confirmedAt) / (1000 * 60);
+                
+                // Check if 1 minute has passed
+                if (minutesSinceConfirmed >= 1) {
+                    // Check if we've already shown or handled this follow-up
+                    const handledFollowUp = localStorage.getItem(`followUpHandled_${followUpData.emergencyId}`);
+                    if (!handledFollowUp) {
+                        showFollowUpReminderModal(followUpData.emergencyId);
+                    }
+                } else {
+                    // Set timer to show modal when 1 minute has passed
+                    const remainingMs = (1 * 60 * 1000) - (now - confirmedAt);
+                    if (remainingMs > 0) {
+                        if (followUpTimer) {
+                            clearTimeout(followUpTimer);
+                        }
+                        followUpTimer = setTimeout(async function() {
+                            // Verify emergency is still active before showing
+                            try {
+                                const checkResponse = await fetch('/Student/CheckEmergencyResolved');
+                                if (checkResponse.ok) {
+                                    const checkResult = await checkResponse.json();
+                                    if (checkResult.success && checkResult.resolved) {
+                                        // Emergency is resolved, don't show follow-up
+                                        localStorage.removeItem('followUpReminder');
+                                        localStorage.setItem(`followUpHandled_${followUpData.emergencyId}`, 'true');
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Error verifying emergency in timer:', e);
+                            }
+                            
+                            const handledFollowUp = localStorage.getItem(`followUpHandled_${followUpData.emergencyId}`);
+                            if (!handledFollowUp) {
+                                showFollowUpReminderModal(followUpData.emergencyId);
+                            }
+                        }, remainingMs);
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking follow-up reminder:', e);
+            }
+        }
+
+        // Show follow-up reminder modal
+        function showFollowUpReminderModal(emergencyId) {
+            const modalElement = document.getElementById('followUpReminderModal');
+            if (!modalElement) {
+                console.error('Follow-up reminder modal element not found');
+                return;
+            }
+
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+
+            // Reset button states before showing modal
+            const followUpBtn = document.getElementById('followUpBtn');
+            const helpReceivedBtn = document.getElementById('helpReceivedBtn');
+            
+            if (followUpBtn) {
+                // Reset button to original state - ensure it's fully functional
+                followUpBtn.disabled = false;
+                followUpBtn.innerHTML = '<i class="fas fa-redo"></i> Follow Up (Re-send Emergency)';
+                // Remove all existing event listeners by replacing onclick
+                followUpBtn.onclick = null;
+            }
+            
+            if (helpReceivedBtn) {
+                // Reset button to original state
+                helpReceivedBtn.disabled = false;
+                helpReceivedBtn.innerHTML = '<i class="fas fa-check-circle"></i> Help is Received';
+            }
+
+            // Show modal first, then attach handlers after a small delay to ensure DOM is ready
+            modal.show();
+            
+            // Use setTimeout to ensure modal is fully shown and button state is reset before attaching handlers
+            setTimeout(() => {
+                // Re-get button references after modal is shown (in case DOM was refreshed)
+                const followUpBtnRefreshed = document.getElementById('followUpBtn');
+                const helpReceivedBtnRefreshed = document.getElementById('helpReceivedBtn');
+                
+                // Handle Follow Up button - re-send the emergency (uses existing emergency ID)
+                if (followUpBtnRefreshed) {
+                    // Ensure button is in correct state
+                    followUpBtnRefreshed.disabled = false;
+                    followUpBtnRefreshed.innerHTML = '<i class="fas fa-redo"></i> Follow Up (Re-send Emergency)';
+                    followUpBtnRefreshed.onclick = null; // Clear any existing handler
+                    
+                    followUpBtnRefreshed.onclick = async function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const btn = this;
+                        // Prevent double-click
+                        if (btn.disabled) {
+                            return;
+                        }
+                        
+                        btn.disabled = true;
+                        const originalHtml = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resending...';
+                        
+                        try {
+                            if (!emergencyId) {
+                                alert('Emergency ID not found. Please send a new SOS request.');
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                                return;
+                            }
+
+                            // Resend using existing emergency ID (doesn't create new one)
+                            const response = await fetch('/Student/ResendSOS', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({
+                                    emergencyId: emergencyId
+                                })
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                modal.hide();
+                                
+                                // Reset button state immediately after successful resend
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-redo"></i> Follow Up (Re-send Emergency)';
+                                
+                                // Clear follow-up tracking so the flow can work again
+                                localStorage.removeItem(`followUpHandled_${emergencyId}`);
+                                localStorage.removeItem('followUpReminder');
+                                
+                                // Clear existing follow-up timer
+                                if (followUpTimer) {
+                                    clearTimeout(followUpTimer);
+                                    followUpTimer = null;
+                                }
+                                
+                                // Reset modal tracking flags so "Help is on the Way" can show again when staff responds
+                                helpModalShown = false;
+                                
+                                // Remove from acknowledged list so SignalR can trigger modal again
+                                try {
+                                    const acknowledged = getAcknowledgedEmergencyIds();
+                                    const index = acknowledged.indexOf(emergencyId);
+                                    if (index > -1) {
+                                        acknowledged.splice(index, 1);
+                                        localStorage.setItem('acknowledgedEmergencyIds', JSON.stringify(acknowledged));
+                                    }
+                                } catch (e) {
+                                    console.error('Error clearing acknowledged emergency:', e);
+                                }
+                                
+                                alert('SOS emergency request resent successfully! Clinic staff has been notified. You will be notified when they respond.');
+                                // Don't reload - keep SignalR connection active for real-time updates
+                            } else {
+                                alert('Failed to resend SOS: ' + (result.error || 'Unknown error'));
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            }
+                        } catch (error) {
+                            console.error('Error resending SOS:', error);
+                            alert('Error resending SOS: ' + (error.message || 'Please try again.'));
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    };
+                }
+
+                // Handle Help is Received button
+                if (helpReceivedBtnRefreshed) {
+                    // Store reference to avoid issues
+                    const btnElement = helpReceivedBtnRefreshed;
+                    
+                    // Remove existing onclick to prevent duplicates
+                    btnElement.onclick = null;
+                    // Remove existing listeners by replacing the element
+                    btnElement.removeEventListener('click', arguments.callee);
+                    
+                    btnElement.addEventListener('click', async function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const btn = this;
+                        btn.disabled = true;
+                        const originalHtml = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                        try {
+                            // Ensure emergencyId is a number, but allow 0 to trigger "find most recent" logic
+                            const emergencyIdNum = emergencyId ? parseInt(emergencyId) : 0;
+                            
+                            console.log('Sending MarkHelpReceived request for emergency ID:', emergencyIdNum || 'will use most recent');
+
+                            const response = await fetch('/Student/MarkHelpReceived', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({ emergencyId: emergencyIdNum || 0 })
+                            });
+
+                            // Check if response is ok
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+
+                        if (result && result.success) {
+                            console.log('Successfully marked help as received. Emergency ID:', result.emergencyId || emergencyId);
+                            modal.hide();
+                            // Mark as handled - use the emergencyId from result if available
+                            const finalEmergencyId = result.emergencyId || emergencyId;
+                            if (finalEmergencyId) {
+                                localStorage.setItem(`followUpHandled_${finalEmergencyId}`, 'true');
+                            }
+                            localStorage.removeItem('followUpReminder');
+                            alert('Thank you for confirming! The emergency has been automatically marked as resolved.');
+                            // Reload page
+                            window.location.reload();
+                        } else {
+                            // Handle error message - check if it's an object or string
+                            let errorMsg = 'Unknown error';
+                            if (result && result.error) {
+                                if (typeof result.error === 'string') {
+                                    errorMsg = result.error;
+                                } else if (result.error.message) {
+                                    errorMsg = result.error.message;
+                                } else {
+                                    errorMsg = JSON.stringify(result.error);
+                                }
+                            }
+                            alert('Failed to mark help as received: ' + errorMsg);
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    } catch (error) {
+                        console.error('Error marking help as received:', error);
+                        const errorMessage = error.message || 'Please try again.';
+                            alert('Error marking help as received: ' + errorMessage);
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    });
+                } else {
+                    console.error('Help Received button not found in DOM');
+                }
+            }, 100); // Small delay to ensure modal DOM is ready
+        }
+
         // Initialize emergency resolved check when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', startEmergencyResolvedCheck);
+            document.addEventListener('DOMContentLoaded', function() {
+                startEmergencyResolvedCheck();
+                // Only check follow-up reminder after emergency check is initialized
+                // This prevents showing follow-up for resolved emergencies
+                setTimeout(() => {
+                    checkAndShowFollowUpReminder();
+                }, 1500); // Small delay to ensure emergency check runs first
+            });
         } else {
             startEmergencyResolvedCheck();
+            // Only check follow-up reminder after emergency check is initialized
+            setTimeout(() => {
+                checkAndShowFollowUpReminder();
+            }, 1500); // Small delay to ensure emergency check runs first
         }
     </script>
 
     <style>
+        /* Fixed SOS Emergency Button */
+        .fixed-sos-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 50px;
+            border: none;
+            color: white;
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .fixed-sos-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(220, 53, 69, 0.8);
+        }
+
+        .fixed-sos-btn i {
+            font-size: 1.2rem;
+        }
+
+        @@media (max-width: 768px) {
+            .fixed-sos-btn {
+                top: 10px;
+                right: 10px;
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+
+            .fixed-sos-btn i {
+                font-size: 1rem;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .fixed-sos-btn {
+                padding: 0.65rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
         /* SOS Needs Options - Enhanced Card Design */
         .sos-needs-label {
             font-weight: 600;
@@ -1390,6 +2012,178 @@
 
             .help-message {
                 font-size: 1rem;
+            }
+        }
+
+        /* Follow-up Reminder Modal Styles */
+        .follow-up-modal-content {
+            border: 3px solid #f59e0b;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
+            animation: followUpModalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        @@keyframes followUpModalEntrance {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .follow-up-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-bottom: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .follow-up-header .modal-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .follow-up-header .modal-title i {
+            font-size: 1.5rem;
+            animation: followUpIconPulse 2s ease-in-out infinite;
+        }
+
+        @@keyframes followUpIconPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        .follow-up-body {
+            padding: 2rem 1.5rem;
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .follow-up-message-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .follow-up-icon-wrapper {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+
+        .follow-up-icon-wrapper i {
+            color: #f59e0b;
+            font-size: 3rem;
+        }
+
+        .follow-up-title {
+            color: #d97706;
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        .follow-up-message {
+            color: #374151;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 0;
+            max-width: 500px;
+        }
+
+        .follow-up-info-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+        }
+
+        .follow-up-info-box i {
+            color: #d97706;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .follow-up-info-box span {
+            color: #92400e;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .follow-up-footer {
+            border-top: 3px solid #fef3c7;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .follow-up-follow-btn {
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .follow-up-follow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white;
+        }
+
+        .follow-up-received-btn {
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .follow-up-received-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+
+        @@media (max-width: 768px) {
+            .follow-up-footer {
+                flex-direction: column;
+            }
+
+            .follow-up-follow-btn,
+            .follow-up-received-btn {
+                width: 100%;
             }
         }
     </style>

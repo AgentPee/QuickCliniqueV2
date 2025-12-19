@@ -684,7 +684,7 @@ function updateEmergenciesTable(emergencies) {
     if (emergencies.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center">
+                <td colspan="5" class="text-center">
                     <div class="no-appointments">
                         <i class="fas fa-shield-alt"></i>
                         <h5>No Emergency Schedules</h5>
@@ -731,12 +731,6 @@ function updateEmergenciesTable(emergencies) {
         row.setAttribute('data-student-id', (emergency.studentIdNumber || '').toString());
         row.innerHTML = `
             <td>
-                <div class="patient-info">
-                    <i class="fas fa-user-circle patient-icon"></i>
-                    <span>${escapeHtml(emergency.studentName || 'Unknown')}</span>
-                </div>
-            </td>
-            <td>
                 <span class="queue-badge">${emergency.studentIdNumber || 'N/A'}</span>
             </td>
             <td>
@@ -755,10 +749,17 @@ function updateEmergenciesTable(emergencies) {
                 </div>
             </td>
             <td>
-                <span class="status-badge ${statusBadgeClass}">
-                    ${emergency.isResolved ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>'}
-                    ${statusText}
-                </span>
+                <div class="emergency-status-cell">
+                    <span class="status-badge ${statusBadgeClass}">
+                        ${emergency.isResolved ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>'}
+                        ${statusText}
+                    </span>
+                    ${!emergency.isResolved ? `
+                        <button class="btn btn-success btn-sm mt-2" onclick="markEmergencyResolved(${emergency.emergencyId})" title="Mark as Resolved">
+                            <i class="fas fa-check"></i> Resolved
+                        </button>
+                    ` : ''}
+                </div>
             </td>
         `;
         tbody.appendChild(row);
@@ -768,5 +769,52 @@ function updateEmergenciesTable(emergencies) {
     const searchEmergency = document.getElementById('searchEmergency');
     if (searchEmergency && searchEmergency.value) {
         filterEmergencyTable();
+    }
+}
+
+// Mark emergency as resolved
+async function markEmergencyResolved(emergencyId) {
+    if (!confirm('Are you sure you want to mark this emergency as resolved?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/Dashboard/MarkEmergencyResolved', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ emergencyId: emergencyId })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Refresh the emergencies table
+            loadEmergencies();
+            
+            // Show success message
+            if (typeof showMessage === 'function') {
+                showMessage('Emergency marked as resolved', 'success');
+            } else {
+                alert('Emergency marked as resolved');
+            }
+        } else {
+            const errorMsg = 'Failed to mark emergency as resolved: ' + (result.error || 'Unknown error');
+            if (typeof showMessage === 'function') {
+                showMessage(errorMsg, 'error');
+            } else {
+                alert(errorMsg);
+            }
+        }
+    } catch (error) {
+        console.error('Error marking emergency as resolved:', error);
+        const errorMsg = 'Error marking emergency as resolved. Please try again.';
+        if (typeof showMessage === 'function') {
+            showMessage(errorMsg, 'error');
+        } else {
+            alert(errorMsg);
+        }
     }
 }

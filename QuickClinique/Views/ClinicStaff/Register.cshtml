@@ -148,6 +148,17 @@
                     </div>
 
                     <div class="input-group">
+                        <label asp-for="LicenseNumber" class="control-label">License Number <span style="color: #999; font-weight: normal;">(Optional)</span></label>
+                        <input asp-for="LicenseNumber" id="LicenseNumber" class="form-control" 
+                               placeholder="e.g., 22 123456"
+                               pattern="\d{2}\s\d{6}"
+                               title="Format: 2 digits, space, 6 digits (e.g., 22 123456)" />
+                        <span asp-validation-for="LicenseNumber" class="text-danger"></span>
+                        <span class="input-icon">🆔</span>
+                        <small class="input-hint">Format: 2 digits, space, 6 digits (e.g., 22 123456)</small>
+                    </div>
+
+                    <div class="input-group">
                         <label asp-for="Password" class="control-label">Password</label>
                         <input asp-for="Password" id="Password" class="form-control" type="password" required />
                         <span class="toggle-password" onclick="togglePassword('Password')">👁️</span>
@@ -178,5 +189,58 @@
     <script src="~/js/studReg.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        // License Number formatting: 2 digits, space, 6 digits (e.g., 22 123456)
+        document.addEventListener('DOMContentLoaded', function() {
+            const licenseInput = document.getElementById('LicenseNumber');
+            
+            if (licenseInput) {
+                licenseInput.addEventListener('input', function(e) {
+                    // Remove all non-digits
+                    let value = this.value.replace(/\D/g, '');
+                    
+                    // Format: 2 digits, space, 6 digits
+                    if (value.length > 2) {
+                        value = value.substring(0, 2) + ' ' + value.substring(2, 8);
+                    }
+                    
+                    // Limit to 9 characters total (2 digits + space + 6 digits)
+                    if (value.length > 9) {
+                        value = value.substring(0, 9);
+                    }
+                    
+                    this.value = value;
+                    
+                    // Visual feedback
+                    if (value.length === 9 && /^\d{2}\s\d{6}$/.test(value)) {
+                        this.style.borderColor = '#2ecc71';
+                        this.style.boxShadow = '0 0 0 3px rgba(46, 204, 113, 0.1)';
+                    } else if (value.length > 0) {
+                        this.style.borderColor = '#e74c3c';
+                        this.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
+                    } else {
+                        this.style.borderColor = '#e1e5e9';
+                        this.style.boxShadow = 'none';
+                    }
+                });
+                
+                // Prevent invalid characters on paste
+                licenseInput.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || window.clipboardData).getData('text');
+                    const digits = paste.replace(/\D/g, '');
+                    
+                    if (digits.length > 0) {
+                        let formatted = digits.substring(0, 2);
+                        if (digits.length > 2) {
+                            formatted += ' ' + digits.substring(2, 8);
+                        }
+                        this.value = formatted;
+                        this.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

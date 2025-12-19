@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Reports";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" />
+}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h2><i class="fas fa-file-alt"></i> Printable Reports</h2>
+        <p class="text-muted">Generate and print various reports for clinic management</p>
+    </div>
+
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <h3>Doctor's Report</h3>
+            <p>Generate a comprehensive doctor's report for a student with medical history, allergies, medications, and additional notes.</p>
+               <a href="@Url.Action("DoctorsReport", "Clinicstaff")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Select Student
+            </a>
+        </div>
+
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <h3>Medical Certificate</h3>
+            <p>Generate an official medical certificate for students with diagnosis, dates of absence, and remarks. Select a student and input the required information.</p>
+            <a href="@Url.Action("StudentCertificationReport", "Clinicstaff")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Select Student
+            </a>
+        </div>
+
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Triage Visualization</h3>
+            <p>View comprehensive graphs of periodic triage data per student for predictive health analysis. Includes vital signs trends over time.</p>
+            <a href="@Url.Action("TriageVisualization", "Clinicstaff")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Select Student
+            </a>
+        </div>
+
+        <div class="report-card">
+            <div class="report-icon">
+                <i class="fas fa-file-medical-alt"></i>
+            </div>
+            <h3>Forensic Report</h3>
+            <p>Generate a printable forensic medical report with statistical and graphical data, including all triage records, vital signs trends, and treatment history.</p>
+            <a href="@Url.Action("ForensicReport", "Clinicstaff")" class="btn btn-primary">
+                <i class="fas fa-search"></i> Select Student
+            </a>
+        </div>
+    </div>
+</div>
+

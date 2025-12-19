@@ -1,0 +1,397 @@
+@model QuickClinique.Models.Student
+@{
+    ViewData["Title"] = $"Triage Visualization - {Model.FirstName} {Model.LastName}";
+    Layout = "_Layout";
+    var triageRecords = ViewBag.TriageRecords as List<QuickClinique.Models.Precord> ?? new List<QuickClinique.Models.Precord>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/triage-visualization.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+}
+
+<div class="triage-visualization-container">
+    <div class="no-print mb-3">
+        <a href="@Url.Action("TriageVisualization", "Clinicstaff")" class="triage-btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Student List
+        </a>
+        <button type="button" class="triage-btn-print" onclick="downloadTriagePdf(event, @Model.StudentId)" style="margin-left: 0.75rem;">
+            <i class="fas fa-download"></i> Download PDF
+        </button>
+    </div>
+
+    <div class="triage-card">
+        <div class="triage-card-header">
+            <h3><i class="fas fa-chart-line"></i> Triage Data Visualization - @Model.FirstName @Model.LastName</h3>
+            <p>ID Number: @Model.Idnumber</p>
+        </div>
+        <div class="triage-card-body">
+            @if (triageRecords.Any())
+            {
+                <!-- Statistics Summary -->
+                <div class="triage-stats-grid">
+                    <div class="triage-stats-card">
+                        <h4>@triageRecords.Count</h4>
+                        <p>Total Triage Records</p>
+                    </div>
+                    <div class="triage-stats-card">
+                        <h4>@(triageRecords.Where(r => r.PulseRate.HasValue).Any() ? triageRecords.Where(r => r.PulseRate.HasValue).Average(r => r.PulseRate.Value).ToString("F1") : "N/A")</h4>
+                        <p>Avg Pulse Rate (bpm)</p>
+                    </div>
+                    <div class="triage-stats-card">
+                        <h4>@(triageRecords.Where(r => r.Temperature.HasValue).Any() ? triageRecords.Where(r => r.Temperature.HasValue).Average(r => (double)r.Temperature.Value).ToString("F1") : "N/A")</h4>
+                        <p>Avg Temperature (°C)</p>
+                    </div>
+                    <div class="triage-stats-card">
+                        <h4>@(triageRecords.Where(r => r.OxygenSaturation.HasValue).Any() ? triageRecords.Where(r => r.OxygenSaturation.HasValue).Average(r => r.OxygenSaturation.Value).ToString("F1") : "N/A")</h4>
+                        <p>Avg O2 Saturation (%)</p>
+                    </div>
+                    <div class="triage-stats-card">
+                        <h4>@(triageRecords.Any() ? triageRecords.Average(r => r.Bmi).ToString("F1") : "N/A")</h4>
+                        <p>Avg BMI</p>
+                    </div>
+                </div>
+
+                <!-- Combined Multiple Line Graph -->
+                <div class="triage-chart-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h5><i class="fas fa-chart-line"></i> Vital Signs Trends Over Time</h5>
+                        <div class="vital-signs-filter">
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="filterPulseRate" checked onchange="toggleDataset('pulseRate')">
+                                <span>Pulse Rate</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="filterTemperature" checked onchange="toggleDataset('temperature')">
+                                <span>Temperature</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="filterBloodPressure" checked onchange="toggleDataset('bloodPressure')">
+                                <span>Blood Pressure</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="filterOxygenSaturation" checked onchange="toggleDataset('oxygenSaturation')">
+                                <span>Oxygen Saturation</span>
+                            </label>
+                            <label class="filter-checkbox">
+                                <input type="checkbox" id="filterBmi" checked onchange="toggleDataset('bmi')">
+                                <span>BMI</span>
+                            </label>
+                        </div>
+                    </div>
+                    <canvas id="combinedChart"></canvas>
+                </div>
+
+                <!-- Triage Records Table -->
+                <div class="triage-table-container">
+                    <h5 style="margin-bottom: 1rem; font-weight: 700; color: var(--text-dark);">
+                        <i class="fas fa-table"></i> Detailed Triage Records
+                    </h5>
+                    <div style="overflow-x: auto;">
+                        <table class="triage-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Pulse Rate</th>
+                                    <th>Blood Pressure</th>
+                                    <th>Temperature</th>
+                                    <th>O2 Saturation</th>
+                                    <th>BMI</th>
+                                    <th>Taken By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var record in triageRecords)
+                                {
+                                    <tr>
+                                        <td>@(record.TriageDateTime?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</td>
+                                        <td>@(record.PulseRate?.ToString() ?? "N/A")</td>
+                                        <td>@(record.BloodPressure ?? "N/A")</td>
+                                        <td>@(record.Temperature?.ToString("F1") ?? "N/A")</td>
+                                        <td>@(record.OxygenSaturation?.ToString() ?? "N/A")</td>
+                                        <td>@record.Bmi</td>
+                                        <td>@(record.TriageTakenByName ?? "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    // Download PDF function
+                    async function downloadTriagePdf(event, studentId) {
+                        const button = event.target.closest('button');
+                        const originalHtml = button.innerHTML;
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+                        
+                        try {
+                            const url = '@Url.Action("DownloadTriageVisualizationPdf", "Clinicstaff")?studentId=' + studentId;
+                            const response = await fetch(url, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/pdf'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                // Get PDF blob
+                                const blob = await response.blob();
+                                
+                                // Create download link
+                                const downloadUrl = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = downloadUrl;
+                                a.download = `Triage_Visualization_@(Model.FirstName)_@(Model.LastName)_${new Date().toISOString().split('T')[0]}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(downloadUrl);
+                            } else {
+                                const errorText = await response.text();
+                                alert('Error generating PDF. Please try again.');
+                                console.error('PDF generation error:', errorText);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error downloading PDF. Please try again.');
+                        } finally {
+                            button.disabled = false;
+                            button.innerHTML = originalHtml;
+                        }
+                    }
+
+                    // Prepare data
+                    const dates = @Html.Raw(Json.Serialize(triageRecords.Where(r => r.TriageDateTime.HasValue).Select(r => r.TriageDateTime.Value.ToString("MMM dd, yyyy HH:mm"))));
+                    const pulseRates = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.PulseRate)));
+                    const temperatures = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.Temperature)));
+                    const oxygenSaturations = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.OxygenSaturation)));
+                    const bloodPressures = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.BloodPressure)));
+                    const bmis = @Html.Raw(Json.Serialize(triageRecords.Select(r => r.Bmi)));
+
+                    // Parse blood pressure values (format: "120/80")
+                    const systolic = [];
+                    const diastolic = [];
+                    let hasBloodPressure = false;
+                    bloodPressures.forEach(bp => {
+                        if (bp && bp.includes('/')) {
+                            const parts = bp.split('/');
+                            systolic.push(parseInt(parts[0]));
+                            diastolic.push(parseInt(parts[1]));
+                            hasBloodPressure = true;
+                        } else {
+                            systolic.push(null);
+                            diastolic.push(null);
+                        }
+                    });
+
+                    // Create combined chart with all datasets
+                    let combinedChart;
+                    const datasets = [];
+
+                    // Pulse Rate dataset
+                    if (pulseRates.some(r => r != null)) {
+                        datasets.push({
+                            id: 'pulseRate',
+                            label: 'Pulse Rate (bpm)',
+                            data: pulseRates,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y',
+                            hidden: false
+                        });
+                    }
+
+                    // Temperature dataset
+                    if (temperatures.some(t => t != null)) {
+                        datasets.push({
+                            id: 'temperature',
+                            label: 'Temperature (°C)',
+                            data: temperatures,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y1',
+                            hidden: false
+                        });
+                    }
+
+                    // Oxygen Saturation dataset
+                    if (oxygenSaturations.some(o => o != null)) {
+                        datasets.push({
+                            id: 'oxygenSaturation',
+                            label: 'Oxygen Saturation (%)',
+                            data: oxygenSaturations,
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y',
+                            hidden: false
+                        });
+                    }
+
+                    // Blood Pressure datasets
+                    if (hasBloodPressure) {
+                        datasets.push({
+                            id: 'bloodPressureSystolic',
+                            label: 'Blood Pressure - Systolic',
+                            data: systolic,
+                            borderColor: 'rgb(255, 159, 64)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y',
+                            hidden: false
+                        });
+                        datasets.push({
+                            id: 'bloodPressureDiastolic',
+                            label: 'Blood Pressure - Diastolic',
+                            data: diastolic,
+                            borderColor: 'rgb(201, 203, 207)',
+                            backgroundColor: 'rgba(201, 203, 207, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y',
+                            hidden: false
+                        });
+                    }
+
+                    // BMI dataset
+                    if (bmis.some(b => b != null && b > 0)) {
+                        datasets.push({
+                            id: 'bmi',
+                            label: 'BMI',
+                            data: bmis,
+                            borderColor: 'rgb(153, 102, 255)',
+                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                            tension: 0.1,
+                            fill: false,
+                            yAxisID: 'y',
+                            hidden: false
+                        });
+                    }
+
+                    // Chart configuration
+                    const chartOptions = {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Date & Time'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Pulse Rate (bpm) / O2 Saturation (%) / BP (mmHg) / BMI'
+                                },
+                                beginAtZero: false
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C)'
+                                },
+                                beginAtZero: false,
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    };
+
+                    // Create combined chart
+                    const ctx = document.getElementById('combinedChart');
+                    combinedChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: datasets
+                        },
+                        options: chartOptions
+                    });
+
+                    // Function to toggle datasets
+                    function toggleDataset(datasetId) {
+                        const checkbox = document.getElementById(`filter${datasetId.charAt(0).toUpperCase() + datasetId.slice(1)}`);
+                        if (!checkbox) return;
+
+                        const isChecked = checkbox.checked;
+                        
+                        // Find and toggle the dataset(s)
+                        combinedChart.data.datasets.forEach((dataset, index) => {
+                            if (datasetId === 'pulseRate' && dataset.id === 'pulseRate') {
+                                combinedChart.setDatasetVisibility(index, isChecked);
+                            } else if (datasetId === 'temperature' && dataset.id === 'temperature') {
+                                combinedChart.setDatasetVisibility(index, isChecked);
+                            } else if (datasetId === 'oxygenSaturation' && dataset.id === 'oxygenSaturation') {
+                                combinedChart.setDatasetVisibility(index, isChecked);
+                            } else if (datasetId === 'bloodPressure') {
+                                if (dataset.id === 'bloodPressureSystolic' || dataset.id === 'bloodPressureDiastolic') {
+                                    combinedChart.setDatasetVisibility(index, isChecked);
+                                }
+                            } else if (datasetId === 'bmi' && dataset.id === 'bmi') {
+                                combinedChart.setDatasetVisibility(index, isChecked);
+                            }
+                        });
+                        
+                        combinedChart.update();
+                    }
+
+                    // Hide checkboxes for datasets that don't exist
+                    if (!pulseRates.some(r => r != null)) {
+                        document.getElementById('filterPulseRate').parentElement.style.display = 'none';
+                    }
+                    if (!temperatures.some(t => t != null)) {
+                        document.getElementById('filterTemperature').parentElement.style.display = 'none';
+                    }
+                    if (!oxygenSaturations.some(o => o != null)) {
+                        document.getElementById('filterOxygenSaturation').parentElement.style.display = 'none';
+                    }
+                    if (!hasBloodPressure) {
+                        document.getElementById('filterBloodPressure').parentElement.style.display = 'none';
+                    }
+                    if (!bmis.some(b => b != null && b > 0)) {
+                        document.getElementById('filterBmi').parentElement.style.display = 'none';
+                    }
+                </script>
+            }
+            else
+            {
+                <div class="triage-alert">
+                    <i class="fas fa-info-circle"></i>
+                    <span>No triage records with timestamps found for this student.</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {}
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj": {}
   },
   "projects": {
-    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj": {
+    "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "projectUniqueName": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj",
         "projectName": "QuickClinique",
-        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\QuickClinique.csproj",
+        "projectPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\quickclinique\\QuickClinique.csproj",
         "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\QuickClinique\\obj\\",
+        "outputPath": "C:\\Users\\LENOVO\\OneDrive\\Documents\\qc\\QuickCliniqueV2\\quickclinique\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -69,6 +69,14 @@
               "version": "[9.0.9, )"
             },
             "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2024.10.2, )"
+            },
+            "System.Drawing.Common": {
               "target": "Package",
               "version": "[9.0.0, )"
             }
