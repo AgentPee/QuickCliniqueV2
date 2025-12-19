@@ -1900,10 +1900,14 @@ namespace QuickClinique.Controllers
                 medicalRecord.Diagnosis = model.Diagnosis;
                 medicalRecord.Medications = model.Medications;
                 
-                // Update treatment provider information
+                // Update treatment provider information from form inputs
                 medicalRecord.TreatmentProvidedByStaffId = staffId;
-                medicalRecord.TreatmentProvidedByName = staff != null ? $"{staff.FirstName} {staff.LastName}" : null;
-                medicalRecord.DoctorLicenseNumber = staff?.LicenseNumber;
+                medicalRecord.TreatmentProvidedByName = !string.IsNullOrWhiteSpace(model.TreatmentProvidedByName) 
+                    ? model.TreatmentProvidedByName 
+                    : (staff != null ? $"{staff.FirstName} {staff.LastName}" : null);
+                medicalRecord.DoctorLicenseNumber = !string.IsNullOrWhiteSpace(model.DoctorLicenseNumber) 
+                    ? model.DoctorLicenseNumber 
+                    : staff?.LicenseNumber;
                 
                 // Update age and gender if not already set from triage
                 if (existingPrecord == null || existingPrecord.Age == 0)

@@ -633,7 +633,7 @@
                 </div>
                 <div class="modal-buttons">
                     <button type="button" onclick="closeModal('uploadFileModal')" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" id="uploadSubmitButton" class="btn btn-primary">
                         <i class="fas fa-upload"></i> Upload
                     </button>
                 </div>
@@ -903,25 +903,72 @@
             openModal('uploadFileModal');
         }
         
-        // Initialize upload form handler
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize upload form handler - ensure it's attached
+        let uploadFormInitialized = false;
+        function initializeUploadForm() {
+            if (uploadFormInitialized) return; // Prevent multiple initializations
+            
             const uploadForm = document.getElementById('uploadFileForm');
-            if (uploadForm) {
-                uploadForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    const patientIdInput = document.getElementById('uploadPatientId');
-                    const patientId = patientIdInput ? parseInt(patientIdInput.value) : @Model.StudentId;
-                    await uploadMedicalRecordFile(patientId);
-                });
+            if (!uploadForm) {
+                console.log('Upload form not found yet, will retry...');
+                return;
             }
-        });
+            
+            // Check if handler is already attached
+            if (uploadForm.dataset.handlerAttached === 'true') {
+                console.log('Upload form handler already attached');
+                return;
+            }
+            
+            console.log('Initializing upload form handler');
+            
+            // Add submit handler to form
+            uploadForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Form submit event triggered');
+                const patientIdInput = document.getElementById('uploadPatientId');
+                const patientId = patientIdInput ? parseInt(patientIdInput.value) : null;
+                if (!patientId || isNaN(patientId)) {
+                    showNotification('Invalid patient ID. Please try again.', 'error');
+                    return;
+                }
+                await uploadMedicalRecordFile(patientId);
+            });
+            
+            // Mark as initialized
+            uploadForm.dataset.handlerAttached = 'true';
+            uploadFormInitialized = true;
+            console.log('Upload form handler initialized successfully');
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeUploadForm();
+                // Also try after a short delay
+                setTimeout(initializeUploadForm, 100);
+            });
+        } else {
+            initializeUploadForm();
+            // Also try after a short delay
+            setTimeout(initializeUploadForm, 100);
+        }
 
         async function uploadMedicalRecordFile(patientId) {
-            const form = document.getElementById('uploadFileForm');
-            const fileInput = document.getElementById('fileInput');
+            console.log('uploadMedicalRecordFile called with patientId:', patientId);
             
+            const form = document.getElementById('uploadFileForm');
+            if (!form) {
+                console.error('Upload form not found');
+                showNotification('Upload form not found. Please refresh the page.', 'error');
+                return;
+            }
+            
+            const fileInput = document.getElementById('fileInput');
             if (!fileInput || !fileInput.files || !fileInput.files[0]) {
                 showNotification('Please select a file to upload.', 'error');
+                fileInput?.focus();
                 return;
             }
 
@@ -931,25 +978,34 @@
             let token = form.querySelector('input[name="__RequestVerificationToken"]');
             if (token) {
                 formData.append('__RequestVerificationToken', token.value);
+                console.log('Anti-forgery token found');
+            } else {
+                console.warn('Anti-forgery token not found in form');
             }
             
             formData.append('patientId', patientId);
             formData.append('file', fileInput.files[0]);
+            console.log('File selected:', fileInput.files[0].name, 'Size:', fileInput.files[0].size);
             
             const description = document.getElementById('fileDescription');
-            if (description) {
-                formData.append('description', description.value || '');
+            if (description && description.value) {
+                formData.append('description', description.value.trim());
             }
 
             const submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            }
 
             try {
+                console.log('Sending upload request to /Precord/UploadMedicalRecordFile');
                 const response = await fetch('/Precord/UploadMedicalRecordFile', {
                     method: 'POST',
                     body: formData
                 });
+
+                console.log('Response status:', response.status, response.statusText);
 
                 let result;
                 const contentType = response.headers.get('content-type');
@@ -957,12 +1013,16 @@
                     result = await response.json();
                 } else {
                     const text = await response.text();
+                    console.log('Response text:', text);
                     try {
                         result = JSON.parse(text);
-                    } catch {
+                    } catch (parseError) {
+                        console.error('Failed to parse response as JSON:', parseError);
                         throw new Error(text || 'Failed to upload file');
                     }
                 }
+
+                console.log('Upload result:', result);
 
                 if (result.success) {
                     showNotification('File uploaded successfully!', 'success');
@@ -974,11 +1034,13 @@
                     throw new Error(result.message || 'Failed to upload file');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error uploading file:', error);
                 showNotification(error.message || 'Error uploading file. Please try again.', 'error');
             } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+                }
             }
         }
 
