@@ -285,6 +285,12 @@
                         document.body.appendChild(newScript);
                     });
                     
+                    // Ensure upload file functions are available after content loads
+                    // Wait a bit for modal HTML to be available
+                    setTimeout(() => {
+                        ensureUploadFileFunctions(modalBody);
+                    }, 100);
+                    
                     // Initialize collapsible sections after content is loaded
                     // Wait a bit for scripts to execute
                     setTimeout(() => {
@@ -624,6 +630,190 @@
                     toggleMedicalRecordDetails(this);
                 });
             });
+        }
+
+        // Ensure upload file functions are available in the modal
+        function ensureUploadFileFunctions(modalBody) {
+            // Check if upload modal exists in the loaded content
+            let uploadModal = modalBody.querySelector('#uploadFileModal');
+            
+            // If upload modal exists in modal body but not in document, move it to document body
+            if (uploadModal && !document.getElementById('uploadFileModal')) {
+                // Clone and append to document body so it's accessible globally
+                const clonedModal = uploadModal.cloneNode(true);
+                document.body.appendChild(clonedModal);
+                console.log('Upload modal moved to document body');
+            } else if (!uploadModal) {
+                // Check if it already exists in document
+                uploadModal = document.getElementById('uploadFileModal');
+            }
+            
+            // Define upload file functions if they don't exist
+            if (typeof window.showUploadFileModal !== 'function') {
+                window.showUploadFileModal = function(patientId) {
+                    console.log('showUploadFileModal called with patientId:', patientId);
+                    const modal = document.getElementById('uploadFileModal');
+                    if (!modal) {
+                        console.error('Upload file modal not found');
+                        alert('Upload modal not found. Please refresh the page.');
+                        return;
+                    }
+                    
+                    const hiddenInput = document.getElementById('uploadPatientId');
+                    if (hiddenInput) {
+                        hiddenInput.value = patientId;
+                    }
+                    
+                    const form = document.getElementById('uploadFileForm');
+                    if (form) {
+                        form.reset();
+                        if (hiddenInput) {
+                            hiddenInput.value = patientId;
+                        }
+                    }
+                    openModal('uploadFileModal');
+                };
+            }
+            
+            if (typeof window.uploadMedicalRecordFile !== 'function') {
+                window.uploadMedicalRecordFile = async function(patientId) {
+                    console.log('uploadMedicalRecordFile called with patientId:', patientId);
+                    const form = document.getElementById('uploadFileForm');
+                    if (!form) {
+                        console.error('Upload form not found');
+                        alert('Upload form not found. Please refresh the page.');
+                        return;
+                    }
+                    
+                    const fileInput = document.getElementById('fileInput');
+                    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                        alert('Please select a file to upload.');
+                        fileInput?.focus();
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    let token = form.querySelector('input[name="__RequestVerificationToken"]');
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token.value);
+                    }
+                    
+                    formData.append('patientId', patientId);
+                    formData.append('file', fileInput.files[0]);
+                    
+                    const description = document.getElementById('fileDescription');
+                    if (description && description.value) {
+                        formData.append('description', description.value.trim());
+                    }
+
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    }
+
+                    try {
+                        const response = await fetch('/Precord/UploadMedicalRecordFile', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        let result;
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            result = await response.json();
+                        } else {
+                            const text = await response.text();
+                            try {
+                                result = JSON.parse(text);
+                            } catch {
+                                throw new Error(text || 'Failed to upload file');
+                            }
+                        }
+
+                        if (result.success) {
+                            alert('File uploaded successfully!');
+                            closeModal('uploadFileModal');
+                            form.reset();
+                            setTimeout(() => {
+                                // Reload the details modal content
+                                const patientIdInput = document.getElementById('uploadPatientId');
+                                const currentPatientId = patientIdInput ? patientIdInput.value : patientId;
+                                if (currentPatientId) {
+                                    showDetailsModal(parseInt(currentPatientId));
+                                }
+                            }, 500);
+                        } else {
+                            throw new Error(result.message || 'Failed to upload file');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert(error.message || 'Error uploading file. Please try again.');
+                    } finally {
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+                        }
+                    }
+                };
+            }
+            
+            if (typeof window.deleteMedicalRecordFile !== 'function') {
+                window.deleteMedicalRecordFile = async function(fileId) {
+                    if (!confirm('Are you sure you want to delete this file?')) {
+                        return;
+                    }
+
+                    try {
+                        const formData = new FormData();
+                        let token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        if (token) {
+                            formData.append('__RequestVerificationToken', token.value);
+                        }
+
+                        const response = await fetch(`/Precord/DeleteMedicalRecordFile/${fileId}`, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            alert('File deleted successfully!');
+                            // Reload the details modal content
+                            const modalBody = document.getElementById('detailsModalBody');
+                            if (modalBody) {
+                                const patientIdMatch = modalBody.innerHTML.match(/data-patient-id="(\d+)"/);
+                                if (patientIdMatch) {
+                                    setTimeout(() => showDetailsModal(parseInt(patientIdMatch[1])), 500);
+                                }
+                            }
+                        } else {
+                            throw new Error(result.message || 'Failed to delete file');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert(error.message || 'Error deleting file. Please try again.');
+                    }
+                };
+            }
+            
+            // Initialize upload form handler
+            const uploadForm = document.getElementById('uploadFileForm');
+            if (uploadForm && !uploadForm.dataset.handlerAttached) {
+                uploadForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const patientIdInput = document.getElementById('uploadPatientId');
+                    const patientId = patientIdInput ? parseInt(patientIdInput.value) : null;
+                    if (!patientId || isNaN(patientId)) {
+                        alert('Invalid patient ID. Please try again.');
+                        return;
+                    }
+                    await window.uploadMedicalRecordFile(patientId);
+                });
+                uploadForm.dataset.handlerAttached = 'true';
+            }
         }
 
     </script>
