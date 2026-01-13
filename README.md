@@ -196,7 +196,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Perry Ian Mendoza** - *Backend* - (https://github.com/AgentPee)
+- **Adonis Henry Espinosa** - *Frontend* - (https://github.com/QuinntinChuy)
 
 ## 🙏 Acknowledgments
 
@@ -212,4 +213,5 @@ For support, email quickclinique@gmail.com or create an issue in the repository.
 ---
 
 **QuickClinique** - Your Health, Our Priority 🏥
+
 
